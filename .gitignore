@@ -1,0 +1,13 @@
+# Project environment files.
+.DS_Store
+.idea
+.vscode
+*.iml
+
+# Output files.
+out
+*.class
+
+# Log files.
+hs_err_pid*
+*.log

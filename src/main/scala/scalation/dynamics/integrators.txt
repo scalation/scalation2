@@ -1,0 +1,11 @@
+
+ScalaTion ODE Integrators
+
+Stiff System:
+ode23s: ModRosenbrock - good
+ode???:               - better
+
+Non-Stiff System:
+ode44:  RungeKutta    - good
+ode45:  DormandPrice  - better
+

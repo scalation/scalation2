@@ -1,0 +1,377 @@
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** @author  John Miller
+ *  @version 1.6
+ *  @date    Wed Jun 23 19:52:57 EDT 2021
+ *  @see     LICENSE (MIT style license file).
+ *
+ * compile: javac --add-modules jdk.incubator.vector MatrixD.java
+ * execute: java --add-modules jdk.incubator.vector jalation.MatrixD
+ */
+
+package jalation;
+
+import jdk.incubator.vector.*;
+import static jdk.incubator.vector.VectorOperators.ADD;
+
+import static java.lang.Math.min;
+import static java.lang.System.nanoTime;
+import static java.lang.System.out;
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `MatrixD` support matrix operations on matrices of doubles.
+ */
+public class MatrixD
+{
+    public final int dim;
+    public final int dim2;
+    public final double [][] v;
+
+    private static final VectorSpecies<Double> SPECIES = DoubleVector.SPECIES_PREFERRED;
+    // DoubleVector.SPECIES_512;
+    private static final int VSZ = SPECIES.length ();
+    private static final int TSZ = 100;                           // pick a tile/block size Θ(√M) of cache size
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Construct a matrix.
+     */
+    public MatrixD (int dim_,
+                    int dim2_,
+                    double [][] v_)
+    {
+        dim  = dim_;
+        dim2 = dim2_;
+        if (v_ == null)
+            v_ = new double [dim][dim2];
+        else if (dim != v_.length || dim2 != v_[0].length)
+            out.println ("constructor: dimensions are wrong");
+        v = v_;
+    } // constructor
+
+    private String fString = "%g,\t";                              // string for formatting output
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Transpose this matrix (columns <=> rows).
+     */
+    MatrixD transpose ()
+    {
+        var a = new double [dim2][dim];
+        for (int i = 0; i < dim; i++)
+            for (int j = 0; j < dim2; j++) a[j][i] = v[i][j];
+        return new MatrixD (dim, dim2, a);
+    } // transpose
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Add this matrix and matrix y (requires y to have at least the dimensions of this).
+     *  @param y  the other matrix
+     */
+    MatrixD add1 (MatrixD y)
+    {
+        if (y.dim < dim || y.dim2 < dim2) out.println ("+: matrix + matrix - incompatible dimensions");
+
+        var a = new double [dim][y.dim2];
+        for (int i = 0; i < dim; i++)
+            for (int j = 0; j < dim2; j++) a[i][j] = v[i][j] + y.v[i][j];
+        return new MatrixD (dim, dim2, a);
+    } // add1
+
+// alias rows to avoid double suscripting
+
+    MatrixD add2 (MatrixD y)
+    {
+        if (y.dim < dim || y.dim2 < dim2) out.println ("+: matrix + matrix - incompatible dimensions");
+
+        var a = new double [dim][y.dim2];
+        for (int i = 0; i < dim; i++) {
+            var v_i = v[i]; var y_i = y.v[i];
+            for (int j = 0; j < dim2; j++) a[i][j] = v_i[j] + y_i[j];
+        } // for
+        return new MatrixD (dim, dim2, a);
+    } // add2
+
+// use AVX vector instructions - VSZ = number of 64-bit words in vector (e.g., AVX-512 has 8)
+
+
+    MatrixD add3 (MatrixD y)
+    {
+        if (y.dim < dim || y.dim2 < dim2) out.println ("+: matrix + matrix - incompatible dimensions");
+
+        var last = (dim2 / VSZ) * VSZ;
+
+        var a = new double [dim][y.dim2];
+        for (int i = 0; i < dim; i++) {
+            var v_i = v[i]; var y_i = y.v[i]; var a_i = a[i];
+            for (int j = 0; j < last; j += VSZ) {
+                var xv = DoubleVector.fromArray (SPECIES, v_i, j);
+                var yv = DoubleVector.fromArray (SPECIES, y_i, j);
+                xv.add (yv).intoArray (a_i, j);
+            } // for
+            for (int j = last; j < dim; j++) a_i[j] = v_i[j] + y_i[j];
+        } // for
+        return new MatrixD (dim, dim2, a);
+    } // add3
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Multiply this matrix by matrix y.
+     *  @param y  the other matrix
+     */
+    MatrixD mul1 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var z = new MatrixD (dim, y.dim2, null);
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < y.dim2; j++) {
+                var sum = 0.0;
+                for (int k = 0; k < dim2; k++) sum += v[i][k] * y.v[k][j];
+                z.v[i][j] = sum;
+            } // for
+        } // for
+        return z;
+    } // mul1
+
+// transpose y first
+
+    MatrixD mul2 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var z  = new MatrixD (dim, y.dim2, null);
+        var yt = y.transpose ();
+        for (int i = 0; i < dim; i++) {
+            for (int j = 0; j < y.dim2; j++) {
+                var v_i = v[i]; var y_j = yt.v[j];
+                var sum = 0.0;
+                for (int k = 0; k < dim2; k++) sum += v_i[k] * y_j[k];
+                z.v[i][j] = sum;
+            } // for
+        } // for
+        return z;
+    } // mul2
+
+// transpose y first and use array ops
+
+    MatrixD mul3 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var a  = new double [dim][y.dim2];
+        var yt = y.transpose ();
+
+        for (int i = 0; i < dim; i++) {
+            var v_i = v[i];
+            for (int j = 0; j < y.dim2; j++) {
+                var y_j = yt.v[j];
+                var sum = 0.0;
+                for (int k = 0; k < dim2; k++) sum += v_i[k] * y_j[k];
+                a[i][j] = sum;
+            } // for
+        } // for
+        return new MatrixD (dim, y.dim2, a);
+    } // mul3
+
+// transpose y first, use array ops and blocking/tiling
+// @see https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
+// n - dim, m - dim2, p - y.dim2
+
+    MatrixD mul4 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var a   = new double [dim][y.dim2];
+        var yt  = y.transpose ();
+
+        for (int ii = 0; ii < dim; ii += TSZ) {
+            for (int jj = 0; jj < y.dim2; jj += TSZ) {
+                for (int kk = 0; kk < dim2; kk += TSZ) {
+                    var k2 = min (kk + TSZ, dim2);
+
+                    for (int i = ii; i < min (ii + TSZ, dim); i++) {
+                        var v_i = v[i];
+                        for (int j = jj; j < min (jj + TSZ, y.dim2); j++) {
+                            var y_j = yt.v[j];
+                            var sum = 0.0;
+                            for (int k = kk; k < k2; k++) sum += v_i[k] * y_j[k];
+                            a[i][j] += sum;
+                        } // for
+                    } // for
+
+                } // for
+            } // for
+        } // for
+        return new MatrixD (dim, y.dim2, a);
+    } // mul4
+
+// use array ops, blocking/tiling and reorder loops
+// @see https://software.intel.com/content/www/us/en/develop/documentation/advisor-cookbook/top/optimize-memory-access-patterns-using-loop-interchange-and-cache-blocking-techniques.html
+
+    MatrixD mul5 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var a   = new double [dim][y.dim2];
+        int ii, jj, kk, i, j, k = 0;
+
+        for (ii = 0; ii < dim; ii += TSZ) {
+            var i2 = min (ii + TSZ, dim);
+            for (kk = 0; kk < dim2; kk += TSZ) {
+                var k2 = min (kk + TSZ, dim2);
+                for (jj = 0; jj < y.dim2; jj += TSZ) {
+                    var j2 = min (jj + TSZ, y.dim2);
+
+                    for (i = ii; i < i2; i++) {
+                        var v_i = v[i]; var a_i = a[i];
+                        for (k = kk; k < k2; k++) {
+                            var y_k = y.v[k]; var v_ik = v_i[k];
+                            for (j = jj; j < j2; j++) a_i[j] += v_ik * y_k[j];
+                        } // for
+                    } // for
+
+                } // for
+            } // for
+        } // for
+        return new MatrixD (dim, y.dim2, a);
+    } // mul5
+
+// use java.incubator.DoubleVector for AVX vector instructions
+
+    MatrixD mul6 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var last = (y.dim2 / VSZ) * VSZ;
+        var yt   = y.transpose ();
+        var a    = new double [dim][y.dim2];
+
+        for (int i = 0; i < dim; i++) {
+            var v_i = v[i]; var a_i = a[i];
+            for (int j = 0; j < y.dim2; j++) {
+                var y_j = yt.v[j];
+                var sum = 0.0;
+                for (int k = 0; k < last; k += VSZ) {
+                    var xv = DoubleVector.fromArray (SPECIES, v_i, k);
+                    var yv = DoubleVector.fromArray (SPECIES, y_j, k);
+                    sum += xv.mul (yv).reduceLanes (ADD);
+                } // for
+                for (int k = last; k < y.dim2; j++) sum += v_i[k] * y_j[k];
+                a_i[j] = sum;
+            } // for
+        } // for
+        return new MatrixD (dim, y.dim2, a);
+    } // mul6
+
+// combine mul5 and mul6 - FIX - not as fast as mul5
+
+    MatrixD mul7 (MatrixD y)
+    {
+        if (dim2 != y.dim) out.println ("*: matrix * matrix - incompatible cross dimensions");
+
+        var a   = new double [dim][y.dim2];
+        int ii, jj, kk, i, j, k = 0;
+
+        for (ii = 0; ii < dim; ii += TSZ) {
+            var i2 = min (ii + TSZ, dim);
+            for (kk = 0; kk < dim2; kk += TSZ) {
+                var k2 = min (kk + TSZ, dim2);
+                for (jj = 0; jj < y.dim2; jj += TSZ) {
+                    var j2 = min (jj + TSZ, y.dim2);
+                    
+                    for (i = ii; i < i2; i++) {
+                        var v_i = v[i]; var a_i = a[i]; 
+                        for (k = kk; k < k2; k++) {
+                            var y_k = y.v[k]; var v_ik = v_i[k];
+
+//                          for (j = jj; j < j2; j++) a_i[j] += v_ik * y_k[j];
+
+                            var last = ((j2 - jj) / VSZ) * VSZ;
+                            for (j = jj; j < last; j += VSZ) {
+                                var yv = DoubleVector.fromArray (SPECIES, y_k, j);
+                                yv.mul (v_ik).intoArray (a_i, j);
+                            } // for
+                            for (j = last; j < j2; j++) a_i[j] += v_ik * y_k[j];
+
+                        } // for
+                    } // for
+                
+                } // for
+            } // for
+        } // for
+        return new MatrixD (dim, y.dim2, a);
+    } // mul7
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Print this matrix.
+     */
+    void printM ()
+    {
+        for (int i = 0; i < dim; i++)
+            for (int j = 0; j < dim; j++) out.printf (fString, (v[i][j]));
+        out.println ();
+    } // printM
+ 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** The `main` method does performance testing of matrix operations.
+     */
+    public static void main (String [] args)
+    {
+        var a = new MatrixD (1000, 1000, null);
+        var b = new MatrixD (1000, 1000, null);
+        for (int i = 0; i < 1000; i++)
+           for (int j = 0; j < 1000; j++) { a.v[i][j] = i + j; b.v[i][j] = a.v[i][j]; };
+
+        long t0, t1;
+
+// test addition
+
+        for (int it = 1; it < 6; it++) {
+            out.println ("results for iteration " + it);
+            t0 = nanoTime ();
+            var a1 = a.add1 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.add2 (b) = " + t1);
+            t0 = nanoTime ();
+            var a2 = a.add2 (b); t1 = (nanoTime () - t0) / 1000000L; 
+            out.println ("a.add2 (b) = " + t1);
+            assert (a2 == a1);
+            t0 = nanoTime ();
+            var a3 = a.add3 (b); t1 = (nanoTime () - t0) / 1000000L; 
+            out.println ("a.add3 (b) = " + t1);
+            assert (a3 == a1);
+        } // for
+
+// test multiplication
+
+        for (int it = 1; it < 6; it++) {
+            out.println ("results for iteration " + it);
+            t0 = nanoTime ();
+            var a1 = a.mul1 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul1 (b) = " + t1);
+            t0 = nanoTime ();
+            var a2 = a.mul2 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul2 (b) = " + t1);
+            assert (a2 == a1);
+            t0 = nanoTime ();
+            var a3 = a.mul3 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul3 (b) = " + t1);
+            assert (a3 == a1);
+            t0 = nanoTime ();
+            var a4 = a.mul4 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul4 (b) = " + t1);
+            assert (a4 == a1);
+            t0 = nanoTime ();
+            var a5 = a.mul5 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul5 (b) = " + t1);
+            assert (a5 == a1);
+            t0 = nanoTime ();
+            var a6 = a.mul6 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul6 (b) = " + t1);
+//          assert (a6 == a1);
+            t0 = nanoTime ();
+            var a7 = a.mul7 (b); t1 = (nanoTime () - t0) / 1000000L;
+            out.println ("a.mul7 (b) = " + t1);
+            assert (a7 == a1);
+        } // for
+
+    } // main
+
+} // MatrixDTest
+
