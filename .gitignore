@@ -1,11 +1,14 @@
 # Project environment files.
+.bsp
 .DS_Store
 .idea
 .vscode
 *.iml
 
 # Output files.
+project/target
 out
+target
 *.class
 
 # Log files.
