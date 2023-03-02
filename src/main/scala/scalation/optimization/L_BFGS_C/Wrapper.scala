@@ -78,6 +78,7 @@ object Wrapper {
   )
   private val LBFGS_MAIN_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
     JAVA_INT,
+    JAVA_INT,
     ADDRESS,
     ADDRESS,
     ADDRESS,
@@ -105,6 +106,12 @@ object Wrapper {
     ADDRESS,
     JAVA_INT
   )
+  private val REDUCED_LBFGS_MAIN_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
+    JAVA_INT,
+    JAVA_INT,
+    ADDRESS,
+    ADDRESS
+  )
 
   // Method downcall handles.
   private val lbfgsFreeHandle: MethodHandle = linker.downcallHandle(
@@ -127,6 +134,10 @@ object Wrapper {
     lbfgsLookup.lookup("lbfgs_strerror").orElseThrow(),
     LBFGS_STRERROR_FUNCTION_DESCRIPTOR
   )
+  private val reducedLbfgsMainHandle: MethodHandle = linker.downcallHandle(
+    lbfgsLookup.lookup("reduced_lbfgs").orElseThrow(),
+    REDUCED_LBFGS_MAIN_FUNCTION_DESCRIPTOR
+  )
 
   def lbfgsStrError(err: Int): String = {
     val returnAddress: MemoryAddress = lbfgsStrErrorHandle.invokeWithArguments(err).asInstanceOf[MemoryAddress]
@@ -134,9 +145,30 @@ object Wrapper {
 
     errorString
   }
+
+  def reducedLbfgsMain(n: Int, x: List[Double]): (Int, Double) = {
+    val xAddress: MemoryAddress = lbfgsMallocHandle.invokeWithArguments(n).asInstanceOf[MemoryAddress]
+    for(i <- 0 until n) {
+      xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
+    }
+
+    val fxAddress: MemoryAddress = MemorySegment.allocateNative(JAVA_DOUBLE, MemorySession.openImplicit()).address()
+
+    val returnStatusCode = reducedLbfgsMainHandle.invokeWithArguments(n, xAddress, fxAddress).asInstanceOf[Int]
+    val fx = fxAddress.getAtIndex(JAVA_DOUBLE, 0)
+
+    return (returnStatusCode, fx)
+  }
 }
 
+// Test functions.
 @main def lbfgsStrErrorTest(): Unit =
   println(Wrapper.lbfgsStrError(-1024))
   println(Wrapper.lbfgsStrError(-1023))
 end lbfgsStrErrorTest
+
+@main def reducedLbfgsMainTest(): Unit =
+  println(Wrapper.reducedLbfgsMain(2, List(-1.2, 1.0)))
+  println(Wrapper.reducedLbfgsMain(2, List(-35.2, -128.43)))
+  println(Wrapper.reducedLbfgsMain(4, List(-35.2, -128.43, 0, -44)))
+end reducedLbfgsMainTest

@@ -1521,7 +1521,51 @@ static int sample_progress(
     return 0;
 }
 
+// Testing macros.
 #define SAMPLE_N 2
+
+// Testing functions.
+int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx) {
+    int i, ret = 0;
+    lbfgs_parameter_t param;
+
+    if (x == NULL) {
+        printf("ERROR: Failed to allocate a memory block for variables.\n");
+        return LBFGSERR_OUTOFMEMORY;
+    }
+
+    /* Check the variables. */
+    printf("\n");
+    printf("Initial values:\n");
+    for (i = 0; i < n; i++) {
+        printf("x[%d]: %lf\n", i, x[i]);
+    }
+    printf("\n");
+
+    /* Initialize the parameters for the L-BFGS optimization. */
+    lbfgs_parameter_init(&param);
+    /*param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;*/
+
+    /*
+        Start the L-BFGS optimization; this will invoke the callback functions
+        evaluate() and progress() when necessary.
+     */
+    ret = lbfgs(n, x, ptr_fx, sample_evaluate, sample_progress, NULL, &param);
+
+    /* Report the result. */
+    printf("L-BFGS optimization terminated with status code = %d\n", ret);
+    printf("fx: %f\n", *ptr_fx);
+
+    /* Check the variables. */
+    printf("\n");
+    printf("Final values:\n");
+    for (i = 0; i < n; i++) {
+        printf("x[%d]: %lf\n", i, x[i]);
+    }
+
+    return ret;
+}
+
 void sample() {
 
     int i, ret = 0;

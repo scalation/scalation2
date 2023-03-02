@@ -753,6 +753,7 @@ licence.
 */
 
 // Test functions.
+int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx);
 void sample();
 
 #endif/*__LBFGS_H__*/
