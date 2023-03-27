@@ -1514,10 +1514,15 @@ static int sample_progress(
     int ls
     )
 {
-    printf("Iteration %d:\n", k);
-    printf("  fx = %f, x[0] = %f, x[1] = %f\n", fx, x[0], x[1]);
-    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
+    int i;
+
     printf("\n");
+    printf("Iteration %d:\n", k);
+    printf("  fx = %f\n", fx);
+    for (i = 0; i < n; i++) {
+        printf("x[%d]: %lf\n", i, x[i]);
+    }
+    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
     return 0;
 }
 
@@ -1526,7 +1531,7 @@ static int sample_progress(
 
 // Testing functions.
 int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx) {
-    int i, ret = 0;
+    int ret = 0;
     lbfgs_parameter_t param;
 
     if (x == NULL) {
@@ -1534,17 +1539,8 @@ int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx) {
         return LBFGSERR_OUTOFMEMORY;
     }
 
-    /* Check the variables. */
-    printf("\n");
-    printf("Initial values:\n");
-    for (i = 0; i < n; i++) {
-        printf("x[%d]: %lf\n", i, x[i]);
-    }
-    printf("\n");
-
     /* Initialize the parameters for the L-BFGS optimization. */
     lbfgs_parameter_init(&param);
-    /*param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;*/
 
     /*
         Start the L-BFGS optimization; this will invoke the callback functions
@@ -1553,15 +1549,50 @@ int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx) {
     ret = lbfgs(n, x, ptr_fx, sample_evaluate, sample_progress, NULL, &param);
 
     /* Report the result. */
-    printf("L-BFGS optimization terminated with status code = %d\n", ret);
-    printf("fx: %f\n", *ptr_fx);
-
-    /* Check the variables. */
     printf("\n");
-    printf("Final values:\n");
-    for (i = 0; i < n; i++) {
-        printf("x[%d]: %lf\n", i, x[i]);
+    printf("L-BFGS optimization terminated with status code = %d\n", ret);
+    printf("\n");
+
+    return ret;
+}
+
+int reduced_lbfgs2(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx, lbfgs_parameter_t *param) {
+    int ret = 0;
+
+    if (x == NULL) {
+        printf("ERROR: Failed to allocate a memory block for variables.\n");
+        return LBFGSERR_OUTOFMEMORY;
     }
+
+    /* Check the params. */
+    printf("Struct params:\n");
+    printf("\t m: %d\n", param->m);
+    printf("\t epsilon: %lf\n", param->epsilon);
+    printf("\t past: %d\n", param->past);
+    printf("\t delta: %lf\n", param->delta);
+    printf("\t max_iterations: %d\n", param->max_iterations);
+    printf("\t linesearch: %d\n", param->linesearch);
+    printf("\t max_linesearch: %d\n", param->max_linesearch);
+    printf("\t min_step: %lf\n", param->min_step);
+    printf("\t max_step: %lf\n", param->max_step);
+    printf("\t ftol: %lf\n", param->ftol);
+    printf("\t wolfe: %lf\n", param->wolfe);
+    printf("\t gtol: %lf\n", param->gtol);
+    printf("\t xtol: %lf\n", param->xtol);
+    printf("\t orthantwise_c: %lf\n", param->orthantwise_c);
+    printf("\t orthantwise_start: %d\n", param->orthantwise_start);
+    printf("\t orthantwise_end: %d\n", param->orthantwise_end);
+
+    /*
+        Start the L-BFGS optimization; this will invoke the callback functions
+        evaluate() and progress() when necessary.
+     */
+    ret = lbfgs(n, x, ptr_fx, sample_evaluate, sample_progress, NULL, param);
+
+    /* Report the result. */
+    printf("\n");
+    printf("L-BFGS optimization terminated with status code = %d\n", ret);
+    printf("\n");
 
     return ret;
 }

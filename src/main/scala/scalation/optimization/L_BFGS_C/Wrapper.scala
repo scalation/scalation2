@@ -18,14 +18,19 @@
 // Package.
 package scalation.optimization.L_BFGS_C
 
-// Imports.
-import java.lang.foreign.*
+// General imports.
+import java.lang.foreign.{Linker, MemoryAddress, MemoryLayout, MemorySegment}
+import java.lang.foreign.{MemorySession, SymbolLookup}
 import java.lang.foreign.ValueLayout.{ADDRESS, JAVA_DOUBLE, JAVA_INT}
 import java.lang.invoke.MethodHandle
 import java.nio.file.Path
-import scalation.optimization.L_BFGS_C.Types.{L_BFGS_Parameters, LBFGSfloatval}
 import scala.math.pow
-import scala.util.{Try, Using}
+import scala.util.{Failure, Success, Try, Using}
+
+// User imports
+import scalation.optimization.L_BFGS_C.FunctionDescriptors.*
+import scalation.optimization.L_BFGS_C.MemoryLayouts.*
+import scalation.optimization.L_BFGS_C.Types.{LBFGSfloatval, LBFGSParameters}
 
 // Object.
 object Wrapper {
@@ -38,80 +43,6 @@ object Wrapper {
     MemorySession.openImplicit
   )
   private val linker: Linker = Linker.nativeLinker
-
-  // Memory layouts.
-  private val LBFGS_FLOATVAL_LAYOUT: ValueLayout = JAVA_DOUBLE
-  private val LBFGS_PARAMETER_LAYOUT: GroupLayout = MemoryLayout.structLayout(
-    LBFGS_FLOATVAL_LAYOUT.withName("epsilon"),
-    LBFGS_FLOATVAL_LAYOUT.withName("delta"),
-    LBFGS_FLOATVAL_LAYOUT.withName("min_step"),
-    LBFGS_FLOATVAL_LAYOUT.withName("max_step"),
-    LBFGS_FLOATVAL_LAYOUT.withName("ftol"),
-    LBFGS_FLOATVAL_LAYOUT.withName("wolfe"),
-    LBFGS_FLOATVAL_LAYOUT.withName("gtol"),
-    LBFGS_FLOATVAL_LAYOUT.withName("xtol"),
-    LBFGS_FLOATVAL_LAYOUT.withName("orthantwise_c"),
-    JAVA_INT.withName("m"),
-    JAVA_INT.withName("past"),
-    JAVA_INT.withName("max_iterations"),
-    JAVA_INT.withName("linesearch"),
-    JAVA_INT.withName("max_linesearch"),
-    JAVA_INT.withName("orthantwise_start"),
-    JAVA_INT.withName("orthantwise_end")
-  ).withName("lbfgs_parameter_t")
-
-  // Function descriptors.
-  private val LBFGS_EVALUATE_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    LBFGS_FLOATVAL_LAYOUT,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    JAVA_INT,
-    LBFGS_FLOATVAL_LAYOUT
-  )
-  private val LBFGS_FREE_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.ofVoid(
-    ADDRESS
-  )
-  private val LBFGS_MALLOC_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    ADDRESS,
-    JAVA_INT
-  )
-  private val LBFGS_MAIN_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    JAVA_INT,
-    JAVA_INT,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS
-  )
-  private val LBFGS_PARAMETER_INIT_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.ofVoid(
-    ADDRESS
-  )
-  private val LBFGS_PROGRESS_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    JAVA_INT,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
-    JAVA_INT,
-    JAVA_INT,
-    JAVA_INT
-  )
-  private val LBFGS_STRERROR_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    ADDRESS,
-    JAVA_INT
-  )
-  private val REDUCED_LBFGS_MAIN_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    JAVA_INT,
-    JAVA_INT,
-    ADDRESS,
-    ADDRESS
-  )
 
   // Method downcall handles.
   private val lbfgsFreeHandle: MethodHandle = linker.downcallHandle(
@@ -138,7 +69,12 @@ object Wrapper {
     lbfgsLookup.lookup("reduced_lbfgs").orElseThrow(),
     REDUCED_LBFGS_MAIN_FUNCTION_DESCRIPTOR
   )
+  private val reducedLbfgsMainHandle2: MethodHandle = linker.downcallHandle(
+    lbfgsLookup.lookup("reduced_lbfgs2").orElseThrow(),
+    REDUCED_LBFGS2_MAIN_FUNCTION_DESCRIPTOR
+  )
 
+  // Public methods.  
   def lbfgsStrError(err: Int): String = {
     val returnAddress: MemoryAddress = lbfgsStrErrorHandle.invokeWithArguments(err).asInstanceOf[MemoryAddress]
     val errorString: String = returnAddress.getUtf8String(0)
@@ -147,17 +83,64 @@ object Wrapper {
   }
 
   def reducedLbfgsMain(n: Int, x: List[Double]): (Int, Double) = {
-    val xAddress: MemoryAddress = lbfgsMallocHandle.invokeWithArguments(n).asInstanceOf[MemoryAddress]
-    for(i <- 0 until n) {
-      xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
+    val result: Try[(Int, Double)] = Using(MemorySession.openConfined()) { session =>
+
+      val xAddress: MemoryAddress = MemorySegment.allocateNative(
+        MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
+        session
+      ).address()
+      for(i <- 0 until n) {
+        xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
+      }
+
+      val fxAddress: MemoryAddress = MemorySegment.allocateNative(JAVA_DOUBLE, session).address()
+
+      val returnStatusCode = reducedLbfgsMainHandle.invokeWithArguments(n, xAddress, fxAddress).asInstanceOf[Int]
+      val fx = fxAddress.getAtIndex(JAVA_DOUBLE, 0)
+
+      (returnStatusCode, fx)
     }
 
-    val fxAddress: MemoryAddress = MemorySegment.allocateNative(JAVA_DOUBLE, MemorySession.openImplicit()).address()
+    result match {
+      case Success(v) => v
+      case Failure(e) => throw e
+    }
+  }
 
-    val returnStatusCode = reducedLbfgsMainHandle.invokeWithArguments(n, xAddress, fxAddress).asInstanceOf[Int]
-    val fx = fxAddress.getAtIndex(JAVA_DOUBLE, 0)
+  def reducedLbfgsMain2(n: Int, x: List[Double], params: LBFGSParameters = LBFGSParameters()): (Int, Double) = {
+    val result: Try[(Int, Double)] = Using(MemorySession.openConfined()) { session =>
 
-    return (returnStatusCode, fx)
+      val xAddress: MemoryAddress = MemorySegment.allocateNative(
+        MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
+        session
+      ).address()
+      for (i <- 0 until n) {
+        xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
+      }
+
+      val fxAddress: MemoryAddress = MemorySegment.allocateNative(JAVA_DOUBLE, session).address()
+
+      val paramsSegment: MemorySegment = MemorySegment.allocateNative(
+        LBFGS_PARAMETER_LAYOUT,
+        session
+      )
+      params.copyToMemorySegment(paramsSegment)
+
+      val returnStatusCode = reducedLbfgsMainHandle2.invokeWithArguments(
+        n,
+        xAddress,
+        fxAddress,
+        paramsSegment.address()
+      ).asInstanceOf[Int]
+      val fx = fxAddress.getAtIndex(JAVA_DOUBLE, 0)
+
+      (returnStatusCode, fx)
+    }
+
+    result match {
+      case Success(v) => v
+      case Failure(e) => throw e
+    }
   }
 }
 
@@ -171,4 +154,21 @@ end lbfgsStrErrorTest
   println(Wrapper.reducedLbfgsMain(2, List(-1.2, 1.0)))
   println(Wrapper.reducedLbfgsMain(2, List(-35.2, -128.43)))
   println(Wrapper.reducedLbfgsMain(4, List(-35.2, -128.43, 0, -44)))
+  println(Wrapper.reducedLbfgsMain(
+    16,
+    List(-35.2, -128.43, 0, -44, 89, 23423.2, 1000, 3, 2, 2, -89234, 23, -4, 9, 10, 18)
+  ))
+  println()
 end reducedLbfgsMainTest
+
+@main def reducedLbfgsMainTest2(): Unit =
+  println(Wrapper.reducedLbfgsMain2(2, List(-1.2, 1.0)))
+  println(Wrapper.reducedLbfgsMain2(2, List(-35.2, -128.43), LBFGSParameters(maxIterations=1, past=1)))
+  println(Wrapper.reducedLbfgsMain2(4, List(-35.2, -128.43, 0, -44), LBFGSParameters(linesearch=2)))
+  println(Wrapper.reducedLbfgsMain2(
+    16,
+    List(-35.2, -128.43, 0, -44, 89, 23423.2, 1000, 3, 2, 2, -89234, 23, -4, 9, 10, 18),
+    LBFGSParameters(m=3, epsilon=1e-10)
+  ))
+  println()
+end reducedLbfgsMainTest2
