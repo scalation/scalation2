@@ -22,14 +22,15 @@ package scalation.optimization.L_BFGS_C
 import java.lang.foreign.{Linker, MemoryAddress, MemoryLayout, MemorySegment}
 import java.lang.foreign.{MemorySession, SymbolLookup}
 import java.lang.foreign.ValueLayout.{ADDRESS, JAVA_DOUBLE, JAVA_INT}
-import java.lang.invoke.MethodHandle
+import java.lang.invoke.{MethodHandle, MethodHandles, MethodType}
 import java.nio.file.Path
 import scala.math.pow
 import scala.util.{Failure, Success, Try, Using}
 
-// User imports
+// User imports.
 import scalation.optimization.L_BFGS_C.FunctionDescriptors.*
 import scalation.optimization.L_BFGS_C.MemoryLayouts.*
+import scalation.optimization.L_BFGS_C.OptimizationLogic
 import scalation.optimization.L_BFGS_C.Types.{LBFGSfloatval, LBFGSParameters}
 
 // Object.
@@ -74,7 +75,69 @@ object Wrapper {
     REDUCED_LBFGS2_MAIN_FUNCTION_DESCRIPTOR
   )
 
-  // Public methods.  
+  // Public methods.
+  def lbfgsMain(
+    n: Int,
+    x: List[Double],
+    evaluateMethodHandle: MethodHandle,
+    progressMethodHandle: MethodHandle = null,
+    instance: MemoryAddress = MemoryAddress.NULL,
+    params: LBFGSParameters = LBFGSParameters()
+  ): (Int, Double) = {
+    val result: Try[(Int, Double)] = Using(MemorySession.openConfined()) { session =>
+
+      val xAddress: MemoryAddress = MemorySegment.allocateNative(
+        MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
+        session
+      ).address()
+      for(i <- 0 until n) {
+        xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
+      }
+
+      val fxAddress: MemoryAddress = MemorySegment.allocateNative(JAVA_DOUBLE, session).address()
+
+      val evaluateMethodAddress: MemoryAddress = linker.upcallStub(
+        evaluateMethodHandle,
+        LBFGS_EVALUATE_FUNCTION_DESCRIPTOR,
+        session
+      ).address()
+
+      val progressMethodAddress: MemoryAddress = progressMethodHandle match {
+        case null => MemoryAddress.NULL
+        case _ => linker.upcallStub(
+          progressMethodHandle,
+          LBFGS_PROGRESS_FUNCTION_DESCRIPTOR,
+          session
+        ).address()
+      }
+
+      val paramsSegment: MemorySegment = MemorySegment.allocateNative(
+        LBFGS_PARAMETER_LAYOUT,
+        session
+      )
+      params.copyToMemorySegment(paramsSegment)
+      val paramsAddress = paramsSegment.address()
+
+      val returnStatusCode = lbfgsMainHandle.invokeWithArguments(
+        n,
+        xAddress,
+        fxAddress,
+        evaluateMethodAddress,
+        progressMethodAddress,
+        instance,
+        paramsAddress
+      ).asInstanceOf[Int]
+      val fx = fxAddress.getAtIndex(JAVA_DOUBLE, 0)
+
+      (returnStatusCode, fx)
+    }
+
+    result match {
+      case Success(v) => v
+      case Failure(e) => throw e
+    }
+  }
+
   def lbfgsStrError(err: Int): String = {
     val returnAddress: MemoryAddress = lbfgsStrErrorHandle.invokeWithArguments(err).asInstanceOf[MemoryAddress]
     val errorString: String = returnAddress.getUtf8String(0)
@@ -114,7 +177,7 @@ object Wrapper {
         MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
         session
       ).address()
-      for (i <- 0 until n) {
+      for(i <- 0 until n) {
         xAddress.setAtIndex(JAVA_DOUBLE, i, x(i))
       }
 
@@ -145,6 +208,50 @@ object Wrapper {
 }
 
 // Test functions.
+@main def lbfgsMainTest(): Unit =
+
+  val evaluateHandle: MethodHandle = MethodHandles.lookup.findStatic(
+    classOf[OptimizationLogic],
+    "evaluate",
+    MethodType.methodType(
+      classOf[Double],
+      classOf[MemoryAddress],
+      classOf[MemoryAddress],
+      classOf[MemoryAddress],
+      classOf[Int],
+      classOf[Double]
+    )
+  )
+
+  val progressHandle: MethodHandle = MethodHandles.lookup.findStatic(
+    classOf[OptimizationLogic],
+    "progress",
+    MethodType.methodType(
+      classOf[Int],
+      classOf[MemoryAddress],
+      classOf[MemoryAddress],
+      classOf[MemoryAddress],
+      classOf[Double],
+      classOf[Double],
+      classOf[Double],
+      classOf[Double],
+      classOf[Int],
+      classOf[Int],
+      classOf[Int]
+    )
+  )
+
+  println(Wrapper.lbfgsMain(2, List(-1.2, 1.0), evaluateHandle, progressHandle))
+  println(Wrapper.lbfgsMain(2, List(-35.2, -128.43), evaluateHandle, progressHandle))
+  println(Wrapper.lbfgsMain(
+    4,
+    List(-35.2, -128.43, 0, -44),
+    evaluateHandle,
+    progressHandle,
+    OptimizationLogic.instance
+  ))
+end lbfgsMainTest
+
 @main def lbfgsStrErrorTest(): Unit =
   println(Wrapper.lbfgsStrError(-1024))
   println(Wrapper.lbfgsStrError(-1023))

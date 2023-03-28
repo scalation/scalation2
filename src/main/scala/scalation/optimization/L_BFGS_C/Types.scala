@@ -2,7 +2,7 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Fri Feb 24 15:23:00 EDT 2023
+ *  @note    Fri Feb 24 15:22:30 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
@@ -23,9 +23,6 @@ import scalation.optimization.L_BFGS_C.MemoryLayouts.{LBFGS_FLOATVAL_LAYOUT, LBF
 object Types {
   // Type definitions.
   type LBFGSfloatval = Double
-  
-  // Enumeration definitions.
-  // TODO: Add both enums defined in lbfgs.h here.
 
   // Case class definitions.
   case class LBFGSParameters(

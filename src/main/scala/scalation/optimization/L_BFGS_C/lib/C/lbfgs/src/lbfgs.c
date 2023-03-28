@@ -1518,11 +1518,11 @@ static int sample_progress(
 
     printf("\n");
     printf("Iteration %d:\n", k);
-    printf("  fx = %f\n", fx);
+    printf("fx = %f\n", fx);
     for (i = 0; i < n; i++) {
         printf("x[%d]: %lf\n", i, x[i]);
     }
-    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
+    printf("xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
     return 0;
 }
 
