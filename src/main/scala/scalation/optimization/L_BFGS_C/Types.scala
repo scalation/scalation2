@@ -13,37 +13,32 @@
 package scalation.optimization.L_BFGS_C
 
 // General imports.
-import java.lang.foreign.MemorySegment
+import java.lang.foreign.{MemoryLayout, MemorySegment, StructLayout}
 import java.lang.foreign.ValueLayout.{JAVA_DOUBLE, JAVA_INT}
-
-// User imports.
-import scalation.optimization.L_BFGS_C.MemoryLayouts.{LBFGS_FLOATVAL_LAYOUT, LBFGS_PARAMETER_LAYOUT}
+import scala.annotation.static
 
 // Object.
-object Types {
-  // Type definitions.
-  type LBFGSfloatval = Double
-
+object Types:
   // Case class definitions.
   case class LBFGSParameters(
     m: Int = 6,
-    epsilon: LBFGSfloatval = 1e-5,
+    epsilon: Double = 1e-5,
     past: Int = 0,
-    delta: LBFGSfloatval = 1e-5,
+    delta: Double = 1e-5,
     maxIterations: Int = 0,
     linesearch: Int = 0,
     maxLinesearch: Int = 40,
-    minStep: LBFGSfloatval = 1e-20,
-    maxStep: LBFGSfloatval = 1e20,
-    ftol: LBFGSfloatval = 1e-4,
-    wolfe: LBFGSfloatval = 0.9,
-    gtol: LBFGSfloatval = 0.9,
-    xtol: LBFGSfloatval = 1.0e-16,
-    orthantwiseC: LBFGSfloatval = 0.0,
+    minStep: Double = 1e-20,
+    maxStep: Double = 1e20,
+    ftol: Double = 1e-4,
+    wolfe: Double = 0.9,
+    gtol: Double = 0.9,
+    xtol: Double = 1.0e-16,
+    orthantwiseC: Double = 0.0,
     orthantwiseStart: Int = 0,
     orthantwiseEnd: Int = -1
-  ) {
-    def copyToMemorySegment(destination: MemorySegment): Unit = {
+  ):
+    def copyToMemorySegment(destination: MemorySegment): Unit =
       destination.set(JAVA_INT, 0, m)
       destination.set(JAVA_DOUBLE, 8, epsilon)
       destination.set(JAVA_INT, 16, past)
@@ -60,6 +55,28 @@ object Types {
       destination.set(JAVA_DOUBLE, 96, orthantwiseC)
       destination.set(JAVA_INT, 104, orthantwiseStart)
       destination.set(JAVA_INT, 108, orthantwiseEnd)
-    }
-  }
-}
+
+  // Companion case object definitions.
+  case object LBFGSParameters:
+    @static
+    val memoryLayout: StructLayout = MemoryLayout.structLayout(
+      JAVA_INT.withName("m"),
+      MemoryLayout.paddingLayout(32),
+      JAVA_DOUBLE.withName("epsilon"),
+      JAVA_INT.withName("past"),
+      MemoryLayout.paddingLayout(32),
+      JAVA_DOUBLE.withName("delta"),
+      JAVA_INT.withName("max_iterations"),
+      JAVA_INT.withName("linesearch"),
+      JAVA_INT.withName("max_linesearch"),
+      MemoryLayout.paddingLayout(32),
+      JAVA_DOUBLE.withName("min_step"),
+      JAVA_DOUBLE.withName("max_step"),
+      JAVA_DOUBLE.withName("ftol"),
+      JAVA_DOUBLE.withName("wolfe"),
+      JAVA_DOUBLE.withName("gtol"),
+      JAVA_DOUBLE.withName("xtol"),
+      JAVA_DOUBLE.withName("orthantwise_c"),
+      JAVA_INT.withName("orthantwise_start"),
+      JAVA_INT.withName("orthantwise_end")
+    ).withName("lbfgs_parameter_t")

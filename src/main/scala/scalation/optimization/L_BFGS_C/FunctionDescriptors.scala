@@ -14,20 +14,17 @@ package scalation.optimization.L_BFGS_C
 
 // General imports.
 import java.lang.foreign.FunctionDescriptor
-import java.lang.foreign.ValueLayout.{ADDRESS, JAVA_INT}
-
-// User imports.
-import scalation.optimization.L_BFGS_C.MemoryLayouts.LBFGS_FLOATVAL_LAYOUT
+import java.lang.foreign.ValueLayout.{ADDRESS, JAVA_DOUBLE, JAVA_INT}
 
 // Object.
-object FunctionDescriptors {
+object FunctionDescriptors:
   val LBFGS_EVALUATE_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-    LBFGS_FLOATVAL_LAYOUT,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
+    JAVA_DOUBLE,
+    ADDRESS.asUnbounded(),
+    ADDRESS.asUnbounded(),
+    ADDRESS.asUnbounded(),
     JAVA_INT,
-    LBFGS_FLOATVAL_LAYOUT
+    JAVA_DOUBLE
   )
   val LBFGS_FREE_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.ofVoid(
     ADDRESS
@@ -51,13 +48,13 @@ object FunctionDescriptors {
   )
   val LBFGS_PROGRESS_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
     JAVA_INT,
-    ADDRESS,
-    ADDRESS,
-    ADDRESS,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
-    LBFGS_FLOATVAL_LAYOUT,
+    ADDRESS.asUnbounded(),
+    ADDRESS.asUnbounded(),
+    ADDRESS.asUnbounded(),
+    JAVA_DOUBLE,
+    JAVA_DOUBLE,
+    JAVA_DOUBLE,
+    JAVA_DOUBLE,
     JAVA_INT,
     JAVA_INT,
     JAVA_INT
@@ -79,4 +76,3 @@ object FunctionDescriptors {
     ADDRESS,
     ADDRESS
   )
-}

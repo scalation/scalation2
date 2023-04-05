@@ -13,70 +13,62 @@
 package scalation.optimization.L_BFGS_C
 
 // General imports.
-import java.lang.foreign.MemoryAddress
+import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 import scala.annotation.static
 import scala.math.pow
 
-// User imports.
-import scalation.optimization.L_BFGS_C.Types.LBFGSfloatval
-
 // Object.
-object OptimizationLogic {
+object OptimizationLogic:
   // Static fields.
   @static
-  val instance: MemoryAddress = MemoryAddress.NULL
+  val instance: MemorySegment = MemorySegment.NULL
 
   // Static methods.
   @static
   def evaluate(
-    instance: MemoryAddress,
-    x: MemoryAddress,
-    g: MemoryAddress,
+    instance: MemorySegment,
+    x: MemorySegment,
+    g: MemorySegment,
     n: Int,
-    step: LBFGSfloatval
-  ): LBFGSfloatval = {
-    var fx: LBFGSfloatval = 0
+    step: Double
+  ): Double =
+    var fx: Double = 0
 
-    for (i <- 0 until n by 2) {
-      val xCurrentSlope: LBFGSfloatval = x.getAtIndex(JAVA_DOUBLE, i) - 2
-      val xNextSlope: LBFGSfloatval = x.getAtIndex(JAVA_DOUBLE, i + 1) - 3
+    for i <- 0 until n by 2 do
+      val xCurrentSlope: Double = x.getAtIndex(JAVA_DOUBLE, i) - 2
+      val xNextSlope: Double = x.getAtIndex(JAVA_DOUBLE, i + 1) - 3
 
       g.setAtIndex(JAVA_DOUBLE, i, 2 * xCurrentSlope)
       g.setAtIndex(JAVA_DOUBLE, i + 1, 2 * xNextSlope)
 
       fx += pow(xCurrentSlope, 2) + pow(xNextSlope, 2) + 1
-    }
 
     fx
-  }
 
   @static
   def progress(
-    instance: MemoryAddress,
-    x: MemoryAddress,
-    g: MemoryAddress,
-    fx: LBFGSfloatval,
-    xnorm: LBFGSfloatval,
-    gnorm: LBFGSfloatval,
-    step: LBFGSfloatval,
+    instance: MemorySegment,
+    x: MemorySegment,
+    g: MemorySegment,
+    fx: Double,
+    xnorm: Double,
+    gnorm: Double,
+    step: Double,
     n: Int,
     k: Int,
     ls: Int
-  ): Int = {
+  ): Int =
     println()
     println(s"Iteration ${k}:")
     println(s"fx = ${fx}")
 
-    for (i <- 0 until n) {
+    for i <- 0 until n do
       println(s"x[${i}]: ${x.getAtIndex(JAVA_DOUBLE, i)}")
-    }
 
     println(s"xnorm = ${xnorm}, gnorm = ${gnorm}, step = ${step}\n")
 
     0
-  }
-}
 
 // Companion class.
 class OptimizationLogic

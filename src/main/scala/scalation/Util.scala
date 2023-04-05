@@ -170,7 +170,7 @@ def getFromURL_File (path: String): Iterator [String] =
     val urlPat = "(?i)((https?|ftp|file)://|file:/).*"     // (?i) => case insensitive
     if path matches urlPat then
         try
-            return fromURL (new URL (path)).getLines ()
+            return fromURL (path).getLines ()
         catch
             case mue: MalformedURLException => 
         end try    
