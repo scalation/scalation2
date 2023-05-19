@@ -26,11 +26,12 @@ import java.nio.file.Path
 import scala.math.pow
 import scala.util.{Failure, Success, Try, Using}
 
-// User imports.
+// Project imports.
 import scalation.mathstat.VectorD
-import scalation.optimization.L_BFGS_C.FunctionDescriptors.*
-import scalation.optimization.L_BFGS_C.OptimizationLogic
-import scalation.optimization.L_BFGS_C.Types.{LBFGSLineSearchAlgorithm, LBFGSParameters, LBFGSReturnCode}
+
+// Module imports.
+import FunctionDescriptors.*
+import Types.{LBFGSLineSearchAlgorithm, LBFGSParameters, LBFGSReturnCode}
 
 // Object.
 object Wrapper:
@@ -83,40 +84,11 @@ object Wrapper:
     instanceMemorySegment: MemorySegment = MemorySegment.NULL,
     params: LBFGSParameters = LBFGSParameters()
   ): (LBFGSReturnCode, VectorD, Option[Double]) =
-    // Variables.
-    val xFinalValues: VectorD = new VectorD(n)
-
-    // Auxiliary methods.
-    def checkArgumentsForEarlyErrorReturn(n: Int, params: LBFGSParameters) : Option[LBFGSReturnCode] =
-      if n <= 0 then return Some(LBFGSReturnCode.InvalidN)
-      if params.epsilon < 0.0 then return Some(LBFGSReturnCode.InvalidEpsilon)
-      if params.past < 0 then return Some(LBFGSReturnCode.InvalidTestPeriod)
-      if params.delta < 0.0 then return Some(LBFGSReturnCode.InvalidDelta)
-      if params.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
-      if params.maxStep < params.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
-      if params.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
-      if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingWolfe ||
-        params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe then
-        if params.wolfe <= params.ftol || 1.0 <= params.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
-      end if
-      if params.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
-      if params.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
-      if params.maxLinesearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
-      if params.orthantwiseC < 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
-      if params.orthantwiseStart < 0 || n < params.orthantwiseStart then
-        return Some(LBFGSReturnCode.InvalidOrthantwiseStart)
-      end if
-      if n < params.orthantwiseEnd then return Some(LBFGSReturnCode.InvalidOrthantwiseEnd)
-      if (params.orthantwiseC != 0.0 && params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingDefault) ||
-        (params.orthantwiseC == 0.0 && params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingDefault) then
-        return Some(LBFGSReturnCode.InvalidLineSearch)
-      end if
-      None
-
-    // Method logic.
     checkArgumentsForEarlyErrorReturn(n, params) match
       case Some(errorReturnCode) => return (errorReturnCode, x, None)
       case None =>
+
+    adjustArguments(n, params)
 
     val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
 
@@ -160,6 +132,73 @@ object Wrapper:
         paramsMemorySegment
       ).asInstanceOf[Int]
 
+      val xFinalValues: VectorD = new VectorD(n)
+
+      for i <- 0 until n do
+        xFinalValues(i) = xMemorySegment.getAtIndex(JAVA_DOUBLE, i)
+
+      val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
+
+      (LBFGSReturnCode.fromCode(returnStatusCode), xFinalValues, Some(fx))
+    }
+
+    result match
+      case Success(v) => v
+      case Failure(e) => throw e
+
+  def lbfgsMainCWrapper(
+    n: Int,
+    x: VectorD,
+    evaluateMethodHandle: MethodHandle,
+    progressMethodHandle: MethodHandle = null,
+    instanceMemorySegment: MemorySegment = MemorySegment.NULL,
+    params: LBFGSParameters = LBFGSParameters()
+  ): (LBFGSReturnCode, VectorD, Option[Double]) =
+    // Method logic.
+    val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
+
+      val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
+        MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
+        arena.scope()
+      )
+
+      for i <- 0 until n do
+        xMemorySegment.setAtIndex(JAVA_DOUBLE, i, x(i))
+
+      val fxMemorySegment: MemorySegment = MemorySegment.allocateNative(JAVA_DOUBLE, arena.scope())
+
+      val evaluateMemorySegment: MemorySegment = linker.upcallStub(
+        evaluateMethodHandle,
+        LBFGS_EVALUATE_FUNCTION_DESCRIPTOR,
+        arena.scope()
+      )
+
+      val progressMemorySegment: MemorySegment = progressMethodHandle match
+        case null => MemorySegment.NULL
+        case _ => linker.upcallStub(
+          progressMethodHandle,
+          LBFGS_PROGRESS_FUNCTION_DESCRIPTOR,
+          arena.scope()
+        )
+
+      val paramsMemorySegment: MemorySegment = MemorySegment.allocateNative(
+        LBFGSParameters.memoryLayout,
+        arena.scope()
+      )
+      params.copyToMemorySegment(paramsMemorySegment)
+
+      val returnStatusCode = lbfgsMainHandle.invokeWithArguments(
+        n,
+        xMemorySegment,
+        fxMemorySegment,
+        evaluateMemorySegment,
+        progressMemorySegment,
+        instanceMemorySegment,
+        paramsMemorySegment
+      ).asInstanceOf[Int]
+
+      val xFinalValues: VectorD = new VectorD(n)
+
       for i <- 0 until n do
         xFinalValues(i) = xMemorySegment.getAtIndex(JAVA_DOUBLE, i)
 
@@ -180,9 +219,6 @@ object Wrapper:
     errorString
 
   def reducedLbfgsMain(n: Int, x: VectorD): (LBFGSReturnCode, VectorD, Option[Double]) =
-    // Variables.
-    val xFinalValues: VectorD = new VectorD(n)
-
     // Method logic.
     val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
 
@@ -202,6 +238,8 @@ object Wrapper:
         fxMemorySegment
       ).asInstanceOf[Int]
 
+      val xFinalValues: VectorD = new VectorD(n)
+
       for i <- 0 until n do
         xFinalValues(i) = xMemorySegment.getAtIndex(JAVA_DOUBLE, i)
 
@@ -219,9 +257,6 @@ object Wrapper:
     x: VectorD,
     params: LBFGSParameters = LBFGSParameters()
   ): (LBFGSReturnCode, VectorD, Option[Double]) =
-    // Variables.
-    val xFinalValues: VectorD = new VectorD(n)
-
     // Method logic.
     val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
 
@@ -248,6 +283,8 @@ object Wrapper:
         paramsMemorySegment
       ).asInstanceOf[Int]
 
+      val xFinalValues: VectorD = new VectorD(n)
+
       for i <- 0 until n do
         xFinalValues(i) = xMemorySegment.getAtIndex(JAVA_DOUBLE, i)
 
@@ -260,11 +297,46 @@ object Wrapper:
       case Success(v) => v
       case Failure(e) => throw e
 
+  // Private methods.
+  private def adjustArguments(n: Int, params: LBFGSParameters): Unit =
+    if params.orthantwiseEnd < 0 then params.orthantwiseEnd = n
+
+  private def checkArgumentsForEarlyErrorReturn(n: Int, params: LBFGSParameters): Option[LBFGSReturnCode] =
+    if n <= 0 then return Some(LBFGSReturnCode.InvalidN)
+    if params.epsilon < 0.0 then return Some(LBFGSReturnCode.InvalidEpsilon)
+    if params.past < 0 then return Some(LBFGSReturnCode.InvalidTestPeriod)
+    if params.delta < 0.0 then return Some(LBFGSReturnCode.InvalidDelta)
+    if params.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
+    if params.maxStep < params.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
+    if params.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
+    if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingWolfe ||
+      params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe then
+      if params.wolfe <= params.ftol || 1.0 <= params.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
+    end if
+    if params.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
+    if params.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
+    if params.maxLinesearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
+    if params.orthantwiseC < 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
+    if params.orthantwiseStart < 0 || n < params.orthantwiseStart then
+      return Some(LBFGSReturnCode.InvalidOrthantwiseStart)
+    end if
+    if n < params.orthantwiseEnd then return Some(LBFGSReturnCode.InvalidOrthantwiseEnd)
+    if params.orthantwiseC != 0.0 &&
+      params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingDefault &&
+      params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingWolfe
+    then
+      return Some(LBFGSReturnCode.InvalidLineSearch)
+
+    None
+
 // Test functions.
 @main def lbfgsMainTest(): Unit =
+  // Variable declaration.
+  val instance: MemorySegment = MemorySegment.NULL
 
+  // Setup Scala method handles.
   val evaluateHandle: MethodHandle = MethodHandles.lookup.findStatic(
-    classOf[OptimizationLogic],
+    classOf[OptimizationLogicExample],
     "evaluate",
     MethodType.methodType(
       classOf[Double],
@@ -277,7 +349,7 @@ object Wrapper:
   )
 
   val progressHandle: MethodHandle = MethodHandles.lookup.findStatic(
-    classOf[OptimizationLogic],
+    classOf[OptimizationLogicExample],
     "progress",
     MethodType.methodType(
       classOf[Int],
@@ -301,7 +373,7 @@ object Wrapper:
     VectorD(-35.2, -128.43),
     evaluateHandle,
     progressHandle,
-    OptimizationLogic.instance,
+    instance,
     LBFGSParameters(minStep = 5, maxStep = 4)
   ))
   println(Wrapper.lbfgsMain(
@@ -309,10 +381,66 @@ object Wrapper:
     VectorD(-35.2, -128.43, 0, -44),
     evaluateHandle,
     progressHandle,
-    OptimizationLogic.instance,
+    instance,
     LBFGSParameters(lineSearch = LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe)
   ))
 end lbfgsMainTest
+
+@main def lbfgsMainCWrapperTest(): Unit =
+  // Variable declaration.
+  val instance: MemorySegment = MemorySegment.NULL
+
+  // Setup Scala method handles.
+  val evaluateHandle: MethodHandle = MethodHandles.lookup.findStatic(
+    classOf[OptimizationLogicExample],
+    "evaluate",
+    MethodType.methodType(
+      classOf[Double],
+      classOf[MemorySegment],
+      classOf[MemorySegment],
+      classOf[MemorySegment],
+      classOf[Int],
+      classOf[Double]
+    )
+  )
+
+  val progressHandle: MethodHandle = MethodHandles.lookup.findStatic(
+    classOf[OptimizationLogicExample],
+    "progress",
+    MethodType.methodType(
+      classOf[Int],
+      classOf[MemorySegment],
+      classOf[MemorySegment],
+      classOf[MemorySegment],
+      classOf[Double],
+      classOf[Double],
+      classOf[Double],
+      classOf[Double],
+      classOf[Int],
+      classOf[Int],
+      classOf[Int]
+    )
+  )
+
+  println(Wrapper.lbfgsMain(2, VectorD(-1.2, 1.0), evaluateHandle, progressHandle))
+  println(Wrapper.lbfgsMain(2, VectorD(-35.2, -128.43), evaluateHandle, progressHandle))
+  println(Wrapper.lbfgsMain(
+    2,
+    VectorD(-35.2, -128.43),
+    evaluateHandle,
+    progressHandle,
+    instance,
+    LBFGSParameters(minStep = 5, maxStep = 4)
+  ))
+  println(Wrapper.lbfgsMain(
+    4,
+    VectorD(-35.2, -128.43, 0, -44),
+    evaluateHandle,
+    progressHandle,
+    instance,
+    LBFGSParameters(lineSearch = LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe)
+  ))
+end lbfgsMainCWrapperTest
 
 @main def lbfgsStrErrorTest(): Unit =
   println(Wrapper.lbfgsStrError(-1024))

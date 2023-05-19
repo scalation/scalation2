@@ -169,6 +169,12 @@ object Types:
   end LBFGSReturnCode
   
   // Case class definitions.
+  case class LBFGSCallbackData(
+    n: Int,
+    instance: MemorySegment,
+    optimizationLogic: OptimizationLogic
+  )
+
   case class LBFGSParameters(
     m: Int = 6,
     epsilon: Double = 1e-5,
@@ -185,7 +191,7 @@ object Types:
     xtol: Double = 1.0e-16,
     orthantwiseC: Double = 0.0,
     orthantwiseStart: Int = 0,
-    orthantwiseEnd: Int = -1
+    var orthantwiseEnd: Int = -1
   ):
     def copyToMemorySegment(destination: MemorySegment): Unit =
       destination.set(JAVA_INT, 0, m)
