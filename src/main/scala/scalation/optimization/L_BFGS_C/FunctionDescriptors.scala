@@ -5,8 +5,9 @@
  *  @note    Tue Mar 14 14:51:56 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm function descriptors.
+ *  Function descriptors from the functions of the C library shared object
+ *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
+ *  for Bound constrained optimization (L-BFGS-B) algorithm.
  */
 
 // Package.
@@ -83,3 +84,4 @@ object FunctionDescriptors:
         ADDRESS,
         ADDRESS
     )
+end FunctionDescriptors

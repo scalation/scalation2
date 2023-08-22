@@ -5,8 +5,9 @@
  *  @note    Wed Apr 19 14:38:29 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
+ *  Trait to specify the optimization logic that describes a problem for the
  *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm optimization logic trait.
+ *  optimization (L-BFGS-B) algorithm.
  */
 
 // Package.
@@ -108,3 +109,4 @@ trait OptimizationLogic:
         k: Int,
         ls: Int
     ): Int
+end OptimizationLogic

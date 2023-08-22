@@ -13,7 +13,7 @@ package scalation.optimization
 
 // Project imports.
 import scalation.mathstat.VectorD
-import scalation.optimization.L_BFGS_C.Types.{LBFGSCallbackData, LBFGSParameters}
+import scalation.optimization.L_BFGS_C.{LBFGSCallbackData, LBFGSParameters}
 
 // Trait.
 trait LineSearch_QN:

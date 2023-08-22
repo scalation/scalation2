@@ -5,8 +5,9 @@
  *  @note    Tue Mar 28 10:49:34 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
+ *  Example of an optimization logic that outlines a problem to be solved by the
  *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm optimization logic example.
+ *  optimization (L-BFGS-B) algorithm.
  */
 
 // Package.
@@ -83,6 +84,7 @@ object OptimizationLogicExample:
         println(s"xnorm = ${xnorm}, gnorm = ${gnorm}, step = ${step}\n")
 
         0
+end OptimizationLogicExample
 
 // Companion class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

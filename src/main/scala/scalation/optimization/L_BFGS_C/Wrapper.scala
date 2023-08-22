@@ -2,12 +2,13 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Tue Feb 7 16:42:00 EDT 2023
+ *  @note    Tue Feb 7 16:42:00 EST 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm wrapper. Originally proposed by Byrd et. al
- *  in 1995. See the first two links for the original paper and authors' software
+ *  Wrapper class for the C library shared object implementation of the Limited
+ *  memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
+ *  optimization (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in
+ *  1995. See the first two links for the original paper and authors' software
  *  (written in Fortran) distribution site, respectively. This code provides a
  *  wrapper for the C implementation found in the last link.
  *  @see www.ece.northwestern.edu/~nocedal/PSfiles/limited.ps.gz
@@ -31,7 +32,6 @@ import scalation.mathstat.VectorD
 
 // Module imports.
 import FunctionDescriptors.*
-import Types.{LBFGSLineSearchAlgorithm, LBFGSParameters, LBFGSReturnCode}
 
 // Object.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -476,6 +476,7 @@ object Wrapper:
             return Some(LBFGSReturnCode.InvalidLineSearch)
 
         None
+end Wrapper
 
 // Test functions.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
