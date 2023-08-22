@@ -51,11 +51,11 @@ import scala.annotation.static
  *  @param maxIterations    The maximum number of iterations. The `lbfgsMain`
  *                          and `lbfgsMainCWrapper` methods in [[Wrapper]]
  *                          terminate an optimization process with the
- *                          [[LBFGSReturnCode.MaximumIteration]] status when the
- *                          iteration count exceeds this parameter. Setting this
- *                          parameter to zero continues the optimization process
- *                          until a convergence or error. The default value is
- *                          0.
+ *                          [[LBFGSReturnCode.MaximumIteration]] return code
+ *                          when the iteration count exceeds this parameter.
+ *                          Setting this parameter to zero continues the
+ *                          optimization process until a convergence or error.
+ *                          The default value is 0.
  *  @param lineSearch       [[LBFGSLineSearchAlgorithm]] to specify what line
  *                          search algorithm should be used. The default value
  *                          is [[LBFGSLineSearchAlgorithm.Default]].
@@ -99,7 +99,7 @@ import scala.annotation.static
  *  @param xtol             The machine precision for floating-point values.
  *                          Must be a positive value set by a client program to
  *                          estimate the machine precision. The L-BFGS
- *                          optimization will terminate with the status
+ *                          optimization will terminate with the return code
  *                          [[LBFGSReturnCode.RoundingError]] if the relative
  *                          width of the interval of uncertainty is less than
  *                          this parameter. The default value is 1.0e-16.

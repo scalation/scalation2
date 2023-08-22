@@ -117,10 +117,15 @@ object Wrapper:
      *                                  L-BFGS optimization. The default
      *                                  parameters used are the defaults of the
      *                                  [[LBFGSParameters]] constructor.
-     *  @return                         Tuple with [[LBFGSReturnCode]] status,
-     *                                  [[VectorD]] with optimized variable
-     *                                  values and [[Option]] with the final
-     *                                  function value.
+     *  @return LBFGSResults            Results for the L-BFGS optimization. The
+     *                                  `optimizedVariables` field represents
+     *                                  the values of `x` that have been
+     *                                  optimized to minimize the objective
+     *                                  function. In this implementation, if the
+     *                                  objective function is never evaluated
+     *                                  due to errors in the arguments from the
+     *                                  method call, the `finalFunctionValue`
+     *                                  returned will be [[None]].
      */
     def lbfgsMain(
         n: Int,
@@ -129,14 +134,14 @@ object Wrapper:
         progressMethodHandle: MethodHandle = null,
         instanceMemorySegment: MemorySegment = MemorySegment.NULL,
         params: LBFGSParameters = LBFGSParameters()
-    ): (LBFGSReturnCode, VectorD, Option[Double]) =
+    ): LBFGSResults =
         checkLBFGSArgumentsForErrors(n, params) match
-            case Some(errorReturnCode) => return (errorReturnCode, x, None)
+            case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
             case None =>
 
         adjustLBFGSArguments(n, params)
 
-        val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
+        val result: Try[LBFGSResults] = Using(Arena.openConfined()) { arena =>
 
             val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
                 MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
@@ -168,7 +173,7 @@ object Wrapper:
             )
             params.copyToMemorySegment(paramsMemorySegment)
 
-            val returnStatusCode = lbfgsMainHandle.invokeWithArguments(
+            val optimizationReturnCode = lbfgsMainHandle.invokeWithArguments(
                 n,
                 xMemorySegment,
                 fxMemorySegment,
@@ -185,7 +190,7 @@ object Wrapper:
 
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
-            (LBFGSReturnCode.fromCode(returnStatusCode), xFinalValues, Some(fx))
+            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
         }
 
         result match
@@ -228,10 +233,15 @@ object Wrapper:
      *                                  L-BFGS optimization. The default
      *                                  parameters used are the defaults of the
      *                                  [[LBFGSParameters]] constructor.
-     *  @return                         Tuple with [[LBFGSReturnCode]] status,
-     *                                  [[VectorD]] with optimized variable
-     *                                  values and [[Option]] with the final
-     *                                  function value.
+     *  @return LBFGSResults            Results for the L-BFGS optimization. The
+     *                                  `optimizedVariables` field represents
+     *                                  the values of `x` that have been
+     *                                  optimized to minimize the objective
+     *                                  function. In this implementation, if the
+     *                                  objective function is never evaluated
+     *                                  due to errors in the arguments from the
+     *                                  method call, the `finalFunctionValue`
+     *                                  returned will be `Some(0)`.
      */
     def lbfgsMainCWrapper(
         n: Int,
@@ -240,9 +250,9 @@ object Wrapper:
         progressMethodHandle: MethodHandle = null,
         instanceMemorySegment: MemorySegment = MemorySegment.NULL,
         params: LBFGSParameters = LBFGSParameters()
-    ): (LBFGSReturnCode, VectorD, Option[Double]) =
+    ): LBFGSResults =
         // Method logic.
-        val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
+        val result: Try[LBFGSResults] = Using(Arena.openConfined()) { arena =>
 
             val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
                 MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
@@ -274,7 +284,7 @@ object Wrapper:
             )
             params.copyToMemorySegment(paramsMemorySegment)
 
-            val returnStatusCode = lbfgsMainHandle.invokeWithArguments(
+            val optimizationReturnCode = lbfgsMainHandle.invokeWithArguments(
                 n,
                 xMemorySegment,
                 fxMemorySegment,
@@ -291,7 +301,7 @@ object Wrapper:
 
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
-            (LBFGSReturnCode.fromCode(returnStatusCode), xFinalValues, Some(fx))
+            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
         }
 
         result match
@@ -320,15 +330,21 @@ object Wrapper:
      *  optimization that minimizes variables using the 1st reduced signature of
      *  the L-BFGS function.
      *
-     *  @param n    The number of variables.
-     *  @param x    [[VectorD]] with the initial values of the variables.
-     *  @return     Tuple with [[LBFGSReturnCode]] status, [[VectorD]] with
-     *              optimized variable values and [[Option]] with the final
-     *              function value.
+     *  @param n                The number of variables.
+     *  @param x                [[VectorD]] with the initial values of the
+     *                          variables.
+     *  @return LBFGSResults    Results for the L-BFGS optimization. The
+     *                          `optimizedVariables` field represents the values
+     *                          of `x` that have been optimized to minimize the
+     *                          objective function. In this implementation, if
+     *                          the objective function is never evaluated due to
+     *                          errors in the arguments from the method call,
+     *                          the `finalFunctionValue` returned will be
+     *                          `Some(0)`.
      */
-    def reducedLbfgsMain(n: Int, x: VectorD): (LBFGSReturnCode, VectorD, Option[Double]) =
+    def reducedLbfgsMain(n: Int, x: VectorD): LBFGSResults =
         // Method logic.
-        val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
+        val result: Try[LBFGSResults] = Using(Arena.openConfined()) { arena =>
 
             val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
                 MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
@@ -340,7 +356,7 @@ object Wrapper:
 
             val fxMemorySegment: MemorySegment = MemorySegment.allocateNative(JAVA_DOUBLE, arena.scope())
 
-            val returnStatusCode = reducedLbfgsMainHandle.invokeWithArguments(
+            val optimizationReturnCode = reducedLbfgsMainHandle.invokeWithArguments(
                 n,
                 xMemorySegment,
                 fxMemorySegment
@@ -353,7 +369,7 @@ object Wrapper:
 
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
-            (LBFGSReturnCode.fromCode(returnStatusCode), xFinalValues, Some(fx))
+            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
         }
 
         result match
@@ -366,23 +382,30 @@ object Wrapper:
      *  minimizes variables using the 2nd reduced signature of the L-BFGS
      *  function.
      *
-     *  @param n        The number of variables.
-     *  @param x        [[VectorD]] with the initial values of the variables.
-     *  @param params   [[LBFGSParameters]] class representing the parameters
-     *                  chosen to control the L-BFGS optimization. The default
-     *                  parameters used are the defaults of the
-     *                  [[LBFGSParameters]] constructor.
-     *  @return         Tuple with [[LBFGSReturnCode]] status, [[VectorD]] with
-     *                  optimized variable values and [[Option]] with the final
-     *                  function value.
+     *  @param n                The number of variables.
+     *  @param x                [[VectorD]] with the initial values of the
+     *                          variables.
+     *  @param params           [[LBFGSParameters]] class representing the
+     *                          parameters chosen to control the L-BFGS
+     *                          optimization. The default parameters used are
+     *                          the defaults of the [[LBFGSParameters]]
+     *                          constructor.
+     *  @return LBFGSResults    Results for the L-BFGS optimization. The
+     *                          `optimizedVariables` field represents the values
+     *                          of `x` that have been optimized to minimize the
+     *                          objective function. In this implementation, if
+     *                          the objective function is never evaluated due to
+     *                          errors in the arguments from the method call,
+     *                          the `finalFunctionValue` returned will be
+     *                          `Some(0)`.
      */
     def reducedLbfgsMain2(
         n: Int,
         x: VectorD,
         params: LBFGSParameters = LBFGSParameters()
-    ): (LBFGSReturnCode, VectorD, Option[Double]) =
+    ): LBFGSResults =
         // Method logic.
-        val result: Try[(LBFGSReturnCode, VectorD, Option[Double])] = Using(Arena.openConfined()) { arena =>
+        val result: Try[LBFGSResults] = Using(Arena.openConfined()) { arena =>
 
             val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
                 MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
@@ -400,7 +423,7 @@ object Wrapper:
             )
             params.copyToMemorySegment(paramsMemorySegment)
 
-            val returnStatusCode = reducedLbfgsMain2Handle.invokeWithArguments(
+            val optimizationReturnCode = reducedLbfgsMain2Handle.invokeWithArguments(
                 n,
                 xMemorySegment,
                 fxMemorySegment,
@@ -414,7 +437,7 @@ object Wrapper:
 
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
-            (LBFGSReturnCode.fromCode(returnStatusCode), xFinalValues, Some(fx))
+            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
         }
 
         result match
@@ -443,7 +466,7 @@ object Wrapper:
      *                                  the parameters chosen to control the
      *                                  L-BFGS optimization.
      *  @return Option[LBFGSReturnCode] [[Option]] value with a
-     *                                  [[LBFGSReturnCode]] status that
+     *                                  [[LBFGSReturnCode]] return code that
      *                                  represents the first error found in the
      *                                  `params` argument. If there are no
      *                                  errors in the `params` argument,

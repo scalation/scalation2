@@ -5,7 +5,7 @@
  *  @note    Mon Aug 21 13:48:43 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Set of status codes that can be returned in an call to the Limited memory
+ *  Set of return codes that can be returned in an call to the Limited memory
  *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
  *  (L-BFGS-B) algorithm.
  */
