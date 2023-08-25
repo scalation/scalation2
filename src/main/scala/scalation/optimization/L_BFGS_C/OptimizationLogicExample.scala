@@ -19,6 +19,10 @@ import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 import scala.annotation.static
 import scala.math.pow
 
+// Project imports.
+import scalation.calculus.Differential
+import scalation.mathstat.VectorD
+
 // Object.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `OptimizationLogicExample` object provides an example of an
@@ -48,18 +52,21 @@ object OptimizationLogicExample:
         n: Int,
         step: Double
     ): Double =
-        var fx: Double = 0
+        def fx(x: VectorD): Double = pow(x(0) - 2, 2) + pow(x(1) - 3, 2) + 1
+        var fx_sum: Double = 0
 
         for i <- 0 until n by 2 do
-            val xCurrentSlope: Double = x.getAtIndex(JAVA_DOUBLE, i) - 2
-            val xNextSlope: Double = x.getAtIndex(JAVA_DOUBLE, i + 1) - 3
+            val interval_variables: VectorD = VectorD(
+                x.getAtIndex(JAVA_DOUBLE, i),
+                x.getAtIndex(JAVA_DOUBLE, i + 1)
+            )
 
-            g.setAtIndex(JAVA_DOUBLE, i, 2 * xCurrentSlope)
-            g.setAtIndex(JAVA_DOUBLE, i + 1, 2 * xNextSlope)
+            g.setAtIndex(JAVA_DOUBLE, i, Differential.partial(0)(fx, interval_variables))
+            g.setAtIndex(JAVA_DOUBLE, i+1, Differential.partial(1)(fx, interval_variables))
 
-            fx += pow(xCurrentSlope, 2) + pow(xNextSlope, 2) + 1
+            fx_sum += fx(interval_variables)
 
-        fx
+        fx_sum
 
     @static
     def progress(
