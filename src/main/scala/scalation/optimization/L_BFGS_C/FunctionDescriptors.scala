@@ -51,6 +51,16 @@ object FunctionDescriptors:
         ADDRESS,
         ADDRESS
     )
+    val LBFGS_NATIVE_STUB_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
+        JAVA_INT,
+        JAVA_INT,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS,
+        ADDRESS
+    )
     val LBFGS_PARAMETER_INIT_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.ofVoid(
         ADDRESS
     )

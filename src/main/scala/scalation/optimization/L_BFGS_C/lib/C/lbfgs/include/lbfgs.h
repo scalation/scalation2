@@ -753,8 +753,22 @@ licence.
 */
 
 // Test functions.
+int lbfgs_native_stub(
+    int n,
+    lbfgsfloatval_t *x,
+    lbfgsfloatval_t *ptr_fx,
+    lbfgs_evaluate_t proc_evaluate,
+    lbfgs_progress_t proc_progress,
+    void *instance,
+    lbfgs_parameter_t *param
+);
 int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx);
-int reduced_lbfgs2(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx, lbfgs_parameter_t *param);
+int reduced_lbfgs2(
+    int n,
+    lbfgsfloatval_t *x,
+    lbfgsfloatval_t *ptr_fx,
+    lbfgs_parameter_t *param
+);
 void sample();
 
 #endif/*__LBFGS_H__*/
