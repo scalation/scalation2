@@ -11,7 +11,7 @@
 package scalation
 package dynamics
 
-import scala.math.{abs, E, pow, round}
+import scala.math.{abs, E, round}
 
 import scalation.mathstat._
 

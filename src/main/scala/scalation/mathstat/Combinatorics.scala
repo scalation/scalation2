@@ -11,7 +11,7 @@
 package scalation
 package mathstat
 
-import scala.math.{abs, asin, E, exp, floor, log, Pi, sin, sqrt}
+import scala.math.{abs, asin, E, exp, log, Pi, sin, sqrt}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Combinatorics` object provides several common combinatorics functions,
@@ -277,8 +277,8 @@ object Combinatorics:
 //  def gammaF (a: Double): Double =
 //      if a <= 0 then flaw ("gammaF", "only handle positive cases")
 //      var prod = 1.0
-//      val ia   = floor (a).toInt
-//      val frac = a - floor (a)
+//      val ia   = math.floor (a).toInt
+//      val frac = a - math.floor (a)
 //      if frac < TOL then
 //          prod = fac (ia - 1)
 //      else if approx (frac, .5) then

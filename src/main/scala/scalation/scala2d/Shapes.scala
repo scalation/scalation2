@@ -45,7 +45,7 @@ package scalation
 package scala2d
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Shapes` object provides type aliases for basic Java awt types.
+/** The `Shapes` file provides type aliases for basic Java awt types.
  */
 
 type BasicStroke      = java.awt.BasicStroke

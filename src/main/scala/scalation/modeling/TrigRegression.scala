@@ -11,7 +11,6 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.{ListMap, Map, Set}
 import scala.math.{cos, Pi, sin}
 
 import scalation.mathstat._
@@ -31,8 +30,8 @@ import scalation.mathstat._
  *  @param t       the initial data/input m-by-1 matrix: t_i expands to x_i
  *  @param y       the response/ouput vector
  *  @param ord     the order (k), maximum multiplier in the trig function (kwt)
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class TrigRegression (t: MatrixD, y: VectorD, ord: Int, fname_ : Array [String] = null,
                       hparam: HyperParameter = Regression.hp)
@@ -66,7 +65,7 @@ end TrigRegression
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `TrigRegression` companion object provides factory functions and functions
+/** The `TrigRegression` companion object provides factory methods and functions
  *  for creating functional forms.
  */
 object TrigRegression:
@@ -78,8 +77,8 @@ object TrigRegression:
     /** Create a `TrigRegression` object from a combined data-response matrix.
      *  @param xy      the initial combined data-response matrix (before term expansion)
      *  @param ord     the number of harmomics
-     *  @param fname_  the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname_  the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, ord: Int, fname: Array [String] = null,
@@ -103,12 +102,12 @@ object TrigRegression:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `TrigRegression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the initial data/input matrix (before term expansion)
      *  @param y       the response/output m-vector
      *  @param ord     the number of harmomics
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use null for default)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      */
     def rescale (x: MatrixD, y: VectorD, ord: Int, fname: Array [String] = null,
                  hparam: HyperParameter = Regression.hp): TrigRegression =

@@ -157,16 +157,16 @@ end JHashMultiMap
  *  @tparam V      the base-type of the values assigned to keys in this tree map
  *  @param  order  the number of order (maximum number of children) of the tree
  *  @param  ord    the implicit ordering used to compare objects of type K
- */
-class BpTreeMultiMap [K: ClassTag, V: ClassTag] (order: Int = 4)(override implicit val ord: Ordering [K])
-      extends BpTreeMap [K, Set [V]] (order):
+ *  FIX - type error
+class BpTreeMultiMap [V: ClassTag] (order: Int = 4)
+      extends BpTreeMap [ValueType, Set [V]] (order):
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add one key-value pair into this tree map and return this (called by put).
      *  The addOne method adds a set of values, whereas addOne1 adds a single value.
      *  @param elem   the key-value pair to add/insert for an individual value
      */
-    def addOne1 (elem: (K, V)): this.type =
+    def addOne1 (elem: (ValueType, V)): this.type =
         val (key, value) = elem
         val current = getOrElse (key, null)
         val multiElem = if current == null then (key, Set (value))
@@ -175,6 +175,7 @@ class BpTreeMultiMap [K: ClassTag, V: ClassTag] (order: Int = 4)(override implic
     end addOne1
 
 end BpTreeMultiMap
+ */
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

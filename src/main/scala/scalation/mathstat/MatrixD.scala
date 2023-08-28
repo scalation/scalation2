@@ -14,14 +14,11 @@ package mathstat
 import java.util.Arrays.copyOf
 import java.io.PrintWriter
 
-import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
+import scala.collection.immutable.{IndexedSeq => IIndexedSeq, Set => ISet}
 import scala.collection.mutable.{ArrayBuffer, IndexedSeq, Set}
 import scala.io.BufferedSource
-import scala.math.sqrt
-import scala.runtime.ScalaRunTime.stringOf
+import scala.math.{round, sqrt}
 import scala.util.control.Breaks.{break, breakable}
-
-import scalation.random.RandomVecSample
 
 /** Top-level type definition for functions mapping:
  */
@@ -356,9 +353,9 @@ class MatrixD (val dim:  Int,
     /** Split the rows from this matrix to form two matrices:  one from the rows in
      *  idx (e.g., testing set) and the other from rows not in idx (e.g., training set).
      *  Note split and split_ produce different row orders.
-     *  @param idx  the row indices to include/exclude
+     *  @param idx  the set of row indices to include/exclude
      */
-    def split (idx: IndexedSeq [Int]): (MatrixD, MatrixD) =
+    def split (idx: ISet [Int]): (MatrixD, MatrixD) =
         val len = idx.size
         val a   = new MatrixD (len, dim2)
         val b   = new MatrixD (dim - len, dim2)
@@ -374,6 +371,8 @@ class MatrixD (val dim:  Int,
         end for
         (a, b)
     end split
+
+    inline def split (idx: IndexedSeq [Int]): (MatrixD, MatrixD) = split (idx.toSet [Int])
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the rows from this matrix to form two matrices:  one from the rows in
@@ -450,6 +449,17 @@ class MatrixD (val dim:  Int,
     def update (d1: Char, d2: Char, u: VectorD): Unit =
         for i <- 0 until minDim do v(i)(i) = u(i)
     end update
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Insert vector u into this matrix at j-th COLUMN after shifting j ... k-1 right.
+     *  @param j  the start column index  [... j ... k k+1 ... ] -->
+     *  @param k  the end column index    [... u j ... k+1 ... ]
+     *  @param u  the vector to insert into column j 
+     */
+    def insert (j: Int, k: Int, u: VectorD): Unit =
+        for jj <- k to j+1 by -1 do this(?, jj) = this(?, jj-1)       // shift columns right
+        this(?, j) = u                                                // insert u
+    end insert
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set this matrix's i-th ROW to the elements in vector u.  May have left-over
@@ -597,7 +607,7 @@ class MatrixD (val dim:  Int,
      */
     def + (y: MatrixD): MatrixD =
         if y.dim < dim || y.dim2 < dim2 then
-            flaw ("+", "matrix + matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
+            flaw ("+", s"matrix + matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -614,7 +624,7 @@ class MatrixD (val dim:  Int,
      */
     def + (u: VectorD): MatrixD =
         if u.dim < dim2 then
-            flaw ("+", "matrix + vector - incompatible dimensions: this = $dims, u = $u.dim")
+            flaw ("+", s"matrix + vector - incompatible dimensions: this = $dims, u = ${u.dim}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -624,6 +634,23 @@ class MatrixD (val dim:  Int,
         end for
         new MatrixD (dim, dim2, a) 
     end +
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Add this matrix and (column) vector u.
+     *  @param u  the vector to add
+     */
+    def +^ (u: VectorD): MatrixD =
+        if u.dim < dim2 then
+            flaw ("+", s"matrix + vector - incompatible dimensions: this = $dims, u = ${u.dim}")
+
+        val a = Array.ofDim [Double] (dim, dim2)
+        for i <- indices do
+            val v_i = v(i); val a_i = a(i)
+            var j = 0
+            cfor (j < dim2, j += 1) { a_i(j) = v_i(j) + u(i) }
+        end for
+        new MatrixD (dim, dim2, a)
+    end +^
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add this matrix and scaler u.
@@ -661,7 +688,7 @@ class MatrixD (val dim:  Int,
      */
     def - (y: MatrixD): MatrixD =
         if y.dim < dim || y.dim2 < dim2 then
-            flaw ("-", "matrix - matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
+            flaw ("-", s"matrix - matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -678,7 +705,7 @@ class MatrixD (val dim:  Int,
      */
     def - (u: VectorD): MatrixD =
         if u.dim < dim2 then
-            flaw ("-", "matrix - vector - incompatible dimensions: this = $dims, u = $u.dim")
+            flaw ("-", s"matrix - vector - incompatible dimensions: this = $dims, u = ${u.dim}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -688,6 +715,23 @@ class MatrixD (val dim:  Int,
         end for
         new MatrixD (dim, dim2, a)
     end -
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Subtract from this matrix, the (column) vector u.
+     *  @param u  the vector to subtract
+     */
+    def -^ (u: VectorD): MatrixD =
+        if u.dim < dim2 then
+            flaw ("-", s"matrix - vector - incompatible dimensions: this = $dims, u = ${u.dim}")
+
+        val a = Array.ofDim [Double] (dim, dim2)
+        for i <- indices do
+            val v_i = v(i); val a_i = a(i)
+            var j = 0
+            cfor (j < dim2, j += 1) { a_i(j) = v_i(j) - u(i) }
+        end for
+        new MatrixD (dim, dim2, a)
+    end -^
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Subtract from this matrix, the scalar u.
@@ -713,7 +757,7 @@ class MatrixD (val dim:  Int,
      */
     def *~ (y: MatrixD): MatrixD =
         if y.dim < dim || y.dim2 < dim2 then
-            flaw ("*~", "matrix *~ matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
+            flaw ("*~", s"matrix *~ matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -873,7 +917,7 @@ class MatrixD (val dim:  Int,
      */
     def / (y: MatrixD): MatrixD =
         if y.dim < dim || y.dim2 < dim2 then
-            flaw ("/", "matrix / matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
+            flaw ("/", s"matrix / matrix - incompatible dimensions: this = $dims, y = ${y.dims}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -890,7 +934,7 @@ class MatrixD (val dim:  Int,
      */
     def / (u: VectorD): MatrixD =
         if u.dim < dim2 then
-            flaw ("/", "matrix / vector - incompatible dimensions: this = $dims, u = $u.dim")
+            flaw ("/", s"matrix / vector - incompatible dimensions: this = $dims, u = ${u.dim}")
 
         val a = Array.ofDim [Double] (dim, dim2)
         for i <- indices do
@@ -1053,9 +1097,9 @@ class MatrixD (val dim:  Int,
         val a = Array.ofDim [Double] (dim * dim2)
         var k = 0
         for i <- indices do
-           val v_i = v(i)
-           var j = 0
-           cfor (j < dim2, j += 1) { a(k) = v_i(j); k += 1 }
+            val v_i = v(i)
+            var j = 0
+            cfor (j < dim2, j += 1) { a(k) = v_i(j); k += 1 }
         end for
         new VectorD (a.length, a)
     end flatten
@@ -1152,6 +1196,15 @@ class MatrixD (val dim:  Int,
     end sumV
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the row sums of this matrix, i.e., the sums for each of its rows.
+     */
+    def sumVr: VectorD =
+        var s = new VectorD (dim)
+        for i <- indices; j <- indices2 do s(i) += v(i)(j)
+        s
+    end sumVr
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the maximum value for the entire matrix.
      */
     def mmax: Double =
@@ -1243,7 +1296,10 @@ class MatrixD (val dim:  Int,
         var symm = true
         breakable {
             for i <- indices; j <- 0 until i do
-                if v(i)(j) != v(j)(i) then { symm = false; break () }
+                if v(i)(j) != v(j)(i) then
+                    symm = false
+                    println (s"MatrixD.isSymmetric: v($i)($j) = ${v(i)(j)} != v($j)($i) = ${v(j)(i)}")
+                    break ()
             end for
         } // breakable
         symm
@@ -1299,7 +1355,7 @@ class MatrixD (val dim:  Int,
     def center (mu_x: VectorD = mean): MatrixD = this - mu_x
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the sample covariance matrix for the columns of matrix this x.
+    /** Return the sample covariance matrix for the columns of this matrix.
      */
     def cov: MatrixD =
         val z = center ()
@@ -1368,10 +1424,19 @@ class MatrixD (val dim:  Int,
     end cos
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Convert this matrix to a matrix.
+    /** Convert this matrix to the same matrix, i.e., return this matrix.
      */
     def toMatrixD: MatrixD = this
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert this matrix to a matrix where all the elements have integer values.
+     */
+    def toInt: MatrixD = 
+        val x = new MatrixD (dim, dim2)
+        for i <- indices; j <- indices2 do x.v(i)(j) = round (v(i)(j)).toDouble
+        x
+    end toInt
+        
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this matrix to a string.
      */
@@ -1464,6 +1529,16 @@ object MatrixD:
         new MatrixD (m, n, a)
     end apply
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create an m-by-1 matrix from an m-vector (column-wise).
+     *  @param v  the vector to build the matrix from
+     */
+    def fromVector (v: VectorD): MatrixD =
+        val x =  new MatrixD (v.dim, 1)
+        for i <- x.indices do x(i, 0) = v(i)
+        x
+    end fromVector
+
     private var DEF_SEP  = ','                                 // default character separating the values
     private val PROGRESS = 1000                                // give feedback at progress count
 
@@ -1473,9 +1548,12 @@ object MatrixD:
      *  @param skip      the initial number of lines/rows to skip
      *  @param skipCol   the initial number of columns to skip
      *  @param sp        the character used to separate values (',', '\t', ...)
+     *  @param fullPath  flag indivating whether to use full-path or path relative to 'DATA_DIR'
+     *                   defaults to false (relative paths)
      */
-    def load (fileName: String, skip: Int = 0, skipCol: Int = 0, sp: Char = DEF_SEP): MatrixD =
-        val lines = readFileIntoArray (fileName)               // array of strings/lines
+    def load (fileName: String, skip: Int = 0, skipCol: Int = 0,
+              sp: Char = DEF_SEP, fullPath: Boolean = false): MatrixD =
+        val lines = readFileIntoArray (fileName, fullPath)     // array of strings/lines
         val m  = lines.length                                  // number lines in the file
         val mm = m - skip                                      // number of lines with data
         val a  = Array.ofDim [Array [Double]] (mm)             // array buffer to hold data values
@@ -1500,7 +1578,8 @@ object MatrixD:
      *  @param yCol      the column that is to make up the y-vector (use the defualt -1 to skip this)
      *  @param skip      the initial number of lines to skip
      *  @param sp        the character used to separate values (',', '\t', ...)
-     *  @param fullPath  whether to use full-path or path relative to 'DATA_DIR'
+     *  @param fullPath  flag indivating whether to use full-path or path relative to 'DATA_DIR'
+     *                   defaults to false (relative paths)
      */
     def loadIter (fileName: String, xCols: Array[Int], yCol: Int = -1, skip: Int = 0,
                   sp: Char = DEF_SEP, fullPath: Boolean = true): (MatrixD, VectorD) =
@@ -1577,6 +1656,8 @@ object MatrixD:
         for i <- x.indices; j <- y.indices do a(i)(j) = x(i) * y(j)
         new MatrixD (x.dim, y.dim, a)
     end outer
+
+    inline def ⊗ (x: VectorD, y: VectorD): MatrixD = outer (x, y)
 
 end MatrixD
 
@@ -1681,18 +1762,26 @@ end matrixDTest2
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `matrixDTest3` main function tests the `MatrixD` class.  Test the back substitution
  *  (/~) operator for solving for x in u * x = y.
+ *  It also computes an outer product
  *  > runMain scalation.mathstat.matrixDTest3
  */
 @main def matrixDTest3 (): Unit =
+
+    import MatrixD.⊗
 
     val u = MatrixD ((3, 3), 1, 2, 3,
                              0, 4, 5,
                              0, 0, 6)
     val y = VectorD (1, 2, 3)
 
+    banner ("Back Substitution")
     val x = u /~ y
-    println (s" u /~ y    = $x")
+    println (s"x = u /~ y = $x")
     assert (u * x == y)
+    println (s"y = $y")
+
+    banner ("Outer Product")
+    println ("⊗ (x, y) = " + ⊗ (x, y))
 
 end matrixDTest3
 
@@ -1730,4 +1819,47 @@ end matrixDTest3
     assert (z_ =~ x_)
 
 end matrixDTest4
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `matrixDTest5` main function tests the `MatrixD` class.  Test the covariance
+ *  and correlation.
+ *  > runMain scalation.mathstat.matrixDTest5
+ */
+@main def matrixDTest5 (): Unit =
+
+    val x = MatrixD ((6, 2), 1, 1,
+                             2, 3,
+                             3, 3,
+                             4, 5,
+                             5, 4,
+                             6, 4)
+
+    println (s"Data Matrix x           = $x")
+    println (s"Samp. Covariance x.cov  = ${x.cov}")
+    println (s"Pop.  Covariance x.cov_ = ${x.cov_}")
+    println (s"Correlation x.corr      = ${x.corr}")
+
+end matrixDTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `matrixDTest6` main function tests the `MatrixD` class.  Test the insert method.
+ *  > runMain scalation.mathstat.matrixDTest6
+ */
+@main def matrixDTest6 (): Unit =
+
+    val x = MatrixD ((4, 5), 1, 2, 3, 4, 5, 
+                             1, 2, 3, 4, 5,
+                             1, 2, 3, 4, 5,
+                             1, 2, 3, 4, 5)
+
+    println (s"Matrix x = $x")
+
+    banner ("x.insert (1, 3, u)")
+    val u = VectorD (1, 2, 3, 4)
+    x.insert (1, 3, u)
+    println (s"Matrix x = $x")
+
+end matrixDTest6
 

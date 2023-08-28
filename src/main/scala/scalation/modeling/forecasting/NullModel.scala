@@ -52,7 +52,7 @@ class NullModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         debug ("train", s"parameters for $modelName = $parameter")     // [mu]
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of a NullModel forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -68,7 +68,7 @@ class NullModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of a NullModel forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined

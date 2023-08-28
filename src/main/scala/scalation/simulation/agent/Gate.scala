@@ -20,7 +20,7 @@ import scalation.animation.CommandType._
 import scalation.database.graph.{Vertex, VertexType}
 import scalation.mathstat.VectorD
 import scalation.random.Variate
-import scalation.scala2d.{Ellipse, Octagon}
+import scalation.scala2d.Octagon
 import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -91,7 +91,7 @@ class Gate (name: String, director: Model, time: Double, line: WaitQueue,
     /** Specifies how the gate is controlled, cycling through open/green to closed/red.
      */
     def act (): Unit =
-        director.animate (this, SetPaintNode, gateColor, Octagon ())      // Ellipse         
+        director.animate (this, SetPaintNode, gateColor, Octagon ())      // Octagon
         while flips < MAX_FLIPS && director.simulating do                 // continue until simulation is over
             debug ("act", s"SimAgent.nAgents = ${SimAgent.nAgents}")
             val dur = duration                                            // keep gate with current for duration units
@@ -102,7 +102,7 @@ class Gate (name: String, director: Model, time: Double, line: WaitQueue,
             flip ()                                                       // change gate color
             debug ("act", s"$me changes gate color to $gateColor at ${director.clock}")
             if _open then release ()
-            director.animate (this, SetPaintNode, gateColor, Octagon ())  // Ellipse         
+            director.animate (this, SetPaintNode, gateColor, Octagon ())  // Octagon
         end while
         yieldToDirector (true)    
     end act

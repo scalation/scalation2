@@ -36,13 +36,13 @@ import scalation.mathstat._
  */
 class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
                             cname_ : Array [String] = Array ("-", "+"),
-                            hparam: HyperParameter = null)
+                            hparam: HyperParameter = Classifier.hp)
       extends Classifier (x, y, fname_, 2, cname_, hparam)
-         with FitC (y, k = 2):
+         with FitC ():
 
     type Pair = (Double, Double)
     
-    private val debug   = debugf ("SupportVectorMachine", true)  // debug flag
+    private val debug   = debugf ("SupportVectorMachine", false) // debug flag
     private val EPSILON = 1E-3                                   // a number close to zero
     private val TOL     = 1E-3                                   // tolerance level
     private val C       = 0.05                                   // crossing penalty
@@ -136,10 +136,22 @@ class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = nu
      */
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                          // predicted classes
-        val qof = diagnose (y_.toDouble, yp.toDouble)                    // diagnose from actual and predicted
+        val qof = diagnose (y_, yp)                                      // diagnose from actual and predicted
         debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Diagnose the health of the model by computing the Quality of Fit (QoF) measures,
+     *  from the error/residual vector and the predicted & actual responses.
+     *  Requires the actual and predicted responses to be non-negative integers.
+     *  This override maps -1 to 0.
+     *  @param y_  the actual response/output vector to use (test/full)
+     *  @param yp  the predicted response/output vector (test/full)
+     */
+    override def diagnose (y_ : VectorI, yp: VectorI): VectorD =
+        super.diagnose (y_.map2 (-1, 0), yp.map2 (-1, 0))                // compute basic QoF from `FitM`
+    end diagnose
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given a new continuous data vector z, determine which class it belongs to.
@@ -353,6 +365,31 @@ class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = nu
     /** Convert svm to a string showing (w, b).
      */
     override def toString: String = "(w, b) = " + (w, b)
+
+end SupportVectorMachine
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `SupportVectorMachine` companion object provides a factory method.
+ */
+object SupportVectorMachine:
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a support vector machine for the given combined matrix where the
+     *  column col is the response/classification vector.
+     *  @param xy      the combined data matrix (features and response)
+     *  @param fname   the names for all features/variables
+     *  @param cname   the names for all classes
+     *  @param hparam  the hyper-parameters
+     *  @param col     the designated response column (defaults to the last column)
+     */
+    def apply (xy: MatrixD, fname: Array [String] = null,
+               cname: Array [String]  = Array ("No", "Yes"),
+               hparam: HyperParameter = Classifier.hp)
+              (col: Int = xy.dim2 - 1): SupportVectorMachine =
+        val (x, y) = (xy.not(?, col), xy(?, col).toInt)                  // data matrix, response vector
+        new SupportVectorMachine (x, y.map2 (0, -1), fname, cname, hparam)
+    end apply
 
 end SupportVectorMachine
 

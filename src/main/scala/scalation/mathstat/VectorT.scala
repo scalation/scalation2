@@ -14,7 +14,6 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
-import scala.collection.IterableFactoryDefaults
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.runtime.ScalaRunTime.stringOf
@@ -89,13 +88,35 @@ class VectorT (val dim: Int,
     end not
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Split the elements from this vector to form two vectors:  one from the elements
-     *  in idx (e.g., testing set) and the other from elements not in idx
-     *  (e.g., training set).
-     *  @param idx  the indices to include/exclude
+    /** Split the elements from this vector to form two vectors:  one from the elements in
+     *  idx (e.g., testing set) and the other from elements not in idx (e.g., training set).
+     *  Note split and split_ produce different element orders.
+     *  @param idx  the element indices to include/exclude
      */
-    def split (idx: IndexedSeq [Int]): (VectorT, VectorT) = (this(idx), not(idx))
-    def split (idx: VectorI): (VectorT, VectorT) = { val idx_ = idx.toMuIndexedSeq; (this(idx_), not(idx_)) }
+    def split (idx: IndexedSeq [Int]): (VectorT, VectorT) =
+        val len = idx.size
+        val a   = new VectorT (len)
+        val b   = new VectorT (dim - len)
+        var j, k = 0
+        for i <- indices do
+            if idx contains i then
+                a.v(j) = v(i)
+                j += 1
+            else
+                b.v(k) = v(i)
+                k += 1
+            end if
+        end for
+        (a, b)
+    end split
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Split the elements from this vector to form two vectors:  one from the elements in
+     *  idx (e.g., testing set) and the other from elements not in idx (e.g., training set).
+     *  Concise, but less efficient than split
+     *  @param idx  the element indices to include/exclude
+     */
+    def split_ (idx: IndexedSeq [Int]): (VectorT, VectorT) = (this(idx), not(idx))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the 

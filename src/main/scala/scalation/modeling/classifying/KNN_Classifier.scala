@@ -23,20 +23,20 @@ import scalation.mathstat._
  *  stored row-wise in the data matrix x.  The corresponding classifications
  *  are given in the vector y, such that the classification for vector x(i)
  *  is given by y(i).
- *  FIX - cross validation uses test data for decision making, so when k = 1, acc = 100%
+ *  FIX - cross validation uses test data for decision making, so when kappa = 1, acc = 100%
  *  @param x       the input/data matrix
  *  @param y       the classification of each vector in x
  *  @param fname_  the names for all features/variables
  *  @param k       the number of classes
  *  @param cname_  the names for all classes
- *  @param kappa   the number of nearest neighbors to consider
+ *  @param kappa   the number of nearest neighbors to consider (k >= 3)
  *  @param hparam  the hyper-parameters
  */
 class KNN_Classifier (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
                       k: Int = 2, cname_ : Array [String] = Array ("No", "Yes"),
-                      kappa: Int = 3, hparam: HyperParameter = null)
+                      kappa: Int = 5, hparam: HyperParameter = null)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k):
+         with FitC ():
 
     private val debug      = debugf ("KNN_Classifier", true)              // debug function
     private val flaw       = flawf ("KNN_Classifier")                     // flaw function
@@ -45,9 +45,11 @@ class KNN_Classifier (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
     private val count      = new VectorI (k)                              // how many nearest neighbors in each class.
     private var d          = VectorD.nullv                                // vector to hold distances
 
-    modelName = "KNN_Classifier"                                          // name of the model
+    modelName = s"KNN_Classifier_$kappa"                                  // name of the model
 
-    debug ("init", s" x = $x \n y = $y")
+    if kappa < 3 then flaw ("init", s"number of neighbors kappa = $kappa < 3")
+
+//  debug ("init", s" x = $x \n y = $y")
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute a distance metric between vectors/points x and z.
@@ -138,7 +140,7 @@ object KNN_Classifier:
      *  @param col    the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
-               k: Int = 2, cname: Array [String] = Array ("No", "Yes"), kappa: Int = 3)
+               k: Int = 2, cname: Array [String] = Array ("No", "Yes"), kappa: Int = 5)
               (col: Int = xy.dim2 - 1): KNN_Classifier =
         new KNN_Classifier (xy.not(?, col), xy(?, col).toInt, fname, k, cname, kappa)
     end apply

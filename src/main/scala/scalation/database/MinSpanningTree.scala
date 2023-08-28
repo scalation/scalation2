@@ -13,10 +13,8 @@ package scalation
 package database
 
 import scala.collection.mutable.{Map, Set => SET}
-//import scala.collection.mutable.PriorityQueue      // lacks decreaseKey method
 import scala.runtime.ScalaRunTime.stringOf
 
-import scalation.PriorityQueue                       // ScalaTion's extension add increaseKey, printInOrder
 import scalation.database.graph_pm.Graph
 import scalation.mathstat.{MatrixD, VectorI}
 
@@ -24,6 +22,7 @@ import scalation.mathstat.{MatrixD, VectorI}
 /** The `MinSpanningTree` class is used to build minimum cost spanning trees
  *  from graphs.  Edge cost/weights are given by edge labels. `MinSpanningTree`
  *  implements Prim's algorithm.
+ *  `scalation.PriorityQueue` ScalaTion's extension adds increaseKey, printInOrder
  *  @see www.cse.ust.hk/~dekai/271/notes/L07/L07.pdf
  *  @param g           the digraph to build the spanning tree from
  *  @param undirected  whether the graph is already undirected

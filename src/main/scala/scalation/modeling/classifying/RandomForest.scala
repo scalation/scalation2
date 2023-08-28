@@ -42,12 +42,12 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     private val fbRatio = hparam ("fbRatio").toDouble                         // feature bagging ratio
 
     private val nFeats  = (fbRatio * x.dim2).toInt                            // number of features/columns to select
-    private val rvg     = RandomVecI (0, x.dim2-1, nFeats, -1, true)          // random vector generator
+    private val rvg     = RandomVecI (nFeats, x.dim2-1, 0, -1, true)          // random vector generator
     private val jcols   = Array.ofDim [VectorI] (nTrees)                      // record column indices for each tree
 
     if nFeats < 0 || nFeats > x.dim2 then flaw ("init", "RF feature size restricted to 0 thru number of features")
 
-    modelName = "RandomForest"                                                // name of the model
+    modelName = s"RandomForest_${height}_$nTrees"                             // name of the model
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Select subFeatures for input of building trees, return the subFeatures
@@ -72,7 +72,7 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     override def train (x_ : MatrixD = x, y_ : VectorI = y): Unit =
         for l <- 0 until nTrees do                                            // iterate l-th tree
             val (sub_x, sub_y, irows) = subSample (x_, y_, sampleSize, l)     // select rows from x_ and elements from y_
-            debug ("train", s"row indices for tree$l, irows = $irows")
+//          debug ("train", s"row indices for tree$l, irows = $irows")
 
             val (xf, columns) = selectSubFeatures (sub_x)                     // select columns of data matrix subsample
             val fname2 = columns.map (fname(_)).toArray                       // extract corresponding feature names       
@@ -81,7 +81,7 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
 
             trees(l) = new DecisionTree_C45 (xf, sub_y, fname2, k, cname, conts2, hparam)
             trees(l).train ()
-            debug ("train", s"for tree$l === \n ${trees(l).printTree ()}")
+//          debug ("train", s"for tree$l === \n ${trees(l).printTree ()}")
         end for
     end train
 
@@ -96,7 +96,7 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
             val zp  = z(jcols(l))                                             // project onto columns for l-th tree
             val y_l = trees(l).predictI (zp)                                  // get vote from l-th tree
             vote(y_l) += 1                                                    // tally the vote
-            debug ("preictI", s"for tree$l, predicted class = y_l")
+//          debug ("preictI", s"for tree$l, predicted class = y_l")
         end for
         vote.argmax ()                                                        // find argmax => the winner
     end predictI
@@ -104,8 +104,35 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
 end RandomForest
 
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `RandomForest` companion object provides a factory method.
+ */
+object RandomForest:
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a random forsst for the given combined matrix where the column col
+     *  is the response/classification vector.
+     *  @param xy      the combined data matrix (features and response)
+     *  @param fname   the names for all features/variables
+     *  @param k       the number of classes
+     *  @param cname   the names for all classes
+     *  @param conts   the set of feature indices for variables that are treated as continuous
+     *  @param hparam  the hyper-parameters
+     *  @param col     the designated response column (defaults to the last column)
+     */
+    def apply (xy: MatrixD, fname: Array [String] = null, k: Int = 2,
+               cname: Array [String]  = Array ("No", "Yes"),
+               conts: Set [Int] = Set [Int] (), hparam: HyperParameter = DecisionTree.hp)
+              (col: Int = xy.dim2 - 1): RandomForest =
+        val (x, y) = (xy.not(?, col), xy(?, col).toInt)                  // data matrix, response vector
+        new RandomForest (x, y, fname, k, cname, conts, hparam)
+    end apply
+
+end RandomForest
+
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest` object is used to test the `RandomForest` class.
+/** The `randomForestTest` main function is used to test the `RandomForest` class.
  *  It tests a simple case that does not require a file to be read.
  *  > runMain scalation.modeling.classifying.randomForestTest
  */
@@ -144,13 +171,13 @@ end randomForestTest
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest2` object is used to test the `RandomForest` class.
+/** The `randomForestTest2` main function is used to test the `RandomForest` class.
  *  It tests the Random Forest classifier using well-known WineQuality Dataset.
  *  > runMain scalation.modeling.classifying.randomForestTest2
  */
 @main def randomForestTest2 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not(?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                                    // shift the class labels by 3
@@ -168,13 +195,13 @@ end randomForestTest2
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest3` object is used to test the `RandomForest` class.
+/** The `randomForestTest3` main function is used to test the `RandomForest` class.
  *  It tests the Random Forest classifier by specific numbers of trees.
  *  > runMain scalation.modeling.classifying.randomForestTest3
  */
 @main def randomForestTest3 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not(?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                                    // shift the class labels by 3
@@ -197,13 +224,13 @@ end randomForestTest3
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest4` object is used to test the `RandomForest` class.
+/** The `randomForestTest4` main function is used to test the `RandomForest` class.
  *  It tests RF using unseen data.
  *  > runMain scalation.modeling.classifying.randomForestTest4
  */
 @main def randomForestTest4 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     val ycol   = xy.dim2 - 1
     for i <- xy.indices do xy(i, ycol) -= 3                                   // shift the class labels by 3
@@ -254,13 +281,13 @@ end randomForestTest4
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest5` object is used to test the `RandomForest` class.
+/** The `randomForestTest5` main function is used to test the `RandomForest` class.
  *  It tests the Random Forest classifier by specific numbers of trees.
  *  > runMain scalation.modeling.classifying.randomForestTest5
  */
 @main def randomForestTest5 (): Unit =
 
-    val nfile  = BASE_DIR + "breast_cancer.csv"
+    val nfile  = "breast_cancer.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not(?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
 
@@ -279,13 +306,13 @@ end randomForestTest5
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest6` object is used to test the `RandomForest` class.
+/** The `randomForestTest6` main function is used to test the `RandomForest` class.
  *  It tests the Random Forest classifier by specific numbers of trees.
  *  > runMain scalation.modeling.classifying.randomForestTest6
  */
 @main def randomForestTest6 (): Unit =
 
-    val nfile  = BASE_DIR + "breast_cancer.csv"
+    val nfile  = "breast_cancer.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not(?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     val fname  = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
@@ -305,13 +332,13 @@ end randomForestTest6
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `randomForestTest7` object is used to test the `RandomForest` class.
+/** The `randomForestTest7` main function is used to test the `RandomForest` class.
  *  It tests the Random Forest classifier by specific numbers of trees.
  *  > runMain scalation.modeling.classifying.randomForestTest7
  */
 @main def randomForestTest7 (): Unit =
 
-    val nfile  = BASE_DIR + "diabetes.csv"
+    val nfile  = "diabetes.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not(?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     val fname  = Array ("pregnancies", "glucose", "blood pressure", "skin thickness",

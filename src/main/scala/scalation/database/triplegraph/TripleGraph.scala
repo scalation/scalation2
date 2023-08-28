@@ -13,8 +13,6 @@ package database
 package triplegraph
 
 import scala.collection.mutable.{ArrayBuffer => Bag, Map, Set => SET}
-import scala.runtime.ScalaRunTime.stringOf
-import scala.util.control.Breaks.{break, breakable}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Triple` class holds information about a triple (3 part edge). 
@@ -27,7 +25,7 @@ case class Triple (h: Int, r: ValueType, t: Int)
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RDFTriple` class holds information about a triple (3 part edge). 
- *  May be views as a statement with a subject, predicate and object.
+ *  It may be viewed as a statement with a subject, predicate and object.
  *  @param s  the head vertex (subject = International Resourse Indentifier (IRI))
  *  @param p  the relation/edge-label (predicate)
  *  @param o  the tail vertex (object = IRI or literal value)

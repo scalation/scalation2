@@ -11,8 +11,6 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.ArrayBuffer
-
 import scalation.mathstat._
 import scalation.optimization.LassoAdmm
 
@@ -25,7 +23,7 @@ import scalation.optimization.LassoAdmm
  *  @see see.stanford.edu/materials/lsoeldsee263/05-ls.pdf
  *  @param x       the data/input m-by-n matrix
  *  @param y       the response/output m-vector
- *  @param fname_  the feature/variable names
+ *  @param fname_  the feature/variable names (defaults to null)
  *  @param hparam  the shrinkage hyper-parameter, lambda (0 => OLS) in the penalty term 'lambda * b dot b'
  */
 class LassoRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
@@ -137,8 +135,8 @@ object LassoRegression:
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `LassoRegression` object from a combined data matrix.
      *  @param xy      the combined data matrix
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use null for default)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -148,12 +146,12 @@ object LassoRegression:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `LassoRegression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the data/input m-by-n matrix
      *                     (augment with a first column of ones to include intercept in model)
      *  @param y       the response/output m-vector
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use null for default)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = hp): LassoRegression =
@@ -297,7 +295,7 @@ end lassoRegressionTest3
     import scalation.database.relation.Relation
 
     banner ("AutoMPG relation")
-    val auto_tab = Relation (BASE_DIR + "auto-mpg.csv", "auto_mpg", null, -1)
+    val auto_tab = Relation (DATE_DIR + "auto-mpg.csv", "auto_mpg", null, -1)
     auto_tab.show ()
 
     banner ("AutoMPG (x, y) dataset")
@@ -335,7 +333,7 @@ end lassoRegressionTest4
     import scalation.database.relation.Relation
 
     banner ("AutoMPG relation")
-    val auto_tab = Relation (BASE_DIR + "auto-mpg.csv", "auto_mpg", null, -1)
+    val auto_tab = Relation (DATA_DIR + "auto-mpg.csv", "auto_mpg", null, -1)
     auto_tab.show ()
 
     banner ("AutoMPG (x, y) dataset")

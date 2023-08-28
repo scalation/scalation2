@@ -14,16 +14,17 @@ package classifying
 
 import scala.collection.mutable.{LinkedHashMap, Map}
 import scala.Double.NaN
-import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
+
+import Probability.centropy
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `QoFC` enum defines the Quality of Fit (QoF) measures for classifiers.
  */
 enum QoFC (name: String):
 
-    case rSq    extends QoFC ("rSq")                        // index  0 - R-sqaured
+    case rSq    extends QoFC ("rSq")                        // index  0 - R-squared
     case p_rSq  extends QoFC ("p_rSq")                      // index  1 - pseudo R-squared (Efron's or McFadden's)
     case sst    extends QoFC ("sst")                        // index  2 - sum of squares total (ssr + sse)
     case sse    extends QoFC ("sse")                        // index  3 - sum of squares for error
@@ -32,24 +33,25 @@ enum QoFC (name: String):
     case mae    extends QoFC ("mae")                        // index  6 - mean absolute error
 
     case kappa  extends QoFC ("kappa")                      // index  7 - Cohen's kappa
-    case acc    extends QoFC ("acc")                        // index  8 - accuracy
+    case cent   extends QoFC ("cent")                       // index  8 - cross entropy
+    case acc    extends QoFC ("acc")                        // index  9 - accuracy
 
-    case p_m    extends QoFC ("p_m")                        // index  9 - mean micro-precision
-    case r_m    extends QoFC ("r_m")                        // index 10 - mean micro-recall
-    case s_m    extends QoFC ("s_m")                        // index 11 - mean micro-specificity
-    case f1_m   extends QoFC ("f1_m")                       // index 12 - mean micro-F1-measure
+    case p_m    extends QoFC ("p_m")                        // index 10 - mean micro-precision
+    case r_m    extends QoFC ("r_m")                        // index 11 - mean micro-recall
+    case s_m    extends QoFC ("s_m")                        // index 12 - mean micro-specificity
+    case f1_m   extends QoFC ("f1_m")                       // index 13 - mean micro-F1-measure
 
-    case p      extends QoFC ("p")                          // index 13 - precision (for k = 2)
-    case r      extends QoFC ("r")                          // index 14 - recall/sensitivity (for k = 2)
-    case s      extends QoFC ("s")                          // index 15 - specificity (for k = 2)
-    case f1     extends QoFC ("f1")                         // index 16 - F1-measure (for k = 2)
+    case p      extends QoFC ("p")                          // index 14 - precision (for k = 2)
+    case r      extends QoFC ("r")                          // index 15 - recall/sensitivity (for k = 2)
+    case s      extends QoFC ("s")                          // index 16 - specificity (for k = 2)
+    case f1     extends QoFC ("f1")                         // index 17 - F1-measure (for k = 2)
 
 end QoFC
 
 import QoFC._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `FitC` companion object records the indicies and labels for the
+/** The `FitC` companion object records the indices and labels for the
  *  base Quality of Fit (QoF) measures for the classification techniques.
  */
 object FitC:
@@ -69,7 +71,7 @@ object FitC:
      *  general, ordinary, micro (per class) vectors and means of the micro vectors.
      *  Ordinary are values of the last element in the micro vectors and can be
      *  interpreted as, say the precision for the last class value/label, e.g.,
-     *  y = hasCancer in {no, yes}, is the prcision of the yes prediction
+     *  y = hasCancer in {no, yes}, is the precision of the yes prediction
      *  and is most meaningful when the number of class values/labels (k) is 2.
      *  @see en.wikipedia.org/wiki/Precision_and_recall
      *  @see en.wikipedia.org/wiki/Cohen%27s_kappa
@@ -86,6 +88,7 @@ help: Quality of Fit (QoF) measures:
     mae   =  Mean Absolute error
 
     kappa =  Cohen's kappa, adjusted accuracy that accounts for agreement by chance
+    cent  =  cross entropy to measure agreement between y and yp
     acc   =  accuracy, the fraction of predictions that are correct 
 
     p     =  precision, the fraction classified as true that are actually true
@@ -111,7 +114,7 @@ help: Quality of Fit (QoF) measures:
     def fitLabel_v: Seq [String] = Seq ("p_v",                 // index  0 - micro-precision vector
                                         "r_v",                 // index  1 - micro-recall vector
                                         "s_v",                 // index  2 - micro-specificity vector
-                                        "f1_v")                // index  3 - micro-F1-measur vector
+                                        "f1_v")                // index  3 - micro-F1-measure vector
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test and report the confusion matrix and associate QoF measures.
@@ -135,7 +138,28 @@ help: Quality of Fit (QoF) measures:
     end test
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Collect qof results for a model and return them in a vector.
+    /** Test and report the confusion matrix and associate QoF measures.
+     *  @param fc  the `FitC` object
+     *  @param y_  the actual class values
+     *  @param yp  the predicted class values
+//   *  @param k   the number of class labels {0, 1, ... , k-1}
+     */
+    def test (fc: FitC, y_ : VectorD, yp: VectorD): Unit =
+        banner ("Actual Class Values/Labels")
+        println (s"y_ = $y_")                                  // actual class values
+
+        banner ("Predicted Class Values/Labels")
+        println (s"yp = $yp")                                  // predicted class values
+
+//      fc.confusion (y_.toInt, yp.toInt)                      // confusion matrix and derivatives
+        fc.diagnose (y_, yp)                                   // full diagnosis
+
+        banner ("Quality of Fit (QoF) measures")
+        println (fc.summary (null, null, null))
+    end test
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Collect QoF results for a model and return them in a vector.
      *  @param fit     the fit vector with regard to the training set
      *  @param cv_fit  the fit array of statistics for cross-validation (upon test sets)
      */
@@ -164,24 +188,26 @@ end FitC
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `FitC` trait provides methods for determining the confusion matrix as well as
  *  derived Quality of Fit (QoF) measures such as pseudo R-squared, sst, sse,
- *  accuracy, precsion, recall, specificity and Cohen's kappa coefficient.
+ *  accuracy, precision, recall, specificity and Cohen's kappa coefficient.
  *  @see `modeling.Fit`
  *  Must call the confusion method before calling the other methods.
- *  @param y  the vector of actual class values/labels
- *  @param k  the number distinct class values/labels
+ *  @param k       the number distinct class values/labels (defaults to 2)
  */
-trait FitC (y: VectorI, k: Int = 2)
+trait FitC (k: Int = 2)
       extends FitM:
 
-    private val debug = debugf ("FitC", false)                       // debug function
-    private val flaw  = flawf ("FitC")                               // flaw function
+    private val debug   = debugf ("FitC", false)                     // debug function
+    private val flaw    = flawf ("FitC")                             // flaw function
+    private val cThresh = Classifier.hp ("cThresh").toDouble         // classification/decision threshold
 
 //  from FitM: m, sse, ssr, sst, mse0, rmse, mae, rSq
 
     private var p_rSq = -1.0                                         // pseudo R-squared (Efron's or McFadden's)
+    private var kappa = -1.0                                         // Cohen's kappa coefficient
+    private var cent  = -1.0                                         // cross entropy
 
     private val cmat  = new MatrixI (k, k)                           // confusion matrix
-    private var tcmat = new MatrixI (k, k)                           // total cummulative confusion matrix
+    private var tcmat = new MatrixI (k, k)                           // total cumulative confusion matrix
     private val rsum  = new VectorI (k)                              // vector of row sums of cmat
     private val csum  = new VectorI (k)                              // vector of column sums of cmat
 
@@ -195,7 +221,7 @@ trait FitC (y: VectorI, k: Int = 2)
     def clearConfusion (): Unit = tcmat.setAll (0)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return a copy of the total cummulative confusion matrix tcmat and clear tcmat.
+    /** Return a copy of the total cumulative confusion matrix tcmat and clear tcmat.
      */
     def total_cmat (): MatrixI = { val t = tcmat.copy; tcmat.setAll (0); t }
 
@@ -210,14 +236,28 @@ trait FitC (y: VectorI, k: Int = 2)
     override def diagnose (y_ : VectorD, yp: VectorD, w: VectorD = null): VectorD =
         super.diagnose (y_, yp)                                      // compute basic QoF from `FitM`
         p_rSq = pseudo_rSq                                           // compute pseudo R^2
-        confusion (y_.toInt, yp.toInt)                               // create the confusion matrix
+        val (yy, yyp) = (y_.toInt, (yp + cThresh).toInt)
+        confusion (yy, yyp)                                          // create the confusion matrix
+        kappa = kappaf (yy, yyp)                                     // compute Cohen's kappa coefficient
+        cent  = centropy (y_, yp)                                    // compute cross entropy
         fit                                                          // return QoF vector
     end diagnose
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Diagnose the health of the model by computing the Quality of Fit (QoF) measures,
+     *  from the error/residual vector and the predicted & actual responses.
+     *  Requires the actual and predicted responses to be non-negative integers.
+     *  Must override when there negative responses.
+     *  @param y_  the actual response/output vector to use (test/full)
+     *  @param yp  the predicted response/output vector (test/full)
+     */
     def diagnose (y_ : VectorI, yp: VectorI): VectorD =
         super.diagnose (y_.toDouble, yp.toDouble)                    // compute basic QoF from `FitM`
+//      println (s"diagnose: y_ = $y_ \n yp = $yp")
         p_rSq = pseudo_rSq                                           // compute pseudo R^2
         confusion (y_, yp)                                           // create the confusion matrix
+        kappa = kappaf (y_, yp)                                      // compute Cohen's kappa coefficient
+//      cent  = centropy (y_, yp)                                    // compute cross entropy (requires real-valued yp)
         fit                                                          // return QoF vector
     end diagnose
 
@@ -233,7 +273,7 @@ trait FitC (y: VectorI, k: Int = 2)
      *  actual y (rows) with predicted yp (columns) simply use cmat.transpose, the transpose of cmat.
      *  @see www.dataschool.io/simple-guide-to-confusion-matrix-terminology
      *  @param y_  the actual class values/labels for full (y) or test (y_e) dataset
-     *  @param yp  the precicted class values/labels
+     *  @param yp  the predicted class values/labels
      */
     def confusion (y_ : VectorI, yp: VectorI): MatrixI =
         cmat.setAll (0)                                              // clear the confusion matrix
@@ -247,10 +287,10 @@ trait FitC (y: VectorI, k: Int = 2)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Contract the actual class y_ vector versus the predicted class yp vector.
-     *  @param yp  the predicted class values/labels
      *  @param y_  the actual class values/labels for full (y) or test (y_e) dataset
+     *  @param yp  the predicted class values/labels
      */
-    def contrast (yp: VectorI, y_ : VectorI = y): Unit =
+    def contrast (y_ : VectorI, yp: VectorI): Unit =
         println (s"actual    y_ = $y_")
         println (s"predicted yp = $yp")
     end contrast
@@ -330,18 +370,20 @@ trait FitC (y: VectorI, k: Int = 2)
     /** Compute Cohen's kappa coefficient that measures agreement between
      *  actual y and predicted yp classifications.
      *  @see en.wikipedia.org/wiki/Cohen%27s_kappa
+     *  @param y_  the actual response/output vector to use (test/full)
+     *  @param yp  the predicted response/output vector (test/full)
      */
-    def kappa: Double =
+    def kappaf (y_ : VectorI, yp: VectorI): Double =
         val freq_y  = new VectorI (k)
         val freq_yp = new VectorI (k)
-        for i <- y.indices do
-            freq_y(y(i))  += 1
-            freq_yp(y(i)) += 1
+        for i <- y_.indices do
+            freq_y(y_(i))  += 1
+            freq_yp(yp(i)) += 1
         end for
-        val pe = (freq_y dot freq_yp) / (y.dim * y.dim).toDouble
+        val pe = (freq_y dot freq_yp) / (y_.dim * yp.dim).toDouble
         val po = accuracy
         (po - pe) / (1.0 - pe)
-    end kappa
+    end kappaf
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the Quality of Fit (QoF) measures corresponding to the labels given
@@ -350,21 +392,22 @@ trait FitC (y: VectorI, k: Int = 2)
     def fit: VectorD =
         val (p, r, s) = (pv.last, rv.last, sv.last)                       // ordinary precision, recall and specificity
 
-        VectorD (rSq, p_rSq, sst, sse, mse0, rmse, mae, kappa, accuracy,  // common QoF measures
+        VectorD (rSq, p_rSq, sst, sse, mse0, rmse, mae,                   // general QoF measures
+                 kappa, cent, accuracy,                                   // QoF measures for classification 
                  mean (pv), mean (rv), mean (sv), mean (f1v),             // means of precision, recall, specificity and F1
                  p, r, s, f1_measure (p, r))                              // most meaningful when k = 2
     end fit
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the Quality of Fit (QoF) vector micor-measures, i.e., measures for
+    /** Return the Quality of Fit (QoF) vector micro-measures, i.e., measures for
      *  each class. 
      */
     def fitMicroMap: Map [String, VectorD] =
         val lab = fitLabel_v
-        LinkedHashMap (lab(0) -> pv,                                      // mirco-precision vector
-                       lab(1) -> rv,                                      // mirco-recall vector
-                       lab(2) -> sv,                                      // mirco-specificity vector
-                       lab(3) -> f1v)                                     // mirco-F1 vector
+        LinkedHashMap (lab(0) -> pv,                                      // micro-precision vector
+                       lab(1) -> rv,                                      // micro-recall vector
+                       lab(2) -> sv,                                      // micro-specificity vector
+                       lab(3) -> f1v)                                     // micro-F1 vector
     end fitMicroMap
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -381,18 +424,18 @@ trait FitC (y: VectorI, k: Int = 2)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a summary report with diagnostics and the overall Quality of Fit (QoF).
+     *  Classifier should override this method.
      *  @param x_     the testing/full data/input matrix
      *  @param fname  the array of feature/variable names
      *  @param b      the parameters/pmf for the model
      *  @param vifs   the Variance Inflation Factors (VIFs)
      */
-    def summary (x_ : MatrixD, fname: Array [String], b: VectorD, vifs: VectorD = null): String =
+    def summary (x_ : MatrixD = null, fname: Array [String] = null,
+                 b: VectorD = null, vifs: VectorD = null): String =
         val fit1 = FitM.fitMap (fit, QoFC.values.map (_.toString))
         val fit2 = fitMicroMap
 
         var sb = new StringBuilder ("-" * 58 + "\nSUMMARY")
-        sb.append ("\n" + "-" * 58)
-        sb.append ("\nfname = " + stringOf (fname))
         sb.append ("\n" + "-" * 58)
         sb.append ("\nparameter = " + b)
         sb.append ("\n" + "-" * 58)
@@ -413,15 +456,7 @@ end FitC
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `TestFit` class can be used for comparing two vectors on the basis of QoF.
- *  @param y  the response vector
- *  @param k  the number of classes
- */
-class TestFitC (y: VectorI, k: Int) extends FitC (y, k)
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `fitCTest` object is used to test the `FitC` trait.
+/** The `fitCTest` main function is used to test the `FitC` trait.
  *  > runMain scalation.modeling.classifying.fitCTest
  */
 @main def fitCTest (): Unit =
@@ -430,13 +465,15 @@ class TestFitC (y: VectorI, k: Int) extends FitC (y, k)
     val yp = VectorI (0, 0, 0, 1, 2, 0, 0, 1, 1, 2, 0, 1, 1, 1, 2)   // predicted
     val k  = 3                                                       // three classes
 
-    FitC.test (new TestFitC (y, k), y, yp, k)
+    object TestFitC extends FitC (k)
+
+    FitC.test (TestFitC, y, yp, k)
 
 end fitCTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `fitCTest2` object is used to test the `FitC` trait.
+/** The `fitCTest2` main function is used to test the `FitC` trait.
  *  @see www.quora.com/How-do-I-compute-precision-and-recall-values-for-a-dataset
  *  > runMain scalation.modeling.classifying.fitCTest2
  */
@@ -446,18 +483,38 @@ end fitCTest
     val yp = VectorI (1, 0, 0, 1, 1, 1, 0, 0, 1, 1)                   // predicted
     val k  = 2                                                        // two classes
 
-    FitC.test (new TestFitC (y, k), y, yp, k)
+    object TestFitC extends FitC (k)
+
+    FitC.test (TestFitC, y, yp, k)
 
 end fitCTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `fitCTest3` object is used to test the `FitC` class.
- *  @see towardsdatascience.com/multi-class-metrics-made-simple-part-i-precision-and-recall-9250280bddc2
- *  Note: ScalaTion's confusion matrix is the transpose of the one on the Website
+/** The `fitCTest3` main function is used to test the `FitC` trait.
+ *  @see www.quora.com/How-do-I-compute-precision-and-recall-values-for-a-dataset
  *  > runMain scalation.modeling.classifying.fitCTest3
  */
 @main def fitCTest3 (): Unit =
+
+    val y  = VectorI (1,   1,   1,   1,   0,   0,   0,   0,   0)      // actual
+    val yp = VectorD (0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1)    // predicted
+    val k  = 2                                                        // two classes
+
+    object TestFitC extends FitC (k)
+
+    FitC.test (TestFitC, y.toDouble, yp)
+
+end fitCTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `fitCTest4` main function is used to test the `FitC` class.
+ *  @see towardsdatascience.com/multi-class-metrics-made-simple-part-i-precision-and-recall-9250280bddc2
+ *  Note: ScalaTion's confusion matrix is the transpose of the one on the Website
+ *  > runMain scalation.modeling.classifying.fitCTest4
+ */
+@main def fitCTest4 (): Unit =
 
     val k  = 3                                                        // three classes: cat, fish, hen
 //                              y yp
@@ -491,7 +548,10 @@ end fitCTest2
 
     println (FitC.help)
     val (y, yp) = (yyp(?, 0).toInt, yyp(?, 1).toInt)
-    FitC.test (new TestFitC (y, k), y, yp, k)
 
-end fitCTest3
+    object TestFitC extends FitC (k)
+
+    FitC.test (TestFitC, y, yp, k)
+
+end fitCTest4
 

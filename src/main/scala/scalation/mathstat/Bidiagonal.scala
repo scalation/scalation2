@@ -18,8 +18,6 @@ package mathstat
 
 import math.{abs, sqrt}
 
-import Householder.house
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Bidiagonal` class is used to create a bidiagonal matrix from matrix a.
  *  It uses the Householder Bidiagonalization Algorithm to compute orthogonal

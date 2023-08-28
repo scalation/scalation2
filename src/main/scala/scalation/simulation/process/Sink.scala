@@ -31,7 +31,7 @@ class Sink (name: String, at: Array [Double])
 
     private val debug = debugf ("Sink", true)                          // debug function 
 
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("init", s"located at ${stringOf (at)}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width 'w' and height 'h'.

@@ -112,7 +112,7 @@ end mergeSortIndirectTest
  */
 @main def mergeSortIndirectTest2 (): Unit =
 
-    import scalation.mathstat.MatrixI
+    import scalation.mathstat.MatrixI                          // WARNING: package inversion (but only for testing)
 
     val mat = MatrixI ((9, 2), 2, 2,
                                1, 1,

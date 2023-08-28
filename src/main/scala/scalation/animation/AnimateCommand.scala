@@ -58,10 +58,12 @@ end CommandType
  *  @param time      simulation time when the command is to be performed
  *  @param from_eid  the 'eid' of the origination node (only for edges)
  *  @param to_eid    the 'eid' of the destination node (only for edges)
+ *  @param shift     amount of distance to shift the shape to be resolved by an angle
+ *                   e.g. to accommodate a bundle of edges in a composite edge( only for edges)
  */
 case class AnimateCommand (action: CommandType, eid: Int, shape: Shape, label: String,
                            primary: Boolean, color: Color, pts: Array [Double], time: Double,
-                           from_eid: Int = -1, to_eid: Int = -1):
+                           from_eid: Int = -1, to_eid: Int = -1, shift: Int = 0):
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** This method compares two `AnimateCommand` objects to see which one has

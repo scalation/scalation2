@@ -13,7 +13,7 @@ package scalation
 package mathstat
 
 import scala.math.{abs, signum, sqrt}
-import scala.util.control.Breaks.{breakable, break}
+//import scala.util.control.Breaks.{breakable, break}
 
 import Householder.house
 import MatrixD.{eye, outer}

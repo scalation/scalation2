@@ -14,13 +14,12 @@ package scalation
 package modeling
 package forecasting
 
-import scala.collection.mutable.Set
-
 import scalation.mathstat._
 import scalation.optimization.L_BFGS_B
 import scalation.random._
 
 import Fit._
+import Forecaster.differ
 //import RollingValidation.trSize
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -54,18 +53,18 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
 
     modelName = "SimpleExpSmoothing"
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reset the smoothing parameter α.
      *  @param a  the smoothing parameter
      */
     def reset (a: Double): Unit = α = a
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Toggle the opt flag that indicates whether optimization should be used to set α.
      */
     def toggleOpt (): Unit = opt = ! opt
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Smooth the time-series data y, returning the leveled/smoothed data l.
      *  May be viewed as unoptimized training.
      *  @see Smoothing Equation in section 7.1.
@@ -80,7 +79,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         s
     end smooth
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the `SimpleExpSmoothing` model on the time-series data, by finding the value
      *  for the smoothing parameter α that minimizes the sum of squared errors sse.
      *  @param x_null  the data/input matrix (ignored, pass null)
@@ -88,7 +87,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
      */
     def train (x_null: MatrixD, y_ : VectorD): Unit =
  
-        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         /*  The objective function to be minimized (sum of squared errors) by `L_BFGS_B`.
          *  @param x  the input vector VectorD (α) to be optimized
          */
@@ -104,7 +103,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         debug ("train", s"α = $α")
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of an SES forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -120,7 +119,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of an SES forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -136,12 +135,12 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         (yfh, diagnose (yy, yfh))                                      // return predictions and QoF vector
     end testF
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the parameter vector.
      */
     override def parameter: VectorD = VectorD (α)
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict a value for y_t+1 using the 1-step ahead forecasts.
      *      y_t+1 = s_t+1
      *  @see predictAll in `Forecaster`
@@ -157,7 +156,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
      */
     override def predictAll (y_ : VectorD): VectorD = s
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a vector of size h, of 1 through h-steps ahead forecasts for the model.
      *      forecast the following time points:  t+1, ..., t-1+h.
      *  Note, must create the yf matrix before calling the forecast method.
@@ -193,7 +192,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         yf(1 until yf.dim)
     end forecast2
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forecast values for all y_.dim time points at horizon h (h-steps ahead).
      *  Assign to forecasting matrix and return h-step ahead forecast.
      *  @param yf  the forecasting matrix (time x horizons)
@@ -209,7 +208,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
         yf(?, h)                                                       // return the h-step ahead forecast vector
     end forecastAt
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forecast values for all m time points and all horizons (1 through h-steps ahead).
      *  Record these in the yf matrix, where
      *      yf(t, k) = k-steps ahead forecast for y_t
@@ -218,17 +217,19 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
      *  @param h   the maximum forecasting horizon, number of steps ahead to produce forecasts
      *  @param y_  the actual values to use in making predictions
      */
-    def forecastAll (h: Int, y_ : VectorD): MatrixD =
+//  def forecastAll (h: Int, y_ : VectorD): MatrixD =
+    override def forecastAll (y_ : VectorD, h: Int): MatrixD =
         val m = y_.dim
-        yf = new MatrixD (m, h+1)                                        // forecasts for all time points t & horizons to h
-        sf = new VectorD (h+1)
+        yf     = new MatrixD (m, h+1)                                    // forecasts for all time points t & horizons to h
+        val s_ = new MatrixD (m, h+1)                                    // state values, per time x horizon
         yf(?, 0) = y                                                     // first column is actual values, horizon 0
+        s_(?, 0) = s
         for k <- 1 to h do
             yf(0, k) = y(0)                                              // copy first actual value
-            sf(0)    = s(0)
+            s_(0, k) = s(0)
             for t <- 1 until m do                                        // forecast the rest
-                 yf(t, k) = sf(k-1)
-                 sf(k)    = α * yf(t-1, k-1) + (1 - α) * sf(k-1)
+                 yf(t, k) = s_(t, k-1)
+                 s_(t, k) = α * yf(t-1, k-1) + (1 - α) * s_(t-1, k-1)
             end for
             debug ("forecastAll", s"yf(?, $k) = ${yf(?, k)}")
         end for
@@ -247,7 +248,7 @@ object SimpleExpSmoothing:
     /** Base hyper-parameter specification for `SimpleExpSmoothing`
      */
     val hp = new HyperParameter;
-    hp += ("α", 0.5, 0.5)                                        // default value for the smoothing parameter
+    hp += ("α", 0.9, 0.9)                                        // default value for the smoothing parameter
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `SimpleExpSmoothing` object.
@@ -262,7 +263,7 @@ object SimpleExpSmoothing:
 end SimpleExpSmoothing
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `simpleExpSmoothingTest` main function tests the `AR` class on simulated data.
  *  Test predictions (one step ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
@@ -288,14 +289,36 @@ end simpleExpSmoothingTest
 @main def simpleExpSmoothingTest2 (): Unit =
 
     import Example_LakeLevels.y
-   
-    banner (s"Build AR(1) model")
-    val ar  = new AR (y)                                               // time series model AR(1)
-    ar.trainNtest ()()                                                 // train and test on full dataset
 
-    banner (s"Build SimpleExpSmoothing model")
+    val m  = y.dim
+    val hh = 2
+   
+    banner ("Build AR(1) model")
+    val ar1 = new AR (y)                                               // time series model AR(1)
+    ar1.trainNtest ()()                                                // train and test on full dataset
+
+    banner ("Build SimpleExpSmoothing model")
     val mod = new SimpleExpSmoothing (y)                               // time series model SimpleExpSmoothing
-    mod.trainNtest ()()                                                // train and test on full dataset
+    val (yp, qof) = mod.trainNtest ()()                                // train and test on full dataset
+
+    banner ("ForecastAll ...")
+    val yf = mod.forecastAll (y, hh)                                   // forecast h-steps ahead (h = 1 to hh) for all y
+    println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
+    println (s"yf = $yf")
+    assert (yf(?, 0)(0 until m) == y)                                  // column 0 must agree with actual values
+    differ (yf(?, 1)(1 until m), yp)
+    assert (yf(?, 1)(1 until m) == yp)                                 // column 1 must agree with one step-ahead predictions
+
+    for h <- 1 to hh do
+        banner (s"Forecasts for horizon $h")
+        val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
+        val yy = y(h until m)                                          // actual response aligned with yfh
+        println (s"Evaluate QoF for horizon $h:")
+        println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
+        println (s"Fit.mae (y, yfh, h)  = ${Fit.mae (y, yfh, h)}")     // evaluate h-steps ahead forecasts with MAE
+        println (s"Fit.mae_n (y, 1)     = ${Fit.mae_n (y, 1)}")        // evaluate h-steps ahead forecasts with MAE_n
+        println (s"Fit.mase (y, yfh, h) = ${Fit.mase (y, yfh, h)}")    // evaluate h-steps ahead forecasts with MASE
+    end for
 
 /*
     for h <- 1 to 4 do                                                 // h-steps ahead  forecast
@@ -354,7 +377,7 @@ end simpleExpSmoothingTest3
     mod.trainNtest ()()                                          // train-test use optimal α
 
 // FIX
-    val yf = mod.forecastAll (h, y)
+    val yf = mod.forecastAll (y, h)
     for k <- 1 to h do                                           // h-steps ahead  forecast
         banner (s"forecastAll h = $h")
         new Plot (null, y, yf(k), s"SES: Plot y and yf(${k})", lines = true)

@@ -12,7 +12,6 @@ package scalation
 package modeling
 
 
-import scala.collection.mutable.IndexedSeq
 import scala.math.sqrt
 import scala.runtime.ScalaRunTime.stringOf
 
@@ -27,7 +26,7 @@ import scalation.mathstat._
  *  @param x       the data/input matrix augmented with a first column of ones
  *                 (only use the first two columns [1, x1])
  *  @param y       the response/output vector
- *  @param fname_  the feature/variable names (only use the first two names)
+ *  @param fname_  the feature/variable names (only use the first two names)(defaults to null)
  */
 class SimpleRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null)
       extends Predictor (x, y, if fname_ == null then null else fname_.slice (0, 2), null)
@@ -133,7 +132,7 @@ object SimpleRegression:
      *  Take the first two columns for the predictor and the last column for the response.
      *  @see `SimplerRegression` for a model without an intercept parameter
      *  @param xy     the combined data matrix
-     *  @param fname  the feature/variable names
+     *  @param fname  the feature/variable names (defaults to null)
      */
     def apply (xy: MatrixD, fname: Array [String] = null): SimpleRegression =
         new SimpleRegression (xy(?, 0 until 2), xy(?, xy.dim2-1), fname)
@@ -155,9 +154,9 @@ object SimpleRegression:
      *  the column of ones (form matrix from two column vectors [1 x^2]).
      *  @param x      the data/input m-by-1 vector (to be squared)
      *  @param y      the response/output m-vector
-     *  @param fname  the feature/variable names
+     *  @param fname  the feature/variable names (defaults to null)
      */
-    def quadratic (x: VectorD, y: VectorD, fname: Array [String]): SimpleRegression =
+    def quadratic (x: VectorD, y: VectorD, fname: Array [String] = null): SimpleRegression =
         new SimpleRegression (MatrixD.one (x.dim) :^+ x~^2, y, fname)
     end quadratic
 
@@ -167,7 +166,7 @@ object SimpleRegression:
      *  Caveat:  assumes matrix x has a first column of all one.
      *  @param x      the m-by-n data/input matrix
      *  @param y      the response/output m-vector
-     *  @param fname  the feature/variable names
+     *  @param fname  the feature/variable names (defaults to null)
      */
     def best (x: MatrixD, y: VectorD, fname: Array [String] = null): SimpleRegression =
         val j = x.corr (y, 1).argmag () + 1                          // use best column
@@ -249,6 +248,7 @@ end simpleRegressionTest2
  */
 @main def simpleRegressionTest3 (): Unit =
 
+/*
     // 5 data points:      one x1
     val x = MatrixD ((5, 2), 1, 0,                                 // x 5-by-2 matrix
                              1, 1,
@@ -256,19 +256,48 @@ end simpleRegressionTest2
                              1, 3,
                              1, 4)
     val y = VectorD (2, 3, 5, 4, 6)                                // y vector
+*/
+
+    // 6 data points:      one x1
+    val ox = MatrixD ((6, 2), 1, 1,                                 // x 6-by-2 matrix
+                             1, 2,
+                             1, 3,
+                             1, 4,
+                             1, 5,
+                             1, 6)
+    val x = ox(?, 1)
+    val y = VectorD (1, 3, 4, 6, 4, 3)                             // y vector
 
     banner ("Test3: Simple Regression Model: y = b_0 + b_1 x + e")
-    println (s"x = $x")
-    println (s"y = $y")
+    println (s"ox = $ox")
+    println (s"y  = $y")
 
-    val mod = new SimpleRegression (x, y)                          // create a simple regression model
+    val mod = new SimpleRegression (ox, y)                         // create a simple regression model
     mod.trainNtest ()()                                            // train and test the model
+
+    banner ("Low Level Calculation Check")
+    val n   = y.dim
+    val xm  = x.mean
+    val ym  = y.mean
+    val xdy = x dot y
+    val xdx = x dot x
+    val b1  = (xdy - n * xm * ym) / (xdx - n * xm * xm)
+    val b0  = ym - b1 * xm
+    println (s"xm = $xm, ym = $ym, xdy = $xdy, xdx = $xdx, b1 = $b1, b0 = $b0")
 
     val z = VectorD (1, 5)                                         // predict y for new point z
     println (s"predict ($z) = ${mod.predict (z)}")
 
-    val yp = mod.predict (x)
-    new Plot (x(?, 1), y, yp, "plot y and yp vs. x", lines = true)
+    val yp = mod.predict (ox)
+    new Plot (x, y, yp, "plot y and yp vs. x", lines = true)
+
+    val qrg = SymbolicRegression.quadratic (MatrixD.fromVector (x), y)
+    val yq = qrg.trainNtest ()()._1
+    new Plot (x, y, yq, "plot y and yq vs. x", lines = true)
+
+    val trg = new TranRegression (ox, y, tran = sqrt, itran = sq)
+    val yt = trg.trainNtest ()()._1
+    new Plot (x, y, yt, "plot y and yt vs. x", lines = true)
 
 end simpleRegressionTest3
 
@@ -388,7 +417,7 @@ end simpleRegressionTest6
  */
 @main def simpleRegressionTest7 (): Unit =
 
-    import Example_AutoMPG.{xy, x, ox, y, x_fname, ox_fname}
+    import Example_AutoMPG.{xy, x, y, x_fname}
 
     banner ("Null Model")
     val nm = new NullModel (y)
@@ -420,8 +449,8 @@ end simpleRegressionTest7
  */
 @main def simpleRegressionTest8 (): Unit =
 
-    val x  = VectorD (1, 2, 3, 4, 5)
-    val y  = VectorD (1, 3, 3, 5, 4)
+    val x  = VectorD (1, 2, 3, 4, 5, 6)
+    val y  = VectorD (1, 3, 3, 5, 4, 4)
     val ox = MatrixD.one (x.dim) :^+ x
 
     val x_fname  = Array ("x")
@@ -448,6 +477,22 @@ end simpleRegressionTest7
     println (s"confI = ${mod.confInterval ()}")
     println (mod.summary ())
     new Plot (null, y, mod.predict (mod.getX), s"${mod.modelName} y vs yp", lines = true)
+
+    banner ("SymbolicRegression.quadratic")
+    val qrg = SymbolicRegression.quadratic (MatrixD (x).transpose, y, x_fname)
+    qrg.trainNtest ()()
+    println (s"mse   = ${qrg.mse_}")
+//  println (s"confI = ${qrg.confInterval ()}")
+    println (qrg.summary ())
+    new Plot (null, y, qrg.predict (qrg.getX), s"${qrg.modelName} y vs yp", lines = true)
+
+    banner ("TranRegression")
+    val trd = new TranRegression (ox, y, ox_fname, tran = sqrt, itran = sq)
+    trd.trainNtest ()()
+    println (s"mse   = ${trd.mse_}")
+//  println (s"confI = ${trd.confInterval ()}")
+    println (trd.summary ())
+    new Plot (null, y, trd.predict (trd.getX), s"${trd.modelName} y vs yp", lines = true)
 
 end simpleRegressionTest8
 

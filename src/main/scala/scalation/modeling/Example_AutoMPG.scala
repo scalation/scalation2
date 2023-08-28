@@ -434,12 +434,20 @@ object Example_AutoMPG:
     private val n = xy.dim2 - 1                                        // last column in xy
 
     val (x, y) = (xy.not(?, n), xy(?, n))                              // (data/input matrix, response column)
+    val yy     = MatrixD.fromVector (y)                                // turn the m-vector y into an m-by-1 matrix 
     val _1     = VectorD.one (xy.dim)                                  // vector of all ones
     val oxy    = _1 +^: xy                                             // prepend a column of all ones to xy
     val ox     = _1 +^: x                                              // prepend a column of all ones to x
 
     val x_fname: Array [String] = xr_fname.take (6)
     val ox_fname: Array [String] = Array ("intercept") ++ x_fname
+
+    val x046_fname = Array (ox_fname(0), ox_fname(4), ox_fname(6))
+    val x046 = ox(?, Array (0, 4, 6))                                  // best two features with intercept
+    for i <- x046.indices do x046(i, 1) /= 1000.0                      // put weight in 1000 pound units
+
+    val x46_fname = Array (ox_fname(4), ox_fname(6))
+    val x46 = x046.not(?, 0)                                           // best two features without intercept
 
 end Example_AutoMPG
 
@@ -532,10 +540,34 @@ end example_AutoMPG_SimpleRegression
  */
 @main def example_AutoMPG_Regression (): Unit =
 
+    banner ("AutoMPG Correlation Matrix")
+    println (oxy.corr)
+
     banner ("Regression model: y = b₀ + b₁*x₁ + b₂*x₂ + b₃*x₃ + b₄*x₄ + b₅*x₅ + b₆*x₆")
-    val mod = Regression (oxy, ox_fname)()                             // create a Regression Model (with intercept)
+    var mod = Regression (oxy, ox_fname)()                             // create a Regression Model (with intercept)
+    mod.trainNtest ()()                                                // train and test the model
+    println (mod.summary ())                                           // produce summary statistics
+
+    banner ("Regression model: y = b₀ + b₄*x₄ + b₆*x₆")
+    mod = new Regression (x046, y, x046_fname)                         // create a Regression Model from columns 0, 4, 6
     mod.trainNtest ()()                                                // train and test the model
     println (mod.summary ())                                           // produce summary statistics
 
 end example_AutoMPG_Regression
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `example_AutoMPG_QuadRegression` main function performs `quadratic` on the UCI
+ *  AutoMPG dataset.
+ *  @see archive.ics.uci.edu/ml/datasets/Auto+MPG
+ *  > runMain scalation.modeling.example_AutoMPG_QuadRegression
+ */
+@main def example_AutoMPG_QuadRegression (): Unit =
+
+    banner ("Quad Regression model: y = b₀ + b₄*x₄ + b₆*x₆ + b7*x4^2 + b8*x6^2")
+    val mod = SymbolicRegression.quadratic (x46, y, x46_fname)         // create a Quad Regression Model from columns 4, 6
+    mod.trainNtest ()()                                                // train and test the model
+    println (mod.summary ())                                           // produce summary statistics
+
+end example_AutoMPG_QuadRegression
 

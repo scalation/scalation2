@@ -15,8 +15,6 @@ package scalation
 package database
 package logic
 
-import scala.util.control.Breaks.{break, breakable}
-
 type BoolVec = IndexedSeq [Boolean]
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -44,6 +42,7 @@ end powerset
  */
 def satSolver (f: BoolVec => Boolean, n: Int): Boolean = powerset (n).exists (f(_))
 /*
+    import scala.util.control.Breaks.{break, breakable}
     var satisfy = false
     breakable {
         for x <- powerset (n) do if f(x) then { satisfy = true; break () }

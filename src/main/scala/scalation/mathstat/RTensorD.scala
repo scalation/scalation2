@@ -64,7 +64,7 @@ class RTensorD (val dim: Int, val dim2: VectorI, val dim3: Int,
         v = Array.ofDim [Array [Array [Double]]] (dim)
         for i <- indices do v(i) = Array.ofDim (dim2(i), dim3)
     else if dim != v.length || dim3 != v(0)(0).length then
-        flaw ("constructor", "dimensions are wrong")
+        flaw ("init", "dimensions are wrong")
     end if
 
     /** Format string used for printing vector values (change using setFormat)

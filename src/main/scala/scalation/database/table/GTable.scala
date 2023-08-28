@@ -14,9 +14,7 @@ package table
 
 import com.google.gson.Gson
 
-import java.io.{BufferedReader, PrintWriter}
-import java.io.{FileInputStream, FileOutputStream}
-import java.io.{ObjectInputStream, ObjectOutputStream}
+import java.io.PrintWriter
 
 import scala.collection.mutable.{ArrayBuffer => Bag, Map}
 import scala.math.min
@@ -91,7 +89,7 @@ end Vertex
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `GTable` companion object provides factory functions for creating graph-tables.
+/** The `GTable` companion object provides factory methods for creating graph-tables.
  *  Supported domains/data-types are 'D'ouble, 'I'nt, 'L'ong, 'S'tring, and 'T'imeNum.
  */
 object GTable:

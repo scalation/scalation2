@@ -12,7 +12,7 @@ package graph_pm
 
 import scala.collection.mutable.{Map, Queue}
 import scala.collection.mutable.{Set => SET}
-import scala.math.{abs, pow}
+import scala.math.abs
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.random._

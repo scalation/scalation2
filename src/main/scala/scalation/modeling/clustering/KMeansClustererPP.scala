@@ -12,10 +12,8 @@ package scalation
 package modeling
 package clustering
 
-import scala.util.control.Breaks.{breakable, break}
-
 import scalation.mathstat._
-import scalation.random.{Discrete, PermutedVecI, Randi, RandomSeeds}
+import scalation.random.{Discrete, Randi, RandomSeeds}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `KMeansClustererPP` class cluster several vectors/points using

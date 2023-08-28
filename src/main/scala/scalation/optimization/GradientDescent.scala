@@ -9,8 +9,6 @@
 package scalation
 package optimization
 
-import scala.math.{abs, max}
-
 import scalation.calculus.Differential.∇
 import scalation.mathstat._
 
@@ -74,17 +72,17 @@ class GradientDescent (f: FunctionV2S, exactLS: Boolean = true)
         var y    = VectorD.nullv                              // next point
         var fy   = 0.0                                        // objective function at next point
         var dir  = if gr != null then - gr(x)                 // initial direction is -gradient: use partials
-                   else - ∇(f, x)                             //                                 estimate gradient
+                   else - ∇(f)(x)                             //                                 estimate gradient
         var dist = 1.0                                        // distance between current and next point
         var down = true                                       // moving down flag
 
-        for k <- 1 to MAX_ITER if down && dist > toler && dir.normSq > toler do
+        for k <- 1 to MAX_IT if down && dist > toler && dir.normSq > toler do
             banner (s"solve iteration $k: fx = $fx, x = $x")
 
             y   = x + dir * lineSearch (x, dir, step)         // determine the next point
             fy = f(y)                                         // objective function value for next point
             dir = if gr != null then - gr(y)                  // next search direction: use partials
-                  else - ∇(f, y)                              //                        estimate gradient
+                  else - ∇(f)(y)                              //                        estimate gradient
 
             debug ("solve", s"k = $k, y = $y, fy = $fy, dir = $dir")
 

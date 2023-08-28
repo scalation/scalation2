@@ -9,6 +9,7 @@
  *
  *  @see www.stat.uchicago.edu/~lekheng/work/icm1.pdf
  *  @see www.math.ias.edu/csdm/files/13-14/Gnang_Pa_Fi_2014.pdf
+ *  @see www.kolda.net/publication/TensorReview.pdf
  *  @see tspace.l
  */
 
@@ -39,6 +40,7 @@ end comple
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TensorD` class is a simple implementation for 3-dimensional tensors.
  *  The names of the dimensions corresponds to MATLAB (row, column, sheet).
+ *  @see www.kolda.net/publication/TensorReview.pdf for details on layout
  *  @see `RTensorD` for non-rectangular (ragged) tensors.
  *  @param dim   size of the 1st level/dimension (row) of the tensor (height)
  *  @param dim2  size of the 2nd level/dimension (column) of the tensor (width)
@@ -61,7 +63,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     if v == null then
         v = Array.ofDim [Double] (dim, dim2, dim3)
     else if dim != v.length || dim2 != v(0).length || dim3 != v(0)(0).length then
-        flaw ("constructor", "dimensions are wrong")
+        flaw ("init", "dimensions are wrong")
     end if
 
     /** Format string used for printing vector values (change using setFormat)
@@ -87,25 +89,75 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     def setFormat (newFormat: String): Unit = fString = newFormat
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Retrieve the i, j, k element from the tensor.
-     *  @param i  1st dimension (row) index of the tensor
-     *  @param j  2nd dimension (column) index of the tensor
-     *  @param k  3rd dimension (sheet) index of the tensor
+    /** Retrieve the i, j, k-th SCALAR element from the tensor x_ijk.
+     *  @param i  the 1st dimension (row) index of the tensor
+     *  @param j  the 2nd dimension (column) index of the tensor
+     *  @param k  the 3rd dimension (sheet) index of the tensor
      */
     def apply (i: Int, j: Int, k: Int): Double = v(i)(j)(k)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Retrieve the i, j vector from the tensor.
-     *  @param i  1st dimension (row) index of the tensor
-     *  @param j  2nd dimension (column) index of the tensor
+    /** Retrieve the i, j-th VECTOR from the tensor x_ij:.
+     *  @param i  the 1st dimension (row) index of the tensor
+     *  @param j  the 2nd dimension (column) index of the tensor
      */
     def apply (i: Int, j: Int): VectorD = VectorD (v(i)(j).toIndexedSeq)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Retrieve the i matrix from the tensor.
-     *  @param i  1st dimension (row) index of the tensor
+    /** Retrieve the i, k-th VECTOR from the tensor x_i:k.
+     *  @param i    the 1st dimension (row) index of the tensor
+     *  @param all  use the all columns indicator ?
+     *  @param k    the 3rd dimension (sheet) index of the tensor
+     */
+    def apply (i: Int, all: Char, k: Int): VectorD = 
+        val a = Array.ofDim [Double] (dim2)
+        for j <- 0 until dim2 do a(j) = v(i)(j)(k)
+        new VectorD (dim2, a)
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Retrieve the j, k-th VECTOR from the tensor x_:jk.
+     *  @param all  use the all rows indicator ?
+     *  @param j    the 2nd dimension (column) index of the tensor
+     *  @param k    the 3rd dimension (sheet) index of the tensor
+     */
+    def apply (all: Char, j: Int, k: Int): VectorD = 
+        val a = Array.ofDim [Double] (dim)
+        for i <- 0 until dim do a(i) = v(i)(j)(k)
+        new VectorD (dim, a)
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the i-th ROW FIXED MATRIX from the tensor (horizontal slice x_i::).
+     *  @see www.kolda.net/publication/TensorReview.pdf
+     *  @param i  the 1st dimension (row) index of the tensor
      */
     def apply (i: Int): MatrixD = new MatrixD (dim2, dim3, v(i))
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Retrieve the j-th COLUMN FIXED MATRIX from the tensor (lateral slice x_:j:).
+     *  @see www.kolda.net/publication/TensorReview.pdf
+     *  @param all  use the all rows indicator ?
+     *  @param j    the 2nd dimension (column) index of the tensor
+     */
+    def apply (all: Char, j: Int): MatrixD =
+        val a = Array.ofDim [Double] (dim, dim3)
+        for i <- 0 until dim; k <- 0 until dim3 do a(i)(k) = v(i)(j)(k)
+        new MatrixD (dim, dim3, a)
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Retrieve the k-th SHEET FIXED MATRIX from the tensor (frontal slice x_::k).
+     *  @see www.kolda.net/publication/TensorReview.pdf
+     *  @param all   use the all rows indicator ?
+     *  @param all2  use the all columns indicator ?
+     *  @param k     the 3rd dimension (sheet) index of the tensor
+     */
+    inline def apply (all: Char, all2: Char, k: Int): MatrixD =
+        val a = Array.ofDim [Double] (dim, dim2)
+        for i <- 0 until dim; j <- 0 until dim2 do a(i)(j) = v(i)(j)(k)
+        new MatrixD (dim, dim2, a)
+    end apply
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Retrieve the ii._1 to ii._2 row slice of the tensor.
@@ -393,6 +445,8 @@ end TensorD
  */
 object TensorD:
 
+    private val flaw = flawf ("TensorD")                               // flaw function
+
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Build a tensor from the argument list x.
      *  @param n1  the first dimension
@@ -408,6 +462,20 @@ object TensorD:
         end for
         t
     end apply 
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the cross-correlation tensor for the given data matrix for up to
+     *  maxLags.
+     *  @param x        the given data matrix (row are instances, columns are variables)
+     *  @param maxLags  the maximum number of lags to consider
+    def crossCorr (x: MatrixD, maxLags: Int = 10): TensorD =
+        val n = x.dim2
+        if 2 * maxLags >= x.dim then flaw ("crossCorr", "not enough data for maxLags = $maxLags") 
+        val ccorr = new TensorD (maxLags+1, n, n)
+        for l <- 0 to maxLags do ccorr(l) = x.laggedCorr (l)
+        ccorr
+    end crossCorr
+     */
 
 end TensorD
 
@@ -494,11 +562,56 @@ end tensorDTest
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TensorDTest2` main function is used to test the `TensorD` class.
- *  It tests the use of tensors and matrices for convolutional operation needed in
- *  Convolutional Nets.
+ *  It tests pulling matrices and vectors from the tensor.
  *  > runMain scalation.mathstat.tensorDTest2
  */
 @main def tensorDTest2 (): Unit =
+
+    // 4 rows, 3 columns, 2 sheets - x_ijk
+    //                                              row columns sheet
+    val x = TensorD ((4, 3, 2), 1,  2,  3,       //  0   0,1,2    0
+                                4,  5,  6,       //  1   0,1,2    0
+                                7,  8,  9,       //  2   0,1,2    0
+                               10, 11, 12,       //  3   0,1,1    0
+
+                               13, 14, 15,       //  0   0,1,2    1
+                               16, 17, 18,       //  1   0,1,2    1
+                               19, 20, 21,       //  2   0,1,2    1
+                               22, 23, 24)       //  3   0,1,2    1
+
+     banner ("Tensor with dimensions (rows, columns, sheets) = (4, 3, 2)")
+     println ("x          = " + x)
+
+     // SCALARS
+     banner ("Scalar element at index position (i, j, k) = (0, 0, 0)")
+     println ("x(0, 0, 0) = " + x(0, 0, 0))                      // x_000  - element i=0, j=0, k=0
+
+     // VECTORS
+     banner ("Vector at index position (i, j) = (0, 0)")
+     println ("x(0, 0)    = " + x(0, 0))                         // x_00:  - vector  i=0, j=0, k=all
+     banner ("Vector at index position (i, ?, k) = (0, all, 0)")
+     println ("x(0, ?, 0) = " + x(0, ?, 0))                      // x_0:0  - vector  i=0, j=all, k=0
+     banner ("Vector at index position (?, j, k) = (all, 0, 0)")
+     println ("x(?, 0, 0) = " + x(?, 0, 0))                      // x_:00  - vector  i=all, j=0, k=0
+
+     // MATRICES
+     banner ("Matrix from tensor with row i fixed at 0")
+     println ("x(0)       = " + x(0))                            // x_0::  - matrix with row i fixed
+     banner ("Matrix from tensor with column j fixed at 0")
+     println ("x(?, 0)    = " + x(?, 0))                         // x_:0:  - matrix with column j fixed
+     banner ("Matrix from tensor with sheet k fixed at 0")
+     println ("x(?, ?, 0) = " + x(?, ?, 0))                      // x_::0  - matrix with sheet k fixed
+
+end tensorDTest2
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `TensorDTest3` main function is used to test the `TensorD` class.
+ *  It tests the use of tensors and matrices for convolutional operation needed in
+ *  Convolutional Nets.
+ *  > runMain scalation.mathstat.tensorDTest3
+ */
+@main def tensorDTest3 (): Unit =
 
     val a = new TensorD (2, 9, 9)
     for i <- a.indices; j <- a.indices2; k <- a.indices3 do a(i, j, k) = i + j + k
@@ -518,5 +631,5 @@ end tensorDTest
 //  for i <- sp.indices; j <- sp.indices2 do sp(i, j) = kernel **+ (image0, i, j)           // FIX **+ only in MatrixD.scala.sav
     println (s"sp = $sp")
 
-end tensorDTest2
+end tensorDTest3
 

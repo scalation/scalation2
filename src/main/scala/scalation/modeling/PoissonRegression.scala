@@ -17,14 +17,10 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.Set
-import scala.math.{exp, log, round}
+import scala.math.{exp, round}
 
 import scalation.mathstat._
-import scalation.mathstat.Combinatorics.fac
 import scalation.optimization.BFGS
-
-import Fit._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PoissonRegression` class supports Poisson regression.  In this case, 
@@ -36,7 +32,7 @@ import Fit._
  *  @see see.stanford.edu/materials/lsoeldsee263/05-ls.pdf
  *  @param x       the data/input matrix augmented with a first column of ones
  *  @param y       the integer response/output vector, y_i in {0, 1, ... }
- *  @param fname_  the names of the features/variables
+ *  @param fname_  the names of the features/variables (defaults to null)
  *  @param hparam  the hyper-parameters (currently has none)
  */
 class PoissonRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
@@ -163,17 +159,17 @@ end PoissonRegression
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `PoissonRegression` companion object provides factory functions.
+/** The `PoissonRegression` companion object provides factory methods for creating
+ *  Poisson regression models.
  */
 object PoissonRegression:
-
-    val drp = (null, null)                                       // default remaining parameters
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `PoissonRegression` object from a combined data matrix.
      *  @param xy      the combined data-response matrix
-     *  @param fname   the feature/variable names
+     *  @param fname   the feature/variable names (defaults to null)
      *  @param hparam  the hyper-parameters (currently has none)
+     *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
                hparam: HyperParameter = null)
@@ -196,7 +192,6 @@ object PoissonRegression:
 
 end PoissonRegression
 
-import PoissonRegression.drp
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `poissonRegressionTest` main function tests the `PoissonRegression` class.
@@ -249,7 +244,7 @@ import PoissonRegression.drp
     println ("x = " + x)
     println ("y = " + y)
 
-    val rg = PoissonRegression (x, y, drp._1, drp._2)
+    val rg = PoissonRegression (x, y, null, null)
     rg.train_null ()                                    // train based on null model
     rg.trainNtest ()()                                  // train based on full model
 
@@ -325,7 +320,7 @@ end poissonRegressionTest
     println ("y = " + y)
 
 //  val rg = PoissonRegression (x(0 until x.dim1, 0 until 2), y, fn)
-    val rg = PoissonRegression (x, y, fn, drp._2)
+    val rg = PoissonRegression (x, y, fn, null)
     rg.train_null ()                                    // train based on null model
     rg.trainNtest ()()                                  // train based on full model
 

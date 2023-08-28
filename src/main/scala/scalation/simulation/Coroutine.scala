@@ -32,7 +32,7 @@ abstract class Coroutine (label: String = "cor")
 
     nCreated += 1
     private val id = label + "." + nCreated
-    debug ("constructor", s"$id waits to be STARTed")
+    debug ("init", s"$id waits to be STARTed")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the Coroutine counts.

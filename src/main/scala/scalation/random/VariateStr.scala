@@ -5,14 +5,14 @@
  *  @date    Sun Aug  7 20:40:29 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random String/Wold Generation
+ *  @title   Random String/Word Generators
  */
 
 package scalation
 package random
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RandomStr` class generates a random string.
+/** The `RandomStr` class generates random strings.
  *  @param lRange  the range of string lengths to generate
  *  @param cRange  the range of characters to generate
  *  @param stream  the random number stream
@@ -57,7 +57,7 @@ end RandomStr
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RandomStr` class generates a random word from a predetermined set.
+/** The `RandomWord` class generates random words from a predetermined set.
  *  @param nWords  the numbers of words to predetermine.
  *  @param lRange  the range of string lengths to generate
  *  @param cRange  the range of characters to generate

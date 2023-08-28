@@ -12,8 +12,6 @@ package scalation
 package simulation
 package process
 
-import java.util.concurrent.ConcurrentLinkedQueue 
-
 import scala.collection.mutable.ListBuffer
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{break, breakable}
@@ -45,7 +43,7 @@ class Source (name: String, director: Model, makeEntity: () => SimActor,
 
     private val debug = debugf ("Source", true)                        // debug function
     
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("Init", s"located at ${stringOf (at)}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width 'w' and height 'h'.

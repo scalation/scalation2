@@ -49,7 +49,7 @@ import Minimizer._
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
         res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
-        res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
+//      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
     end test1
@@ -65,7 +65,7 @@ import Minimizer._
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
         res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
-        res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
+//      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
     end test2
@@ -81,7 +81,7 @@ import Minimizer._
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
         res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
-        res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
+//      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
     end test3
@@ -98,7 +98,7 @@ import Minimizer._
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
         res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
-        res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
+//      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
     end test4

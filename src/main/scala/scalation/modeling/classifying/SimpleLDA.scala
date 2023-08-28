@@ -31,7 +31,7 @@ class SimpleLDA (x: MatrixD, y: VectorI, fname_ : Array [String] = Array ("x1"),
                  k: Int = 2, cname_ : Array [String] = Array ("No", "Yes"),
                  hparam: HyperParameter = Classifier.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, 2):
+         with FitC (k):
 
     private val debug = debugf ("SimpleLDA", true)                       // debug function
 

@@ -1,5 +1,5 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller, Hao Peng
  *  @version 2.0
  *  @date    Thu May 26 18:06:08 EDT 2022
@@ -17,16 +17,12 @@ package scalation
 package modeling
 package forecasting
 
-import scala.math.{max, sqrt}
-
 import scalation.mathstat._
-import scalation.optimization._
-import scalation.random.{Normal, Uniform}
 
 import Forecaster.differ
 import ARMA.hp
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the first difference of the time-series y, giving the velocity v_t = y_t+1 - y_t.
  *  @param y  the original time-series to be differenced
  */
@@ -35,7 +31,7 @@ def del (y: VectorD): VectorD = VectorD (for t <- 0 until y.dim - 1 yield y(t+1)
 inline def Δ (y: VectorD): VectorD = del (y)
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the undifferenced time-series from the velocity series.
  *  @param v   the differenced time-series (velocity)
  *  @param y0  the first value in the original time-series
@@ -48,7 +44,7 @@ def undel (v: VectorD, y0: Double): VectorD =
 end undel
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `AR1MA` class provides basic time-series analysis capabilities for Auto-
  *  Regressive 'AR' Integrated 'I' Moving-Average 'MA' models.  In an
  *  AR1MA(p, q) model, p and q refer to the order of the Auto-Regressive and
@@ -98,7 +94,7 @@ class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
         arma.train (x_null, pick (y_))
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of an AR1MA forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -110,7 +106,7 @@ class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
         arma.test (x_null, pick (y_))
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train and test the forecasting model y_ = f(y-past) + e and report its QoF
      *  and plot its predictions.  Return the predictions and QoF.
      *  @param y_  the training/full response/output vector (defaults to full y)
@@ -120,7 +116,7 @@ class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
         arma.trainNtest (pick (y_))(pick (yy))
     end trainNtest
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of an AR1MA forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -245,6 +241,7 @@ class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
 
 end AR1MA
 
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aR1MATest` main function tests the `AR1MA` class on simulated data.
  *  Test predictions (one step ahead forecasts).
@@ -333,7 +330,7 @@ end aR1MATest3
     val y    = yy(is until yy.dim)                                     // slice out days before is
 
     val h   = 2                                                        // forecasting horizon
-    for p <- 1 to 5; q <- 1 to 3 do                                   // AR1MA hyper-parameter settings
+    for p <- 1 to 5; q <- 1 to 3 do                                    // AR1MA hyper-parameter settings
         hp("p") = p; hp("q") = q
         val mod = new AR1MA (y)                                        // create an AR1MA model
         val (vp, qof) = mod.trainNtest ()()                            // train and the model on full dataset

@@ -26,7 +26,7 @@ import scalation.mathstat._
  */
 class NullModel (y: VectorI, k: Int = 2, cname_ : Array [String] = Array ("No", "Yes"))
       extends Classifier (null, y, null, k, cname_, null)               // no x matrix, no hyper-parameters
-         with FitC (y, k):
+         with FitC (k):
 
     private val debug = debugf ("NullModel", true)                      // debug function
 
@@ -43,22 +43,45 @@ class NullModel (y: VectorI, k: Int = 2, cname_ : Array [String] = Array ("No", 
     def test (x_ : MatrixD = null, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = VectorI.fill (y_.dim)(p_y.argmax ())                  // prediction does not change
         val qof = diagnose (y_, yp)
-        debug ("test", s" yp = $yp \n qof = $qof")
+//      debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 
+    inline def predictI (z: VectorD): Int = predictI (z.toInt)
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a QoF summary for a model with diagnostics for each predictor 'x_0', 'x_1',
-     *  and the overall Quality of Fit (QoF).
-     *  @param x_      the testing/full data/input matrix
-     *  @param fname_  the array of feature/variable names
-     *  @param b_      the parameters/coefficients for the model
-     *  @param vifs    the Variance Inflation Factors (VIFs)
+    /** Produce a QoF summary for a model with diagnostics for the overall Quality of Fit (QoF).
+     *  @param x_      the testing/full data/input matrix (ignore, use null)
+     *  @param fname_  the array of feature/variable names (ignore, use null)
+     *  @param b_      the parameters/coefficients for the model (default to p_y)
+     *  @param vifs    the Variance Inflation Factors (VIFs) (ignore, use null)
      */
     override def summary (x_ : MatrixD = null, fname_ : Array [String] = null,
                           b_ : VectorD = p_y, vifs: VectorD = null): String =
         super.summary (x_, fname_, b_, vifs)                            // summary from `Fit`
     end summary
+
+end NullModel
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** `NullModel` is the companion object for the `NullModel` class provides a
+ *  factory method for creating null models.
+ */
+object NullModel:
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a `NullModel` object, passing x and y together in one matrix.
+     *  @param xy     the combined data-response matrix
+     *  @param k      the number of classes
+     *  @param cname  the names of the classes
+     *  @param col    the designated response column (defaults to the last column)
+     */
+    def apply (xy: MatrixI, k: Int = 2, cname: Array [String] = Array ("No", "Yes"))
+              (col: Int = xy.dim2 - 1): NullModel =
+        val y = xy(?, col).toInt                                        // no data matrix, only response vector
+        new NullModel (y, k, cname)
+    end apply
 
 end NullModel
 

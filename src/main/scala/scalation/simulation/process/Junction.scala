@@ -24,31 +24,29 @@ import scalation.scala2d.Colors._
 /** The `Junction` class provides a connector between two `Transport`s/`Route`s.
  *  Since `Lines` and `QCurves` have limitations (e.g., hard to make a loop back),
  *  a junction may be needed.
- *  @param name      the name of the junction
- *  @param director  the director controlling the model
- *  @param jTime     the jump-time through the junction
- *  @param at        the location of the junction (x, y, w, h)
+ *  @param name   the name of the junction
+ *  @param jTime  the jump-time through the junction
+ *  @param at     the location of the junction (x, y, w, h)
  */
-class Junction (name: String, director: Model, jTime: Variate, at: Array [Double])
+class Junction (name: String, jTime: Variate, at: Array [Double])
       extends Component:
 
     initComponent (name, at)
 
     private val debug = debugf ("Junction", true)                    // debug function 
 
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("init", s"located at ${stringOf (at)}")
 
     private var onJunction = 0            // the number of entities/sim-actors on this Junction
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width 'w' and height 'h'.
      *  @param name      the name of the junction
-     *  @param director  the director controlling the model
      *  @param jTime     the jump-time through the junction
      *  @param xy        the (x, y) coordinates for the top-left corner of the junction
      */
-    def this (name: String, director: Model, jTime: Variate, xy: (Double, Double)) =
-        this (name, director, jTime, Array (xy._1, xy._2, 10.0, 10.0))
+    def this (name: String, jTime: Variate, xy: (Double, Double)) =
+        this (name, jTime, Array (xy._1, xy._2, 10.0, 10.0))
     end this
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -87,28 +85,24 @@ object Junction:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a junction using defaults for width 'w' and height 'h'.
-     *  @param name      the name of the junction
-     *  @param director  the director controlling the model
-     *  @param jTime     the jump-time through the junction
-     *  @param xy        the (x, y) coordinates for the top-left corner of the junction
+     *  @param name   the name of the junction
+     *  @param jTime  the jump-time through the junction
+     *  @param xy     the (x, y) coordinates for the top-left corner of the junction
      */
-    def apply (name: String, director: Model, jTime: Variate, xy: (Int, Int)): Junction =
-        new Junction (name, director, jTime,
-                      Array (xy._1.toDouble, xy._2.toDouble, 10.0, 10.0))
+    def apply (name: String, jTime: Variate, xy: (Int, Int)): Junction =
+        new Junction (name, jTime, Array (xy._1.toDouble, xy._2.toDouble, 10.0, 10.0))
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a group of related junctions using defaults for width 'w' and height 'h'.
-     *  @param director  the director controlling the model
      *  @param jTime     the jump-time through the junction
      *  @param xy        the (x, y) coordinates for the top-left corner of the reference junction.
      *  @param jnt       repeated junction specific info: name, offset
      */
-    def group (director: Model, jTime: Variate, xy: (Int, Int),
+    def group (jTime: Variate, xy: (Int, Int),
                jnt: (String, (Int, Int))*): List [Junction] =
         val junctionGroup = new ListBuffer [Junction] ()
-        for j <- jnt do junctionGroup += Junction (j._1, director, jTime,
-                                                  (xy._1 + j._2._1, xy._2 + j._2._2))
+        for j <- jnt do junctionGroup += Junction (j._1, jTime, (xy._1 + j._2._1, xy._2 + j._2._2))
         junctionGroup.toList
     end group
 

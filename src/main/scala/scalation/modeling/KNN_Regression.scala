@@ -28,8 +28,8 @@ import scalation.mathstat._
  *  WARNING: in-sample testing is only meaningful for large values of hyper-parsameter kappa
  *  @param x       the vectors/points of predictor data stored as rows of a matrix
  *  @param y       the response value for each vector in x
- *  @param fname_  the names for all features/variables
- *  @param hparam  the number of nearest neighbors to consider
+ *  @param fname_  the names for all features/variables (defaults to null)
+ *  @param hparam  the number of nearest neighbors to consider (defaults to KNN_Regression.hp)
  */
 class KNN_Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                       hparam: HyperParameter = KNN_Regression.hp)
@@ -173,7 +173,8 @@ end KNN_Regression
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `KNN_Regression` companion object provides a factory functions.
+/** The `KNN_Regression` companion object provides factory methods for creating
+ *  k-nearest neighbor regression models.
  */
 object KNN_Regression:
 
@@ -182,8 +183,8 @@ object KNN_Regression:
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `KNN_Regression` object from a combined xy data-response matrix.
      *  @param xy      the combined data-response matrix
-     *  @param fname   the names for all features/variables
-     *  @param hparam  the number of nearest neighbors to consider
+     *  @param fname   the names for all features/variables (defaults to null)
+     *  @param hparam  the number of nearest neighbors to consider (defaults to hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -193,12 +194,12 @@ object KNN_Regression:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `KNN_Regression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the data/input m-by-n matrix
      *                     (augment with a first column of ones to include intercept in model)
      *  @param y       the response/output m-vector
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use null for default)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (default to hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = hp): KNN_Regression =

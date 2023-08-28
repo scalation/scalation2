@@ -5,25 +5,24 @@
  *  @date    Tue Apr 18 11:58:39 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @see arxiv.org/pdf/1502.04759.pdf
+ *  @title   Coordinate Descent
+ *  @see     arxiv.org/pdf/1502.04759.pdf
  */
 
 package scalation
 package optimization
 
-import scala.math.{abs, max}
-
 import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `CoordinateDescent` class solves unconstrained Non-Linear Programming (NLP)
- *  problems using the Coordinate Descent algorithm.  Given a function 'f' and a
- *  starting point 'x0', the algorithm picks coordinate directions (cyclically) and
+ *  problems using the Coordinate Descent algorithm.  Given a function f and a
+ *  starting point x0, the algorithm picks coordinate directions (cyclically) and
  *  takes steps in the those directions.  The algorithm iterates until it converges.
  *
- *  dir_k = kth coordinate direction
+ *      dir_k = kth coordinate direction
  *
- *  minimize    f(x)
+ *      min f(x)
  *
  *  @param f        the vector-to-scalar objective function
  *  @param exactLS  whether to use exact (e.g., `GoldenLS`)
@@ -34,11 +33,10 @@ class CoordinateDescent (f: FunctionV2S, exactLS: Boolean = true)
 
     private val debug  = debugf ("CoordinateDescent", true)     // debug function
     private val flaw   = flawf ("CoordinateDescent")            // flaw function
-    private val WEIGHT = 1000.0                              // weight on penalty for constraint violation
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Perform an exact 'GoldenSectionLS' or inexact 'WolfeLS' line search.
-     *  Search in direction 'dir', returning the distance 'z' to move in that direction.
+    /** Perform an exact `GoldenSectionLS` or inexact `WolfeLS` line search.
+     *  Search in direction dir, returning the distance z to move in that direction.
      *  @param x     the current point
      *  @param dir   the direction to move in
      *  @param step  the initial step size
@@ -67,22 +65,23 @@ class CoordinateDescent (f: FunctionV2S, exactLS: Boolean = true)
         var dist = 1.0                                        // distance between current and next point
         var down = true                                       // moving down flag
 
-        for k <- 1 to MAX_ITER if down && dist > toler do
+        var it = 1
+        cfor (it <= MAX_IT && down && dist > toler, it += 1) {   // FIX - use better stopping rule
             
             for fb <- 1 to -1 by -2; j <- 0 until n do        // cycle thru coordinates - establish direction
                             
                 if j > 0 then dir(j-1) = 0.0
-                dir(j) = fb                                   // set direction forward of backward by fb
+                dir(j) = fb                                   // set direction forward or backward by fb
                 y      = x + dir * lineSearch (x, dir, step)  // determine the next point
-                fy    = f(y)                                  // objective function value for next point
+                fy     = f(y)                                 // objective function value for next point
 
-                debug ("solve", s":k = $k, y = $y, fy = $fy, dir = $dir")
+                debug ("solve", s"it = $it, y = $y, fy = $fy, dir = $dir")
 
                 dist = (x - y).normSq                         // calc the distance between current and next point
                 down = fy < fx                                // still moving down?
                 if down then { x = y; fx = fy }               // make the next point, the current point
             end for
-        end for
+        } // cfor
         (fx, x)                                               // return the functional value and current point
     end solve
 

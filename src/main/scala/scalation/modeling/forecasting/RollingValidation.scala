@@ -54,7 +54,7 @@ object RollingValidation:
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Use rolling-validation to compute test Quality of Fit (QoF) measures
      *  by dividing the dataset into a TESTING SET (tr) and a TRAINING SET (te)
-     *  as follows:  [ <-- tr-size --> | <-- te_size --> ]
+     *  as follows:  [ <-- tr_size --> | <-- te_size --> ]
      *  This version calls predict for one-step ahead out-of-sample forecasts.
      *  @param mod  the forecasting model being used (e.g., `ARIMA`)
      *  @param rc   the retraining cycle (number of forecasts until retraining occurs)
@@ -82,7 +82,7 @@ object RollingValidation:
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Use rolling-validation to compute test Quality of Fit (QoF) measures
      *  by dividing the dataset into a TESTING SET (tr) and a TRAINING SET (te).
-     *  as follows:  [ <-- tr-size --> | <-- te_size --> ]
+     *  as follows:  [ <-- tr_size --> | <-- te_size --> ]
      *  This version calls forecast for h-steps ahead out-of-sample forecasts.
      *  @param mod  the forecasting model being used (e.g., `ARIMA`)
      *  @param rc   the retraining cycle (number of forecasts until retraining occurs)

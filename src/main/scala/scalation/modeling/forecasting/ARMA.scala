@@ -57,7 +57,7 @@ class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
 
     modelName = s"ARMA($p, $q)"
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the maximum lag used by this model (its capacity to look into the past).
      */
     override def cap: Int = max (p, q)                                 // max order
@@ -100,7 +100,7 @@ class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
         debug ("train", s"parameters for ARMA($p, $q) model: φ = $φ, θ = $θ, δ = $δ")
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of an ARMA forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -116,7 +116,7 @@ class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
         (yp, diagnose (yy, yp))                                          // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of an ARMA forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -290,7 +290,7 @@ end aRMATest2
 @main def aRMATest3 (): Unit =
 
     val m  = y.dim                                                     // number of data points
-    val hh = 3                                                         // maximum forecasting horizon
+    val hh = 2                                                         // maximum forecasting horizon
 
     banner (s"Test Forecasts: ARMA(1, 0) on LakeLevels Dataset")
     val mod = new ARMA (y)                                             // create model for time series data ARMA(1, 0)
@@ -321,7 +321,7 @@ end aRMATest3
     val m  = y.dim                                                     // number of data points
     val hh = 2                                                         // maximum forecasting horizon
  
-    for p <- 1 to 3; q <- 0 to 2 do
+    for p <- 1 to 7; q <- 0 to 2 do
         hp("p") = p; hp("q") = q                                       // set p (AR) and q (MA) hyper-parameters
         val mod = new ARMA (y)                                         // create model for time series datsk
         banner (s"Test: ${mod.modelName} on LakeLevels Dataset")
@@ -400,4 +400,41 @@ end aRMATest5
     end for
 
 end aRMATest6
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRMATest6` main function tests the `AR` class on real data:  Forecasting Weekly Covid-19.
+ *  Test forecasts (1 to h steps ahead forecasts).  Try multiple values for p.
+ *  > runMain scalation.modeling.forecasting.aRMATest7
+ */
+@main def aRMATest7 (): Unit =
+
+    val y  = Example_Covid.loadData_y ("new_deaths")
+    val m  = y.dim                                                     // number of data points
+    val hh = 2                                                         // maximum forecasting horizon
+
+    println (s"y.dim = ${y.dim}")
+
+    var mod: ARMA = null
+    for p <- 1 to 12 do                                                // autoregressive hyper-parameter p
+        ARMA.hp("p") = p                                               // set p hyper-parameter
+        banner (s"Test: ARMA($p) on Covid-19 Weekly Dataset")
+        mod = new ARMA (y)                                             // create model for time series data
+        val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset
+
+        val yf = mod.forecastAll (y, hh)                               // forecast h-steps ahead for all y
+//      println (s"yf = $yf")
+        println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
+        assert (yf(?, 0)(0 until m) == y)                              // column 0 must agree with actual values
+        differ (yf(?, 1)(1 until m), yp)
+        assert (yf(?, 1)(1 until m) == yp)                             // column 1 must agree with one step-ahead predictions
+
+        for h <- 1 to hh do
+            val (yfh, qof) = mod.testF (h, y)                          // h-steps ahead forecast and its QoF
+            println (s"Evaluate QoF for horizon $h:")
+            println (FitM.fitMap (qof, QoF.values.map (_.toString)))   // evaluate h-steps ahead forecasts
+        end for
+    end for
+
+end aRMATest7
 

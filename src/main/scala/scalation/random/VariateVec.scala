@@ -4,19 +4,21 @@
  *  @version 2.0
  *  @date    Sat Mar  9 19:19:53 EST 2013
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @title   Random Variate Vector (RVV) Generators
  */
 
 package scalation
 package random
 
-import scala.math.{abs, exp, Pi, round, sqrt}
+import scala.math.{abs, exp, sqrt}
 
-import scalation.mathstat._
+import scalation.mathstat.{Fac_Cholesky, Fac_LU, MatrixD, VectorD, VectorI, VectorS}
 import scalation.mathstat.Combinatorics.{choose, fac, gammaF}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `VariateVec` abstract class serves as a base class for all the random
- *  variate vector (RVV) generators. They use one of the Random Number Generators
+/** The `VariateVec` abstract class serves as a base class for all the Random
+ *  Variate Vector (RVV) generators. They use one of the Random Number Generators
  *  (RNG's) from Random.scala to generate numbers following their particular
  *  multivariate distribution.
  *-----------------------------------------------------------------------------
@@ -79,7 +81,7 @@ case class ProbabilityVec (n: Int, d: Double = 0.5, stream: Int = 0)
     private val mu  = new VectorD (n); mu.set (1.0 / n.toDouble)   // mean
     private val rng = Random (stream)                              // random number generator
 
-    if d < 0.0 || d > 1.0 then flaw ("constructor", "d must be in [0, 1]")
+    if d < 0.0 || d > 1.0 then flaw ("int", "d must be in [0, 1]")
 
     def mean: VectorD = mu
 
@@ -117,9 +119,9 @@ case class NormalVec (mu: VectorD, cov: MatrixD, stream: Int = 0)
     def mean: VectorD = mu
 
     def pf (z: VectorD): Double =
-        val lu   = new Fac_LU (cov)                      // also compute LU Factorization - FIX - combine
-        val n    = z.dim.toDouble                        // n-dimensional vectors
-        val z_mu = z - mu                                // subtract mean
+        val lu   = new Fac_LU (cov)                          // also compute LU Factorization - FIX - combine
+        val n    = z.dim.toDouble                            // n-dimensional vectors
+        val z_mu = z - mu                                    // subtract mean
         val zz   = z_mu dot inverse (cov)(lu) * z_mu
         exp (-.5 * zz) / sqrt (_2Pi~^n * abs (det (cov)(lu)))
     end pf
@@ -127,12 +129,88 @@ case class NormalVec (mu: VectorD, cov: MatrixD, stream: Int = 0)
     def gen: VectorD =
         val z = new VectorD (mu.dim)
         for i <- mu.indices do z(i) = normal.gen
-        c_cov * z + mu                                   // Cholesky covariance * standard Normal + mean
+        c_cov * z + mu                                       // Cholesky covariance * standard Normal + mean
     end gen
 
     def igen: VectorI = gen.toInt
 
 end NormalVec
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `NormalVec_` class generates Normal (Gaussian) random variate vectors according
+ *  to the Multivariate Normal distribution with vector mean 'mu' and standard deviation 'sig'.
+ *  This continuous RVV models normally distributed multidimensional data and
+ *  treats the variables as independent.
+ *  @see http://onlinelibrary.wiley.com/doi/10.1111/1467-9639.00037/pdf
+ *  @see http://www.statlect.com/mcdnrm1.htm
+ *  @see http://prob140.org/textbook/content/Chapter_23/04_Independence.html
+ *  @param mu      the mean vector
+ *  @param sig     the standard deviation vector
+ *  @param stream  the random number stream
+ */
+case class NormalVec_ (mu: VectorD, sig: VectorD, stream: Int = 0)
+     extends VariateVec (stream):
+
+    private val normal = Normal (0.0, 1.0, stream)           // generator for standard normals
+
+    def mean: VectorD = mu
+
+    def pf (z: VectorD): Double =
+        var d = 1.0                                          // density f(z)
+        for i <- 0 until z.dim do
+            var v = (z(i) - mu(i)) / sig(i)                  // normalize
+            d *= sqrt_2Pi * sig(i) * exp (-.5 * v*v)
+        end for
+        d
+    end pf
+
+    def gen: VectorD =
+        val y = new VectorD (mu.dim)
+        for i <- mu.indices do y(i) = sig(i) * normal.gen + mu(i)
+        y
+    end gen
+
+    def igen: VectorI = gen.toInt
+
+end NormalVec_
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `NormalVec_c` class generates Normal (Gaussian) random variate vectors according
+ *  to the Multivariate Normal distribution with constant mean 'mu' and variance 'sig2'.
+ *  This continuous RVV models normally distributed multidimensional data and
+ *  treats the variables as independent.
+ *  @see http://onlinelibrary.wiley.com/doi/10.1111/1467-9639.00037/pdf
+ *  @see http://www.statlect.com/mcdnrm1.htm
+ *  @see http://prob140.org/textbook/content/Chapter_23/04_Independence.html
+ *  @param n       the number of elements in the vector
+ *  @param mu      the common mean
+ *  @param sig2    the common variance (standard deviation squared)
+ *  @param stream  the random number stream
+ */
+case class NormalVec_c (n: Int, mu: Double, sig2: Double, stream: Int = 0)
+     extends VariateVec (stream):
+
+    private val normal = Normal (mu, sig2, stream)           // generator for normals
+
+    def mean: VectorD = VectorD.fill (n)(mu)                 // vector of all mu values
+
+    def pf (z: VectorD): Double =
+        var d = 1.0                                          // density f(z)
+        for i <- 0 until n do d *= normal.pf (z(i))
+        d
+    end pf
+
+    def gen: VectorD =
+        val y = new VectorD (n)
+        for i <- 0 until n do y(i) = normal.gen
+        y
+    end gen
+
+    def igen: VectorI = gen.toInt
+
+end NormalVec_c
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -189,7 +267,7 @@ case class PermutedVecD (x: VectorD, stream: Int = 0)
         val y = x.copy                                  // deep copy vector x
         for i <- x.indices do
             val j = rng.igen % (i+1)                    // random integer 0, ... , i
-            val t = y(i); y(i) = y(j); y(j) = t         // swap x(i) and x(j)
+            val t = y(i); y(i) = y(j); y(j) = t         // swap y(i) and y(j)
         end for
         y
     end gen
@@ -243,7 +321,7 @@ case class RandomVecSample (pop: Int, samp: Int, stream: Int = 0)
     _discrete = true
 
     if samp >= pop then
-        flaw ("constructor", "requires samp < pop")
+        flaw ("int", "requires samp < pop")
         throw new IllegalArgumentException ("RandomVecSample: samp too large")
     end if
 
@@ -314,6 +392,7 @@ end RandomVecD
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RandomVecD_` class generates a random vector of doubles.
  *  Ex: (3.0, 2.0, 0.0, 4.0, 1.0) has dim = 5.
+ *  This version does not consider density or runLength.
  *  @param dim     the dimension/size of the vector (number of elements)
  *  @param max     generate doubles in the range min to max
  *  @param min     generate doubles in the range min to max
@@ -357,7 +436,7 @@ case class RandomVecI (dim: Int = 10, max: Int = 20, min: Int = 10, skip: Int = 
     _discrete = true
 
     if unique && max < dim-1 then
-        flaw ("constructor", "requires max >= dim-1")
+        flaw ("int", "requires max >= dim-1")
         throw new IllegalArgumentException ("RandomVecI: max too small")
     end if
 
@@ -442,8 +521,8 @@ end RandomVecS
 case class Multinomial (p: Array [Double] = Array (.4, .7, 1.0), n: Int = 5, stream: Int = 0)
      extends VariateVec (stream):
 
-    for pi <- p if pi < 0 || pi > 1 do flaw ("constructor", "parameter pi must be in [0, 1]*")
-    if n <= 0 then flaw ("constructor", "parameter n must be positive")
+    for pi <- p if pi < 0 || pi > 1 do flaw ("int", "parameter pi must be in [0, 1]*")
+    if n <= 0 then flaw ("int", "parameter n must be positive")
     _discrete = true
 
     private val dice = Dice (p, stream)
@@ -497,12 +576,12 @@ end RandomVecTrend
 
      var rvv: VariateVec = null                               // variate vector
 
-     println ("Test: ProbabilityVec random vector generation ----------------")
+     banner ("Test: ProbabilityVec random vector generation ----------------")
      rvv = ProbabilityVec (10)
      println ("mean = " + rvv.mean)             // probability vector generator
      for k <- 0 until 30 do println (rvv.gen)
 
-     println ("Test: NormalVec random vector generation ---------------------")
+     banner ("Test: NormalVec random vector generation ---------------------")
      val mu  = VectorD (5.0, 5.0)
      val cov = MatrixD ((2, 2), 2.0, 1.0,
                                 1.0, 2.0)
@@ -510,49 +589,55 @@ end RandomVecTrend
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.gen)
 
-     println ("Test: PermutedVecD random vector generation ------------------")
+     banner ("Test: NormalVec_ random vector generation --------------------")
+     val sig = VectorD (2.0, 1.0)
+     rvv = NormalVec_ (mu, sig)           // ind. multivariate normal generator
+     println ("mean = " + rvv.mean)
+     for k <- 0 until 30 do println (rvv.gen)
+
+     banner ("Test: PermutedVecD random vector generation ------------------")
      val x = VectorD (1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0)
      rvv = PermutedVecD (x)                     // random permutation generator
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.gen)
 
-     println ("Test: PermutedVecI random vector generation ------------------")
+     banner ("Test: PermutedVecI random vector generation ------------------")
      val y = VectorI (1, 2, 3, 4, 5, 6, 7, 8, 9)
      rvv = PermutedVecI (y)                     // random permutation generator
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.igen)
 
-     println ("Test: RandomVecSample random vector generation ---------------")
+     banner ("Test: RandomVecSample random vector generation ---------------")
      rvv = RandomVecSample (10, 5)             // random permutation generator
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.igen)
 
-     println ("Test: RandomVecD random vector generation --------------------")
+     banner ("Test: RandomVecD random vector generation --------------------")
      rvv = RandomVecD ()                     // random vector generator doubles
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.gen)
 
-     println ("Test: RandomVecD_ random vector generation -------------------")
+     banner ("Test: RandomVecD_ random vector generation -------------------")
      rvv = RandomVecD_ (2, VectorD (10, 8), VectorD (0, 0))  // random vector generator doubles
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.gen)
 
-     println ("Test: RandomVecI random vector generation --------------------")
+     banner ("Test: RandomVecI random vector generation --------------------")
      rvv = RandomVecI ()                        // random vector generator ints
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.igen)
 
-     println ("Test: RandomVecS random vector generation --------------------")
+     banner ("Test: RandomVecS random vector generation --------------------")
      rvv = RandomVecS ()                     // random vector generator strings
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.asInstanceOf [RandomVecS].sgen)
 
-     println ("Test: Multinomial random vector generation --------------------")
+     banner ("Test: Multinomial random vector generation --------------------")
      rvv = Multinomial ()                        // random multinomial generator
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.igen)
 
-     println ("Test: RandomVecTrend random vector generation -----------------")
+     banner ("Test: RandomVecTrend random vector generation -----------------")
      rvv = RandomVecTrend ()                     // time-series vector generator
      println ("mean = " + rvv.mean)
      for k <- 0 until 30 do println (rvv.gen)

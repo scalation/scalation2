@@ -41,9 +41,9 @@ class B_Spline (ττ: VectorD, mMax: Int = 4, clamp: Boolean = true)
     protected val head  = τ(0)
     protected val tail  = τ.last
 
-    if mMax < 1 || mMax > 10 then flaw ("constructor", "B_Spline order restricted to 1 thru 10")
+    if mMax < 1 || mMax > 10 then flaw ("init", "B_Spline order restricted to 1 thru 10")
 
-    debug ("constructor", s"B_Spline (ττ = $ττ, mMax = $mMax) with intervals l = $l, augmented τ = $τ")
+    debug ("init", s"B_Spline (ττ = $ττ, mMax = $mMax) with intervals l = $l, augmented τ = $τ")
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Range of "usable" splines when using the `bs` function. This is needed,

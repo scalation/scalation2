@@ -47,6 +47,11 @@ class Vertex (_name: String, val prop: Property, _pos: VectorD = null)
     end tryCompareTo
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the center coordinates for this vertex.
+     */
+    def getCenter: VectorD = VectorD (_pos(0) + _pos(2)/2, _pos(1) + _pos(3)/2)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this vertex object to a string.
      */
     override def toString: String =

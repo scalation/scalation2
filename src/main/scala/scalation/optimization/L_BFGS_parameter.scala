@@ -5,7 +5,7 @@
  *  @date    Mon Jul 12 16:13:47 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   BFGS Line Search Algorithms
+ *  @title   BFGS Hyper-Parameters
  *
  *  @see github.com/clementfarabet/lbfgs/blob/master/lbfgs.h
  *  @see github.com/chokkan/liblbfgs/blob/master/lib/lbfgs.c
@@ -13,8 +13,6 @@
 
 package scalation
 package optimization
-
-import scala.math.{abs, max, min, sqrt}
 
 import scalation.mathstat.VectorD
 

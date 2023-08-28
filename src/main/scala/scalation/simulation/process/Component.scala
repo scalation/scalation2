@@ -12,7 +12,8 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
+//import scala.collection.mutable.{ListBuffer => VEC}
 
 import scalation.mathstat.{Statistic, TimeStatistic}
 
@@ -37,7 +38,7 @@ trait Component
         name = label
         at   = loc
         initStats (label)
-        //if at == null then flaw ("constructor", s"component '$name' has null location")
+        //if at == null then flaw ("init", s"component '$name' has null location")
     end initComponent
 
     /** Radius of a token (for animating entities)
@@ -50,7 +51,7 @@ trait Component
 
     /** List of subparts of the Component (empty for atomic components, nonempty for composites)
      */
-    val subpart = ListBuffer [Component] ()
+    val subpart = VEC [Component] ()
 
     /** Collector of sample statistics (e.g., waiting time)
      */
@@ -102,8 +103,8 @@ trait Component
     def aggregate (): Unit =
         val n = subpart.size
         if n > 0 then
-            val durationStatList   = ListBuffer [Statistic] ()
-            val persistentStatList = ListBuffer [TimeStatistic] ()
+            val durationStatList   = VEC [Statistic] ()
+            val persistentStatList = VEC [TimeStatistic] ()
             for p <- subpart do
                 durationStatList += p.durationStat
                 if director.full && p.persistentStat != null then persistentStatList += p.persistentStat

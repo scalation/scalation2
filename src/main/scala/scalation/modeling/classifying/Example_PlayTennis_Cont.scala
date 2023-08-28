@@ -101,8 +101,8 @@ end Example_PlayTennis_Cont
     sda.trainNtest ()()
     println (sda.summary ())
 
-    banner ("LDA")
-    val lda = new LDA (x, y)
+    banner ("LinDiscAnalyis")
+    val lda = new LinDiscAnalyis (x, y)
     lda.trainNtest ()()
     println (lda.summary ())
 

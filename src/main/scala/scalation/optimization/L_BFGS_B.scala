@@ -292,14 +292,14 @@ class L_BFGS_B (f: FunctionV2S, g: FunctionV2S = null, ineq: Boolean = true, exa
         var yHistoryMx: MatrixD = null
         var sHistoryMx: MatrixD = null
 
-        var (x, gr)  = (x0, ∇ (fg, x0))
+        var (x, gr)  = (x0, ∇ (fg)(x0))
         var fv       = fg(x)
         var mgn      = 0.0
         var count    = 0
         val countMax = 10
 
         breakable {
-            for k <- 1 to MAX_ITER do
+            for k <- 1 to MAX_IT do
                 banner (s"solve: iteration $k: f(x) = $fv, x = $x")
                 val f_old   = fv
                 val x_old   = x
@@ -324,7 +324,7 @@ class L_BFGS_B (f: FunctionV2S, g: FunctionV2S = null, ineq: Boolean = true, exa
                 fv = fg(x)
                 if blown ((fv, x)) then { best = better ((f_old, x_old), best); break () }
 
-                gr  = ∇ (fg, x)
+                gr  = ∇ (fg)(x)
                 mgn = getMgn (x, gr)
                 if mgn < toler || count > countMax then { best = better ((fv, x), best); break () }
                 if abs (mgn - mgn_old) < toler then count += 1

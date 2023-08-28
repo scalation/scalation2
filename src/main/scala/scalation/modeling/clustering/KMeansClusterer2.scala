@@ -12,12 +12,8 @@ package scalation
 package modeling
 package clustering
 
-import scala.collection.mutable.Set
-import scala.Double.PositiveInfinity
-import scala.util.control.Breaks.{breakable, break}
-
 import scalation.mathstat._
-import scalation.random.{PermutedVecI, Randi, RandomVecI}
+import scalation.random.RandomVecI
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `KMeansClusterer2` class cluster several vectors/points using k-means

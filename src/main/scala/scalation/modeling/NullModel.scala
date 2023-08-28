@@ -15,12 +15,12 @@ import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `NullModel` class implements the simplest type of predictive modeling technique
- *  that just predicts the response 'y' to be the mean.
- *  Fit the parameter vector 'b' in the null regression equation
+ *  that just predicts the response y to be the mean.
+ *  Fit the parameter vector b in the null regression equation
  *  <p>
  *      y  =  b dot x + e  =  b0 + e
  *  <p>
- *  where 'e' represents the residual/error vector (the part not explained by the model).
+ *  where e represents the residual/error vector (the part not explained by the model).
  *  @param y  the response/output vector
  */
 class NullModel (y: VectorD)
@@ -68,7 +68,7 @@ class NullModel (y: VectorD)
     override def predict (x_ : MatrixD): VectorD = VectorD.fill (x_.dim)(b(0))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a QoF summary for a model with diagnostics for each predictor 'x_0', 'x_1',
+    /** Produce a QoF summary for a model with diagnostics for each predictor x_0, x_1,
      *  and the overall Quality of Fit (QoF).
      *  @param x_      the testing/full data/input matrix
      *  @param fname_  the array of feature/variable names

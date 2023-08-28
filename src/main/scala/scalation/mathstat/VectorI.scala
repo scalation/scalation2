@@ -14,7 +14,6 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
-import scala.collection.IterableFactoryDefaults
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.math.{abs, sqrt}
@@ -171,6 +170,13 @@ class VectorI (val dim: Int,
      *  @param f  the function to apply
      */
     def map (f: Int => Int): VectorI = new VectorI (v.size, v.map (f))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Map the elements of this vector matching value a to value b.
+     *  @param a  the value to be replaced
+     *  @param b  the replacement value
+     */
+    def map2 (a: Int, b: Int): VectorI = map (e => if e == a then b else e)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Iterate over this vector element by element applying the given function.

@@ -14,7 +14,6 @@ package mugraph_pm
 
 import scala.collection.mutable.{Set => SET}
 import scala.runtime.ScalaRunTime.stringOf
-import scala.util.control.Breaks.{break, breakable}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `MuGraphMatcher` trait serves as a template for implementing specific

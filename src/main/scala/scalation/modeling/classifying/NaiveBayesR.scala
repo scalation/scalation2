@@ -13,6 +13,7 @@ package modeling
 package classifying
 
 import scala.math.{ceil, floor}
+import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
 import scalation.random.Normal
@@ -20,8 +21,8 @@ import scalation.random.Normal
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `NaiveBayesR` class implements a Gaussian Naive Bayes Classifier, which
  *  is the most commonly used such classifier for continuous input data.  The
- *  classifier is trained using a data matrix 'x' and a classification vector 'y'.
- *  Each data vector in the matrix is classified into one of 'k' classes numbered
+ *  classifier is trained using a data matrix x and a classification vector y.
+ *  Each data vector in the matrix is classified into one of k classes numbered
  *  0, ..., k-1.  Class probabilities are calculated based on the frequency of
  *  each class in the training-set.  Relative probabilities are computed  by
  *  multiplying these by values computed using conditional density functions
@@ -39,9 +40,9 @@ class NaiveBayesR (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: In
                    cname_ : Array [String] = Array ("No", "Yes"),
                    hparam: HyperParameter = NaiveBayes.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k):
+         with FitC (k):
 
-    private val debug   = debugf ("NaiveBayesR", false)                  // debug function
+    private val debug   = debugf ("NaiveBayesR", true)                   // debug function
     private val EPSILON = 1E-9                                           // number close to zero
     private val cor     = x.corr                                         // feature correlation matrix
 
@@ -78,7 +79,7 @@ class NaiveBayesR (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: In
                 varc(c, j)  = (varc(c, j) - mc * mean_cj*mean_cj) / (mc - 1.0)   // compute variance - FIX - check
         end for
     
-        debug ("calcStats", s"fname = $fname, nu_y = $nu_y, mean = $mean, varc = $varc")
+        debug ("calcStats", s"fname = ${stringOf (fname)}, nu_y = $nu_y, mean = $mean, varc = $varc")
     end calcStats
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -102,7 +103,7 @@ class NaiveBayesR (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: In
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the classifier, i.e., calculate statistics and create conditional
-     *  density 'cd' functions.  Assumes that conditional densities follow the
+     *  density cd functions.  Assumes that conditional densities follow the
      *  Normal (Gaussian) distribution.
      *  @param x_  the training/full data/input matrix (defaults to full x)
      *  @param y_  the training/full response/output vector (defaults to full y)
@@ -139,6 +140,7 @@ class NaiveBayesR (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: In
      *  @param z  the new vector to predict
      */
     override def predictI (z: VectorD): Int =
+        p_yz = nu_y / p_yz.dim.toDouble                                  // reset probabilities
         for c <- 0 until k; j <- x.indices2 do p_yz(c) *= cd(c)(j)(z(j))
         p_yz.argmax ()                                                   // return class with highest probability
     end predictI

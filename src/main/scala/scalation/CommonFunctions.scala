@@ -9,6 +9,8 @@
  *
  *  @see https://dotty.epfl.ch/api/scala/math.html
  *  @see https://en.wikipedia.org/wiki/Trigonometric_functions
+ *
+ *  Many common functions are supplied by the `scala.math` package
  */
 
 package scalation

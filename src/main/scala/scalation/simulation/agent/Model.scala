@@ -12,13 +12,13 @@ package simulation.agent
 import scala.collection.mutable.{ArrayBuffer => VEC, PriorityQueue}
 
 import scalation.animation.{AnimateCommand, CommandType}
-import scalation.animation.CommandType.{CreateToken, MoveToken, DestroyToken}
+import scalation.animation.CommandType.MoveToken
 import scalation.database.Identifiable
 import scalation.database.graph.{EdgeType, PGraph, VertexType}
-import scalation.mathstat.{Statistic, VectorD}
+import scalation.mathstat.Statistic
 import scalation.simulation.{Completion, Coroutine}
 import scalation.scala2d.Colors._
-import scalation.scala2d.{RectangularShape, Shape}
+import scalation.scala2d.Shape
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Model` class maintains a property graph making up the model and

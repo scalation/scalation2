@@ -26,9 +26,9 @@ package database
 package table
 
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+//import com.google.gson.reflect.TypeToken
 
-import java.io.{FileInputStream, FileOutputStream}
+import java.io.{FileInputStream, FileOutputStream, File}
 import java.io.{ObjectInputStream, ObjectOutputStream, PrintWriter}
 
 // pick a type of Map for Unique `IndexMap` and for Non-Unique `MIndexMap`
@@ -59,7 +59,7 @@ import scala.util.control.Breaks.{breakable, break}
 import scalation.mathstat.{MatrixD, VectorD, VectorI, VectorL, VectorS, VectorT}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Table` companion object provides factory functions for creating tables.
+/** The `Table` companion object provides factory methods for creating tables.
  *  Supported domains/data-types are 'D'ouble, 'I'nt, 'L'ong, 'S'tring, and 'T'imeNum.
  *  Note 'X' is for Long String (a formatting issue).
  */
@@ -261,6 +261,12 @@ object Table:
         for j <- dom.indices do dom(j) = typeOfStr (tup(j))
         dom
     end tuple2type
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return whether the given table file exists in STORE_DIR.
+     *  @param name  the name of table.
+     */
+    def exist (name: String): Boolean = File (STORE_DIR + name + SER).exists ()
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** LOAD/Read the table with the given name into memory using serialization.
@@ -1179,7 +1185,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val a = Array.ofDim [Double] (m, n)
         for j <- 0 until n do
             val jj = cols(j)
-            domain(j) match
+            domain(jj) match
             case 'S' | 'X' => val x = VectorS.map2Int (col(jj).map (_.toString))._1 
                         for i <- 0 until m do a(i)(j) = x(i).toDouble
             case 'T' => val x = VectorT.map2Long (col(jj).map (TimeNum.fromValueType (_)))._1

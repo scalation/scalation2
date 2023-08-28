@@ -28,19 +28,19 @@ import scalation.random.RandomVecI
  *  @param k       the number of classes
  *  @param cname_  the class names
  *  @param conts   the set of feature indices for variables that are treated as continuous
- *  @param hparam  the hyper-parameters for the bagging trees
+ *  @param hparam  the hyper-parameters
  */
 class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                     cname_ : Array [String] = Array ("No", "Yes"),
                     conts: Set [Int] = Set [Int] (), hparam: HyperParameter = DecisionTree.hp)
       extends Classifier (x, y, fname_, k , cname_, hparam)
-         with FitC (y, k):
+         with FitC (k):
 
     private   val debug      = debugf ("BaggingTrees", true)                     // debug function
     private   val flaw       = flawf ("BaggingTrees")                            // flaw function
     protected val nTrees     = hparam ("nTrees").toInt                           // number of trees
-    private   val bRatio     = hparam ("bRatio").toDouble                        // bagging ratio 
-    private   val height     = hparam ("height").toInt                           // height limit
+    protected val bRatio     = hparam ("bRatio").toDouble                        // bagging ratio 
+    protected val height     = hparam ("height").toInt                           // height limit
 
     protected val trees      = Array.ofDim [DecisionTree_C45] (nTrees)           // many decision trees
     protected val sampleSize = (bRatio * x.dim).toInt                            // size of matrix sub-samples
@@ -48,7 +48,7 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     if nTrees <= 0 then                flaw ("init", "BT number of tree must be at least one")
     if bRatio <= 0 || bRatio >= 1 then flaw ("init", "BT bagging ratio restricted to (0, 1)")
 
-    modelName = "BaggingTrees"                                                   // name of the model
+    modelName = s"BaggingTrees_${height}_$nTrees"                                // name of the model
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the vector of model parameter vector.
@@ -66,11 +66,11 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     override def train (x_ : MatrixD = x, y_ : VectorI = y): Unit =
         for l <- 0 until nTrees do
             val (sub_x, sub_y, irows) = subSample (x_, y_, sampleSize, l)        // select rows from x_ and elements from y_
-            debug ("train", s"row indices for tree$l, irows = $irows")
+//          debug ("train", s"row indices for tree$l, irows = $irows")
 
             trees(l) = new DecisionTree_C45 (sub_x, sub_y, fname, k, cname, conts, hparam)
             trees(l).train ()
-            debug ("train", s"for tree$l === \n ${trees(l).printTree ()}")
+//          debug ("train", s"for tree$l === \n ${trees(l).printTree ()}")
         end for
     end train
 
@@ -85,7 +85,7 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                                  // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                            // diagnose from actual and predicted
-        debug ("test", s" yp = $yp \n qof = $qof")
+//      debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 
@@ -99,7 +99,7 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
         for l <- 0 until nTrees do                                               // iterate l-th tree
             val y_l = trees(l).predictI (z)                                      // get vote from l-th tree
             vote(y_l) += 1                                                       // tally the vote
-            debug ("predict", s"for tree$l, predicted class = y_l")
+//          debug ("predict", s"for tree$l, predicted class = y_l")
         end for
         vote.argmax ()                                                           // find argmax => the winner
     end predictI
@@ -116,6 +116,33 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
                           b_ : VectorD = p_y, vifs: VectorD = null): String =
         super.summary (x_, fname_, b_, vifs)                                     // summary from `Fit`
     end summary
+
+end BaggingTrees
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `BaggingTrees` companion object provides a factory method.
+ */
+object BaggingTrees:
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a bag of trees for the given combined matrix where the column col
+     *  is the response/classification vector.
+     *  @param xy      the combined data matrix (features and response)
+     *  @param fname   the names for all features/variables
+     *  @param k       the number of classes
+     *  @param cname   the names for all classes
+     *  @param conts   the set of feature indices for variables that are treated as continuous
+     *  @param hparam  the hyper-parameters
+     *  @param col     the designated response column (defaults to the last column)
+     */
+    def apply (xy: MatrixD, fname: Array [String] = null, k: Int = 2,
+               cname: Array [String]  = Array ("No", "Yes"),
+               conts: Set [Int] = Set [Int] (), hparam: HyperParameter = DecisionTree.hp)
+              (col: Int = xy.dim2 - 1): BaggingTrees =
+        val (x, y) = (xy.not(?, col), xy(?, col).toInt)                  // data matrix, response vector
+        new BaggingTrees (x, y, fname, k, cname, conts, hparam)
+    end apply
 
 end BaggingTrees
 
@@ -164,7 +191,7 @@ end baggingTreesTest
  */
 @main def baggingTreesTest2 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     var (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                            // shift the class labels by 3
@@ -188,7 +215,7 @@ end baggingTreesTest2
  */
 @main def baggingTreesTest3 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     var (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                            // shift the class labels by 3
@@ -216,7 +243,7 @@ end baggingTreesTest3
  */
 @main def baggingTreesTest4 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     val ycol   = xy.dim2 - 1
     for i <- xy.indices do xy(i, ycol) -= 3                           // shift the class labels by 3
@@ -273,7 +300,7 @@ end baggingTreesTest4
  */
 @main def baggingTreesTest5 (): Unit =
 
-    val nfile  = BASE_DIR + "breast_cancer.csv"
+    val nfile  = "breast_cancer.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
 
@@ -298,7 +325,7 @@ end baggingTreesTest5
  */
 @main def baggingTreesTest6 (): Unit =
 
-    val nfile  = BASE_DIR + "breast_cancer.csv"
+    val nfile  = "breast_cancer.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
 
@@ -320,7 +347,7 @@ end baggingTreesTest6
  */
 @main def baggingTreesTest7 (): Unit =
 
-    val nfile  = BASE_DIR + "diabetes.csv"
+    val nfile  = "diabetes.csv"
     val xy     = MatrixD.load (nfile)
     val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     val fname  = Array ("pregnancies", "glucose", "blood pressure", "skin thickness", "insulin",

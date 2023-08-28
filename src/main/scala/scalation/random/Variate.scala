@@ -5,6 +5,8 @@
  *  @date    Wed Sep 30 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
+ *  @title   Random Variate (RV) Generators
+ *
  *  Many of the algorithms used are from:
  *    Averill M. Law and W. David Kelton
  *    Simulation Modeling and Analysis, 2nd Edition
@@ -14,15 +16,15 @@
 package scalation
 package random
 
-import scala.math.{ceil, exp, floor, log, min, Pi, round, sqrt, tan}
+import scala.math.{exp, floor, log, Pi, round, sqrt, tan}
 import scala.runtime.ScalaRunTime.stringOf
 
-import scalation.mathstat._
+import scalation.mathstat.{Histogram, Plot, VectorD}
 import scalation.mathstat.Combinatorics.{betaF, choose, fac, gammaF}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Variate` abstract class serves as a base class for all the random variate
- *  (RV)  generators.  They use one of the Random Number Generators (RNG's) from
+/** The `Variate` abstract class serves as a base class for all the Random Variate
+ *  (RV) generators.  They use one of the Random Number Generators (RNG's) from
  *  `Random` to generate numbers following their particular distribution.
  *  Random Variate Generators (RVG's) for thirty popular probability distributions
  *  are implemented as extensions of Variate.  Still need to add one.
@@ -139,7 +141,7 @@ end Variate
 case class Bernoulli (p: Double = .5, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0 || p > 1.0 then flaw ("constructor", "parameter p must be in [0, 1]")
+    if p < 0.0 || p > 1.0 then flaw ("init", "parameter p must be in [0, 1]")
     _discrete = true
     private val q = 1.0 - p                                     // probability of failure
 
@@ -170,7 +172,7 @@ end Bernoulli
 case class Beta (alpha: Double = 2, beta: Double = 3, stream: Int = 0)
      extends Variate (stream):
 
-    if alpha <= 0 || beta <= 0 then flaw ("constructor", "parameters alpha and beta must be positive")
+    if alpha <= 0 || beta <= 0 then flaw ("init", "parameters alpha and beta must be positive")
     private val gamma1 = Gamma (alpha, 1.0, stream)
     private val gamma2 = Gamma (beta, 1.0, stream)
 
@@ -202,8 +204,8 @@ end Beta
 case class Binomial (p: Double = .5, n: Int = 10, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0 || p > 1.0 then flaw ("constructor", "parameter p must be in [0, 1]")
-    if n <= 0 then             flaw ("constructor", "parameter n must be positive")
+    if p < 0.0 || p > 1.0 then flaw ("init", "parameter p must be in [0, 1]")
+    if n <= 0 then             flaw ("init", "parameter n must be positive")
     _discrete = true
     private val q    = 1.0 - p                  // probability of failure
     private val p_q  = p / q                    // the ratio p divided by q
@@ -240,7 +242,7 @@ end Binomial
 case class Cauchy (alpha: Double = 2.5, beta: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if beta <= 0.0 then flaw ("constructor", "parameter beta must be positive")
+    if beta <= 0.0 then flaw ("init", "parameter beta must be positive")
 
     val mean = alpha                       // but, technically does not exist
 
@@ -263,7 +265,7 @@ end Cauchy
 case class ChiSquare (df: Int = 2, stream: Int = 0)
      extends Variate (stream):
 
-    if df <= 0 then flaw ("constructor", "parameter df must be positive")
+    if df <= 0 then flaw ("init", "parameter df must be positive")
 
     private val gamma  = Gamma (df/2, 2.0, stream)
     private val normal = Normal (0.0, 1.0, stream)
@@ -389,7 +391,7 @@ case class DiscreteF (f: Array [Double => Double] = Array ((x: Double) => x), st
 
     def setTime (tt: Double): Unit = { t = tt }
 
-    def pf (z: Double): Double = f(min (n-1, floor (z).toInt))(t)
+    def pf (z: Double): Double = f(math.min (n-1, floor (z).toInt))(t)
    
     def gen: Double =
         val y = r.gen
@@ -426,7 +428,7 @@ end DiscreteF
 case class Erlang (mu: Double = 1.0, k: Int = 2, stream: Int = 0)
      extends Variate (stream):
 
-    if mu <= 0.0 || k <= 0 then flaw ("constructor", "parameters mu and k must be positive")
+    if mu <= 0.0 || k <= 0 then flaw ("init", "parameters mu and k must be positive")
 
     private val l = 1.0 / mu             // lambda
 
@@ -459,7 +461,7 @@ end Erlang
 case class Exponential (mu: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if mu <= 0.0 then flaw ("constructor", "parameter mu must be positive")
+    if mu <= 0.0 then flaw ("init", "parameter mu must be positive")
 
     private val λ = 1.0 / mu             // lambda, the rate parameter
 
@@ -486,7 +488,7 @@ case class Fisher (df1: Int = 6, df2: Int = 4, stream: Int = 0)
      extends Variate (stream):
 
     if df1 <= 0 || df2 <= 2 then
-        flaw ("constructor", "parameters df1 and df2 must be at least 1 and 3, respectively")
+        flaw ("init", "parameters df1 and df2 must be at least 1 and 3, respectively")
 
     private val chi1 = ChiSquare (df1, stream)
     private val chi2 = ChiSquare (df2, stream)
@@ -526,7 +528,7 @@ end Fisher
 case class Gamma (alpha: Double = 1.0, beta: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if alpha <= 0.0 || beta <= 0.0 then flaw ("constructor", "parameters alpha and beta must be positive")
+    if alpha <= 0.0 || beta <= 0.0 then flaw ("init", "parameters alpha and beta must be positive")
 
     private val a    = floor (alpha).toInt          // integral part
     private val b    = alpha - a                    // fractional part  
@@ -581,7 +583,7 @@ end Gamma
 case class Geometric (p: Double = .5, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0 || p > 1 then flaw ("constructor", "parameter p must be in [0, 1]")
+    if p < 0 || p > 1 then flaw ("init", "parameter p must be in [0, 1]")
     _discrete = true
 
     private val q      = 1.0 - p
@@ -618,8 +620,8 @@ end Geometric
 case class HyperExponential (p: Double = .5, mu1: Double = 1, mu2: Double = 2, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0 || p > 1.0 then       flaw ("constructor", "parameter p must be in [0, 1]")
-    if mu1 <= 0.0 || mu2 <= 0.0 then flaw ("constructor", "parameters mu1 and mu2 must be positive")
+    if p < 0.0 || p > 1.0 then       flaw ("init", "parameter p must be in [0, 1]")
+    if mu1 <= 0.0 || mu2 <= 0.0 then flaw ("init", "parameters mu1 and mu2 must be positive")
 
     private val q  = 1.0 - p
     private val l1 = 1.0 / mu1      // lambda 1
@@ -638,17 +640,17 @@ end HyperExponential
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** This class generates `HyperExponential` random variates.
+/** This class generates `HyperExponential_` random variates.
  *  This continuous RV models the time until an event occurs (higher coefficient
  *  of variation than exponential distribution). FIX
  *  @param mu      the mean
  *  @param sigma   the standard deviation
  *  @param stream  the random number stream
  */
-case class _HyperExponential (mu: Double = 1.0, sigma: Double = 2, stream: Int = 0)
+case class HyperExponential_ (mu: Double = 1.0, sigma: Double = 2, stream: Int = 0)
      extends Variate (stream):
 
-    if mu <= 0.0 || sigma <= 0.0 then flaw ("constructor", "parameters mu and sigma must be positive")
+    if mu <= 0.0 || sigma <= 0.0 then flaw ("init", "parameters mu and sigma must be positive")
 
     private val cv2 = (sigma / mu)~^2.0
     private val p   = .5 * (1.0 - sqrt ((cv2-1.0) / (cv2+1.0)))
@@ -671,7 +673,7 @@ case class _HyperExponential (mu: Double = 1.0, sigma: Double = 2, stream: Int =
         -0.5 * zz * log (r.gen)
     end gen1
 
-end _HyperExponential
+end HyperExponential_
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -686,8 +688,8 @@ end _HyperExponential
 case class HyperGeometric (p: Double = .5, n: Int = 5, pop: Int = 10, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0 || p > 1.0 then flaw ("constructor", "parameter p must be in [0, 1]")
-    if n <= 0 || pop <= 0 then flaw ("constructor", "parameters n and pop must be positive")
+    if p < 0.0 || p > 1.0 then flaw ("init", "parameter p must be in [0, 1]")
+    if n <= 0 || pop <= 0 then flaw ("init", "parameters n and pop must be positive")
     _discrete = true
 
     private val reds: Int = floor (p * pop).toInt    // number of red balls
@@ -794,7 +796,7 @@ end Logistic
 case class LogNormal (mu: Double = 0.0, sigma2: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if sigma2 <= 0.0 then flaw ("constructor", "parameter sigma2 must be positive")
+    if sigma2 <= 0.0 then flaw ("init", "parameter sigma2 must be positive")
 
     private val _2sigma2 = 2.0 * sigma2
     private val normal   = Normal (mu, sigma2, stream)   // associated Normal distribution
@@ -827,8 +829,8 @@ end LogNormal
 case class NegativeBinomial (p: Double = .5, s: Int = 2, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0 || p > 1.0 then flaw ("constructor", "parameter p must be in [0, 1]")
-    if s <= 0 then             flaw ("constructor", "parameter s must be positive")
+    if p < 0.0 || p > 1.0 then flaw ("init", "parameter p must be in [0, 1]")
+    if s <= 0 then             flaw ("init", "parameter s must be positive")
     _discrete = true
 
     private val q    = 1.0 - p
@@ -870,7 +872,7 @@ end NegativeBinomial
 case class Normal (mu: Double = 0.0, sigma2: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if sigma2 < 0.0 then flaw ("constructor", "parameter sigma2 must be nonnegative")
+    if sigma2 < 0.0 then flaw ("init", "parameter sigma2 must be nonnegative")
 
     private val sigma    = sqrt (sigma2)
     private val _2sigma2 = - 2.0 * sigma2
@@ -929,8 +931,8 @@ end Normal
 case class Pareto (a: Double = 0.5, b: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
-    if a <= 0.0 || b < 0.0 then flaw ("constructor", "parameters 'a' and 'b' must be positive, nonegative")
-    if a >= 1.0 then flaw ("constructor", "parameter 'a' must be less than 1")
+    if a <= 0.0 || b < 0.0 then flaw ("init", "parameters 'a' and 'b' must be positive, nonegative")
+    if a >= 1.0 then flaw ("init", "parameter 'a' must be less than 1")
 
     val mean = a * b / (a-1.0)
 
@@ -954,7 +956,7 @@ end Pareto
 case class Poisson (mu: Double = 2.0, stream: Int = 0)
      extends Variate (stream):
 
-    if mu <= 0.0 then flaw ("constructor", "parameter mu must be positive")
+    if mu <= 0.0 then flaw ("init", "parameter mu must be positive")
     _discrete = true
 
     private val cutoff = exp (-mu)
@@ -1004,8 +1006,8 @@ end Poisson
 case class PowerLaw (a: Double = 1.0, b: Double = 10.0, y: Double = 2.1, stream: Int = 0)
      extends Variate (stream):
 
-    if a >= b then  flaw ("constructor", "requires parameter a < b")
-    if y < 1.0 then flaw ("constructor", "parameter y must be >= 1.0")
+    if a >= b then  flaw ("init", "requires parameter a < b")
+    if y < 1.0 then flaw ("init", "parameter y must be >= 1.0")
 
     private val exp  = 1.0 - y                            // exponent
     private val a_up = a~^exp
@@ -1040,7 +1042,7 @@ end PowerLaw
 case class Randi (a: Int = 0, b: Int = 5, stream: Int = 0)
      extends Variate (stream):
 
-    if a > b then flaw ("constructor", "parameter a must not be greater than b")
+    if a > b then flaw ("init", "parameter a must not be greater than b")
     _discrete = true
 
     private val width = b + 1 - a
@@ -1074,7 +1076,7 @@ end Randi
 case class Randi0 (b: Int = 5, stream: Int = 0)
      extends Variate (stream):
 
-    if b < 0 then flaw ("constructor", "parameter b must be non-negative")
+    if b < 0 then flaw ("init", "parameter b must be non-negative")
     _discrete = true
 
     private val width = b + 1
@@ -1102,7 +1104,7 @@ end Randi0
 case class RandiU0 (b: Int = 1000, stream: Int = 0)
      extends Variate (stream):
 
-    if b < 0 then flaw ("constructor", "parameter b must be non-negative")
+    if b < 0 then flaw ("init", "parameter b must be non-negative")
     _discrete = true
 
     val previous = collection.mutable.Set [Int] ()
@@ -1209,7 +1211,7 @@ end StdNormal
 case class StudentT (df: Int = 4, stream: Int = 0)
      extends Variate (stream):
 
-    if df <= 0 then flaw ("constructor", "parameter df must be positive")
+    if df <= 0 then flaw ("init", "parameter df must be positive")
 
     private val _df    = (df + 1) / 2.0
     private val normal = Normal (0.0, 1.0, stream)
@@ -1295,7 +1297,7 @@ end Trapezoidal
 case class Triangular (a: Double = 0, b: Double = 5, c: Double = Double.MaxValue, stream: Int = 0)
      extends Variate (stream):
 
-    if a > b then flaw ("constructor", "parameter a must not be greater than b")
+    if a > b then flaw ("init", "parameter a must not be greater than b")
 
     private val width = b - a
     private val mode  = if c < Double.MaxValue then c else (a + b) / 2.0
@@ -1344,10 +1346,10 @@ end Triangular
 case class Trinomial (p: Double = 1.0/3.0, q: Double = 1.0/3.0, n: Int = 5, stream: Int = 0)
      extends Variate (stream):
 
-    if p < 0.0   then flaw ("constructor", "parameter p must be non-negative")
-    if q < 0.0   then flaw ("constructor", "parameter q must be non-negative")
-    if p+q > 1.0 then flaw ("constructor", "p+q must not exceed one")
-    if n <= 0    then flaw ("constructor", "parameter n must be positive")
+    if p < 0.0   then flaw ("init", "parameter p must be non-negative")
+    if q < 0.0   then flaw ("init", "parameter q must be non-negative")
+    if p+q > 1.0 then flaw ("init", "p+q must not exceed one")
+    if n <= 0    then flaw ("init", "parameter n must be positive")
     _discrete = true
 
     private val qq   = 1.0 - p - q               // the probability of low (0)
@@ -1412,7 +1414,7 @@ end Trinomial
 case class Uniform (a: Double = 0.0, b: Double = 5.0, stream: Int = 0)
      extends Variate (stream):
 
-    if a > b then flaw ("constructor", "parameter a must not be greater than b")
+    if a > b then flaw ("init", "parameter a must not be greater than b")
 
     private val width = b - a
 
@@ -1444,7 +1446,7 @@ end Uniform
 case class Weibull (alpha: Double = 1.0, beta: Double = 2.0, stream: Int = 0)
      extends Variate (stream):
 
-    if alpha <= 0.0 || beta <= 0.0 then flaw ("constructor", "parameters alpha and beta must be positive")
+    if alpha <= 0.0 || beta <= 0.0 then flaw ("init", "parameters alpha and beta must be positive")
 
     private val shape_recip = 1.0 / alpha
 

@@ -24,8 +24,8 @@ import scalation.mathstat._
  *  Use Least-Squares (minimizing the residuals) to fit the parameter vector 'b'
  *  @param x       the data/input matrix
  *  @param y       the response/output vector
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters (it doesn't have any, but may be used by derived classes)
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class RoundRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                        hparam: HyperParameter = Regression.hp)
@@ -57,15 +57,16 @@ end RoundRegression
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RoundRegression` companion object provides factory functions.
+/** The `RoundRegression` companion object provides factory methods for creating
+ *  rounded regression models.
  */
 object RoundRegression:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RoundRegression` object using a combined matrix.
      *  @param xy      the combined data matrix and response vector
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters (it doesn't have any, but may be used by derived classes)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,

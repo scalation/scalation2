@@ -13,7 +13,7 @@ package mathstat
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Sample a function at n+1 equally spaced points in the domain and return
- *  these functional values in a vector.
+ *  their functional values in a vector.
  *  Ex: sample f(x) on x in [0, 10] at 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
  *  @param f   the function to be sampled
  *  @param ab  the interval of the domain [a, b]

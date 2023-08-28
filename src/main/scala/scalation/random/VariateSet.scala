@@ -4,17 +4,18 @@
  *  @version 2.0
  *  @date    Wed Sep 16 16:12:08 EDT 2015
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @title   Random Variate Set (RVS) Generators
  */
 
 package scalation
 package random
 
 import scala.collection.mutable.Set
-import scala.math.round
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `VariateSet` abstract class serves as a base class for all the random
- *  variate set (RVS) generators.  They use one of the Random Number Generators
+/** The `VariateSet` abstract class serves as a base class for all the Random
+ *  Variate Set (RVS) generators.  They use one of the Random Number Generators
  *  (RNG's) from Random.scala to generate numbers following their particular
  *  multivariate distribution.
  *  @param stream  the random number stream

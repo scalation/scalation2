@@ -14,7 +14,6 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
-import scala.collection.IterableFactoryDefaults
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.runtime.ScalaRunTime.stringOf

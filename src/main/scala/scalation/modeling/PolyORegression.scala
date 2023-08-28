@@ -31,8 +31,8 @@ import scalation.mathstat._
  *  @param t       the initial data/input m-by-1 matrix: t_i expands to x_i = [1, t_i, t_i^2, ... t_i^k]
  *  @param y       the response/ouput vector
  *  @param ord     the order (k) of the polynomial (max degree)
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to PolyRegression.hp)
  */
 class PolyORegression (t: MatrixD, y: VectorD, ord: Int, fname_ : Array [String] = null,
                        hparam: HyperParameter = PolyRegression.hp)
@@ -87,8 +87,8 @@ end PolyORegression
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `PolyORegression` companion object provides factory functions and functions
- *  for creating functional forms.
+/** The `PolyORegression` companion object provides factory methods for creating
+ *  orthogonal polynomial regression models and methods for creating functional forms.
  */
 object PolyORegression:
 
@@ -105,8 +105,8 @@ object PolyORegression:
     /** Create a `PolyORegression` object from a combined data-response matrix.
      *  @param xy      the initial combined data-response matrix (before polynomial term expansion)
      *  @param ord     the order (k) of the polynomial (max degree)
-     *  @param fname_  the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname_  the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to PolyRegression.hp)
      */
     def apply (xy: MatrixD, ord: Int, fname: Array [String] = null,
                hparam: HyperParameter = PolyRegression.hp): PolyORegression =
@@ -128,12 +128,12 @@ object PolyORegression:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `PolyORegression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the initial data/input matrix (before polynomial term expansion)
      *  @param y       the response/output m-vector
      *  @param ord     the order (k) of the polynomial (max degree)
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to PolyRegression.hp)
      */
     def rescale (x: MatrixD, y: VectorD, ord: Int, fname: Array [String] = null,
                  hparam: HyperParameter = PolyRegression.hp): PolyORegression =

@@ -23,7 +23,7 @@ import scalation.mathstat._
  *  @see `SimpleRegression` for both intercept and slope parameters
  *  @param x       the data/input matrix (only use the first column)
  *  @param y       the response/output vector
- *  @param fname_  the feature/variable names (only use the first name)
+ *  @param fname_  the feature/variable names (only use the first name)(defaults to null)
  */
 class SimplerRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null)
       extends Predictor (x, y, if fname_ == null then null else fname_.slice (0, 1), null)
@@ -88,7 +88,7 @@ object SimplerRegression:
     /** Create a Simpler Linear Regression model from a combined data matrix.
      *  Take the first column for the predictor and the last column for the response.
      *  @param xy      the combined data matrix
-     *  @param fname_  the feature/variable names
+     *  @param fname_  the feature/variable names (defaults to null)
      */
     def apply (xy: MatrixD, fname: Array [String] = null): SimplerRegression =
         new SimplerRegression (xy(?, 0 to 1), xy(?, xy.dim2-1), fname)

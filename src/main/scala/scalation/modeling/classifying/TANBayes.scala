@@ -24,7 +24,7 @@ import scalation.database.MaxSpanningTree
 import scalation.mathstat._
 
 import Classifier.{shift2zero, vc_fromData}
-import Probability.{freq, plog}
+import Probability.plog
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TANBayes` class implements an Integer-Based TAN Bayes Classifier,
@@ -50,7 +50,7 @@ class TANBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
                 private var vc: VectorI = null, hparam: HyperParameter = NaiveBayes.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
          with BayesClassifier (k)
-         with FitC (y, k):
+         with FitC (k):
 
     private val debug = debugf ("TANBayes", true)                        // debug function
 
@@ -110,12 +110,12 @@ class TANBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
         super.train (x_, y_)                                            // set class frequencies nu_y and probabilities p_y
         findParent (x_, y_)                                             // find the best x-parent for each xj (parent)
         vc_parent ()                                                    // set the value counts for the parents (vc_p)
-        nu_Xy  = RTensorD.freq (x_, vc, y_, k)                      // Joint Frequency Tables (JFTs)
-        nu_Xpy_ = RTensor4D.freq (x_, vc, parent, vc_p, y_, k)      // extended Joint Frequency Tables (JFTs)
+        nu_Xy      = RTensorD.freq (x_, vc, y_, k)                      // Joint Frequency Tables (JFTs)
+        nu_Xpy_    = RTensor4D.freq (x_, vc, parent, vc_p, y_, k)       // extended Joint Frequency Tables (JFTs)
         val nu_Xpy = freq_Xpy (x_, y_)                                  // extended Joint Frequency Tables (JFTs)
         p_Xpy      = cProb_Xpy (x_, y_, nu_y, nu_Xy, nu_Xpy)            // extended Conditional Probability Tables (CPTs)
-        println (s"nu_Xpy  = ${stringOf (nu_Xpy)}")
-        println (s"nu_Xpy_ = $nu_Xpy_")
+//      println (s"nu_Xpy  = ${stringOf (nu_Xpy)}")
+//      println (s"nu_Xpy_ = $nu_Xpy_")
     end train
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -191,7 +191,7 @@ class TANBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                         // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                   // diagnose from actual and predicted
-        debug ("test", s" yp = $yp \n qof = $qof")
+//      debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 
@@ -213,9 +213,11 @@ class TANBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
                 p_yz *= ecpt (z(j))(0)                                  // multiply in its v = z(j) row
             end if
         end for
-        debug ("predictI", s"p_yz = $p_yz")
+//      debug ("predictI", s"p_yz = $p_yz")
         p_yz.argmax ()                                                  // return class with highest probability
     end predictI
+
+    inline def predictI (z: VectorD): Int = predictI (z.toInt)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict the integer value of y = f(z) by computing the product of the class

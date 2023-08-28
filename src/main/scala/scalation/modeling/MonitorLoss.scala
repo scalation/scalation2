@@ -21,6 +21,7 @@ import scalation.mathstat._
  */
 trait MonitorLoss:
 
+    private val debug  = debugf ("MonitorLoss", false)                 // debug function
     private val losses = ArrayBuffer [Double] ()                       // hold values for loss function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -30,14 +31,14 @@ trait MonitorLoss:
     def collectLoss (loss: Double): Unit = losses += loss
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Plot the loss function versus the epoch.
+    /** Plot the loss function versus the epoch/major iterations.
      *  @param optName  the name of optimization algorithm (alt. name of network)
      */
     def plotLoss (optName: String): Unit =
         val loss  = VectorD (losses)
-        println (s"loss = $loss")
+        debug ("plotLoss", s"loss = $loss")
         val epoch = VectorD.range (1, loss.dim+1)
-        new Plot (epoch, loss, null, "loss vs epoch $optName")
+        new Plot (epoch, loss, null, s"loss vs epoch $optName")
     end plotLoss
 
 end MonitorLoss

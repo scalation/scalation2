@@ -37,7 +37,7 @@ class WaitQueue_LCFS (name: String, at: Array [Double], cap: Int = Int.MaxValue)
 
     private val debug = debugf ("WaitQueue_LCFS", true)                 // debug function
 
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("init", s"located at ${stringOf (at)}")
 
     /** The number of entities barred from entering due to the wait-queue being full
      */

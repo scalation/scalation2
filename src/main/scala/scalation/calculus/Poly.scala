@@ -5,12 +5,11 @@
  *  @date    Sat Apr 29 13:22:47 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @see introcs.cs.princeton.edu/java/92symbolic/Polynomial.java.html
+ *  @title   Univariate Polynomials
+ *  @see     introcs.cs.princeton.edu/java/92symbolic/Polynomial.java.html
  */
 package scalation
 package calculus
-
-import scala.math.abs
 
 import scalation.mathstat._
 
@@ -29,7 +28,7 @@ case class Poly (c: VectorD, x: String = "x"):
     private val debug = debugf ("Poly", true)                  // debug function
     val deg           = c.size - 1                             // degree of the polynomial
 
-    debug ("constructor", s"($c) has degree $deg")
+    debug ("init", s"($c) has degree $deg")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Apply/evaluate the polynomial at 'x'.

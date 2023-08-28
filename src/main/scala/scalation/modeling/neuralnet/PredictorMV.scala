@@ -12,8 +12,7 @@ package scalation
 package modeling
 package neuralnet
 
-import scala.collection.mutable.{ArrayBuffer, IndexedSeq, LinkedHashSet, Set}
-import scala.math.{cbrt, sqrt}
+import scala.collection.mutable.{ArrayBuffer, IndexedSeq, LinkedHashSet}
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{break, breakable}
 
@@ -21,11 +20,16 @@ import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PredictorMV` trait provides a framwork for multiple predictive analytics
- *  techniques, e.g., Neural Netoworks.  x is multi-dimensional [1, x_1, ... x_k].
- *  Fit the parameter vector b in for example the regression equation
- *      y  =  f(b dot x) + e
+ *  techniques, e.g., Multi-variate Regression and Neural Netoworks.
+ *  x is multi-dimensional [1, x_1, ... x_k] and so is y.
+ *  Fit the `NetParam` parameters bb in for example the regression equation
+ *      y  =  f(bb dot x) + e
+ *  bb is an array of `NetParam` where each component is a weight matrix and
+ *  a bias vector.
+ *  @see `NetParam`
  *  @param x       the input/data m-by-n matrix
- *                     (augment with a first column of ones to include intercept in model)
+ *                     (augment with a first column of ones to include intercept in model
+ *                      or use bias)
  *  @param y       the response/output m-by-ny matrix
  *  @param fname   the feature/variable names (if null, use x_j's)
  *  @param hparam  the hyper-parameters for the model/network
@@ -48,8 +52,7 @@ trait PredictorMV (x: MatrixD, y: MatrixD, protected var fname: Array [String],
     private val stream    = 0                                                // random number stream to use
     private val permGen   = TnT_Split.makePermGen (y.dim, stream)            // permutation generator
 
-    protected var b: MatrixD | NetParam = null                               // parameter/coefficient matrix - init in class
-    protected var bb: Array [NetParam]  = null                               // array of network parameters  - init in class
+    protected var bb: Array [NetParam]  = null                               // array of network parameters - init/alloc in class
     protected var e: MatrixD            = null                               // residual/error matrix
 
     if x != null && fname == null then fname = x.indices2.map ("x" + _).toArray  // default feature/variable names
@@ -81,7 +84,7 @@ trait PredictorMV (x: MatrixD, y: MatrixD, protected var fname: Array [String],
     /** Train a predictive model y_ = f(x_) + e where x_ is the data/input
      *  matrix and y_ is the response/output matrix.  These arguments default
      *  to the full dataset x and y, but may be restricted to a training
-     *  dataset.  Training involves estimating the model parameters b.
+     *  dataset.  Training involves estimating the model parameters bb.
      *  @param x_  the training/full data/input matrix (defaults to full x)
      *  @param y_  the training/full response/output matrix (defaults to full y)
      */
@@ -132,12 +135,7 @@ trait PredictorMV (x: MatrixD, y: MatrixD, protected var fname: Array [String],
         train (x_, y_)
         val (yp, qof) = test (xx, yy)
         println (report (qof))
-        if DO_PLOT then
-            val (ryy, ryp) = orderByYY (yy, yp)                               // order by yy
-            for k <- ryy.indices2 do
-                new Plot (null, ryy(?, k), ryp(?, k), s"$modelName: y$k actual, predicted")
-            end for
-        end if
+        if DO_PLOT then makePlots (yy, yp)
         (yp, qof)
     end trainNtest
 
@@ -155,14 +153,22 @@ trait PredictorMV (x: MatrixD, y: MatrixD, protected var fname: Array [String],
         train2 (x_, y_)
         val (yp, qof) = test (xx, yy)
         println (report (qof))
-        if DO_PLOT then
-            val (ryy, ryp) = orderByYY (yy, yp)                               // order by yy
-            for k <- ryy.indices2 do
-                new Plot (null, ryy(?, k), ryp(?, k), s"$modelName: y$k actual, predicted")
-            end for
-        end if
+        if DO_PLOT then makePlots (yy, yp)
         (yp, qof)
     end trainNtest2
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Make plots for each output/response variable (column of matrix y).
+     *  Must override if the response matrix is transformed or rescaled.
+     *  @param yy  the testing/full actual response/output matrix (defaults to full y)
+     *  @param yp  the testing/full predicted response/output matrix (defaults to full y)
+     */
+    def makePlots (yy: MatrixD, yp: MatrixD): Unit =
+        val (ryy, ryp) = orderByYY (yy, yp)                               // order by yy
+        for k <- ryy.indices2 do
+            new Plot (null, ryy(?, k), ryp(?, k), s"$modelName: y$k black/actual vs. red/predicted")
+        end for
+    end makePlots
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return a basic report on a trained and tested multi-variate model.
@@ -217,12 +223,9 @@ REPORT
     def hparameter: HyperParameter = hparam
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the matrix (or `NetParam`) of parameter/coefficient values.
+    /** Return only the first matrix of parameter/coefficient values.
      */
-    def parameter: MatrixD =
-        if b.isInstanceOf [MatrixD] then b.asInstanceOf [MatrixD]
-        else b.asInstanceOf [NetParam].toMatrixD
-    end parameter
+    def parameter: MatrixD = bb(0).toMatrixD
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the array of network parameters (weight matrix, bias vector) bb.
@@ -239,7 +242,7 @@ REPORT
      *  Override for models that support feature section.
      *  @param x_cols  the columns that the new model is restricted to
      */
-    def buildModel (x_cols: MatrixD): PredictorMV
+    def buildModel (x_cols: MatrixD): PredictorMV & Fit
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `BestStep` is used to record the best improvement step found so far.
@@ -248,7 +251,30 @@ REPORT
      *  @param qof  the Quality of Fit (QoF) for this step
      *  @param mod  the model including selected features/variables for this step
      */
-    case class BestStep (col: Int = -1, qof: VectorD = null, mod: PredictorMV = null)
+    case class BestStep (col: Int = -1, qof: VectorD = null, mod: PredictorMV & Fit = null)
+
+    private var theBest = BestStep ()                                        // record the best model from feature selection
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Reset the best-step to default
+     */
+    def resetBest (): Unit = theBest = BestStep ()
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the best model found from feature selection.
+     */
+    def getBest: BestStep = theBest
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** When the new best-step is better than theBest, replace theBest.
+     *  Note: for QoF where smaller if better, must switch to '<'.
+     *  @param best   new best-step found during feature selection
+     *  @param idx_q  index of Quality of Fit (QoF) to use for comparing quality
+     */
+    private def updateBest (best: BestStep, idx_q: Int = QoF.rSqBar.ordinal): Unit =
+        if best.qof != null then
+            if theBest.qof == null || best.qof(idx_q) > theBest.qof(idx_q) then theBest = best
+    end updateBest
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the rSq-based QoF results for the l-th iteration.
@@ -302,7 +328,7 @@ REPORT
             val x_cols = x(?, cols_j)                                         // x projected onto cols_j columns
             val mod_j  = buildModel (x_cols)                                  // regress with x_j added
             mod_j.train ()                                                    // train model
-            val cand = BestStep (j, mod_j.test ()._2(?, 0), mod_j)            // candidate step
+            val cand = BestStep (j, mod_j.test ()._2(?, 0), mod_j)            // candidate step (based on column 0)
             if cand.qof(idx_q) > bestq then { best = cand; bestq = cand.qof(idx_q) }
         end for
 
@@ -322,8 +348,10 @@ REPORT
      */
     def forwardSelAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
             (LinkedHashSet [Int], MatrixD) =
-        val rSq  = new MatrixD (x.dim2 - 1, 3)                                // QoF: R^2, R^2 Bar, R^2 cv
+        resetBest ()
+        val rSq  = new MatrixD (x.dim2 - 1, Fit.qofVectorSize)                // QoF: R^2, R^2 Bar, smape, R^2 cv
         val cols = LinkedHashSet (0)                                          // start with x_0 in model
+//      updateQoF (rSq, 0, cross, select0 (idx_q))                            // update Qof results for 0-th variable FIX?
 
         banner (s"forwardSelAll: (l = 0) INITIAL variable (0, ${fname(0)}) => cols = $cols")
 
@@ -331,6 +359,7 @@ REPORT
             for l <- 1 until x.dim2 do
                 val best = forwardSel (cols, idx_q)                           // add most predictive variable
                 if best.col == -1 then break ()                               // could not find variable to add
+                updateBest (best)
                 cols += best.col                                              // add variable x_j
                 updateQoF (rSq, l-1, cross, best)                             // update QoF results
                 val (jj, jj_qof) = (best.col, best.qof(idx_q))
@@ -391,7 +420,8 @@ REPORT
      */
     def backwardElimAll (idx_q: Int = QoF.rSqBar.ordinal, first: Int = 1, cross: Boolean = true):
             (LinkedHashSet [Int], MatrixD) =
-        val rSq  = new MatrixD (x.dim2 - 1, 3)                                // R^2, R^2 Bar, R^2 cv
+        resetBest ()
+        val rSq  = new MatrixD (x.dim2 - 1, Fit.qofVectorSize)                // R^2, R^2 Bar, smape, R^2 cv
         val cols = LinkedHashSet.range (0, x.dim2)                            // start with all x_j in model
 
         val best0 = fullModel
@@ -403,6 +433,7 @@ REPORT
             for l <- 1 until x.dim2 - 1 do                                    // l indicates number of variables eliminated
                 val best = backwardElim (cols, idx_q, first)                  // remove least predictive variable
                 if best.col == -1 then break ()                               // could not find variable to remove
+                updateBest (best)
                 cols -= best.col                                              // remove variable x_j
                 updateQoF (rSq, l, cross, best)                               // update QoF results
                 val (jj, jj_qof) = (best.col, best.qof(idx_q))
@@ -424,8 +455,9 @@ REPORT
      */
     def stepRegressionAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
             (LinkedHashSet [Int], MatrixD) =
-        val SWAP   = false                                                    // whether to include swapping
-        val rSq    = new MatrixD (x.dim2 - 1, 3)                              // QoF: R^2, R^2 Bar, R^2 cv
+        resetBest ()
+        val SWAP   = true                                                     // whether to include swapping
+        val rSq    = new MatrixD (x.dim2 - 1, Fit.qofVectorSize)              // QoF: R^2, R^2 Bar, smape, R^2 cv
         val cols   = LinkedHashSet (0)                                        // start with x_0 in model
         var last_q = -MAX_VALUE                                               // current best QoF
         val vars   = ArrayBuffer [Int]()
@@ -440,6 +472,7 @@ REPORT
 
                 if (bestb.col == -1 || bestf.qof(idx_q) >= bestb.qof(idx_q)) &&   // forward as good as backward
                    (bestf.col != -1 && bestf.qof(idx_q) > last_q) then            // a better model has been found
+                    updateBest (bestf)
                     vars  += bestf.col
                     cols  += bestf.col                                            // ADD variable bestf.col
                     last_q = bestf.qof(idx_q)
@@ -449,6 +482,7 @@ REPORT
                     banner (s"stepRegressionAll: (l = $l) ADD variable ($jj, ${fname(jj)}) => cols = $cols @ $jj_qof")
 
                 else if bestb.col != -1 && bestb.qof(idx_q) > last_q then         // a better model has been found
+                    updateBest (bestb)
                     vars  += bestb.col
                     cols  -= bestb.col                                            // REMOVE variable bestb.col 
                     last_q = bestb.qof(idx_q)
@@ -461,6 +495,7 @@ REPORT
                     if ! SWAP then break ()
                     val (out, in) = (bestb.col, bestf.col)
                     val bestfb = swapVars (cols, out, in)
+                    updateBest (bestfb)
                     if out != -1 && in != -1 && bestfb.qof(idx_q) > last_q then    // a better model has been found
                         vars  += bestb.col
                         vars  += bestf.col
@@ -614,11 +649,11 @@ end PredictorMV
 /** The `predictorMVTest` main function is used to test the `PredictorMV` trait
  *  and its derived classes using the `Example_Concrete` dataset containing
  *  data matrices x, ox and response matrix y.
- *  > runMain scalation.modeling.predictorMV
+ *  > runMain scalation.modeling.predictorMVTest
  */
 @main def predictorMVTest (): Unit =
 
-    import Example_Concrete._
+//  import Example_Concrete._
 
     println ("TBD")
 

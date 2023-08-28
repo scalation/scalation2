@@ -13,8 +13,6 @@ package database
 package graph_pm
 
 import scala.collection.mutable.{ArrayBuffer, Queue}
-import scala.collection.mutable.{Set => SET}
-import scala.runtime.ScalaRunTime.stringOf
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `GraphMetrics` class provides methods for determining graph metrics that

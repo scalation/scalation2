@@ -30,16 +30,16 @@ import VariableKind.Categorical
  *  @param fname_  the name for each feature/variable xj
  *  @param k       the number of classes
  *  @param cname_  the name for each class
- *  @param hparam  the hyper-parameters for the Decision Tree classifier
+ *  @param hparam  the hyper-parameters
  */
 class DecisionTree_ID3 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                         cname_ : Array [String] = Array ("No", "Yes"),
                         hparam: HyperParameter = DecisionTree.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k)
+         with FitC (k)
          with DecisionTree:
 
-    private val debug     = debugf ("DecisionTree_ID3", true)            // debug function
+    private val debug     = debugf ("DecisionTree_ID3", false)           // debug function
     private val height    = hparam ("height").toInt                      // the maximum height of tree
     private val cutoff    = hparam ("cutoff")                            // cutoff entropy threshold
 
@@ -48,7 +48,7 @@ class DecisionTree_ID3 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
     private val feas      = Array.ofDim [Variable] (x.dim2)              // array of features/variables xj's
     for j <- x.indices2 do feas(j) = Variable (x(?, j), j, Categorical) 
 
-    modelName = "DecisionTree_ID3"                                       // name of the model
+    modelName = s"DecisionTree_ID3_$height"                              // name of the model
 
     debug ("init", s"entropy of original/full y: entropy_0 = $entropy_0")
 
@@ -89,12 +89,12 @@ class DecisionTree_ID3 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
         var sum = 0.0
         for v <- fea.values do
             val (frac_v, nu_v) = freq (xj, y_, k, v, rindex)                  // frequency for value v
-            debug ("gain", s" (v = $v): (frac_v, nu_v) = ($frac_v, $nu_v")
+//          debug ("gain", s" (v = $v): (frac_v, nu_v) = ($frac_v, $nu_v")
             sum += frac_v * entropy (nu_v)                                    // weighted entropy
             nu  += nu_v                                                       // aggregate frequency vector
         end for
         val igain = entropy_0 - sum                                           // the drop in entropy = information gain
-        debug ("gain", s"entropy = $sum, overall gain from feature ${fea.j} = $igain")
+//      debug ("gain", s"entropy = $sum, overall gain from feature ${fea.j} = $igain")
         (igain, nu)                                                           // return gain and aggregate frequency vector
     end gain
 
@@ -112,10 +112,10 @@ class DecisionTree_ID3 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
         var best = (-1, 0.0, null.asInstanceOf [VectorI])                     // best (feature, gain, frequency)
         for j <- cindex do
             val (gn, nu) = gain (feas(j), x_(?, j).toInt, y_, rindex)         // compute gain for feature j
-            debug ("findBest", s"compare ($j, $gn, $nu) to $best")
+//          debug ("findBest", s"compare ($j, $gn, $nu) to $best")
             if gn > best._2 then best = (j, gn, nu)                           // better gain => update best
         end for
-        if best._2 <= 0.0 then println ("findBest: no positive gain found")
+//      if best._2 <= 0.0 then println ("findBest: no positive gain found")
         best
     end findBest
 
@@ -219,18 +219,18 @@ end DecisionTree_ID3
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `DecisionTree_ID3` companion object provides factory methods.
+/** The `DecisionTree_ID3` companion object provides a factory method.
  */
 object DecisionTree_ID3:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a decision tree for the given combined matrix where the last column
+    /** Create a decision tree for the given combined matrix where the column col
      *  is the response/classification vector.
      *  @param xy      the combined data matrix (features and response)
      *  @param fname   the names for all features/variables
      *  @param k       the number of classes
      *  @param cname   the names for all classes
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixI, fname: Array [String] = null, k: Int = 2,
@@ -294,7 +294,7 @@ end decisionTree_ID3Test
 @main def decisionTree_ID3Test2 (): Unit =
 
     banner ("Breast Cancer: DecisionTree_ID3")
-    val nfile = BASE_DIR + "breast_cancer.csv"
+    val nfile = "breast_cancer.csv"
     val xy    = MatrixD.load (nfile)
     val fname = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
                        "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses")

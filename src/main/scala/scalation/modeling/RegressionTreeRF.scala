@@ -11,29 +11,25 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.Set
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
-import scalation.random.RandomVecI
 
 import modeling.{RegressionTree  => REG_TREE}                                // swap for Regression Tree
 //import modeling.{RegressionTreeMT => REG_TREE}                             // swap for Model Tree
-
-import RegressionTree.hp
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTreeRF` class uses several randomly built reegression trees for prediction.
  *  It randomly selects sub-samples of 'bRatio * x.dim1' size from the data x and y to
  *  build nTrees regression trees.  The predict method uses the average over all trees.
  *  Note: this version does not select sub-features to build the trees.
- *  @param x       the data matrix (instances by features)
- *  @param y       the response/class labels of the instances
- *  @param fname_  the names of the variables/features
- *  @param hparam  the hyper-parameters to the random forest
+ *  @param x       the input/data matrix (instances by features)
+ *  @param y       the ouput/response vector (instances)
+ *  @param fname_  the names of the variables/features (defaults to null)
+ *  @param hparam  the hyper-parameters to the random forest (defaults to RegressionTree.hp)
  */
 class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
-                        hparam: HyperParameter = hp)
+                        hparam: HyperParameter = RegressionTree.hp)
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):                    // call resetDF once tree is built
 

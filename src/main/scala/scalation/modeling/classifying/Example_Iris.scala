@@ -12,16 +12,20 @@ package scalation
 package modeling
 package classifying
 
+import scala.collection.mutable.Set
+
 import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Example_Iris` object is used to test all classifiers.
  *  This is the well-known classification problem on how to classify a flower
- *      val x = xy.not (?, 5)         // columns 1, 2, 3, 4
- *      val y = xy(?, 5).toInt        // column 5
+ *      val x = xy(?, 1 until 5)               // columns 1, 2, 3, 4
+ *      val y = xy(?, 5).toInt                 // column 5
  *  @see https://en.wikipedia.org/wiki/Iris_flower_data_set
  */
 object Example_Iris:
+
+    val fname = Array ("Sepal length", "Sepal width", "Petal length", "Petal width")
 
     // combined data matrix [ x | y ]
     // dataset ----------------------------------------------------------------
@@ -183,82 +187,136 @@ object Example_Iris:
                               149, 6.2, 3.4, 5.4, 2.3, 2,    // I. virginica
                               150, 5.9, 3.0, 5.1, 1.8, 2)    // I. virginica
 
-     // data for ternary classifiers
-     val k = 3
-     val x = xy.not(?, 5)                // columns 1, 2, 3, 4
-     val y = xy(?, 5).toInt              // column 5
+    // data for ternary classifiers
+    val k = 3
+    val x = xy(?, 1 until 5)                                 // columns 1, 2, 3, 4
+    val y = xy(?, 5).toInt                                   // column 5
 
-     // data for binary classifiers
-     val kk = 2
-     val xx = x(0 until 100)             // first 100 rows
-     val yy = y(0 until 100)             // first 100 elements
-     val yb = y.copy                     // imbalanced copy of y
-     for i <- 100 until 150 do yb(i) = 1
+    // data for binary classifiers
+    val kk = 2
+    val xx = x(0 until 100)                                  // first 100 rows
+    val yy = y(0 until 100)                                  // first 100 elements
+    val yb = y.copy                                          // imbalanced copy of y
+    for i <- 100 until 150 do yb(i) = 1
+
+    val continuous = Set (0, 1, 2, 3)                        // features that are continuous
 
 end Example_Iris
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `example_IrisTest` main function tests several classifiers on the Iris dataset.
+/** The `example_IrisTest` main function tests 16 of 18 classifiers on the Iris dataset.
+ *  As this is an easy classification problem, classifiers should be nearly perfect.
+ *
+ *  BaggingTrees, DecisionTree_C45, DecisionTree_C45wp, DecisionTree_ID3, DecisionTree_ID3wp,
+ *  HiddenMarkov, KNN_Classifier, LinDiscAnalyis, LogisticRegression, NaiveBayes,
+ *  NaiveBayesR, NeuralNet_Class_3L, NullModel, RandomForest, SupportVectorMachine, TANBayes.
+ *
+ *  Require having only a single feature: SimpleLDA, SimpleLogisticRegression => SKIP
+ *
  *  > runMain scalation.modeling.classifying.example_IrisTest
  */
 @main def example_IrisTest (): Unit =
 
     import Example_Iris._
 
-    val xr = MatrixI.roundMat (xx)
+    val xr = MatrixI.roundMat (xx)                           // rounded to integers
 
-    banner ("NullModel")
-    val nm = new NullModel (yy)
-    nm.trainNtest ()()
-    println (nm.summary ())
+    var mod: Classifier & FitC = null                        // build models using constructors
 
-    banner ("NaiveBayes")
-    val nb = new NaiveBayes (xr, yy)
-    nm.trainNtest ()()
-    println (nb.summary ())
+// Basic/Null Classifiers (1)
 
-    banner ("NaiveBayesR")
-    val nbr = new NaiveBayesR (xx, yy)
-    nm.trainNtest ()()
-    println (nbr.summary ())
+    banner ("Example_Iris: NullModel")
+    mod = new NullModel (yy)
+    mod.trainNtest ()()
+    println (mod.summary ())
 
-    banner ("TANBayes")
-    val tan = new TANBayes (xr, yy)
-    nm.trainNtest ()()
-    println (tan.summary ())
+// Bayesian Classifiers (4)
 
-    banner ("LogisticRegression")
-    val lrg = new LogisticRegression (xx, yy)
-    nm.trainNtest ()()
-    println (lrg.summary ())
+    banner ("Example_Iris: NaiveBayes")
+    mod = new NaiveBayes (xr, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
 
-    banner ("KNN_Classifier")
-    val knn = new KNN_Classifier (xx, yy)
-    nm.trainNtest ()()
-    println (knn.summary ())
+    banner ("Example_Iris: NaiveBayesR")                     // FIX - fails
+    mod = new NaiveBayesR (xx, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
 
-    banner ("LDA")
-    val lda = new LDA (xx, yy)
-    nm.trainNtest ()()
-    println (lda.summary ())
+    banner ("Example_Iris: TANBayes")
+    mod = new TANBayes (xr, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
 
-/*
-    banner ("DecisionTree_C45")
-    val dtc = new DecisionTree_C45 (xx, yy)
-    nm.trainNtest ()()
-    println (dtc.summary ())
+//  banner ("Example_Iris: HiddenMarkov")                    // FIX - Under Development
+//  mod = new HiddenMarkov (xr, yy, fname)
+//  mod.trainNtest ()()
+//  println (mod.summary ())
 
-    banner ("RandomForest")
-    val rf = new RandomForest (xx, yy)
-    nm.trainNtest ()()
-    println (rf.summary ())
+// Logistic Regression/LDA Classifiers (2)
 
-    banner ("SupportVectorMachine")
-    val svm = new SupportVectorMachine (xx, yy)
-    nm.trainNtest ()()
-    println (svm.summary ())
- */
+    banner ("Example_Iris: LogisticRegression")
+    mod = new LogisticRegression (xx, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: LinDiscAnalyis")
+    mod = new LinDiscAnalyis (xx, yy, fname)
+    mod.trainNtest ()()// Logistic Regression/LDA Classifiers (2)
+    println (mod.summary ())
+
+// K-Nearest Neighbors Classifiers (1)
+
+    banner ("Example_Iris: KNN_Classifier")
+    mod = new KNN_Classifier (xx, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+// Decision/Classification Tree Classifiers (6)
+
+    banner ("Example_Iris: DecisionTree_ID3")
+    mod = new DecisionTree_ID3 (xr, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: DecisionTree_ID3wp")
+    mod = new DecisionTree_ID3wp (xr, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: DecisionTree_C45")
+    mod = new DecisionTree_C45 (xx, yy, fname, conts = continuous)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: DecisionTree_C45wp")
+    mod = new DecisionTree_C45wp (xx, yy, fname, conts = continuous)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: BaggingTrees")
+    mod = new BaggingTrees (xx, yy, fname, conts = continuous)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+    banner ("Example_Iris: RandomForest")
+    mod = new RandomForest (xx, yy, fname, conts = continuous)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+// Support Vector Machine Classifiers (1)
+
+    banner ("Example_Iris: SupportVectorMachine")            // FIX - fails
+    mod = new SupportVectorMachine (xx, yy.map2 (0, -1), fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
+
+// Neural Network Classifiers (1)
+
+    banner ("Example_Iris: NeuralNet_Class_3L")
+    mod = new NeuralNet_Class_3L (xx, yy, fname)
+    mod.trainNtest ()()
+    println (mod.summary ())
 
 end example_IrisTest
 

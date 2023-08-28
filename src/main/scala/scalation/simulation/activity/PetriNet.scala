@@ -375,9 +375,9 @@ class ArcI (val place: PlaceI, val transition: Transition, incoming: Boolean, va
 
     private val flaw = flawf ("ArcI")                           // flaw function
 
-    if place == null then         flaw ("constructor", "discrete place must not be null")
-    if transition == null then    flaw ("constructor", "transition must not be null")
-    if ! incoming && testArc then flaw ("constructor", "test arcs must be incoming")
+    if place == null then         flaw ("init", "discrete place must not be null")
+    if transition == null then    flaw ("init", "transition must not be null")
+    if ! incoming && testArc then flaw ("init", "test arcs must be incoming")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the number of tokens of each color to flow over 'this' arc.
@@ -412,10 +412,10 @@ class ArcD (val place: PlaceD, val transition: Transition, incoming: Boolean, va
 
     private val flaw = flawf ("ArcD")                           // flaw function
 
-    if place == null then              flaw ("constructor", "continuous place must not be null")
-    if transition == null then         flaw ("constructor", "transition must not be null")
-    if ! incoming && testArc then      flaw ("constructor", "test arcs must be incoming")
-    if ! incoming && derv != null then flaw ("constructor", "only incoming arcs may have ODE's")
+    if place == null then              flaw ("init", "continuous place must not be null")
+    if transition == null then         flaw ("init", "transition must not be null")
+    if ! incoming && testArc then      flaw ("init", "test arcs must be incoming")
+    if ! incoming && derv != null then flaw ("init", "only incoming arcs may have ODE's")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the amount of fluid of each color to flow over 'this' arc.

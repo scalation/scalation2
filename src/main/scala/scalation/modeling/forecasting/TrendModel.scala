@@ -54,7 +54,7 @@ class TrendModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         debug ("train", s"parameters for $modelName = $parameter")     // [b_0, b_1]
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of a TrendModel forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -70,7 +70,7 @@ class TrendModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of a TrendModel forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined

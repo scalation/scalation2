@@ -12,7 +12,7 @@ package scalation
 package simulation
 package state
 
-import scala.math.{abs, cos, Pi, sin}
+import scala.math.{cos, Pi, sin}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.{AnimateCommand, DgAnimator}
@@ -48,7 +48,7 @@ class MarkovCT (tr: MatrixD):
      */
     val jump = new MatrixD (tr.dim, tr.dim2)
    
-    if tr.dim != tr.dim2 then flaw ("constructor", "transition rate matrices must be square")
+    if tr.dim != tr.dim2 then flaw ("init", "transition rate matrices must be square")
     for i <- jump.indices do
         val s = tr(i).sum - tr(i, i)                          // sum the ith row of tr skipping i
         for j <- jump.indices2 do

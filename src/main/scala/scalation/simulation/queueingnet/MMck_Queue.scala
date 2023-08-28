@@ -34,8 +34,8 @@ class MMck_Queue (λ: Double, μ: Double, c: Int = 1, k: Int = Int.MaxValue)
 
      private val flaw = flawf ("MMck_Queue")             // flaw function
 
-     if c < 1 then flaw ("constructor", "must have at least on server")
-     if k < c then flaw ("constructor", "not enough capacity")
+     if c < 1 then flaw ("init", "must have at least on server")
+     if k < c then flaw ("init", "not enough capacity")
 
      private val k_c   = k - c                           // waiting capacity
      private val c_fac = fac (c)                         // c! (factorial)

@@ -24,7 +24,6 @@ val G_RATIO = (1.0 + sqrt (5.0)) / 2.0
  */
 val G_SECTION = G_RATIO / (1.0 + G_RATIO)
 
-
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `GoldenSectionLS` class performs a line search on 'f(x)' to find a minimal
  *  value for 'f'.  It requires no derivatives and only one functional evaluation per
@@ -39,8 +38,8 @@ val G_SECTION = G_RATIO / (1.0 + G_RATIO)
 class GoldenSectionLS (f: FunctionS2S, τ: Double = 1E-5)
       extends LineSearch:
 
-    private val debug    = debugf ("GoldenSectionLS", false)   // debug flag
-    private val MAX_ITER = 200                                 // maximum number of expansion iterations
+    private val debug  = debugf ("GoldenSectionLS", false)     // debug flag
+    private val MAX_IT = 200                                   // maximum number of expansion iterations
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** A recursive golden section search requiring only one functional evaluation
@@ -94,7 +93,7 @@ class GoldenSectionLS (f: FunctionS2S, τ: Double = 1E-5)
         var matched = false
 
         breakable {
-            for k <- 1 to MAX_ITER do                       // expand right to try to find a down-up pattern
+            for k <- 1 to MAX_IT do                         // expand right to try to find a down-up pattern
                 val dist = x3 - x1
                 x2 = x1 + G_SECTION * dist
                 f2 = f(x2)

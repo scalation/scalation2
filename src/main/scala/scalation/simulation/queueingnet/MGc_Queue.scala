@@ -13,8 +13,6 @@ package scalation
 package simulation
 package queueingnet
 
-import scalation.mathstat.Combinatorics.fac
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `MGc_Queue` class is used to solve single node Queueing problems.
  *  It models a service station consisting of one queue and c servers, i.e.,

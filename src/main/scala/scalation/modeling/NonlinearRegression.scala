@@ -31,7 +31,7 @@ type FunctionP2S = (VectorD, VectorD) => Double
  *  @param y       the response/output vector
  *  @param f       the nonlinear function f(x, b) to fit
  *  @param b_init  the initial guess for the parameter vector b
- *  @param fname_  the feature/variable names
+ *  @param fname_  the feature/variable names (defaults to null)
  *  @param hparam  the hyper-parameters (currently has none)
  */
 class NonlinearRegression (x: MatrixD, y: VectorD, f: FunctionP2S,
@@ -113,7 +113,7 @@ object NonlinearRegression:
      *  @param xy      the combined data/input and response/output matrix
      *  @param f       the nonlinear function f(x, b) to fit
      *  @param b_init  the initial guess for the parameter vector b
-     *  @param fname   the feature/variable names
+     *  @param fname   the feature/variable names (defaults to null)
      *  @param hparam  the hyper-parameters (currently has none)
      *  @param col     the designated response column (defaults to the last column)
      */
@@ -141,7 +141,7 @@ object NonlinearRegression:
      *  @param y       the response/output vector
      *  @param f       the nonlinear function f(x, b) to fit
      *  @param b_init  the initial guess for the parameter vector b
-     *  @param fname   the feature/variable names
+     *  @param fname   the feature/variable names (defaults to null)
      *  @param hparam  the hyper-parameters (currently has none)
      */
     def rescale (x: MatrixD, y: VectorD, f: FunctionP2S, b_init: VectorD,

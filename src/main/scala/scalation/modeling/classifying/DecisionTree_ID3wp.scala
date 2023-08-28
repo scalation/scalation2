@@ -12,8 +12,6 @@ package scalation
 package modeling
 package classifying
 
-import scala.collection.mutable.Set
-
 import scalation.mathstat._
 import scalation.random.RandomVecI
 
@@ -26,7 +24,7 @@ import scalation.random.RandomVecI
  *  @param fname_  the name for each feature/variable xj
  *  @param k       the number of classes
  *  @param cname_  the name for each class
- *  @param hparam  the hyper-parameters for the Decision Tree classifier
+ *  @param hparam  the hyper-parameters
  */
 class DecisionTree_ID3wp (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                           cname_ : Array [String] = Array ("No", "Yes"),
@@ -65,12 +63,12 @@ object DecisionTree_ID3wp:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a decision tree (with pruning) for the given combined matrix where
-     *  the last column is the response/classification vector.
+     *  the column col is the response/classification vector.
      *  @param xy      the combined data matrix (features and response)
      *  @param fname   the names for all features/variables
      *  @param k       the number of classes
      *  @param cname   the names for all classes
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixI, fname: Array [String] = null, k: Int = 2,
@@ -110,7 +108,7 @@ end decisionTree_ID3wpTest
  */
 @main def decisionTree_ID3wpTest2 (): Unit =
 
-    val nfile = BASE_DIR + "breast_cancer.csv"
+    val nfile = "breast_cancer.csv"
     val xy    = MatrixD.load (nfile)
     val fname = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
                        "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses")
@@ -139,7 +137,7 @@ end decisionTree_ID3wpTest2
  */
 @main def decisionTree_ID3wpTest3 (): Unit =
 
-    val nfile = BASE_DIR + "breast_cancer.csv"
+    val nfile = "breast_cancer.csv"
     val xy    = MatrixD.load (nfile)
     val fname = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
                        "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses")

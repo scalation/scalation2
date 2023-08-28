@@ -1,5 +1,5 @@
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
  *  @version 2.0
  *  @date    Sun Nov 27 15:17:28 EST 2022
@@ -19,7 +19,7 @@ import scalation.mathstat.{MatrixD, VectorD}
 import ActivationFun._
 import neuralnet.Optimizer
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `SimpleRNN4TS` class supports regression-like recurrent neural networks
  *  for Time Series data.  Given a response vector y, a predictor matrix x is built
  *  that consists of lagged y vectors.
@@ -45,7 +45,7 @@ class SimpleRNN4TS (y: VectorD, lag: Int, h: Int, nz: Int = -1,
 end SimpleRNN4TS
 
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `simpleRNN4TSTest` main function test the basic calculations for RNNs.
  *  @see https://machinelearningmastery.com/understanding-simple-recurrent-neural-networks-in-keras/
  *  > runMain scalation.modeling.forecasting.simpleRNN4TSTest

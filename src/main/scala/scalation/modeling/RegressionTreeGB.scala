@@ -22,8 +22,8 @@ import modeling.{RegressionTree  => REG_TREE}                                 //
 /** The `RegressionTreeGB` class uses Gradient Boosting on `RegressionTree`s.
  *  @param x       the input/data matrix
  *  @param y       the output/response vector
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters for the model
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters for the model (defaults to RegressionTree.hp)
  */
 class RegressionTreeGB (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                         hparam: HyperParameter = RegressionTree.hp)
@@ -106,7 +106,7 @@ end RegressionTreeGB
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTreeGB` companion object defines hyper-parameters and provides
- *  a factory function.
+ *  a factory methods for creating gradient boosted regression trees.
  */
 object RegressionTreeGB:
 
@@ -116,8 +116,9 @@ object RegressionTreeGB:
     /** Create a `RegressionTreeGB` object that uses Gradient Boosting on `RegressionTree`.
      *  One Tree is included in the model at a time wisely chosen for reducing gradient.
      *  @param xy      the combined data-response matrix
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters for the model
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters for the model (defaults to RegressionTree.hp)
+     *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
                hparam: HyperParameter = RegressionTree.hp)
@@ -135,10 +136,10 @@ object RegressionTreeGB:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionTreeGB` object that uses Gradient Boosting on `RegressionTree`.
      *  One Tree is included in the model at a time wisely chosen for reducing gradient.
-     *  @param x       the data matrix
-     *  @param y       the response vector
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters for the model
+     *  @param x       the input/data matrix
+     *  @param y       the output/response vector
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters for the model (defaults to RegressionTree.hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = RegressionTree.hp): RegressionTreeGB =
@@ -157,10 +158,10 @@ end RegressionTreeGB
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionTreeGBTest` main function is used to test the `RegressionTreeGB` class.
-  *  @see translate.google.com/translate?hl=en&sl=zh-CN&u=https:
-  *       //www.hrwhisper.me/machine-learning-decision-tree/&prev=search
-  *  > runMain scalation.modeling.regressionTreeGBTest
-  */
+ *  @see translate.google.com/translate?hl=en&sl=zh-CN&u=https:
+ *       //www.hrwhisper.me/machine-learning-decision-tree/&prev=search
+ *  > runMain scalation.modeling.regressionTreeGBTest
+ */
 @main def regressionTreeGBTest (): Unit =
 
     val x  = MatrixD ((10, 1), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -211,17 +212,17 @@ end regressionTreeGBTest
 //  println (s"x = $o")
 //  println (s"y = $y")
 
-    val dmax    = 6                                                     // range of depths 1 to dmax
+    val dmax = 6                                                        // range of depths 1 to dmax
     val qual = new MatrixD (dmax, 3)
 
     for d <- 1 to dmax do
-       banner ("AutoMPG Regression Tree GB with depth d = $d")
-       RegressionTree.hp("maxDepth") = d                                // depth of tree
-       RegressionTree.hp("nTrees")   = 3                                // number of iterations
-       val mod = new RegressionTreeGB (x, y, x_fname)                   // create model with intercept (else pass x)
-       val qof = mod.trainNtest ()()._2                                 // train and test the model
-//     mod.printTree ()                                                 // print the regression tree
-//     println (mod.summary ())                                         // parameter/coefficient statistics
+        banner ("AutoMPG Regression Tree GB with depth d = $d")
+        RegressionTree.hp("maxDepth") = d                               // depth of tree
+        RegressionTree.hp("nTrees")   = 3                               // number of iterations
+        val mod = new RegressionTreeGB (x, y, x_fname)                  // create model with intercept (else pass x)
+        val qof = mod.trainNtest ()()._2                                // train and test the model
+//      mod.printTree ()                                                // print the regression tree
+//      println (mod.summary ())                                        // parameter/coefficient statistics
 
         banner (s"AutoMPG Regression Tree GB with d = $d Validation")
         val qof2 = mod.validate ()()                                    // out-of-sampling testing
@@ -272,8 +273,8 @@ end regressionTreeGBTest3
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionTreeGBTest4` main function is used to test the `RegressionTreeGB` class.
-  *  > runMain scalation.modeling.regressionTreeGBTest4
-  */
+ *  > runMain scalation.modeling.regressionTreeGBTest4
+ */
 @main def regressionTreeGBTest4 (): Unit =
 
     val x = MatrixD ((5, 1), 750, 800, 850, 900, 950)

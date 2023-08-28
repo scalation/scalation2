@@ -11,8 +11,9 @@
 package scalation
 package mathstat
 
-import scala.collection.mutable.ListBuffer
-import scala.math.{abs, sqrt}
+import scala.collection.mutable.{ArrayBuffer => VEC}
+//import scala.collection.mutable.{ListBuffer => VEC}
+import scala.math.abs
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TimeStatistic` class is used to collect values and compute time-persistent
@@ -139,7 +140,7 @@ object TimeStatistic:
      *  @param subStats  the list of sub-statistics
      *  @param name      the name for the aggregated statistic
      */
-    def aggregate (subStats: ListBuffer [TimeStatistic], name: String = "ap-stat"): TimeStatistic =
+    def aggregate (subStats: VEC [TimeStatistic], name: String = "ap-stat"): TimeStatistic =
         val m = subStats.size
         if m < 1 then { flaw ("aggregate", "there are no subparts to average"); return null }
         var n     = 0

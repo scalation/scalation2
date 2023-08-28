@@ -14,8 +14,8 @@ package event
 package example_1
 
 import scalation.mathstat.Statistic
-import scalation.random.{Exponential, Known}
-import scalation.random.RandomSeeds.N_STREAMS
+import scalation.random.Known
+//import scalation.random.RandomSeeds.N_STREAMS
 
 import queueingnet.MMck_Queue
 
@@ -49,6 +49,7 @@ class FastFoodModel (name: String = "FastFood", reps: Int = 1, nStop: Int = 100,
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
+//  import scalation.random.Exponential
 //  val iArrivalRV = Exponential (HOUR / lambda, stream)
 //  val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
 

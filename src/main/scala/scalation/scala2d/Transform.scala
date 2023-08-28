@@ -11,8 +11,6 @@
 package scalation
 package scala2d
 
-import scalation.scala2d.RectPolyShape
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Transform` trait provides a simple technique for transforming
  *  (translation, scaling and rotation) rectangular shapes.

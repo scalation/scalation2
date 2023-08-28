@@ -11,6 +11,7 @@
 package scalation
 package mathstat
 
+import scala.collection.immutable.Set
 import scala.collection.mutable.IndexedSeq
 
 import scalation.random.PermutedVecI
@@ -43,6 +44,11 @@ object TnT_Split:
          else VectorI.range (0, n_test)).toMuIndexedSeq                      // ordered indices
     end testIndices
 
+    def testIndices2 (permGen: PermutedVecI, n_test: Int, rando: Boolean = true): Set [Int] =
+        if rando then permGen.igen (0 until n_test).toSet [Int]              // permuted indices
+        else Set.range (0, n_test)                                           // ordered indices
+    end testIndices2
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the dataset given as a combined data-response matrix into a testing-set
      *  and training-set based on the given indices.
@@ -60,14 +66,18 @@ object TnT_Split:
      *  @see `scalation.modeling.Predictor`
      *  @param x    the input/data matrix (for some models this may be null => return (null, null)
      *  @param y    the output/response vector
-     *  @param idx  the indices for the testing-set
+     *  @param idx  the set of indices for the testing-set
      */
-    def apply (x: MatrixD, y: VectorD, idx: IndexedSeq [Int]): (MatrixD, MatrixD, VectorD, VectorD) =
+    def apply (x: MatrixD, y: VectorD, idx: Set [Int]): (MatrixD, MatrixD, VectorD, VectorD) =
         if x.dim != y.dim then flaw ("apply", s"x.dim ${x.dim} != y.dim = ${y.dim}")
 
         val (x_test, x_train) = if x == null then (null, null) else x.split (idx)
         val (y_test, y_train) = y.split (idx)
         (x_test, x_train, y_test, y_train)
+    end apply
+
+    def apply (x: MatrixD, y: VectorD, idx: IndexedSeq [Int]): (MatrixD, MatrixD, VectorD, VectorD) =
+        apply (x, y, idx.toSet [Int])
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -12,8 +12,6 @@ package scalation
 package modeling
 package classifying
 
-import scala.runtime.ScalaRunTime.stringOf
-
 import scalation.mathstat._
 import scalation.log2
 

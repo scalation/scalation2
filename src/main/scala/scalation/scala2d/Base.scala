@@ -20,8 +20,11 @@ package scala2d
  *  @see Shapes.scala for providing classes in `java.awt.geom`.
  */
 
-// type definition for awt classes
+// type definition for awt and awt.event classes
 
+type Font          = java.awt.Font
+val  Font_BOLD     = java.awt.Font.BOLD
+val  Font_ITALIC   = java.awt.Font.ITALIC
 type MouseEvent    = java.awt.event.MouseEvent
 type MouseListener = java.awt.event.MouseListener
 type MouseAdapter  = java.awt.event.MouseAdapter

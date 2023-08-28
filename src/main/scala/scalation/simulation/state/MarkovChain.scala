@@ -12,7 +12,7 @@ package scalation
 package simulation
 package state
 
-import scala.math.{abs, cos, Pi, sin}
+import scala.math.{cos, Pi, sin}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.{AnimateCommand, DgAnimator}
@@ -35,7 +35,7 @@ class MarkovChain (a: MatrixD):
     private val debug = debugf ("MarkovChain", true)                              // debug function
     private val flaw  = flawf ("MarkovChain")                                     // flaw function
 
-    if ! isStochastic then flaw ("constructor", "transition matrices must be stochastic")
+    if ! isStochastic then flaw ("init", "transition matrices must be stochastic")
 
     private val EPSILON = 1E-7                                                    // number close to zero
     private val radius  = 200                                                     // radius of the circle that the nodes are displayed on

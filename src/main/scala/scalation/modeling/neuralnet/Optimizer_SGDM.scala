@@ -25,7 +25,7 @@ import Optimizer._
  */
 class Optimizer_SGDM extends Optimizer:
 
-    private val debug = debugf ("Optimizer_SGDM", true)                   // debug function
+    private val debug = debugf ("Optimizer_SGDM", false)                  // debug function
     private val flaw  = flawf ("Optimizer_SGDM")                          // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -81,7 +81,7 @@ class Optimizer_SGDM extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD): MatrixD =
+        inline def updateWeight (x: MatrixD, y: MatrixD): MatrixD =
             val α  = η / x.dim                                            // eta over the current batch size
             val yp = f.fM (b * x)                                         // prediction: Yp = f(XB)
             val ε  = yp - y                                               // negative of error matrix
@@ -155,7 +155,7 @@ class Optimizer_SGDM extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD): (NetParam, NetParam) =
+        inline def updateWeight (x: MatrixD, y: MatrixD): (NetParam, NetParam) =
             val α  = η / x.dim                                            // eta over the current batch size
             val z  = f.fM (a * x)                                         // hidden layer: Z  = f(XA)
             val yp = f1.fM (b * z)                                        // prediction:   Yp = f(ZB)
@@ -235,7 +235,7 @@ class Optimizer_SGDM extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD): Double =
+        inline def updateWeight (x: MatrixD, y: MatrixD): Double =
             val α = η / x.dim                                             // eta over the current batch size
             z(0)  = x                                                     // initial activation, which is the input matrix
             for l <- layers do z(l+1) = f(l).fM (b(l) * z(l))             // feedforward and store all activations

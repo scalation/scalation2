@@ -70,9 +70,17 @@ val TOL = 1000.0 * EPSILON
  */
 val _2Pi = 2.0 * Pi
 
+/** The number 2/π (needed in common calculations)
+ */
+val _2byPi = 2.0 / Pi
+
 /** The number srqt 2π (needed in common calculations)
  */
 val sqrt_2Pi = sqrt (2.0 * Pi)
+
+/** The number srqt 2/π (needed in common calculations)
+ */
+val sqrt_2byPi = sqrt (2.0 / Pi)
 
 /** Indicators of missing/illegal values per datatype
  */
@@ -89,6 +97,16 @@ val NO_TIMENUM = null.asInstanceOf [TimeNum]
  *  @param z  the third value
  */
 inline def max3 (x: Double, y: Double, z: Double): Double = max (max (x, y), z)
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Return x, unless it is lees than the lower limit in absolute value, return limit with x's sign.
+ *  @param x      the given value
+ *  @param limit  the lower limit (a small positive value)
+ */
+inline def maxmag (x: Double, limit: Double): Double =
+    if abs (x) < limit then if x < 0.0 then -limit else limit
+    else x
+end maxmag
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the absolute value of x with the sign of y.

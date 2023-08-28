@@ -12,12 +12,12 @@ package scalation
 package simulation
 package process
 
-import scala.math.{abs, hypot}
+import scala.math.hypot
 
 import scalation.animation.CommandType._
 import scalation.mathstat.VectorD
-import scalation.random.{Discrete, Variate}
-import scalation.scala2d.QCurve
+import scalation.random.Variate
+//import scalation.scala2d.QCurve
 import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

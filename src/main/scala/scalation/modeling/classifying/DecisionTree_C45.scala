@@ -31,16 +31,16 @@ import VariableKind.Categorical
  *  @param k       the number of classes
  *  @param cname_  the names for all classes
  *  @param conts   the set of feature indices for variables that are treated as continuous
- *  @param hparam  the hyper-parameters for the Decision Tree classifier
+ *  @param hparam  the hyper-parameters
  */
 class DecisionTree_C45 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                        cname_ : Array [String] = Array ("No", "Yes"),
                        conts: Set [Int] = Set [Int] (), hparam: HyperParameter = DecisionTree.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k)
+         with FitC (k)
          with DecisionTree:
 
-    private val debug     = debugf ("DecisionTree_C45", true)                 // debug function
+    private val debug     = debugf ("DecisionTree_C45", false)                // debug function
     private val height    = hparam ("height").toInt                           // the maximum height of tree
     private val cutoff    = hparam ("cutoff")                                 // cutoff entropy threshold
 
@@ -51,7 +51,7 @@ class DecisionTree_C45 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
     for j <- x.indices2 do feas(j) = if conts contains j then Variable (x(?, j), j)
                                      else Variable (x(?, j), j, Categorical)
 
-    modelName = "DecisionTree_C45"                                            // name of the model
+    modelName = s"DecisionTree_C45_$height"                                   // name of the model
 
     debug ("init", s"entropy of original/full y: entropy_0 = $entropy_0")
 
@@ -93,12 +93,12 @@ class DecisionTree_C45 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
         for v <- fea.values do
             val (frac_v, nu_v) = freq (xj, y_, k, v, rindex,
                                  fea.kind != Categorical, threshold(fea.j))   // frequency for value v
-            debug ("gain", s" (v = $v): (frac_v, nu_v) = ($frac_v, $nu_v")
+//          debug ("gain", s" (v = $v): (frac_v, nu_v) = ($frac_v, $nu_v")
             sum += frac_v * entropy (nu_v)                                    // weighted entropy
             nu  += nu_v                                                       // aggregate frequency vector
         end for
         val igain = entropy_0 - sum                                           // the drop in entropy = information gain
-        debug ("gain", s"entropy = $sum, overall gain from feature ${fea.j} = $igain")
+//      debug ("gain", s"entropy = $sum, overall gain from feature ${fea.j} = $igain")
         (igain, nu)                                                           // return gain and aggregate frequency vector
     end gain
 
@@ -120,7 +120,7 @@ class DecisionTree_C45 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
                 threshold(j) = DecisionTree_C45.findSplit (xj, y_, rindex, k)   // => calculate split threshold
             end if
             val (gn, nu) = gain (feas(j), xj, y_, rindex)                     // compute gain for feature j
-            debug ("findBest", s"compare ($j, $gn, $nu) to $best")
+//          debug ("findBest", s"compare ($j, $gn, $nu) to $best")
             if gn > best._2 then best = (j, gn, nu)                           // better gainb => update best
         end for
         if best._2 <= 0.0 then println ("findBest: no positive gain found")
@@ -242,14 +242,14 @@ end DecisionTree_C45
 object DecisionTree_C45:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a decision tree for the given combined matrix where the last column
+    /** Create a decision tree for the given combined matrix where the column col
      *  is the response/classification vector.
      *  @param xy      the combined data matrix (features and response)
      *  @param fname   the names for all features/variables
      *  @param k       the number of classes
      *  @param cname   the names for all classes
      *  @param conts   the set of feature indices for variables that are treated as continuous
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null, k: Int = 2,
@@ -296,7 +296,7 @@ object DecisionTree_C45:
      *  @param fname   the names for all features/variables
      *  @param k       the number of classes
      *  @param cname   the names for all classes
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *
     def apply (x: MatrixI, y: VectorI, fname: Array [String], k: Int, cname: Array [String],
                hparam: HyperParameter): DecisionTree_C45 =
@@ -311,7 +311,7 @@ object DecisionTree_C45:
      *  @param k       the number of classes
      *  @param cname   the names for all classes
      *  @param conts   the set of feature indices for variables that are treated as continuous
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *
     def test (xy: MatrixD, fname: Array [String], k: Int, cname: Array [String],
               conts: Set [Int] = Set [Int] (), hparam: HyperParameter = hp): DecisionTree_C45 =
@@ -435,7 +435,7 @@ end decisionTree_C45Test2
 @main def decisionTree_C45Test3 (): Unit =
 
     banner ("Test: DecisionTree_C45: Breast Cancer Dataset")
-    val nfile = BASE_DIR + "breast_cancer.csv"
+    val nfile = "breast_cancer.csv"
     val xy    = MatrixD.load (nfile)
     val fname = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
                        "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses")
@@ -464,7 +464,7 @@ end decisionTree_C45Test3
  */
 @main def decisionTree_C45Test4 (): Unit =
 
-    val nfile  = BASE_DIR + "winequality-white.csv"
+    val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
     val ycol   = xy.dim2 - 1
     for i <- xy.indices do xy(i, ycol) -= 3                         // shift the class labels by 3
@@ -500,16 +500,14 @@ end decisionTree_C45Test4
 @main def decisionTree_C45Test5 (): Unit =
 
     banner ("Test: DecisionTree_C45: Diabetes Dataset")
-    val nfile  = BASE_DIR + "diabetes.csv"
+    val nfile  = "diabetes.csv"
     val xy     = MatrixD.load (nfile)
-
     val k      = 2                                                  // 2 classes
 
     val fname  = Array ("pregnancies", "glucose", "blood pressure", "skin thickness", "insulin",
                         "BMI", "diabetes pedigree function", "age")
     val cname  = Array ("tested_positive", "tested_negative")       // class names
     val height = 5
-//  val conts  = range2muSet (0 until xy.dim2 - 1)
     val conts  = Set.range (0, xy.dim2 - 1)
 
     DecisionTree.hp("height") = height

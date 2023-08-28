@@ -11,7 +11,8 @@
 package scalation
 package mathstat
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
+//import scala.collection.mutable.{ListBuffer => VEC}
 
 import scalation.scala2d.{Frame, ScrollPane, Table}
 
@@ -20,7 +21,7 @@ import scalation.scala2d.{Frame, ScrollPane, Table}
  *  @param _title  the title of the frame
  *  @param stats   the statistics to be displayed in the table.
  */
-class StatTable (_title: String, stats: ListBuffer [Statistic])
+class StatTable (_title: String, stats: VEC [Statistic])
       extends Frame (_title):
 
     val rows  = stats.size + 1
@@ -46,7 +47,7 @@ end StatTable
 @main def statTableTest (): Unit =
 
      println ("Create a StatTable called Test")
-     val stats = ListBuffer [Statistic] ()
+     val stats = VEC [Statistic] ()
      for i <- 0 until 50 do stats += new Statistic ()
      for j <- 0 until 50 do
          for i <- 0 until 50 do stats(j).tally (i)

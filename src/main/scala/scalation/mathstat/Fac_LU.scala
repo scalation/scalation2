@@ -221,6 +221,18 @@ object Fac_LU:
     private val flaw = flawf ("Fac_LU")                         // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Solve for x in the equation a*x = b using LU Factorization. 
+     *  Return the solution vector x.
+     *  @param a  the matrix A holding the coefficients of the equations
+     *  @param b  the constant vector
+     */
+    def solve_ (a: MatrixD, b: VectorD): VectorD =
+        val lu = new Fac_LU (a)
+        lu.factor ()
+        lu.solve (a * b)
+    end solve_
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Solve for x in the equation a*x = b in an over determined system of
      *  linear equation using least squares.  Return the solution vector x.
      *  @see people.csail.mit.edu/bkph/articles/Pseudo_Inverse.pdf

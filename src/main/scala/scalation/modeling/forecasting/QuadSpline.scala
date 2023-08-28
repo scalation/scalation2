@@ -45,7 +45,7 @@ class QuadSpline (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
      */
     override def train (x_null: MatrixD, y_ : VectorD): Unit = { }
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of a QuadSpline forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -61,7 +61,7 @@ class QuadSpline (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of a QuadSpline forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -139,12 +139,12 @@ class QuadSpline (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
 end QuadSpline
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `QuadSpline` companion object provides factory methods for the `QuadSpline` class.
  */
 object QuadSpline:
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `QuadSpline` object that predicts using a quadratic curve that
      *  fits the last three point.
      *  @param y       the response vector (time-series data)

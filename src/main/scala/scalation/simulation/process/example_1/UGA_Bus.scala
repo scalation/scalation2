@@ -76,10 +76,10 @@ class UGA_BusModel (name: String = "UGA_Bus", reps: Int = 1, animating: Boolean 
                                                ("bSouth", (30, 70)),
                                                ("bWest", (-20, 50)))
 
-    val junction = Junction.group (this, jTimeRV, (800, 430), ("jNorth", (0, 0)),
-                                                              ("jEast", (50, 20)),
-                                                              ("jSouth", (30, 70)),
-                                                              ("jWest", (-20, 50)))
+    val junction = Junction.group (jTimeRV, (800, 430), ("jNorth", (0, 0)),
+                                                        ("jEast", (50, 20)),
+                                                        ("jSouth", (30, 70)),
+                                                        ("jWest", (-20, 50)))
 
     val sink = Sink.group ((830, 250), ("kNorth", (0, 0)),
                                        ("kEast", (200, 230)),

@@ -61,7 +61,7 @@ end Vertex_
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `VTable` companion object provides factory functions for creating vertex-tables.
+/** The `VTable` companion object provides factory methods for creating vertex-tables.
  *  Supported domains/data-types are 'D'ouble, 'I'nt, 'L'ong, 'S'tring, and 'T'imeNum.
  */
 object VTable:

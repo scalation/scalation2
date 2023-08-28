@@ -7,17 +7,15 @@
  *
  *  @title   Model: Auto-Regressive (AR)
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
+ *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation
 package modeling
 package forecasting
-
-import scala.math.max
 
 import scalation.mathstat._
 
@@ -27,12 +25,12 @@ import Forecaster.differ
 /** The `AR` class provides basic time series analysis capabilities for Auto-Regressive
  *  (AR) models.  In an AR(p) model, p refers to the order of the Auto-Regressive
  *  components of the model.  AR models are often used for forecasting.
- *  Given time-series data stored in vector y, its next value y_t+1 = y(t+1)
+ *  Given time series data stored in vector y, its next value y_t+1 = y(t+1)
  *  may be predicted based on prior values of y and its noise:
  *      y_t+1 = δ + Σ(φ_j y_t-j) + e_t+1
  *  where δ is a constant, φ is the auto-regressive coefficient vector,
  *  and e_t+1 is the noise term.
- *  @param y       the response vector (time-series data)
+ *  @param y       the response vector (time series data)
  *  @param tt      the time vector, if relevant (time index may suffice)
  *  @param hparam  the hyper-parameters
  */
@@ -41,17 +39,27 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
          with Correlogram (y)
          with Fit (dfm = hparam("p").toInt, df = y.dim - hparam("p").toInt):
 
-    private   val debug = debugf ("AR", true)                          // debug function
-    private   val flaw  = flawf ("AR")                                 // flaw function
-                  m     = y.dim                                        // number of time points (@see `FitM`)
-    private val p       = hparam("p").toInt                            // p-th order Auto-Regressive model
-    private var φ       = VectorD.nullv                                // AR(p) parameters/coefficients
-    private var δ       = NO_DOUBLE                                    // drift/intercept/constant term
-    private val pnq     = p                                            // sum of # parameters
+    private val debug  = debugf ("AR", true)                           // debug function
+    private val flaw   = flawf ("AR")                                  // flaw function
+    private val p      = hparam("p").toInt                             // p-th order Auto-Regressive model
+    private var φ      = VectorD.nullv                                 // AR(p) parameters/coefficients
+    private var δ      = NO_DOUBLE                                     // drift/intercept/constant term
+    private val pnq    = p                                             // sum of # parameters
+    private var calPhi = true                                          // calculate phi vector - not externally supplied
 
     if p > MAX_LAGS then flaw ("init", s"p = $p must not be greater than MAX_LAGS = $MAX_LAGS")
 
     modelName = s"AR($p)"
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Allow users to set the parameter/coefficient vector the values they want, e.g.,
+     *  custom values or from another optimizer.
+     *  @param phi  the custom values for the parameter vector
+     */
+    def setPhi (phi: VectorD): Unit =
+        φ = phi
+        calPhi = false
+    end setPhi
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `AR` model to the times-series data in vector y_.
@@ -62,15 +70,15 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
      *  @param y_      the training/full response vector (e.g., full y)
      */
     def train (x_null: MatrixD, y_ : VectorD): Unit = 
-        m = y_.dim                                                     // length of relevant time-series
+        m = y_.dim                                                     // length of relevant time series
         resetDF (pnq, m - pnq)                                         // reset the degrees of freedom
         makeCorrelogram (y_)                                           // correlogram computes psi matrix
-        φ = psiM(p)(1 until p+1)                                       // coefficients = p-th row, columns 1, 2, ... p
+        if calPhi then φ = psiM(p)(1 until p+1)                        // coefficients = p-th row, columns 1, 2, ... p
         δ = statsF.mu * (1 - φ.sum)                                    // compute drift/intercept
         debug ("train", s"parameters for AR($p) model: φ = $φ, δ = $δ")
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of an AR forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -86,7 +94,7 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of an AR forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -109,16 +117,12 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict a value for y_t+1 using the 1-step ahead forecast.
-     *      y_t+1 = φ_0 y_t + φ_1 y_t-1 + ... + φ_p-1 y_t-(p-1)
+     *      y_t+1 = δ +  φ_0 y_t + φ_1 y_t-1 + ... + φ_p-1 y_t-(p-1)
      *  When t-j is negative, use y_0
      *  @param t   the time point from which to make prediction
      *  @param y_  the actual values to use in making predictions
      */
-    def predict (t: Int, y_ : VectorD): Double =
-        var sum = δ                                                    // intercept
-        for j <- 0 until p do sum += φ(j) * y_(max (0, t-j))           // add φ_j y_t-j
-        sum
-    end predict
+    def predict (t: Int, y_ : VectorD): Double = δ + rdot (φ, y_, t)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a vector of size h, of 1 through h-steps ahead forecasts for the model.
@@ -135,10 +139,9 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
         val yd = new VectorD (h)                                       // hold forecasts for each horizon
         for k <- 1 to h do
             val t1  = t + k - 1                                        // time point prior to horizon
-            var sum = δ
-            for j <- 0 until p do sum += φ(j) * yf(max (0, t1-j), max (0, k-1-j))
+            val sum = δ + rdot (φ, yf, t1, k-1) 
             yf(t+k, k) = sum                                           // forecast down the diagonal
-            yd (k-1)   = sum                                           // record diagonal values
+            yd(k-1)    = sum                                           // record diagonal values
         end for
         yd                                                             // return forecasts for each horizon
     end forecast
@@ -157,9 +160,7 @@ class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
         if h < 1 then flaw ("forecastAt", s"horizon h = $h must be at least 1")
         for t <- y_.indices do                                         // make forecasts over all time points for horizon h
             val t1  = t + h - 1                                        // time point prior to horizon
-            var sum = δ
-            for j <- 0 until p do sum += φ(j) * yf(max (0, t1-j), max (0, h-1-j))
-            yf(t+h, h) = sum                                           // forecast down the diagonal
+            yf(t+h, h) = δ + rdot (φ, yf, t1, h-1)                     // forecast down the diagonal
         end for
         yf(?, h)                                                       // return the h-step ahead forecast vector
     end forecastAt
@@ -194,9 +195,9 @@ end AR
  */
 @main def aRTest (): Unit =
 
-    val y = makeTSeries ()                                             // create simulated time-series (see `Stationary`)
+    val y = makeTSeries ()                                             // create simulated time series (see `Stationary`)
 
-    banner (s"Test Predictions: AR(1) on simulated time-series")
+    banner (s"Test Predictions: AR(1) on simulated time series")
     val mod = new AR (y)                                               // create model for time series data AR(1)
     mod.trainNtest ()()                                                // train and test on full dataset
 
@@ -206,15 +207,110 @@ end AR
 
 end aRTest
 
-import Example_LakeLevels.y
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRTest2` main function tests the `AR` class on real data:  Forecasting lake levels.
+/** The `aRTest2` main function tests the `AR` class on simulated data.
  *  Test predictions (one step ahead forecasts).
- *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.aRTest2
  */
 @main def aRTest2 (): Unit =
+
+    import scala.math.sqrt
+
+    import ActivationFun.f_sigmoid.{fM, dM}
+    import neuralnet.{NeuralNet_3L, Optimizer}
+
+    val y = VectorD (1, 2, 4, 7, 9, 8, 6, 5, 3)                        // create a time series by hand
+
+    val m    = y.dim
+    val mu_y = y.mean                                                  // mean for full series
+
+    def rho (k: Int): Double =
+        var s = 0.0
+        var q = 0.0
+        for t <- 0 until y.dim-k do
+            s += (y(t) - mu_y) * (y(t+k) - mu_y)
+        for t <- 0 until y.dim do
+            q += (y(t) - mu_y)~^2
+        s / q
+    end rho
+
+    val yB1  = y(1 until m)                                            // apply back-shift operator
+    val yy   = y(0 until m-1)                                          // y clipped to match the size of yB1
+    val zz   = yy - yy.mean
+    val zB1  = yB1 - yB1.mean
+    val r1   = (zz dot zB1) / sqrt ((zz dot zz) * (zB1 dot zB1))       // lag-1 auto-correlation
+    println (s"mu_y = $mu_y")
+    println (s"zz   = $zz")
+    println (s"zB1  = $zB1")
+    println (s"r1   = $r1")
+    println (s"rho1 = ${rho(1)}")
+    println (s"rho2 = ${rho(2)}")
+
+    banner (s"Test Predictions: AR(1) on hand created time series")
+    var mod = new AR (y)                                               // create model for time series data AR(1)
+    mod.setPhi (VectorD (0.6))                                         // allows coefficients to be user specified
+    mod.trainNtest ()()                                                // train and test on full dataset
+
+    banner (s"Test Predictions: AR(2) on hand created time series")
+    ARMA.hp("p") = 2
+    mod = new AR (y)                                                   // create model for time series data AR(2)
+    mod.trainNtest ()()                                                // train and test on full dataset
+
+    val x = MatrixD ((9, 3), 1, 1, 8,
+                             1, 2, 7,
+                             1, 3, 6,
+                             1, 4, 5,
+                             1, 5, 5,
+                             1, 6, 4,
+                             1, 7, 4,
+                             1, 8, 3,
+                             1, 9, 2)
+
+    banner (s"Test Predictions: Regression on hand created time series")
+    val reg = new Regression (x, y)
+    val (yp, qof) =reg.trainNtest ()()                                 // train and test on full dataset
+    println (reg.summary ())
+    new Plot (null, y, yp, "Regression", lines = true)
+
+    banner (s"Test Predictions: NeuralNet_3L on hand created time series")
+    val x_  = x(?, 1 until 3)
+    val y_  = MatrixD.fromVector (y)
+    val a   = MatrixD.fill (2, 2, 0.1)                                  // weight matrix A
+    val b   = MatrixD.fill (2, 1, 0.1)                                  // weight matrix B
+    val ab  = VectorD.fill (2)(0.1)                                     // bias vector alpha
+    val bb  = VectorD.fill (1)(0.1)                                     // bias vector beta
+    val u   = x_ * a + ab                                               // hidden layer pre-activation
+    val z   = fM (u)                                                    // hidden layer (use sigmoid)
+    val v   = z * b + bb                                                // output layer pre-activation
+    val yp_ = v                                                         // output layer (use id)
+    val e   = yp_ - y_                                                  // negative error
+    val d1  = e *~ dM (v)                                               // delta 1: output -> hidden
+    val d0  = (d1 * b.transpose) *~ dM (z)                              // delta 0: hidden -> input
+
+    println (s"u = $u, z = $z, v = $v, yp_ = $yp_, e = $e, d1 = $d1, d0 = $d0")
+
+    Optimizer.hp ("eta") = 1.0
+    val nn3 = new NeuralNet_3L (x(?, 1 until 3), MatrixD.fromVector (y), nz = 2)
+    val (yq, q0f) = nn3.trainNtest ()()                                // train and test on full dataset
+//  val (yq, q0f) = nn3.trainNtest2 ()()                               // train and test on full dataset - auto eta
+    nn3.opti.plotLoss ("NeuralNet_3L")
+    new Plot (null, y, yq(?, 0), "NeuralNet_3L", lines = true)
+
+    banner ("Select model based on ACF and PACF")
+    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
+    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
+
+end aRTest2
+
+import Example_LakeLevels.y
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRTest3` main function tests the `AR` class on real data:  Forecasting lake levels.
+ *  Test predictions (one step ahead forecasts).
+ *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+ *  > runMain scalation.modeling.forecasting.aRTest3
+ */
+@main def aRTest3 (): Unit =
 
     banner (s"Test Predictions: AR(1) on LakeLevels Dataset")
     val mod = new AR (y)                                               // create model for time series data AR(1)
@@ -224,16 +320,16 @@ import Example_LakeLevels.y
     mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
     mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
 
-end aRTest2
+end aRTest3
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRTest3` main function tests the `AR` class on real data:  Forecasting lake levels.
+/** The `aRTest4` main function tests the `AR` class on real data:  Forecasting lake levels.
  *  Test forecasts (1 to h steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.aRTest3
+ *  > runMain scalation.modeling.forecasting.aRTest4
  */
-@main def aRTest3 (): Unit =
+@main def aRTest4 (): Unit =
 
     val m  = y.dim                                                     // number of data points
     val hh = 2                                                         // maximum forecasting horizon
@@ -248,7 +344,7 @@ end aRTest2
     println (s"yf = $yf")
     assert (yf(?, 0)(0 until m) == y)                                  // column 0 must agree with actual values
     differ (yf(?, 1)(1 until m), yp)
-    assert (yf(?, 1)(1 until m) == yp)                                 // column 1 must agree with one step-ahead predictions
+    assert (yf(?, 1)(1 until m) =~ yp)                                 // column 1 must agree with one step-ahead predictions
 
     for h <- 1 to hh do
         val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
@@ -260,22 +356,22 @@ end aRTest2
         println (s"Fit.mase (y, yfh, h) = ${Fit.mase (y, yfh, h)}")    // evaluate h-steps ahead forecasts with MASE
     end for
 
-end aRTest3
+end aRTest4
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRTest4` main function tests the `AR` class on real data:  Forecasting lake levels.
+/** The `aRTest5` main function tests the `AR` class on real data:  Forecasting lake levels.
  *  Test forecasts (1 to h steps ahead forecasts).  Try multiple values for p.
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.aRTest4
+ *  > runMain scalation.modeling.forecasting.aRTest5
  */
-@main def aRTest4 (): Unit =
+@main def aRTest5 (): Unit =
 
     val m  = y.dim                                                     // number of data points
-    val hh = 3                                                         // maximum forecasting horizon
+    val hh = 2                                                         // maximum forecasting horizon
  
     var mod: AR = null
-    for p <- 1 to 5 do                                                 // autoregressive hyper-parameter p
+    for p <- 1 to 7 do                                                 // autoregressive hyper-parameter p
         ARMA.hp("p") = p                                               // set p hyper-parameter
         banner (s"Test: AR($p) on LakeLevels Dataset")
         mod = new AR (y)                                               // create model for time series data
@@ -286,7 +382,7 @@ end aRTest3
         println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
         assert (yf(?, 0)(0 until m) == y)                              // column 0 must agree with actual values
         differ (yf(?, 1)(1 until m), yp)
-        assert (yf(?, 1)(1 until m) == yp)                             // column 1 must agree with one step-ahead predictions
+        assert (yf(?, 1)(1 until m) =~ yp)                             // column 1 must agree with one step-ahead predictions
 
         for h <- 1 to hh do
             val (yfh, qof) = mod.testF (h, y)                          // h-steps ahead forecast and its QoF
@@ -295,5 +391,42 @@ end aRTest3
         end for
     end for
 
-end aRTest4
+end aRTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRTest6` main function tests the `AR` class on real data:  Forecasting Weekly Covid-19.
+ *  Test forecasts (1 to h steps ahead forecasts).  Try multiple values for p.
+ *  > runMain scalation.modeling.forecasting.aRTest6
+ */
+@main def aRTest6 (): Unit =
+
+    val y  = Example_Covid.loadData_y ("new_deaths")
+    val m  = y.dim                                                     // number of data points
+    val hh = 2                                                         // maximum forecasting horizon
+
+    println (s"y.dim = ${y.dim}")
+
+    var mod: AR = null
+    for p <- 1 to 12 do                                                // autoregressive hyper-parameter p
+        ARMA.hp("p") = p                                               // set p hyper-parameter
+        banner (s"Test: AR($p) on Covid-19 Weekly Dataset")
+        mod = new AR (y)                                               // create model for time series data
+        val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset
+
+        val yf = mod.forecastAll (y, hh)                               // forecast h-steps ahead for all y
+//      println (s"yf = $yf")
+        println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
+        assert (yf(?, 0)(0 until m) == y)                              // column 0 must agree with actual values
+        differ (yf(?, 1)(1 until m), yp)
+        assert (yf(?, 1)(1 until m) =~ yp)                             // column 1 must agree with one step-ahead predictions
+
+        for h <- 1 to hh do
+            val (yfh, qof) = mod.testF (h, y)                          // h-steps ahead forecast and its QoF
+            println (s"Evaluate QoF for horizon $h:")
+            println (FitM.fitMap (qof, QoF.values.map (_.toString)))   // evaluate h-steps ahead forecasts
+        end for
+    end for
+
+end aRTest6
 
