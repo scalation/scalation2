@@ -47,6 +47,15 @@ case class NetParam (var w: MatrixD, var b: VectorD = null):
     def copy: NetParam = NetParam (w.copy, if b != null then b.copy else null)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Make a trimmed copy of the network parameters.
+     *  @param dim   the first dimension of weight matrix
+     *  @param dim2  the second dimension of weight matrix and dimension of bias vector
+     */
+    def trim (dim: Int, dim2: Int): NetParam =
+        NetParam (w(0 until dim, 0 until dim2), if b != null then b(0 until dim2) else null)
+    end trim
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update/assign `NetParam` c to this.
      */
     def update (c: NetParam): Unit = { w = c.w; b = c.b }
@@ -126,6 +135,16 @@ case class NetParam (var w: MatrixD, var b: VectorD = null):
      *  @param x  the vector to multiply by
      */
     def dot (x: VectorD): VectorD = (w dot x) + b
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return whether this and `NetParam` c are approximately equal.
+     *  @param c  the other network parameters
+     */
+    def =~ (c: NetParam): Boolean = 
+        if (w - c.w).normFSq > 1E-3 then { println (s"w = $w =~ c.w = ${c.w} is false"); return false }
+        if (b - c.b).normSq  > 1E-3 then { println (s"b = $b =~ c.b = #{c.b} is false"); return false }
+        true
+    end =~
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this `NetParam` object to a matrix where the first row is the 

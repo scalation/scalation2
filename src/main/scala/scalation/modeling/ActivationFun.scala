@@ -5,13 +5,13 @@
  *  @date    Sun Dec 28 12:00:07 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Activation Functions
+ *  @title   Model Support: Activation Functions for Neural Networks
  */
 
 package scalation
 package modeling
 
-import scala.math.{exp, log, max, min, tanh}
+import scala.math.{cosh, exp, log, max, min, tanh}
 
 import scalation.mathstat._
 
@@ -21,10 +21,13 @@ import scalation.mathstat._
  *  @param f       the activation function itself (scalar version)
  *  @param f_      the vector version of the activation function
  *  @param d       the vector version of the activation function derivative
- *  @param bounds  the (lower, upper) bounds on the range of the activation function
+ *  @param bounds  the (lower, upper) bounds on the output range of the activation function,
+ *                     e.g., (0, 1) for sigmoid, defaults to null => no limit
+ *  @param arange  the (lower, upper) bounds on the input (active) range of the activation function
+ *                     e.g., (-2, 2) for sigmoid, defaults to null => no limit
  */
 case class AFF (name: String, f: FunctionS2S, f_ : FunctionV2V, d: FunctionV2V,
-                bounds: (Double, Double) = null):
+                bounds: (Double, Double) = null, arange: (Double, Double) = null):
 
     val fM = matrixize (f_)             // the matrix version of the activation function
     val dM = matrixize (d)              // the matrix version of the activation function derivative
@@ -37,13 +40,15 @@ end AFF
  *  both scalar and vector versions.
  *  @see en.wikipedia.org/wiki/Activation_function
  *  Convention: fun   activation function (e.g., sigmoid)
- *              fun_  vector version of activation function (e.g., sigmoidV_)
+ *              fun_  vector version of activation function (e.g., sigmoid_)
  *              funD  vector version of dervivative (e.g., sigmoidD)
  *----------------------------------------------------------------------------------
  * Supports: id, reLU, lreLU, eLU, tanh, sigmoid, gaussian, softmax
  * Related functions: logistic, logit
  */
 object ActivationFun:
+
+    private val debug = debugf ("ActivationFun", true)                            // debug function
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // id: Identity functions
@@ -79,16 +84,19 @@ object ActivationFun:
      *  yp is pre-computed by yp = reLU_ (t).
      *  @param yp  the derivative function vector argument
      */
-    def reLUD (yp: VectorD): VectorD = yp.map (y => if y >= 0.0 then 1.0 else 0.0)
+    def reLUD (yp: VectorD): VectorD = yp.map (y => if y > 0.0 then 1.0 else 0.0)
 
     val f_reLU = AFF ("reLU", reLU, reLU_, reLUD)                                 // reLU family
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // lreLU: Leaky Rectified Linear Unit functions
+// @see stackoverflow.com/questions/64735352/details-about-alpha-in-tf-nn-leaky-relu-features-alpha-0-2-name-none
+// "The default values in Tensorflow and Keras are 0.2 and 0.3 respectively"
 
 //  private var a = 0.01             // the lreLU alpha parameter (0, 1] indicating how leaky the function is
-    private var a = 0.3              // the lreLU alpha parameter (0, 1] default values used in Keras
+//  private var a = 0.3              // the lreLU alpha parameter (0, 1] default values used in Keras
                                      // @see keras.io/layers/advanced-activations
+    private var a = 0.2              // the lreLU alpha parameter (0, 1] default values used in Tensorflow and ScalaTion
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the lreLU a (alpha) parameter for the Leaky Rectified Linear Unit functions.
@@ -162,7 +170,7 @@ object ActivationFun:
      */
     def tanhD (yp: VectorD): VectorD = VectorD.one (yp.dim) - yp~^2
 
-    val f_tanh = AFF ("tanh", tanh, tanh_, tanhD, (-1, 1))                        // tanh family
+    val f_tanh = AFF ("tanh", tanh, tanh_, tanhD, (-1, 1), (-2, 2))               // tanh family
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // sigmoid: Sigmoid functions
@@ -183,7 +191,7 @@ object ActivationFun:
      */
     def sigmoidD (yp: VectorD): VectorD = yp * (VectorD.one (yp.dim) - yp)
 
-    val f_sigmoid = AFF ("sigmoid", sigmoid, sigmoid_, sigmoidD, (0, 1))          // sigmoid family
+    val f_sigmoid = AFF ("sigmoid", sigmoid, sigmoid_, sigmoidD, (0, 1), (-2, 2))   // sigmoid family
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Common Activation Function Families
@@ -209,6 +217,36 @@ object ActivationFun:
     def gaussianD (yp: VectorD, t: VectorD): VectorD = t * yp * -2.0              // non-standard signature
 
 //  val f_gaussain = AFF ("gaussian", gaussian, gaussian_, gaussianD)             // gaussian family
+
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// geLU: Gaussain Error Linear Unit (geLU) functions
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Approximately compute the value of the geLU function at t.
+     *  @param t  the geLU function argument
+     */
+    def geLU (t: Double): Double = 
+        val t3 = t~^3
+        0.5 * t * (1.0 + tanh (sqrt_2byPi * (t + 0.044715 * t3)))
+    end geLU
+
+    val geLU_ : FunctionV2V = vectorize (geLU _)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the derivative vector for geLU function at vector yp where
+     *  yp is pre-computed by yp = geLU_ (t).
+     *  @param yp  the derivative function vector argument
+     *  @param t   the domain value for the function
+     */
+    def geLUd (t: Double): Double =
+        val t3 = t~^3
+        0.5 * tanh (0.0356774 * t3 + 0.797885 * t) + 0.5 +
+        (0.0535161 * t3 + 0.398942 * t) / cosh(0.0356774 * t3 + 0.797885 * t)~^2
+    end geLUd
+
+    val geLUD : FunctionV2V = vectorize (geLUd _)
+
+    val f_geLU = AFF ("geLU", geLU, geLU_, geLUD)                                 // geLU family
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // softmax: Softmax functions - FIX
@@ -287,15 +325,16 @@ object ActivationFun:
     val logit_ : FunctionV2V = vectorize (logit _)                 // vector version
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Rescale the input/data matrix x to the bounds of the "first" activation
-     *  function f; otherwise normalize.  Return the rescaled matrix.
+    /** Rescale the input/data matrix x to the arange (active range) of the "first"
+     *  activation function f; otherwise normalize.  Return the rescaled matrix.
      *  @param x  the input/data matrix
      *  @param f  the activation function family (first)
      */
     def rescaleX (x: MatrixD, f: AFF): MatrixD =
-        if f.bounds != null then                                // scale to bounds of f
+        if f.arange != null then                                // scale to arange of f
             val (min_x, max_x) = (x.min, x.max)
-            scale ((min_x, max_x), f.bounds) (x)
+            debug ("rescaleX", s"from ($min_x, $max_x) to ${f.arange}")
+            scale ((min_x, max_x), f.arange) (x)
         else                                                    // normalize: Normal (0, 1)
             val (mu_x, sig_x) = (x.mean, x.stdev)
             normalize ((mu_x, sig_x)) (x)
@@ -312,6 +351,7 @@ object ActivationFun:
     def rescaleY (y: VectorD, f: AFF): (VectorD, FunctionV2V) =
         if f.bounds != null then                                // scale to bounds of f
             val (min_y, max_y) = (y.min, y.max)
+            debug ("rescaleY", s"from ($min_y, $max_y) to ${f.bounds}")
             (scaleV ((min_y, max_y), f.bounds) (y),
              unscaleV ((min_y, max_y), f.bounds) _)             // rescaling inverse
         else                                                    // normalize: Normal (0, 1)
@@ -331,6 +371,7 @@ object ActivationFun:
     def rescaleY (y: MatrixD, f: AFF): (MatrixD, FunctionM2M) =
         if f.bounds != null then                                // scale to bounds of f
             val (min_y, max_y) = (y.min, y.max)
+            debug ("rescaleY", s"from ($min_y, $max_y) to ${f.bounds}")
             (scale ((min_y, max_y), f.bounds) (y),
              unscale ((min_y, max_y), f.bounds) _)              // rescaling inverse
         else                                                    // normalize: Normal (0, 1)
@@ -344,54 +385,146 @@ end ActivationFun
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `activationFunTest` is used to test the `ActivationFun` object.
+/** The `activationFunTest` main function tests the `ActivationFun` object.
+ *  This test individually plots the activation function f(t).
  *  > runMain scalation.modeling.activationFunTest
  */
 @main def activationFunTest (): Unit =
 
     import ActivationFun._
 
-    val t = VectorD.range (-30, 30) / 6.0
-    val p = VectorD.range (1, 59) / 60.0
+    val t = VectorD.range (-50, 50) / 10.0
 
     // Test the vector version of activation functions
-    val ident  = id_ (t);       new Plot (t, ident,  null, "t vs. ident") 
-    val reluf  = reLU_ (t);     new Plot (t, reluf,  null, "t vs. reluf") 
-    val lreluf = lreLU_ (t);    new Plot (t, lreluf, null, "t vs. lreluf") 
-    val eluf   = eLU_ (t);      new Plot (t, eluf,   null, "t vs. eluf") 
-    val tanhh  = tanh_ (t);     new Plot (t, tanhh,  null, "t vs. tanhh") 
-    val sigmo  = sigmoid_ (t);  new Plot (t, sigmo,  null, "t vs. sigmo")
-    val gauss  = gaussian_ (t); new Plot (t, gauss,  null, "t vs. gauss")
-    val softmo = softmax_ (t);  new Plot (t, softmo, null, "t vs. softmo")
+    val idf       = id_ (t)
+    val reLUf     = reLU_ (t)
+    val lreLUf    = lreLU_ (t)
+    val eLUf      = eLU_ (t)
+    val tanhf     = tanh_ (t)
+    val sigmoidf  = sigmoid_ (t)
+    val gaussianf = gaussian_ (t)
+    val geLUf     = geLU_ (t)
+    val softmaxf  = softmax_ (t)
 
-    // Test the vector version of related functions
-    val logit  = logit_ (p);    new Plot (p, logit,  null, "p vs. logit")
-    val logist = logistic_ (t); new Plot (t, logist, null, "t vs. logist")
-
-    // Test the vector version of activation function derivatives
-    val identD = idD (ident);          new Plot (t, identD, null, "t vs. identD") 
-    val relufD = reLUD (reluf);        new Plot (t, relufD, null, "t vs. relufD") 
-    val lrlufD = lreLUD (lreluf);      new Plot (t, lrlufD, null, "t vs. lrlufD") 
-    val elufD  = eLUD (eluf);          new Plot (t, elufD, null,  "t vs. elufD") 
-    val tanhhD = tanhD (tanhh);        new Plot (t, tanhhD, null, "t vs. tanhhD") 
-    val sigmoD = sigmoidD (sigmo);     new Plot (t, sigmoD, null, "t vs. sigmoD")
-    val gaussD = gaussianD (gauss, t); new Plot (t, gaussD, null, "t vs. gaussD")
-//  val softmD = softmaxD (softmo);    new Plot (t, softmD, null, "t vs. softmD")
+    new Plot (t, idf,       null, "t vs. id_") 
+    new Plot (t, reLUf,     null, "t vs. reLU_") 
+    new Plot (t, lreLUf,    null, "t vs. lreLU_") 
+    new Plot (t, eLUf,      null, "t vs. eLU_") 
+    new Plot (t, tanhf,     null, "t vs. tanh-") 
+    new Plot (t, sigmoidf,  null, "t vs. sigmoid_")
+    new Plot (t, gaussianf, null, "t vs. gaussian_")
+    new Plot (t, geLUf,     null, "t vs. geLU_")
+    new Plot (t, softmaxf,  null, "t vs. softmax_")
 
 end activationFunTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `activationFunTest2` is used to test the `ActivationFun` object.
- *  @see en.wikipedia.org/wiki/Softmax_function
+/** The `activationFunTest2` main function tests the `ActivationFun` object.
+ *  This test plots similar pairs of activation functions f(t).
  *  > runMain scalation.modeling.activationFunTest2
  */
 @main def activationFunTest2 (): Unit =
 
+    import ActivationFun._
+
+    val t = VectorD.range (-50, 50) / 10.0
+
+    // Test the vector version of activation functions
+    val idf       = id_ (t)
+    val reLUf     = reLU_ (t)
+    val lreLUf    = lreLU_ (t)
+    val eLUf      = eLU_ (t)
+    val tanhf     = tanh_ (t)
+    val sigmoidf  = sigmoid_ (t)
+    val gaussianf = gaussian_ (t)
+    val geLUf     = geLU_ (t)
+    val softmaxf  = softmax_ (t)
+
+    new Plot (t, idf,       null,     "t vs. id_")
+    new Plot (t, lreLUf,    reLUf,    "t vs. lreLU_, reLU_ (red)")
+    new Plot (t, eLUf,      geLUf,    "t vs. eLU_, geLU_ (red)")
+    new Plot (t, tanhf,     sigmoidf, "t vs. tanh_, sigmoid_ (red)")
+    new Plot (t, gaussianf, softmaxf, "t vs. gaussian_, softmax_ (red)")
+
+end activationFunTest2
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `activationFunTest3` main function tests the `ActivationFun` object.
+ *  This test plots the derivatives of the activation functions f'(t).
+ *  > runMain scalation.modeling.activationFunTest2
+ */
+@main def activationFunTest3 (): Unit =
+
+    import ActivationFun._
+
+    val t = VectorD.range (-50, 50) / 10.0
+
+    val idf       = id_ (t)
+    val reLUf     = reLU_ (t)
+    val lreLUf    = lreLU_ (t)
+    val eLUf      = eLU_ (t)
+    val tanhf     = tanh_ (t)
+    val sigmoidf  = sigmoid_ (t)
+    val gaussianf = gaussian_ (t)
+    val geLUf     = geLU_ (t)
+    val softmaxf  = softmax_ (t)
+
+    // Test the vector version of activation function derivatives
+    val idDf       = idD (idf)
+    val reLUDf     = reLUD (reLUf)
+    val lreLUDf    = lreLUD (lreLUf)
+    val eLUDf      = eLUD (eLUf)
+    val tanhDf     = tanhD (tanhf)
+    val sigmoidDf  = sigmoidD (sigmoidf)
+    val gaussianDf = gaussianD (gaussianf, t)
+    val geLUDf     = geLUD (t)
+//  val softmaxDf  = softmaxD (softmaxf)
+
+    new Plot (t, idDf,       null, "t vs. idD") 
+    new Plot (t, reLUDf,     null, "t vs. reLUD") 
+    new Plot (t, lreLUDf,    null, "t vs. lreLUD") 
+    new Plot (t, eLUDf,      null, "t vs. eLUD") 
+    new Plot (t, tanhDf,     null, "t vs. tanhD") 
+    new Plot (t, sigmoidDf,  null, "t vs. sigmoidD")
+    new Plot (t, gaussianDf, null, "t vs. gaussianD")
+    new Plot (t, geLUDf,     null, "t vs. geLUD")
+//  new Plot (t, softmaxDf,  null, "t vs. softmaxD")
+
+end activationFunTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `activationFunTest4` main function tests the `ActivationFun` object.
+ *  @see en.wikipedia.org/wiki/Softmax_function
+ *  > runMain scalation.modeling.activationFunTest4
+ */
+@main def activationFunTest4 (): Unit =
+
     import ActivationFun.softmax_
 
     val t = VectorD (1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0)
+
     println (s"softmax_ ($t) = \n ${softmax_ (t)}")
 
-end activationFunTest2
+end activationFunTest4
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `activationFunTest3` main function tests the `ActivationFun` object.
+ *  > runMain scalation.modeling.activationFunTest5
+ */
+@main def activationFunTest5 (): Unit =
+
+    import ActivationFun.{logit_, logistic_}
+
+    val t = VectorD.range (-50, 50) / 10.0
+    val p = VectorD.range (1, 99) / 100.0
+
+    // Test the vector version of related functions
+    val logitf    = logit_ (p);    new Plot (p, logitf,    null, "p vs. logit_")
+    val logisticf = logistic_ (t); new Plot (t, logisticf, null, "t vs. logistic_")
+
+end activationFunTest5
 

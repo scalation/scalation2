@@ -15,7 +15,6 @@ package scalation
 package modeling
 package clustering
 
-import scala.collection.mutable.ListMap
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{breakable, break}
 
@@ -39,9 +38,9 @@ import scalation.mathstat._
 class MarkovClusterer (t: MatrixD, k: Int = 2, r: Double = 2.0)
       extends Clusterer:
 
-    private val debug    = debugf ("MarkovClusterer", false)      // debug flag
-    private val MAX_ITER = 200                                    // maximum number of iterations
-    private val EPSILON  = 1E-7                                   // number close to zero
+    private val debug   = debugf ("MarkovClusterer", false)       // debug flag
+    private val MAX_IT  = 200                                     // maximum number of iterations
+    private val EPSILON = 1E-7                                    // number close to zero
 
     private val clustr = Array.ofDim [Int] (t.dim2)               // vector of cluster assignments
 
@@ -142,7 +141,7 @@ class MarkovClusterer (t: MatrixD, k: Int = 2, r: Double = 2.0)
      */
     def processMatrix (): MatrixD = 
         breakable {
-            for l <- 1 to MAX_ITER do
+            for l <- 1 to MAX_IT do
                 expand ()                                // expansion step
                 if inflate () then break ()              // inflation step with convergence check
                 debug ("processMatrix", s"($l): t = $t")
@@ -217,6 +216,7 @@ end MarkovClusterer
 
     // Test the MCL Algorithm on a graph represented as a sparse adjacency matrix.
 
+//  import scala.collection.mutable.ListMap
 //  val x = new SparseMatrixD (12, 12)
 //  x(0)  = ListMap ((1, 1.0), (5, 1.0), (6, 1.0), (9, 1.0))
 //  x(1)  = ListMap ((0, 1.0), (2, 1.0), (4, 1.0))

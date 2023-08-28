@@ -12,12 +12,13 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.{LinkedHashMap, ListBuffer, PriorityQueue}
+import scala.collection.mutable.{ArrayBuffer => VEC}
+//import scala.collection.mutable.{ListBuffer => VEC}
+import scala.collection.mutable.{LinkedHashMap, PriorityQueue}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.{AnimateCommand, CommandType, DgAnimator}
-import scalation.animation.CommandType._
-import scalation.mathstat.{Statistic, StatTable, t_interval, VectorD}
+import scalation.mathstat._
 import scalation.scala2d.Colors._
 import scalation.scala2d.Shape
 
@@ -32,9 +33,12 @@ import scalation.scala2d.Shape
  *  @param animating  whether to animate the model
  *  @param aniRatio   the ratio of simulation speed vs. animation speed
  *  @param full       generate a full report with both sample and time-persistent statistics
+ *  @param width      the width of the animation panel
+ *  @param height     the height of the animation panel
+ *  @param labels     the labels of the animation panel
  */
 class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRatio: Double = 1.0,
-             val full: Boolean = true)
+             val full: Boolean = true, weight: Int = 1200, height: Int = 800, labels: Boolean = true)
       extends Coroutine (name) with Completion with Modelable with Component:
 
     initComponent (name, Array ())
@@ -44,7 +48,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
     private [process] val log  = Monitor ("simulation")            // log for model execution
 
     director = this
-    debug ("constructor", s"make ${director.name} the director")
+    debug ("init", s"make ${director.name} the director")
 
     /** The map of statistics vectors records the means of each replication
      */
@@ -72,11 +76,12 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
 
     /** List of Components making up the model
      */
-    private val parts = ListBuffer [Component] ()
+    private val parts = VEC [Component] ()
 
     /** The animation engine
      */
-    private val dgAni = if animating then new DgAnimator ("Process Animator", black, white, aniRatio)
+    private val dgAni = if animating then new DgAnimator ("Process Animator", black, white,
+                                                          aniRatio, weight, height, labels)
                         else null
 
     /** The animation engine's command queue
@@ -237,7 +242,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
         end for
 
         cleanup ()
-        reportV ()
+        if reps > 1 then reportV ()
         println (s"coroutine counts = $counts")
         log.trace (this, "terminates model", null, _clock)
         hasFinished ()                                          // signal via semaphore that simulation is finished
@@ -249,8 +254,8 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
      *  This includes the sample/duration statistics and if 'full', time persistent
      *  statistics as well.
      */
-    def getStatistics: ListBuffer [Statistic] =
-        val stats = new ListBuffer [Statistic] ()
+    def getStatistics: VEC [Statistic] =
+        val stats = new VEC [Statistic] ()
         for p <- parts do
             if p.composite then p.aggregate ()
             stats += p.durationStat

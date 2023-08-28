@@ -47,9 +47,9 @@ class Gate (name: String, director: Model, line: WaitQueue, units: Int,
     private val debug = debugf ("Gate", true)                        // debug function 
     private val flaw  = flawf ("Gate")                               // flaw function
 
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("init", s"located at ${stringOf (at)}")
 
-    if line == null then flaw ("constructor", "must have line for entities when gate is closed")
+    if line == null then flaw ("init", "must have line for entities when gate is closed")
 
     /** Initial value for _shut
      */

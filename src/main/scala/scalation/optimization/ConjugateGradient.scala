@@ -110,18 +110,18 @@ class ConjugateGradient (f: FunctionV2S, g: FunctionV2S = null,
         var f_x  = fg(x)                                      // objective function at current point
         var y    = VectorD.nullv                              // next point
         var f_y  = 0.0                                        // objective function at next point
-        var dir  = - ∇(fg, x)                                 // initial direction is -gradient
+        var dir  = - ∇(fg)(x)                                 // initial direction is -gradient
         var dir0 = VectorD.nullv                              // keep the previous direction
         var dist = 1.0                                        // distance between current and next point
         var down = true                                       // moving down flag
 
-        for t <- 1 to MAX_ITER if down && dist > toler && dir.normSq > toler do
-            banner (s"solve: iteration $t: f(x) = $f_x, x = $x")
+        for t <- 1 to MAX_IT if down && dist > toler && dir.normSq > toler do
+            debug ("solve", "iteration $t: f(x) = $f_x, x = $x")
 
             y   = x + dir * lineSearch (x, dir, step)         // determine the next point
             f_y = fg(y)                                       // objective function value for next point
             dir0 = dir                                        // save the current direction
-            dir = - ∇(fg, y)                                  // next search direction using Gradient Descent
+            dir = - ∇(fg)(y)                                  // next search direction using Gradient Descent
             if t > 1 then dir += dir0 * beta (dir0, dir)      // modify search direction using PR-CG
 
             debug ("solve", s"t = $t, y = $y, f_y = $f_y, dir = $dir")

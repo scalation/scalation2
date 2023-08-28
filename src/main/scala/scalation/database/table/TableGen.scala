@@ -12,8 +12,6 @@ package scalation
 package database
 package table
 
-import scala.collection.mutable.{ArrayBuffer => Bag}
-
 import scalation.mathstat._
 import scalation.random._
 
@@ -114,7 +112,7 @@ object TableGen:
             case 'I' => ranI.igen
             case 'L' => ranI.igen
             case 'S' => ranS.sgen
-            case _  => { flaw ("genValue", "type not supported"); null }
+            case _   => { flaw ("genValue", "type not supported"); null }
         end genValue
 
     end popTable 
@@ -125,6 +123,7 @@ end TableGen
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `tableGenTest` main function is used to test the `TableGen` object.
  *  Create unpopulated tables and use the table generator to populate their columns.
+ *  Tables:  student, professor, course, section, transcript
  *  > runMain scalation.database.table.tableGenTest
  */
 @main def tableGenTest (): Unit =
@@ -141,17 +140,19 @@ end TableGen
     TableGen.popTable (course, 20)
     course.show ()
 
-    val teaching = Table ("teaching", "cid, semester, pid", "I, S, I", "cid, semester")
-//  teaching.fKeys = Bag (("cid", "course", 0), ("pid", "professor", 0))
-    TableGen.popTable (teaching, 50)
-    teaching.show ()
-//  teaching.showFkey ()
+    val section = Table ("section", "crn, cid, semester, pid", "I, I, S, I", "crn")
+    section.addLinkage ("cid", course)                             // teaching cid references course cid
+    section.addLinkage ("pid", professor)                          // teaching pid references professor pid
+    TableGen.popTable (section, 50)
+    section.show ()
+    section.show_foreign_keys ()
 
-    val transript = Table ("transript", "sid, cid, grade", "I, I, S", "sid, cid")
-//  transript.fKeys = Bag (("sid", "student", 0), ("trid", "teaching", 0))
+    val transript = Table ("transript", "sid, crn, grade", "I, I, S", "sid, crn")
+    transript.addLinkage ("sid", student)                          // transript sid references student sid
+    transript.addLinkage ("crn", section)                          // transript crn references section crn
     TableGen.popTable (transript, 70)
     transript.show ()
-//  transript.showFkey ()
+    transript.show_foreign_keys ()
 
 end tableGenTest
 

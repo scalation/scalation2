@@ -15,7 +15,6 @@ package clustering
 import scala.util.control.Breaks.{breakable, break}
 
 import scalation.mathstat._
-import scalation.random.PermutedVecI
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `KMeansClustererHW` class cluster several vectors/points using

@@ -14,10 +14,10 @@
 package scalation
 package random
 
-import scala.math.{ceil, E, exp, floor, log, Pi, pow, round, sqrt}
+import scala.math.{exp, floor, log, Pi, pow, round}
 
-import scalation.mathstat._
-import scalation.mathstat.Combinatorics.{fac, gammaF, logfac}
+import scalation.mathstat.VectorD
+import scalation.mathstat.Combinatorics.{fac, logfac}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TimeVariate` abstract class serves as a superclass for time-based
@@ -91,7 +91,7 @@ case class PoissonProcess (lambda: Double, stream: Int = 0)
 
     private val flaw = flawf ("PoissonProcess")               // flaw function
 
-    if lambda <= 0.0 then flaw ("constructor", "parameter lambda must be positive")
+    if lambda <= 0.0 then flaw ("init", "parameter lambda must be positive")
 
     private val e_rv  = Exponential (1.0 / lambda, stream)    // exponential rv generator
     private val _1_30 = 1.0 / 30.0                            // one thirtieth
@@ -183,7 +183,7 @@ case class NHPoissonProcess (lambda: VectorD, dt: Double = 1.0, stream: Int = 0)
 
     private val flaw = flawf ("NHPoissonProcess")             // flaw function
 
-    if ! lambda.isNonnegative then flaw ("constructor", "parameter vector lambda must be nonnegative")
+    if ! lambda.isNonnegative then flaw ("init", "parameter vector lambda must be nonnegative")
 
     private val lsum    = lambda.cumulate * dt                // cumulative lambda
     private val e_rv    = Exponential (1.0, stream)           // exponential rv generator with mean 1

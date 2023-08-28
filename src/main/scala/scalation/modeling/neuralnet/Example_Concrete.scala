@@ -38,6 +38,9 @@ object Example_Concrete:
     // 2. FLOW (cm)
     // 3. 28-day Compressive STRENGTH (Mpa) 
 
+    val x_fname  = Array ("Cement", "Furnace_Slag", "Fly_Ash", "Water", "Super_Plasticizer",
+                          "Coarse_Aggregate", "Fine_Aggregate")
+
     val ox_fname = Array ("One", "Cement", "Furnace_Slag", "Fly_Ash", "Water", "Super_Plasticizer",
                           "Coarse_Aggregate", "Fine_Aggregate")
 
@@ -149,45 +152,61 @@ object Example_Concrete:
 
     val (min_x, max_x) = (xy.min, xy.max)
 
-    val xy_s  = scale ((min_x, max_x), (0, 1)) (xy)           // column-wise scaled to [0.0, 1.0]
-    val xy_s2 = scale ((min_x, max_x), (-1, 1)) (xy)          // column-wise scaled to [-1.0, 1.0]
-    xy_s.setCol (0, 1)                                        // turn index column into a column of all ones
-    xy_s2.setCol (0, 1)                                       // turn index column into a column of all ones
+    val xy_s  = scale ((min_x, max_x), (0, 1)) (xy)              // column-wise scaled to [0.0, 1.0]
+    val xy_s2 = scale ((min_x, max_x), (-1, 1)) (xy)             // column-wise scaled to [-1.0, 1.0]
+    xy_s.setCol (0, 1)                                           // turn index column into a column of all ones
+    xy_s2.setCol (0, 1)                                          // turn index column into a column of all ones
 
-    val ox = xy_s(?, 0 until 8)                               // input matrix - include column 0 for intercept
-    val x  = xy_s(?, 1 until 8)                               // input matrix - exclude column 0 for no intercept
-    val y  = xy_s(?, 8 until 11)                              // output matrix
+    val ox = xy_s(?, 0 until 8)                                  // input matrix - include column 0 for intercept
+    val x  = xy_s(?, 1 until 8)                                  // input matrix - exclude column 0 for no intercept
+    val y  = xy_s(?, 8 until 11)                                 // output matrix
 
 end Example_Concrete
 
 import Example_Concrete._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `example_ConcreteTest` main function is used to test the `Example_Concrete` object.
- *  It compares several modeling techniques.  This one runs `Regression`.
+/** The `example_ConcreteTest` main function tests the `Example_Concrete` object.
+ *  These test cases compare several modeling techniques.  This one runs `Regression`
+ *  and `RegressionMV`.
  *  > runMain scalation.modeling.neuralnet.example_ConcreteTest
  */
 @main def example_ConcreteTest (): Unit =
-
-    banner ("Regression")
 
     println (s"input ox: ${ox.dim}, ${ox.dim2}")
     println (s"output y: ${y.dim}, ${y.dim2}")
 
     for j <- y.indices2 do
-        val yj  = y(?, j)                                         // use jth column of matrix y
-        val mod = new Regression (ox, yj)                         // create a Regression model
-        mod.trainNtest ()()                                       // train and test the model
-        println (mod.summary ())                                  // parameter/coefficient statistics
+        banner (s"Concrete - Regression for y$j")
+        val yj  = y(?, j)                                        // use j-th column of matrix y
+        val mod = new Regression (ox, yj, ox_fname)              // create j-th Regression model
+        mod.trainNtest ()()                                      // train and test the model
+        println (mod.summary ())                                 // parameter/coefficient statistics
     end for
+
+    banner ("Concrete - RegressionMV")
+    val mod = new RegressionMV (ox, y, ox_fname)                 // create model with intercept (else pass x)
+    val (yp, qof) = mod.trainNtest ()()                          // train and test the model
+    println (mod.summary ())                                     // parameter/coefficient statistics
+
+    val sse = qof (QoF.sse.ordinal)
+    val sst = qof (QoF.sst.ordinal)
+    val sse_all = sse.sum
+    val sst_all = sst.sum
+
+    println ("sst_all = " + sst_all)
+    println ("sse_all = " + sse_all)
+    println ("rSq_all = " + (sst_all - sse_all) / sst_all)
 
 end example_ConcreteTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ConcreteTest2` main function is used to test the `ExampleConcrete` object.
- *  It compares several modeling techniques.  This one runs `Perceptron`.
+ *  These test cases compare several modeling techniques.  This one runs `Perceptron`.
+ *  with trainNtest (manual hyper-parameter tuning).
  *  > runMain scalation.modeling.neuralnet.example_ConcreteTest2
+ */
 @main def example_ConcreteTest2 (): Unit =
 
     banner ("Perceptron")
@@ -200,14 +219,12 @@ end example_ConcreteTest
 
     for j <- y.indices2 do
         val yj = y(?, j)
-        val pt = new Perceptron (x, yj)
-        pt.reset (eta_ = 0.2)                                 // try several values for the learning rate eta
-        pt.train ().eval ()                                   // try train vs. train0
-        println (pt.report)
+        Perceptron.hp("eta") = 0.1                               // try several values for the learning rate eta
+        val pt = Perceptron.rescale (ox, yj)
 
-        banner (s"Perceptron: train for $j th column")
+        banner (s"Perceptron: trainNtest for $j th column")
+        pt.trainNtest ()()                                       // try train vs. train0
         val e = pt.residual
-        println ("e = " + e)
         val sse = e dot e
         val sst = (yj dot yj) - yj.sum~^2 / yj.dim
         println ("sse = " + sse)
@@ -215,7 +232,7 @@ end example_ConcreteTest
         sst_all += sst
 
         banner ("predicted output")
-        val yp = pt.predict (x)                               // predicted output values
+        val yp = pt.predict (x)                                  // predicted output values
 //      println ("diff: y - yp = " + (y - yp))
         new Plot (null, yj, yp, s"y vs yp for $j th column")
     end for
@@ -225,13 +242,15 @@ end example_ConcreteTest
     println ("rSq_all = " + (sst_all - sse_all) / sst_all)
 
 end example_ConcreteTest2
- */
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ConcreteTest3` main function is used to test the `ExampleConcrete` object.
- *  It compares several modeling techniques.  This one runs `Perceptron`.
+ *  These test cases compare several modeling techniques.  This one runs `NeuralNet_2L`
+ *  (that effectively is multiplke perceptrons) with trainNtest2 (partially automated
+ *  hyper-parameter tuning).  Compare the overall R^2 for these three test cases.
  *  > runMain scalation.modeling.neuralnet.example_ConcreteTest3
+ */
 @main def example_ConcreteTest3 (): Unit =
 
     banner ("Perceptron with train2")
@@ -242,25 +261,19 @@ end example_ConcreteTest2
     var sst_all = 0.0
     var sse_all = 0.0
 
-    for j <- y.indices2 do
-        val yj = y(?, j)
-        val pt = new Perceptron (x, yj)
-        pt.train2 ().eval ()                                   // interval search on eta
-        println (pt.report)
+    val pt = NeuralNet_2L.rescale (ox, y)
 
-        banner (s"Perceptron: train2 for $j th column")
-        val e = pt.residual
-        println ("e = " + e)
+    banner (s"Neural_2L as 3 perceptrons: trainNtest2")
+    val (yp, qof) = pt.trainNtest2 ()()                          // interval search on eta
+    for j <- y.indices2 do
+        val yj  = y(?, j)
+        val ypj = yp(?, j)
+        val e   = yj - ypj
         val sse = e dot e
         val sst = (yj dot yj) - yj.sum~^2 / yj.dim
-        println ("sse = " + sse)
         sse_all += sse
         sst_all += sst
-
-        banner ("predicted output")
-        val yp = pt.predict (x)                               // predicted output values
-//      println ("diff: y - yp = " + (y - yp))
-        new Plot (null, yj, yp, s"y vs yp for $j th column")
+        new Plot (null, yj, ypj, s"y vs yp for $j th column")
     end for
 
     println ("sst_all = " + sst_all)
@@ -268,5 +281,4 @@ end example_ConcreteTest2
     println ("rSq_all = " + (sst_all - sse_all) / sst_all)
 
 end example_ConcreteTest3
- */
 

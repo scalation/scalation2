@@ -14,7 +14,7 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
-import scala.collection.IterableFactoryDefaults
+import scala.collection.immutable.Set
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.runtime.ScalaRunTime.stringOf
@@ -119,9 +119,9 @@ class VectorD (val dim: Int,
     /** Split the elements from this vector to form two vectors:  one from the elements in
      *  idx (e.g., testing set) and the other from elements not in idx (e.g., training set).
      *  Note split and split_ produce different element orders.
-     *  @param idx  the element indices to include/exclude
+     *  @param idx  the set of element indices to include/exclude
      */
-    def split (idx: IndexedSeq [Int]): (VectorD, VectorD) =
+    def split (idx: Set [Int]): (VectorD, VectorD) =
         val len = idx.size
         val a   = new VectorD (len)
         val b   = new VectorD (dim - len)
@@ -137,6 +137,8 @@ class VectorD (val dim: Int,
         end for
         (a, b)
     end split
+
+    inline def split (idx: IndexedSeq [Int]): (VectorD, VectorD) = split (idx.toSet [Int])
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the elements in
@@ -666,7 +668,8 @@ class VectorD (val dim: Int,
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Recursively and indirectly sort the p to r partition of array v 
-     *  using QuickSort.
+     *  using QuickSort.  This version avoids stack overflow.
+     *  @author Sulaiman Owodunni
      *  @param rk  the rank order
      *  @param p   the left cursor
      *  @param r   the right cursor
@@ -674,25 +677,45 @@ class VectorD (val dim: Int,
     private def iqsort (rk: Array [Int], p: Int, r: Int): Array [Int] =
         if r - p > 5 then
             iswap (rk, r, med3 (p, (p+r)/2, r))            // use median-of-3, comment out for simple pivot
-            val q = ipartition (rk, p, r)                  // partition into left (<=) and right (>=)
-            iqsort (rk, p, q - 1)                          // recursively sort left partition
-            iqsort (rk, q + 1, r)                          // recursively sort right partition
+            var (p_, r_) = (p, r)                          // use local cursors
+            while p_ < r_ do
+                val pivot = ipartition (rk, p_, r_)        // partition into left (<=) and right (>=)
+                if pivot - p_ < r_ - pivot then            // recurse on the smaller subarray
+                    iqsort (rk, p_, pivot - 1)             // recursively sort left partition
+                    p_ = pivot + 1
+                else
+                    iqsort (rk, pivot + 1, r_)             // recursively sort right partition
+                    r_ = pivot - 1
+                end if
+            end while
         else
             iselsort (rk, p, r)                            // use simple sort when small
         end if
         rk
     end iqsort
 
+    private def iqsort_ (rk: Array [Int], p: Int, r: Int): Array [Int] =
+        if r - p > 5 then
+            iswap (rk, r, med3 (p, (p+r)/2, r))            // use median-of-3, comment out for simple pivot
+            val pivot = ipartition (rk, p, r)              // partition into left (<=) and right (>=)
+            iqsort (rk, p, pivot - 1)                      // recursively sort left partition
+            iqsort (rk, pivot + 1, r)                      // recursively sort right partition
+        else
+            iselsort (rk, p, r)                            // use simple sort when small
+        end if
+        rk
+    end iqsort_
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort this vector using QuickSort, returning the rank order.
      */
-    def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
+    inline def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Indirectly sort the p to r partition of array v using SelectionSort.
-     *  @param rk  the rank order
-     *  @param p   the left cursor
-     *  @param r   the right cursor
+    /** Indirectly sort the p to r partition of array v using Selection Sort.
+     *  @param rk  the rank order (index order, index of smallest element, etc.)
+     *  @param p   the left cursor (inclusive)
+     *  @param r   the right cursor (inclusive)
      */
     private def iselsort (rk: Array [Int], p: Int, r: Int): Array [Int] =
         for i <- p to r do
@@ -703,12 +726,22 @@ class VectorD (val dim: Int,
         rk
     end iselsort
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Indirectly sort this vector using SelectionSort, returning the rank order.
-     */
     def iselsort: Array [Int] = iselsort (Array.range (0, dim), 0, dim-1)
 
-    def iselsort (end: Int = dim): Array [Int] = iselsort (Array.range (0, end), 0, end-1)
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Indirectly sort this vector using Selection Sort, returning the rank order
+     *  of the stop smallest elements.
+     *  @param stop  only sort stop number of smallest elements
+     */
+    def iselsort (stop: Int = dim): Array [Int] = 
+        val rk = Array.range (0, dim)
+        for i <- 0 until stop do
+            var k = i
+            for j <- i+1 until dim if v(rk(j)) < v(rk(k)) do k = j
+            if i != k then iswap (rk, i, k)
+        end for
+        rk.slice (0, stop)
+    end iselsort
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly partition the array from 'p' to 'r' into a left partition
@@ -795,18 +828,62 @@ class VectorD (val dim: Int,
     def stdev_ : Double = math.sqrt (variance_)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the 'k'-lag auto-covariance of this vector for stationary and
-     *  non-stationary series (acov_).
-     *  @param k  the lag parameter
+    /** Compute the 'k'-lag auto-covariance of this vector for stationary series.
+     *  This follows the standard defintion that divides by the number of elements dim
+     *  to avoid singularity issues.  IT ALWAYS DIVIDES BY 'dim-1'
+     *  @see stats.stackexchange.com/questions/56238/question-about-sample-autocovariance-function
+     *  @param k  the lag parameter (0 <= k < n) 
      */
     def acov (k: Int = 1): Double =
-        val n   = dim - k
-        val mu  = mean
-        var s = 0.0
-        for i <- 0 until n do s += (v(i) - mu) * (v(i+k) - mu)
-        s / n
+        val mu = mean
+        var s  = 0.0
+        for i <- 0 until dim-k do s += (v(i) - mu) * (v(i+k) - mu)
+        s / (dim-1)
     end acov
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for stationary series
+     *  with the mean pre-computed.
+     *  @param k   the lag parameter (0 <= k < n) 
+     *  @param mu  the pre-computed mean
+     */
+    def acov (k: Int, mu: Double): Double =
+        var s  = 0.0
+        for i <- 0 until dim-k do s += (v(i) - mu) * (v(i+k) - mu)
+        s / (dim-1)
+    end acov
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag cross-covariance of this vector and vector y for stationary
+     *  series with both means pre-computed.
+     *  @param k     the lag parameter (0 <= k < n)
+     *  @param mu    the pre-computed mean for this
+     *  @param y     the other vector
+     *  @param mu_y  the pre-computed mean for y
+     */
+    def ccov (k: Int, mu: Double, y: VectorD, mu_y: Double): Double =
+        var s  = 0.0
+        for i <- 0 until dim-k do s += (v(i) - mu) * (y.v(i+k) - mu_y)
+        s / (dim-1)
+    end ccov
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for stationary series.
+     *  This follows an intuitive defintion that divides by the number of elements summed dim-k.
+     *  @param k  the lag parameter (0 <= k < n) 
+     */
+    def acov2 (k: Int = 1): Double =
+        val n  = dim - k
+        val mu = mean
+        var s  = 0.0
+        for i <- 0 until n do s += (v(i) - mu) * (v(i+k) - mu)
+        s / n
+    end acov2
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n) 
+     */
     def acov_ (k: Int = 1): Double =
         val n   = dim - k
         val ss  = sums (k)
@@ -828,12 +905,31 @@ class VectorD (val dim: Int,
     end corr
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the 'k'-lag auto-correlation of this vector.
-     *  Assumes a stationary process vector, if not its an approximation.
-     *  @param k  the lag parameter
+    /** Compute the 'k'-lag auto-correlation of this vector (assumes a stationary
+     *  process vector, if not its an approximation).
+     *  @param k  the lag parameter (0 <= k < n) 
      */
-    def acorr (k: Int = 1): Double  = acov (k) / variance
+    def acorr (k: Int = 1): Double =
+        val mu = mean
+        acov (k, mu) / acov (0, mu)
+    end acorr
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag cross-correlation of this vector (assumes a stationary
+     *  process vector, if not its an approximation).
+     *  @param y  the other vector
+     *  @param k  the lag parameter (0 <= k < n)
+     */
+    def ccorr (y: VectorD, k: Int = 1): Double =
+        val mu   = mean
+        val mu_y = y.mean
+        ccov (k, mu, y, mu_y) / (stdev * y.stdev)
+    end ccorr
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-correlation of this vector for a non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n) 
+     */
     def acorr_ (k: Int = 1): Double =
         val n   = dim - k
         val ss  = sums (k)
@@ -1093,4 +1189,107 @@ end VectorD
     println (s"x.variance_         = ${x.variance_}")
 
 end vectorDTest
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `vectorDTest2` main function tests the indirect sorting operations provided
+ *  by the `VectorD` class.
+ *  > runMain scalation.mathstat.vectorDTest2
+ */
+@main def vectorDTest2 (): Unit =
+
+    val y = VectorD (4, 6, 5, 2, 8, 3, 9, 7, 5, 2)
+    val is = y.iselsort
+    val iq = y.iqsort
+
+    banner ("Index Order")
+    println (s"y.iselsort = ${stringOf (is)}")              // indirect QuickSort in ascending order
+    println (s"y.iqsort   = ${stringOf (iq)}")              // indirect SelectionSort in ascending order
+
+    banner ("Value Order")
+    println (s"y.iselsort = ${stringOf (is.map (y(_)))}")   // indirect QuickSort in ascending order
+    println (s"y.iqsort   = ${stringOf (iq.map (y(_)))}")   // indirect SelectionSort in ascending order
+
+end vectorDTest2
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `vectorDTest3` main function tests covariance and correlation methods provided
+ *  by the `VectorD` class.
+ *  > runMain scalation.mathstat.vectorDTest3
+ */
+@main def vectorDTest3 (): Unit =
+
+    val x = VectorD (1, 2, 3, 4, 5, 6)
+    val y = VectorD (1, 3, 4, 6, 4, 3)
+    val z = MatrixD (x, y).transpose
+
+    println (s"z = $z")
+
+    banner ("Sample Covariance")
+    println (s"x cov y  = ${x cov y}")
+
+    banner ("Population Covariance")
+    println (s"x cov_ y = ${x cov_ y}")
+
+    banner ("Correlation")
+    println (s"x corr y = ${x corr y}")
+
+    banner ("Covariance Matrix (cov)")
+    println (s"z.cov = ${z.cov}")
+
+    banner ("Population Covariance Matrix (cov_)")
+    println (s"z.cov_ = ${z.cov_}")
+
+    banner ("Correlation Matrix (corr)")
+    println (s"z.corr = ${z.corr}")
+
+end vectorDTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `vectorDTest4` main function tests auto-covariance and auto-correlation methods
+ *  provided by the `VectorD` class.
+ *  > runMain scalation.mathstat.vectorDTest4
+ */
+@main def vectorDTest4 (): Unit =
+
+    val y    = VectorD (1, 2, 4, 7, 9, 8, 6, 5, 3)
+    val z    = VectorD (2, 1, 9, 7, 4, 8, 6, 3, 5)
+    val mu_y = y.mean
+    val mu_z = z.mean
+    val sd_y = y.stdev
+    val sd_z = z.stdev
+    val sd_p = sd_y * sd_z                                   // product of stdev's
+
+    println (s"y    = $y")
+    println (s"z    = $z")
+    println (s"mu_y = $mu_y")
+    println (s"mu_z = $mu_z")
+    println (s"sd_y = $sd_y")
+    println (s"sd_z = $sd_z")
+    println (s"sd_p = $sd_p")
+
+    banner (s"Regular Covariance and Correlation of y and z")
+    println (s"Covariance   y cov z          = ${y cov z}")
+    println (s"Correlation  y corr z         = ${y corr z}")
+    println (s"Correlation  (y cov z) / sd_p = ${(y cov z) / sd_p}")
+
+    for k <- 0 to 2 do
+        banner (s"Lag-$k Auto-Covariance")
+        println (s"Stationary     y acov $k   = ${y acov k}")
+        println (s"Non-Stationary y acov_ $k  = ${y acov_ k}")
+
+        banner (s"Lag-$k Auto-Correlation")
+        println (s"Stationary     y acorr $k  = ${y acorr k}")
+        println (s"Non-Stationary y acorr_ $k = ${y acorr k}")
+
+        banner (s"Lag-$k Cross-Covariance")
+        println (s"Stationary     y.ccov ($k, mu_y, z, mu_z)  = ${y.ccov (k, mu_y, z, mu_z)}")
+
+        banner (s"Lag-$k Cross-Correlation")
+        println (s"Stationary     y.ccorr (z, $k) = ${y.ccorr (z, k)}")
+    end for
+
+end vectorDTest4
 

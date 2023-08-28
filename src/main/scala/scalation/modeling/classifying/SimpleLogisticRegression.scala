@@ -37,7 +37,7 @@ class SimpleLogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] 
                                 cname_ : Array [String] = Array ("No", "Yes"),
                                 hparam: HyperParameter = Classifier.hp)
       extends Classifier (x, y, fname_, 2, cname_, hparam)
-         with FitC (y, 2):
+         with FitC ():
 
     private val debug = debugf ("SimpleLogisticRegression", true)        // debug function
     private val flaw  = flawf ("SimpleLogisticRegression")               // flaw function
@@ -53,7 +53,7 @@ class SimpleLogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] 
     protected var r_dev   = -1.0                                         // residual dev: -2l, for full model
     protected var aic     = -1.0                                         // Akaike’s Information Criterion
 
-    modelName = "SimpleLogisticRegression"                               // name of the model
+    modelName = s"SimpleLogisticRegression_$cThresh"                     // name of the model
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute McFaffen's pseudo R-squared.
@@ -144,7 +144,7 @@ class SimpleLogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] 
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                          // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                    // diagnose from actual and predicted
-        debug ("test", s" yp = $yp \n qof = $qof")
+//      debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 

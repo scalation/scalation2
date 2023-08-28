@@ -40,7 +40,7 @@ inline def mean_stdev (x: VectorD): (Double, Double) = (x.mean, x.stdev)
  *-------------------------------------------------------------------------------
  *  @param x         the vector to scale
  */
-def scaleV (extremes: (Double, Double), bounds: (Double, Double)) (x: VectorD): VectorD =
+def scaleV (extremes: (Double, Double), bounds: (Double, Double) = (0, 1)) (x: VectorD): VectorD =
     val (min_x, max_x) = extremes
     val (lb, ub) = bounds
     val scale = (ub - lb) / (max_x - min_x)
@@ -54,7 +54,7 @@ end scaleV
  *-------------------------------------------------------------------------------
  *  @param x_s       the vector to unscale
  */
-def unscaleV (extremes: (Double, Double), bounds: (Double, Double)) (x_s: VectorD): VectorD =
+def unscaleV (extremes: (Double, Double), bounds: (Double, Double) = (0, 1)) (x_s: VectorD): VectorD =
     val (min_x, max_x) = extremes
     val (lb, ub) = bounds
     val scale = (ub - lb) / (max_x - min_x)
@@ -126,7 +126,7 @@ end uncenter
  *-------------------------------------------------------------------------------
  *  @param x         the matrix to scale
  */
-def scale (extremes: (VectorD, VectorD), bounds: (Double, Double)) (x: MatrixD): MatrixD =
+def scale (extremes: (VectorD, VectorD), bounds: (Double, Double) = (0, 1)) (x: MatrixD): MatrixD =
     val (lb, ub) = bounds
     val (min_x, max_x) = extremes
     val x_s = new MatrixD (x.dim, x.dim2)
@@ -150,7 +150,7 @@ end scale
  *-------------------------------------------------------------------------------
  *  @param x_s       the matrix to unscale
  */
-def unscale (extremes: (VectorD, VectorD), bounds: (Double, Double)) (x_s: MatrixD): MatrixD =
+def unscale (extremes: (VectorD, VectorD), bounds: (Double, Double) = (0, 1)) (x_s: MatrixD): MatrixD =
     val (lb, ub) = bounds
     val (min_x, max_x) = extremes
     val x = new MatrixD (x_s.dim, x_s.dim2)

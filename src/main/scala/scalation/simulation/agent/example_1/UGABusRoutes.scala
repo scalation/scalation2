@@ -14,7 +14,7 @@ package example_1
 
 import scala.collection.mutable.{ArrayBuffer => VEC}
 
-import scalation.random.{Bernoulli, Sharp, Uniform}
+import scalation.random.{Sharp, Uniform}
 import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

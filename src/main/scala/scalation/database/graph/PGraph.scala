@@ -31,11 +31,14 @@ import scalation.scala2d.Colors._
  *  @param et         the set of edge-types
  *  @param animating  whether to animate the model (defaults to false)
  *  @param aniRatio   the ratio of simulation speed vs. animation speed
+ *  @param width      the width of the drawing canvas
+ *  @param height     the height of the drawing canvas
  */
 class PGraph (val name: String,
               val vt: VEC [VertexType] = VEC [VertexType] (null),
               val et: VEC [EdgeType]   = VEC [EdgeType] (null),
-              animating: Boolean = false, aniRatio: Double = 1.0)
+              animating: Boolean = false, aniRatio: Double = 1.0,
+              width: Int = 800, height: Int = 600)
       extends Serializable:
 
     private val debug = debugf ("PGraph", true)                              // debug function
@@ -47,7 +50,7 @@ class PGraph (val name: String,
     private val dgAni: DgAnimator =                                          // animation engine
             if animating then
                 debug ("init", s"create DgAnimator for property-graph $name")
-                new DgAnimator (s"$name Property Graph Animator", black, white, aniRatio)
+                new DgAnimator (s"$name Property Graph Animator", black, white, aniRatio, width, height)
             else null
 
     private val aniQ: ConcurrentLinkedQueue [AnimateCommand] =               // animation engine's command queue
@@ -57,6 +60,11 @@ class PGraph (val name: String,
 
     val vmap = Map [String, VertexType] ()                                   // map name to vertex-type
     val emap = Map [String, EdgeType] ()                                     // map name to edge-type
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Set the animation flag (that is private) to done.
+     */
+    def setAniDone () = dgAni.setAniDone ()
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the name maps, vmap and emap, after constructing this property graph.
@@ -172,10 +180,11 @@ class PGraph (val name: String,
             val et_j = et(j)                                                 // edge-type j
             println (s"et($j) = $et_j")
             for e <- et_j.edges do
-                val at  = e.calcEndPoints
+//              val at  = e.calcEndPoints                                    // logic replaced by move2Boundary
+                val at  = (e.from.pos(0 to 2), e.to.pos(0 to 2))
                 val att = (at._1 ++ at._2).toArray
                 aniQ.add (AnimateCommand (CreateEdge, e.id, et_j.newShapeObj, e.name, true, et_j.color, att, 0,
-                                          e.from.id, e.to.id))
+                                          e.from.id, e.to.id, e.shift))      // shift for bundle of edges
             end for
         end for
 

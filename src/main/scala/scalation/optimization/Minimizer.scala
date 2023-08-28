@@ -14,10 +14,6 @@ package optimization
 import scalation.mathstat._
 import scalation.random.RandomVecD
 
-/** Type definition:  Tuple of the functional value f(x) and the point/vector x
- */
-type FuncVec = (Double, VectorD)
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Minimizer` trait sets the pattern for optimization algorithms for solving
  *  Non-Linear Programming (NLP) problems of the form:
@@ -36,11 +32,11 @@ type FuncVec = (Double, VectorD)
  */
 trait Minimizer:
 
-    protected val EPSILON  = 1E-10                // number close to zero
+    protected val EPSILON = 1E-10                 // number close to zero
                                                   //   between machine epsilon and its square root
-    protected val TOL      = 100.0 * EPSILON      // default tolerance level more relaxed
-    protected val STEP     = 0.5                  // default initial step size
-    protected val MAX_ITER = 1000                 // maximum number of major steps/iterations 
+    protected val TOL     = 100.0 * EPSILON       // default tolerance level more relaxed
+    protected val STEP    = 0.5                   // default initial step size
+    protected val MAX_IT  = 400                   // maximum number of major steps/iterations 
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The objective function f plus a weighted penalty based on the constraint
@@ -89,28 +85,6 @@ trait Minimizer:
         opt
     end resolve
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the better solution, the one with smaller functional value.
-     *  @param cand  the candidate solution (functional value f and vector x)
-     *  @param best  the best solution found so far
-     */
-    inline def better (cand: FuncVec, best: FuncVec): FuncVec =
-        if cand._1 < best._1 then cand else best
-    end better
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Check whether the candidate solution has blown up.
-     *  @param cand  the candidate solution (functional value f and vector x)
-     */
-    def blown (cand: FuncVec): Boolean =
-        val (fx, x) = cand
-        fx.isNaN || fx.isInfinite || x.exists ((z: Double) => z.isNaN || z.isInfinite)
-    end blown
-
-/*
-        for xi <- x if xi.isNaN || xi.isInfinite do return true
-*/
-
 end Minimizer
 
 
@@ -150,7 +124,7 @@ end Minimizer
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Minimizer_NoLS` trait specifies that the extending optimizer/minimizer
  *  does not use a line search algorithm.
- */
+ * 
 trait Minimizer_NoLS extends Minimizer:
 
     def lineSearch (x: VectorD, dir: VectorD, step: Double = STEP): Double =
@@ -158,4 +132,5 @@ trait Minimizer_NoLS extends Minimizer:
     end lineSearch
 
 end Minimizer_NoLS
+ */
 

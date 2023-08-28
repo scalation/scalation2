@@ -18,13 +18,13 @@ import scala.math._
  */
 object Calc:
 
-    def f(x: Double): Double = 6.67408E-11 * 5.97219E24 * x / 6.371E6~^2
+    def f(x: Double): Double = 6.67408E-11 * 5.97219E24 * x / 6.371E6~^2 + log (1.0)
 
 end Calc
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `runCalc` main function evalautes the function f on the given input.
+/** The `runCalc` main function evaluates the function f on the given input.
  *  @param x  the command-line argument passed to function f
  *  > runMain scalation.runCalc <value-for-x>
  */
@@ -51,6 +51,7 @@ end runCalc
         /       divide
         %       mod
         ~^      exponentiate
+        log     logarithm
         see     https://scala-lang.org/api/3.x/scala/math.html
         see     https://cobweb.cs.uga.edu/~jam/scalation_2.0/target/scala-3.1.1-RC2/api/scalation.html
     """

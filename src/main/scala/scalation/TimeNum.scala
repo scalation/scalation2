@@ -11,7 +11,7 @@
 package scalation
 
 import java.time.{DateTimeException, Instant, ZonedDateTime, ZoneId, ZoneOffset}
-import java.time.format.{DateTimeFormatter, DateTimeParseException}
+import java.time.format.DateTimeFormatter
 import java.time.temporal.{ChronoField, UnsupportedTemporalTypeException}
 
 import scala.language.implicitConversions
@@ -37,7 +37,7 @@ extension (s: Instant)
  */
 object TimeNum:
 
-    private val debug = debugf ("TimeNum", true)             // debug function
+    private val debug = debugf ("TimeNum", false)            // debug function
 
     /** Define the default time zone to be Coordinated Universal Time (UTC).
      *  UTC is the successor to Greenwich Mean Time (GMT) that was developed

@@ -14,7 +14,6 @@ package simulation
 import scala.collection.mutable.ArrayBuffer
 
 import scalation.mathstat._
-import scalation.random.{Exponential, VariateVec}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `NH_PoissonProcess` class generates data following a Non-Homogeneous Poisson

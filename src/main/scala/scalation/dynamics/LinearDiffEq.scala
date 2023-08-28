@@ -33,7 +33,7 @@ class LinearDiffEq (a: MatrixD, y0: VectorD):
 
      private val flaw = flawf ("LinearDiffEq")               // flaw function
 
-     if a.dim2 != y0.dim then flaw ("constructor", "incompatible dimensions")
+     if a.dim2 != y0.dim then flaw ("init", "incompatible dimensions")
 
      /** Vector of eigenvalues
       */

@@ -11,11 +11,10 @@
 package scalation
 package mathstat
 
-import scala.math.{ceil, floor, min, round}
+import scala.math.{ceil, floor, min}
 
-import scalation.mathstat.VectorD
 import scalation.random.{Normal, Uniform}
-import scalation.scala2d._
+import scalation.scala2d.{BasicStroke, Graphics, Graphics2D, Line, Panel, Rectangle, VizFrame}
 import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -6,6 +6,7 @@
  *  @see     LICENSE (MIT style license file).
  *
  *  @title   Model: Multiple Linear Regression with Multiple Response Variables
+ *                  Multi-variate Multiple Linear Regression
  */
 
 package scalation
@@ -17,9 +18,9 @@ import scala.runtime.ScalaRunTime.stringOf
 import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RegressionMV` class supports multiple linear regression.  In this case,
- *  x is multi-dimensional [1, x_1, ... x_k].  Fit the parameter vector b in
- *  the regression equation
+/** The `RegressionMV` class supports multi-variate multiple linear regression.  In this case,
+ *  x is multi-dimensional [1, x_1, ... x_k] and y is multi-dimensional [y_0, ... y_l].
+ *  Fit the parameter vector b in for each regression equation
  *      y  =  b dot x + e  =  b_0 + b_1 * x_1 + ... b_k * x_k + e
  *  where e represents the residuals (the part not explained by the model).
  *  Use Least-Squares (minimizing the residuals) to solve the parameter vector b
@@ -39,8 +40,8 @@ import scalation.mathstat._
  *  @param x       the data/input m-by-n matrix
  *                     (augment with a first column of ones to include intercept in model)
  *  @param y       the response/output m-by-ny matrix
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters (it doesn't have any, but may be used by derived classes)
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
                   hparam: HyperParameter = Regression.hp)
@@ -83,18 +84,18 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
         val fac = solver (x_)
         fac.factor ()                                                    // factor the matrix, either X or X.t * X
 
-        b = new MatrixD (x_.dim2, y_.dim2)                               // allocate the parameter matrix
+        bb = Array (new NetParam (new MatrixD (x.dim2, y.dim2)))         // allocate parameters bb (only uses 'bb(0).w')
         for k <- y_.indices2 do
             val yk  = y_(?, k) 
-            b.asInstanceOf [MatrixD](?, k) = fac match                   // RECORD the parameters/coefficients (@see `PredictorMV`)
+            bb(0).w(?, k) = fac match                                    // RECORD the parameters/coefficients (@see `PredictorMV`)
             case fac: Fac_QR  => fac.solve (yk)
             case fac: Fac_SVD => fac.solve (yk)
             case _            => fac.solve (x_.transpose * yk)
 
-            if b.asInstanceOf [MatrixD](0, k).isNaN then flaw ("train", s"parameter b = $b")
+            if bb(0).w(0, k).isNaN then flaw ("train", s"parameters bb(0).w = ${bb(0).w}")
         end for
 
-        debug ("train", s"$fac estimates parameter b = $b")
+        debug ("train", s"$fac estimates parameters bb(0).w = ${bb(0).w}")
     end train
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -115,13 +116,13 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a QoF summary for a model with diagnostics for each predictor 'x_j'
      *  and the overall Quality of Fit (QoF).
-     *  @param x_     the testing/full data/input matrix
-     *  @param fname  the array of feature/variable names
-     *  @param b      the parameters/coefficients for the model
-     *  @param vifs   the Variance Inflation Factors (VIFs)
+     *  @param x_      the testing/full data/input matrix
+     *  @param fname_  the array of feature/variable names
+     *  @param b_      the parameters/coefficients for the model
+     *  @param vifs    the Variance Inflation Factors (VIFs)
      */
     override def summary (x_ : MatrixD = getX, fname_ : Array [String] = fname,
-                          b_ : VectorD = b.asInstanceOf [MatrixD](?, 0),             // FIX
+                          b_ : VectorD = bb(0).w(?, 0),                  // FIX
                           vifs: VectorD = vif ()): String =
         super.summary (x_, fname_, b_, vifs)                             // summary from `Fit`
     end summary
@@ -131,13 +132,13 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
      *  e.g., (b_0, b_1, b_2) dot (1, z_1, z_2).
      *  @param z  the new vector to predict
      */
-    def predict (z: VectorD): VectorD = b.asInstanceOf [MatrixD] dot z
+    def predict (z: VectorD): VectorD = bb(0).w dot z
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict the value of matrix y = f(x_, b).  It is overridden for speed.
      *  @param x_  the matrix to use for making predictions, one for each row
      */
-    override def predict (x_ : MatrixD): MatrixD = x_ * b.asInstanceOf [MatrixD]
+    override def predict (x_ : MatrixD): MatrixD = x_ * bb(0).w
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Build a sub-model that is restricted to the given columns of the data matrix.
@@ -152,15 +153,16 @@ end RegressionMV
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RegressionMV` companion object provides factory apply functions and a testing method.
+/** The `RegressionMV` companion object provides factory methods for creating
+ *  multi-variate regression models.
  */
 object RegressionMV:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionMV` object from a combined data-response matrix.
      *  @param xy      the combined data-response matrix (predictors and response)
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      *  @param col     the first designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -170,13 +172,13 @@ object RegressionMV:
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `RegressionMV` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+    /** Create a `RegressionMV` object from a data matrix and a response matrix.
+     *  This method provides data rescaling.
      *  @param x       the data/input m-by-n matrix
      *                     (augment with a first column of ones to include intercept in model)
      *  @param y       the response/output m-vector
      *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use Regression.hp for default)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      */
     def rescale (x: MatrixD, y: MatrixD, fname: Array [String] = null,
                  hparam: HyperParameter = Regression.hp): RegressionMV = 
@@ -223,8 +225,9 @@ end RegressionMV
     rg1.trainNtest ()()                                          // train and test the model
     println (rg1.summary ())                                     // parameter/coefficient statistics
 
-    assert (mod.parameter(?, 0) == rg0.parameter)
-    assert (mod.parameter(?, 1) == rg1.parameter)
+    val b_ = mod.parameters(0).w                                 // check for parameter agreements with `Regression`
+    assert (b_(?, 0) == rg0.parameter)
+    assert (b_(?, 1) == rg1.parameter)
 
 end regressionMVTest
 
@@ -264,9 +267,7 @@ end regressionMVTest2
  */
 @main def regressionMVTest3 (): Unit =
 
-    import Example_AutoMPG.{ox, y, ox_fname}
-
-    val yy = MatrixD (y).transpose                               // vector to matrix with 1 column
+    import Example_AutoMPG.{ox, yy, ox_fname}
 
 //  println (s"ox = $ox")
 //  println (s"yy = $yy")
@@ -288,19 +289,17 @@ end regressionMVTest3
  
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `regressionMVTest4` main function tests the `RegressionMV` class using the AutoMPG
- *  dataset.  Assumes no missing values.  It tests forward selection.
+/** The `regressionMVTest4` main function tests the `RegressionMV` class using the
+ *  AutoMPG dataset.  It tests forward selection.
  *  > runMain scalation.modeling.neuralnet.regressionMVTest4
  */
 @main def regressionMVTest4 (): Unit =
 
-    import Example_AutoMPG.{ox, y, ox_fname}
+    import Example_AutoMPG.{ox, yy, ox_fname}
 
 //  println (s"ox = $ox")
 //  println (s"y  = $y")
     println (s"ox_fname = ${stringOf (ox_fname)}")
-
-    val yy = MatrixD (y).transpose                               // vector to matrix with 1 column
 
     banner ("AutoMPG RegressionMV")
     val mod = new RegressionMV (ox, yy, ox_fname)                // create model with intercept (else pass x)
@@ -308,11 +307,11 @@ end regressionMVTest3
     println (mod.summary ())                                     // parameter/coefficient statistics
 
     banner ("Feature Selection Technique: Forward")
-    val (cols, rSq) = mod.forwardSelAll ()                       // R^2, R^2 bar, R^2 cv
-//  val (cols, rSq) = mod.backwardElimAll ()                     // R^2, R^2 bar, R^2 cv
+    val (cols, rSq) = mod.forwardSelAll ()                       // R^2, R^2 bar, smape, R^2 cv
+//  val (cols, rSq) = mod.backwardElimAll ()                     // R^2, R^2 bar, smape, R^2 cv
     val k = cols.size
     println (s"k = $k, n = ${ox.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "R^2 cv"),
+    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "smape", "R^2 cv"),
                s"R^2 vs n for ${mod.modelName}", lines = true)
     println (s"rSq = $rSq")
 
@@ -321,17 +320,15 @@ end regressionMVTest4
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionMVTest5` main function tests the `RegressionMV` class using the AutoMPG
- *  dataset.  Assumes no missing values.  It tests forward, backward and stepwise selection.
+ *  dataset.  It tests forward, backward and stepwise selection.
  *  > runMain scalation.modeling.neuralnet.regressionMVTest5
  */
 @main def regressionMVTest5 (): Unit =
 
-    import Example_AutoMPG.{ox, y, ox_fname}
+    import Example_AutoMPG.{ox, yy, ox_fname}
 
 //  println (s"ox = $ox")
 //  println (s"y  = $y")
-
-    val yy = MatrixD (y).transpose                               // vector to matrix with 1 column
 
     banner ("AutoMPG RegressionMV")
     val mod = new RegressionMV (ox, yy, ox_fname)                // create model with intercept (else pass x)
@@ -345,10 +342,10 @@ end regressionMVTest4
 
     for tech <- SelectionTech.values do
         banner (s"Feature Selection Technique: $tech")
-        val (cols, rSq) = mod.selectFeatures (tech)              // R^2, R^2 bar, R^2 cv
+        val (cols, rSq) = mod.selectFeatures (tech)              // R^2, R^2 bar, smape, R^2 cv
         val k = cols.size
         println (s"k = $k, n = ${ox.dim2}")
-        new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "R^2 cv"),
+        new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "smape", "R^2 cv"),
                    s"R^2 vs n for ${mod.modelName} with $tech", lines = true)
         println (s"$tech: rSq = $rSq")
     end for

@@ -17,7 +17,7 @@ package animation
 //import javax.swing.WindowConstants.EXIT_ON_CLOSE
 
 import scalation.mathstat.VectorD
-import scalation.scala2d.{Ellipse, Graphics, Graphics2D, Panel, VizFrame}
+import scalation.scala2d.{Ellipse, Graphics, Graphics2D, VizFrame, ZoomablePanel}
 import scalation.scala2d.Colors.{blue, red}
 
 import scala.math.{cos, sin}
@@ -46,22 +46,26 @@ class SimpleAnimator2 (_title: String)
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `Canvas` inner class is used to place shapes in the drawing region.
      */
-    class Canvas extends Panel:
+    class Canvas
+//        extends Panel:                                              // regular panel
+          extends ZoomablePanel:                                      // adds zoom in and out
 
         //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         /** Paint the canvas panel component.
          *  @param gr  the graphics context
          */
         override def paintComponent (gr: Graphics): Unit =
-           super.paintComponent (gr)
-           val gr2 = gr.asInstanceOf [Graphics2D]                     // use hi-res
+            super.paintComponent (gr)
+            val g2d = gr.asInstanceOf [Graphics2D]                    // use hi-res
 
-           gr2.setPaint (blue)                                        // blue circle
-           gr2.draw (circle)
+            g2d.setTransform (at)                                     // used for zooming @author Casey Bowman
 
-           gr2.setPaint (red)                                         // read ball
-           ball.setFrame (ballPos(0) - 10, ballPos(1) - 10, 20, 20)
-           gr2.fill (ball)
+            g2d.setPaint (blue)                                       // blue circle
+            g2d.draw (circle)
+
+            g2d.setPaint (red)                                        // read ball
+            ball.setFrame (ballPos(0) - 10, ballPos(1) - 10, 20, 20)
+            g2d.fill (ball)
         end paintComponent
 
     end Canvas
@@ -74,7 +78,7 @@ class SimpleAnimator2 (_title: String)
         var theta = 0.0
 
         while true do
-            theta    += 0.05
+            theta     += 0.05
             ballPos(0) = 300 + 100 * cos (theta)
             ballPos(1) = 300 + 100 * sin (theta)
             println (s"ballPos = $ballPos")
@@ -93,8 +97,12 @@ end SimpleAnimator2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `runSimpleAnimator2` is a main function for invoking the `SimpleAnimator2`.
- *  > runMain scalation.animation.runSimpleAnimator2
+/** The `simpleAnimator2Test` is a main function for invoking the `SimpleAnimator2`.
+ *  > runMain scalation.animation.simpleAnimator2Test
  */
-@main def runSimpleAnimator2 (): Unit = new SimpleAnimator2 ("SimpleAnimator2")
+@main def simpleAnimator2Test (): Unit =
+
+     new SimpleAnimator2 ("SimpleAnimator2")
+
+end simpleAnimator2Test
 

@@ -14,7 +14,6 @@ package monte_carlo
 
 import scala.math.sqrt
 
-import scalation.mathstat._
 import scalation.random.Uniform
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

@@ -16,8 +16,7 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.{LinkedHashMap, Map}
-import scala.math.{abs, log, Pi, sqrt}
+import scala.math.{abs, log, sqrt}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
@@ -81,15 +80,15 @@ help: Quality of Fit (QoF) measures:
     df     =  degrees of freedom left for residuals
     fStat  =  Fisher's statistic
     aic    =  Akaike Information Criterion (AIC)
-    bic    =  Bayesain Information Criterion (BIC)
-    mape   =  Mean Absolute Precentage Error (MAPE)
+    bic    =  Bayesian Information Criterion (BIC)
+    mape   =  Mean Absolute Percentage Error (MAPE)
     smape  =  symmetric Mean Absolute Percentage Error (sMAPE)
     mase   =  Mean Absolute Scaled Error (optional)
         """
     end help
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Collect qof results for a model and return them in a vector.
+    /** Collect QoF results for a model and return them in a vector.
      *  @param fit     the fit vector with regard to the training set
      *  @param cv_fit  the fit array of statistics for cross-validation (upon test sets)
      */
@@ -162,6 +161,16 @@ help: Quality of Fit (QoF) measures:
         mae (y, yp, h) / mae_n (y, 1)                          // compare to Naive (one-step)
 //      mae (y, yp, h) / mae_n (y, h)                          // compare to Naive (h-steps)
     end mase
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the symmetric Mean Absolute Percentage Error (sMAPE) score.
+     *  @param y   the given time-series (must be aligned with the forecast)
+     *  @param yp  the forecasted time-series
+     */
+    def smapeF (y: VectorD, yp: VectorD): Double =
+        val e = y - yp
+        200 * (e.abs / (y.abs + yp.abs)).sum / y.dim
+    end smapeF
 
 end Fit
 
@@ -320,7 +329,7 @@ ${stats._1}
     end summary
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce the summary report portion for the parameters/cofficients.
+    /** Produce the summary report portion for the parameters/coefficients.
      *  @param b       the parameters/coefficients for the model
      *  @param stdErr  the standard error for parameters/coefficients
      *  @param vf      the Variance Inflation Factors (VIFs)
@@ -352,7 +361,7 @@ end Fit
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TestFit` class can be used for comparing two vectors on the basis of QoF.
- *  The the degrees of freedom (dfm) for the "model" is assumed to be 1.
+ *  The degrees of freedom (dfm) for the "model" is assumed to be 1.
  *  Can be used when the degrees of freedom are not known.
  *  @param m  the size of vectors to compare
  */
@@ -366,7 +375,6 @@ class TestFit (m: Int) extends Fit (1, m-1)
 @main def fitTest (): Unit =
 
 //  import scalation.random.Normal
-    import scalation.SimpleUniform
 
     for sig2 <- 10 to 50 by 10 do
 //      val rv = Normal (0, sig2)

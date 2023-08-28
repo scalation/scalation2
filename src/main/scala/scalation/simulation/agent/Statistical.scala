@@ -13,8 +13,7 @@ package simulation.agent
 
 import scala.collection.mutable.{ArrayBuffer => VEC}
 
-import scalation.database.Identifiable
-import scalation.mathstat.{Statistic, TimeStatistic, VectorD}
+import scalation.mathstat.{Statistic, TimeStatistic}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Statistical` trait maintain statistical collectors.

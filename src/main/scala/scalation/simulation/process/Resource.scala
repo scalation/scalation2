@@ -32,7 +32,7 @@ class Resource (name: String, line: WaitQueue, private var units: Int, serviceTi
                 at: Array [Double])
       extends Component:
 
-    if units < 0 then flaw ("constructor", "resource may not have negative units")
+    if units < 0 then flaw ("init", "resource may not have negative units")
 
     initComponent (name, at)
 

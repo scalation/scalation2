@@ -69,7 +69,7 @@ class Animator (graph: Dgraph)
      *  @param color    the color of the node
      *  @param pts      the coordinates and dimensions of the node
      */
-//    def createNode (eid: Int, shape: RectangularShape, label: String, primary: Boolean,
+//  def createNode (eid: Int, shape: RectangularShape, label: String, primary: Boolean,
     def createNode (eid: Int, shape: RectPolyShape, label: String, primary: Boolean,
                     color: Color, pts: Array [Double]): Unit =
         var node: graph.Node = null
@@ -96,9 +96,11 @@ class Animator (graph: Dgraph)
      *  @param from_eid  the eid of the origination node
      *  @param to_eid    the eid of the destination node
      *  @param pts       the coordinates and dimensions of the edge
+     *  @param shift     amount of distance to shift the edge to accommodate,
+     *                   e.g., a bundle of edges in a composite edge
      */
-    def createEdge (eid: Int, shape: CurvilinearShape, label: String, primary: Boolean,
-                    color: Color, from_eid: Int, to_eid: Int, pts: Array [Double]): Unit =
+    def createEdge (eid: Int, shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
+                    from_eid: Int, to_eid: Int, pts: Array [Double], shift: Int = 0): Unit =
         var edge: graph.Edge = null
         val from: graph.Node = nodeMap.get (from_eid).getOrElse (null)
         val to:   graph.Node = nodeMap.get (to_eid).getOrElse (null)
@@ -115,18 +117,20 @@ class Animator (graph: Dgraph)
 
         else if npts == 1 then
             // Create a quadratic curve using implicit coordinates derived from node coordinates.
-            edge = new graph.Edge (shape, label, primary, color, from, to, pts(0))
+            edge = new graph.Edge (shape, label, primary, color, from, to, pts(0), shift = shift)
 
         else if npts == 4 then
             // Create a straight line using explicit coordinates.
-            edge = new graph.Edge (shape, label, primary, color, from, to,
-                                   VectorD (pts(0), pts(1)), VectorD (pts(2), pts(3)))
+//          edge = new graph.Edge (shape, label, primary, color, from, to,
+            edge = graph.Edge (shape, label, primary, color, from, to,
+                               VectorD (pts(0), pts(1)), VectorD (pts(2), pts(3)), shift = shift)
 
         else if npts == 6 then
             // Create a quadratic curve using explicit coordinates.
-            edge = new graph.Edge (shape, label, primary, color, from, to,
-                                   VectorD (pts(0), pts(1)), VectorD (pts(2), pts(3)),
-                                   VectorD (pts(4), pts(5)))
+//          edge = new graph.Edge (shape, label, primary, color, from, to,
+            edge = graph.Edge (shape, label, primary, color, from, to,
+                               VectorD (pts(0), pts(1)), VectorD (pts(2), pts(3)),
+                               VectorD (pts(4), pts(5)), shift = shift)
         else
             flaw ("createEdge", s"for edges npts = $npts != 0, 1, 4 or 6")
             return

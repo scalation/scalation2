@@ -16,7 +16,6 @@ package graph
 import scala.collection.mutable.{ArrayBuffer => VEC}
 
 import scala.collection.mutable.Map
-import scala.math.{atan2, cos, Pi, sin}
 
 import scalation.mathstat._
 
@@ -52,8 +51,9 @@ class Edge (_name: String, val from: Vertex, val prop: Property, val to: Vertex,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** When shift is non-zero, the endpoints for the edge must be shifted by shift * GAP
      *  in the direction orthogonal to the edge.
-     */
+     *
     def calcEndPoints: (VectorD, VectorD) = 
+        import scala.math.{atan2, cos, Pi, sin}
         val p1 = from.pos(0 to 2) + from.pos(2 to 4) / 2.0
         val p2 = to.pos(0 to 2)   + to.pos(2 to 4) / 2.0
         val an = atan2 (p2(1) - p1(1), p2(0) - p1(0)) + Pi / 2
@@ -61,6 +61,7 @@ class Edge (_name: String, val from: Vertex, val prop: Property, val to: Vertex,
         (VectorD (p1(0) + del._1, p1(1) + del._2),
          VectorD (p2(0) + del._1, p2(1) + del._2))
     end calcEndPoints
+     */
 
 end Edge
 

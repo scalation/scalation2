@@ -66,7 +66,6 @@ import scala.math.abs
 
 import mathstat.{FunctionV2S, VectorD}
 
-import BFGS_LSA._
 import BFGS_code._
 
 class L_BFGS (ff: FunctionV2S, gf: VectorD => VectorD)
@@ -220,8 +219,10 @@ object L_BFGS:
 
             // Perform linesearch in direction d
             debug ("lbfgs", s"before linesearch: d = $d, x = $x")
-//      line_search_backtracking (n, x, f, g, s, step, xp, gp, wa)
-            val ret = linesearch (n, x, fx, gx, d, step, xp, gp, w)
+//          line_search_backtracking (n, x, f, g, s, step, xp, gp, wa)
+//          val ret = linesearch (n, x, fx, gx, d, step, xp, gp, w)
+            val ret = linesearch (x, fx, gx, d, step)
+
             fx = ret._1; step = ret._2
             debug ("lbfgs", s"after linesearch: ls = $ls, x = $x")
 

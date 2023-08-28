@@ -12,7 +12,7 @@ package scalation
 
 import java.io.File
 import java.lang.System.nanoTime
-import java.net.{URL, MalformedURLException}
+import java.net.{MalformedURLException, URI} // URL
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.{max, min}
@@ -160,6 +160,15 @@ def gauge [R] (block: => R): Double =
 end gauge
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Return the free, total, and max memory in MiB.
+ */
+def memoryUsed: Array [Long] =
+    val MB = 1024 * 1024
+    val runtime = Runtime.getRuntime
+    Array (runtime.freeMemory / MB, runtime.totalMemory / MB, runtime.maxMemory / MB)
+end memoryUsed
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return a line iterator for a line-oriented data source (e.g., CSV file).
  *  The data source is accessed via (1) URL, (2) file's absolute path, or
  *  (3) file's relative path (relative to 'DATA-DIR').
@@ -170,7 +179,8 @@ def getFromURL_File (path: String): Iterator [String] =
     val urlPat = "(?i)((https?|ftp|file)://|file:/).*"     // (?i) => case insensitive
     if path matches urlPat then
         try
-            return fromURL (new URL (path)).getLines ()
+//          return fromURL (new URL (path)).getLines ()
+            return fromURL (new URI (path).toURL).getLines ()
         catch
             case mue: MalformedURLException => 
         end try    

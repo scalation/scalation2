@@ -5,7 +5,7 @@
  *  @date    Mon Jan 28 17:18:16 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Differential Calculus Opertions and Functions
+ *  @title   Differential Calculus Operations and Functions
  *
  *  @see gwu.geverstine.com/pdenum.pdf
  */
@@ -107,9 +107,8 @@ object Differential:
      */
     def grad (f: FunctionV2S, x: VectorD): VectorD =
         VectorD (for i <- x.indices yield (f(x + (i, h)) - f(x - (i, h))) / h2)
-    end grad
 
-    inline def ∇ (f: FunctionV2S, x: VectorD): VectorD = grad (f, x)
+    inline def ∇ (f: FunctionV2S)(x: VectorD): VectorD = grad (f, x)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the slope of the vector-to-scalar function f defined on mixed
@@ -125,7 +124,6 @@ object Differential:
                    else          (f(x + (i, 1.0)) - f(x - (i, 1.0))) / 2.0    // difference
         end for
         c
-    end slope
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the Jacobian matrix for a vector-valued function represented as
@@ -136,9 +134,25 @@ object Differential:
      */
     def jacobian (f: Array [FunctionV2S], x: VectorD): MatrixD =
         MatrixD (for i <- f.indices yield grad (f(i), x))
-    end jacobian
 
     inline def Ј (f: Array [FunctionV2S], x: VectorD): MatrixD = jacobian (f, x)   // want row-wise
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Evaluate an array of vector-to-scalar functions (`FunctionV2S`) as one
+     *  vector-to-vector function (`FunctionV2V`).
+     *  @param f  the array of functions to be evaluated
+     *  @param x  the point (vector) at which to functionally evaluate
+     */
+    def eval (f: Array [FunctionV2S], x: VectorD): VectorD =
+        VectorD (for i <- f.indices yield f(i)(x))
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert an array of vector-to-scalar functions (`FunctionV2S`) into one
+     *  vector-to-vector function (`FunctionV2V`).
+     *  @param f  the array of functions to be evaluated
+     */
+    def array2f (f: Array [FunctionV2S]): FunctionV2V = 
+        (x: VectorD) => VectorD (for i <- f.indices yield f(i)(x))
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     // Second Order
@@ -152,7 +166,7 @@ object Differential:
      */
     def derivative2 (f: FunctionS2S, x: Double): Double = (f(x + h) - 2.0*f(x) + f(x - h)) / hh
 
-    inline def ⅮⅮ (f: FunctionS2S, x: Double): Double = derivative2 (f, x)
+    inline def ⅮⅮ (f: FunctionS2S)(x: Double): Double = derivative2 (f, x)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Estimate the (i,j)th second partial derivative of the vector-to-scalar
@@ -172,7 +186,6 @@ object Differential:
         else                                                                      // cross partial
             (f(x + hi + hj) - f(x + hi - hj) - f(x - hi + hj) + f(x - hi - hj)) / hh4
         end if
-    end partial2
 
     inline def ∂∂ (i: Int, j: Int)(f: FunctionV2S, x: VectorD): Double = partial2 (i, j)(f, x)
 
@@ -189,7 +202,6 @@ object Differential:
             if j < i then h(j, i) = h(i, j)                                       // Hessian is symmetric
         end for
         h
-    end hessian
 
     inline def Η (f: FunctionV2S, x: VectorD): MatrixD = hessian (f, x)
 
@@ -203,7 +215,6 @@ object Differential:
         var sum = 0.0
         for i <- x.indices do sum += (f(x + (i, h)) - 2.0*f(x) + f(x - (i, h))) / hh
         sum
-    end laplacian
 
     inline def ∆ (f: FunctionV2S, x: VectorD): Double = laplacian (f, x)
 
@@ -227,7 +238,7 @@ import Differential._
 
     banner ("Derivatives")
     println (s"Ⅾ g($y)  = ${Ⅾ (g)(y)}")                         // derivative
-    println (s"ⅮⅮ g($y) = ${ⅮⅮ (g, y)}")                        // second derivative
+    println (s"ⅮⅮ g($y) = ${ⅮⅮ (g)(y)}")                        // second derivative
 
     banner ("Partial Derivatives")
     println (s"∂ (0)(f($x)    = ${∂ (0)(f, x)}")                // partial derivative wrt x0
@@ -238,7 +249,7 @@ import Differential._
     println (s"∂∂ (1,0)(f3($x) = ${∂∂ (1,0)(f3, x)}")           // cross partial derivative
 
     banner ("Gradient Vectors")
-    val gr1 = ∇ (f, x)                                          // gradient computed numerically
+    val gr1 = ∇ (f)(x)                                          // gradient computed numerically
     val gr2 = gr(x)                                             // gradient from functions for partials
     println (s"∇ f($x) = $gr1")
     println (s"gr($x)  = $gr2")
@@ -246,6 +257,9 @@ import Differential._
 
     val ff = Array [FunctionV2S] ((x: VectorD) => 2 * x(0) + x(1),
                                   (x: VectorD) => 2 * x(0) - x(1))
+
+    banner ("Evaluation of ff as one funtion")
+    println (s"eval (ff, $x) = ${eval (ff, x)}")
 
     banner ("Jacobian Matrices")
     println (s"Ј ff($x) = ${Ј (ff, x)}")                        // Jacobian

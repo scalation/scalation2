@@ -12,12 +12,10 @@ package scalation
 package simulation
 package tableau
 
-import java.io.File
-
 import scala.collection.mutable.ArrayBuffer
 
 import scalation.mathstat._
-import scalation.random.{Exponential, Randi, Variate}
+import scalation.random.{Randi, Variate}
 import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

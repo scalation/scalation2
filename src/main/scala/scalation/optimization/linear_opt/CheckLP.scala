@@ -44,15 +44,15 @@ class CheckLP (a: MatrixD, b: VectorD, c: VectorD):
     private val M       = a.dim                        // the number of constraints (row in a matrix)
     private val N       = a.dim2                       // the number of decision variables (columns in a matrix)
 
-    if b.dim != M then flaw ("constructor", s"b.dim = ${b.dim} != $M")
-    if c.dim != N then flaw ("constructor", s"c.dim = ${c.dim} != $N")
+    if b.dim != M then flaw ("init", s"b.dim = ${b.dim} != $M")
+    if c.dim != N then flaw ("init", s"c.dim = ${c.dim} != $N")
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether the solution primal feasible 'x >= 0 and a x [<= | >=] b'.
      *  @param x  the N-length primal solution vector
      */
     def isPrimalFeasible (x: VectorD): Boolean =
-        if x.dim != N then flaw ("constructor", s"x.dim = ${x.dim} != $N")
+        if x.dim != N then flaw ("init", s"x.dim = ${x.dim} != $N")
 
         var feas = true
         // non-negativity constraints: check that x >= 0
@@ -79,7 +79,7 @@ class CheckLP (a: MatrixD, b: VectorD, c: VectorD):
      *  @param y  the M-length dual solution vector
      */
     def isDualFeasible (y: VectorD): Boolean =
-        if y.dim != M then flaw ("constructor", s"y.dim = ${y.dim} != $M")
+        if y.dim != M then flaw ("init", s"y.dim = ${y.dim} != $M")
 
         var feas = true
         // non-positivity constraints: check that y <= 0

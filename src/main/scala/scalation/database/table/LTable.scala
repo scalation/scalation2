@@ -16,7 +16,7 @@ import scala.collection.mutable.Map
 import scala.runtime.ScalaRunTime.stringOf
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `LTable` companion object provides factory functions for creating linkable-tables.
+/** The `LTable` companion object provides factory methods for creating linkable-tables.
  *  Supported domains/data-types are 'D'ouble, 'I'nt, 'L'ong, 'S'tring, and 'T'imeNum.
  */
 object LTable:

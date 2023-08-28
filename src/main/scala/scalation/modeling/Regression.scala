@@ -38,8 +38,8 @@ import scalation.mathstat._
  *  @param x       the data/input m-by-n matrix
  *                     (augment with a first column of ones to include intercept in model)
  *  @param y       the response/output m-vector
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                   hparam: HyperParameter = Regression.hp)
@@ -137,7 +137,8 @@ end Regression
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Regression` companion object provides factory apply functions and a testing method.
+/** The `Regression` companion object provides factory methods for creating regression
+ *  models.
  */
 object Regression:
 
@@ -148,8 +149,8 @@ object Regression:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `Regression` object from a combined data-response matrix.
      *  @param xy      the combined data-response matrix (predictors and response)
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -159,12 +160,12 @@ object Regression:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `Regression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the data/input m-by-n matrix
      *                     (augment with a first column of ones to include intercept in model)
      *  @param y       the response/output m-vector
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use Regression.hp for default)
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = hp): Regression = 

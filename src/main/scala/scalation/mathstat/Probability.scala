@@ -11,9 +11,9 @@
 package scalation
 package mathstat
 
-import scala.math.abs
+import scala.math.{abs, log}
 
-import scalation.mathstat.MatrixD.outer
+import MatrixD.outer
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Probability` object provides methods for operating on univariate and
@@ -340,12 +340,15 @@ object Probability:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given probability vectors px and qx, compute the "cross entropy".
-     *  @param px  the first probability vector
-     *  @param qx  the second probability vector (requires qx.dim >= px.dim)
+     *  May also pass in response vectors: y (actual) and yp (predicted).
+     *  @param px      the first probability vector
+     *  @param qx      the second probability vector (requires qx.dim >= px.dim)
+     *  @param base_e  whether to use base e or base 2 logarithms (defaults to e)
      */
-    def centropy (px: VectorD, qx: VectorD): Double =
+    def centropy (px: VectorD, qx: VectorD, base_e: Boolean = true): Double =
         var sum = 0.0
-        for i <- px.indices if px(i) > 0.0 do sum -= px(i) * log2 (qx(i))
+        if base_e then for i <- px.indices if px(i) > 0.0 do sum -= px(i) * log (qx(i))
+        else for i <- px.indices if px(i) > 0.0 do sum -= px(i) * log2 (qx(i))
         sum
     end centropy
 

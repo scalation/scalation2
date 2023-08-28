@@ -44,7 +44,7 @@ import scalation.mathstat._
  *  @see statweb.stanford.edu/~tibs/ElemStatLearn/
  *  @param x       the centered data/input m-by-n matrix NOT augmented with a first column of ones
  *  @param y       the centered response/output m-vector
- *  @param fname_  the feature/variable names
+ *  @param fname_  the feature/variable names (defaults to null)
  *  @param hparam  the shrinkage hyper-parameter, lambda (0 => OLS) in the penalty term 'lambda * b dot b'
  */
 class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
@@ -198,7 +198,7 @@ end RidgeRegression
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RidgeRegression` companion object defines hyper-parameters and provides
- *  factory functions for the `RidgeRegression` class.
+ *  factory methods creating ridge regression models.
  */
 object RidgeRegression:
 
@@ -211,9 +211,9 @@ object RidgeRegression:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a Ridge Regression from a combined data matrix.
      *  This function centers the data.
-     *  @param xy      the ?centered? data/input m-by-n matrix, NOT augmented with a first column of ones
-     *                     and the centered response m-vector (combined)
-     *  @param fname   the feature/variable names
+     *  @param xy      the uncentered data/input m-by-n matrix, NOT augmented with a first column of ones
+     *                     and the uncentered response m-vector (combined)
+     *  @param fname   the feature/variable names (defaults to null)
      *  @param hparam  the shrinkage hyper-parameter (0 => OLS) in the penalty term lambda * b dot b
      *  @param col     the designated response column (defaults to the last column)
      */
@@ -230,20 +230,19 @@ object RidgeRegression:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a Ridge Regression from a data matrix and response vector.
      *  This function centers the data.
-     *  @param x       the centered data/input m-by-n matrix, NOT augmented with a first column of ones
-     *  @param y       the centered response/output vector
-     *  @param fname   the feature/variable names
+     *  @param x       the uncentered data/input m-by-n matrix, NOT augmented with a first column of ones
+     *  @param y       the uncentered response/output vector
+     *  @param fname   the feature/variable names (defaults to null)
      *  @param hparam  the shrinkage hyper-parameter (0 => OLS) in the penalty term 'lambda * b dot b'
      */
-    def apply (x: MatrixD, y: VectorD, fname: Array [String],
-               hparam: HyperParameter): RidgeRegression =
-        val hp2 = if hparam == null then hp else hparam 
+    def center (x: MatrixD, y: VectorD, fname: Array [String] = null,
+               hparam: HyperParameter = RidgeRegression.hp): RidgeRegression =
         val mu_x = x.mean                                              // column-wise mean of x
         val mu_y = y.mean                                              // mean of y
         val x_c  = x - mu_x                                            // centered x (column-wise)
         val y_c  = y - mu_y                                            // centered y
-        new RidgeRegression (x_c, y_c, fname, hp2)
-    end apply
+        new RidgeRegression (x_c, y_c, fname, hparam)
+    end center
 
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = hp): RidgeRegression = ???
@@ -415,7 +414,7 @@ end ridgeRegressionTest3
     println (s"x = $x")
     println (s"y = $y")
 
-    val mod = RidgeRegression (xy)()                                   // factory function does centering
+    val mod = RidgeRegression (xy, null)()                             // factory method does centering
     mod.trainNtest ()()                                                // train and test the model
     println (mod.summary ())                                           // parameter/coefficient statistics
 
@@ -447,7 +446,7 @@ end ridgeRegressionTest4
 //  println (s"y = $y")                                                // response vector
 
     banner ("AutoMPG Ridge Regression")
-    val mod = RidgeRegression (x, y, x_fname, RidgeRegression.hp)      // create a ridge regression model (no intercept)
+    val mod = RidgeRegression.center (x, y, x_fname)                   // create a ridge regression model (no intercept)
     mod.trainNtest ()()                                                // train and test the model
     println (mod.summary ())                                           // parameter/coefficient statistics
 

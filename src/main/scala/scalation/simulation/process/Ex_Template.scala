@@ -13,7 +13,7 @@ package simulation
 package process
 
 import scalation.random.Exponential
-import scalation.random.RandomSeeds.N_STREAMS
+//import scalation.random.RandomSeeds.N_STREAMS
 
 /*******************************************************************************
 See Example Models in sub-directories:

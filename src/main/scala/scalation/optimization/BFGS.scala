@@ -24,17 +24,17 @@ import scala.util.control.Breaks.{breakable, break}
 
 import scalation.calculus.Differential.∇
 import scalation.mathstat._
-import scalation.random.RandomVecD
 
-import MatrixD.{eye, outer}
+import MatrixD.eye
+import QNewton.aHi_inc
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `BFGS` the class implements the Broyden–Fletcher–Goldfarb–Shanno (BFGS)
  *  Quasi-Newton Algorithm for solving Non-Linear Programming (NLP) problems.
  *  BFGS determines a search direction by deflecting the steepest descent direction
  *  vector (opposite the gradient) by  multiplying it by a matrix that approximates
- *  the inverse Hessian.  Note, this  implementation may be set up to work with the matrix
- *  b (approximate Hessian) or directly with the binv matrix (the inverse of b).
+ *  the inverse Hessian.  Note, this  implementation may be set up to work with the
+ *  matrix b (approximate Hessian) or directly with the aHi matrix (the inverse of b).
  *
  *  minimize    f(x)
  *  subject to  g(x) <= 0   [ optionally g(x) == 0 ]
@@ -49,22 +49,21 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
             ineq: Boolean = true, exactLS: Boolean = false)
       extends Minimizer:
 
-    private val debug  = debugf ("BFGS", false)             // debug function
+    private val debug  = debugf ("BFGS", true)              // debug function
     private val flaw   = flawf ("BFGS")                     // flaw function
     private val WEIGHT = 1000.0                             // weight on penalty for constraint violation
+    private var bfgs   = true                               // use BFGS (true) or Gradient Descent (false)
 
-    private var df: Array [FunctionV2S] = null              // array of partials
-    private var b: MatrixD    = null                        // approx. Hessian matrix (use b or binv)
-    private var binv: MatrixD = null                        // inverse of approx. Hessian matrix
-    private var bfgs          = true                        // use BFGS (true) or Gradient Descent (false)
+    private var df: Array [FunctionV2S] = null              // gradient as explicit functions for partials
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Use the Gradient Descent algorithm rather than the default BFGS algorithm.
      */
-    def setSteepest (): Unit = { bfgs = false }
+    def setSteepest (): Unit = bfgs = false
 
+//  private var b: MatrixD    = null                        // approx. Hessian matrix (use b or aHi)
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update the b matrix, whose inverse is used to deflect -gradient to a
+    /*  Update the b matrix, whose inverse is used to deflect -gradient to a
      *  better direction than steepest descent (-gradient).
      *  @param s  the step vector (next point - current point)
      *  @param y  the difference in the gradients (next - current)
@@ -74,34 +73,18 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
 //      var sy = s dot y                                    // dot product of s and y
 //      if abs (sy) < TOL then sy = TOL
 //      val sb = s * b
-//      b += outer (y, y) / sy - outer (sb, sb) / (sb dot s)
+//      b += MatrixD.outer (y, y) / sy - MatrixD.outer (sb, sb) / (sb dot s)
 //  } // updateB
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update the binv matrix, which is used to deflect -gradient to a better
-     *  search direction than steepest descent (-gradient).
-     *  Compute the binv matrix directly using the Sherman–Morrison formula.
-     *  @see http://en.wikipedia.org/wiki/BFGS_method
-     *  @param s  the step vector (next point - current point)
-     *  @param y  the difference in the gradients (next - current)
-     */
-    def updateBinv (s: VectorD, y: VectorD): Unit =
-        var sy = s dot y                                    // dot product of s and y
-        if abs (sy) < TOL then sy = TOL
-        val binvy = binv * y
-        binv +=  (outer (s, s) * (sy + (binvy dot y))) / (sy * sy) -
-                 (outer (binvy, s) + outer (s, binvy)) / sy
-    end updateBinv
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the partial derivative functions.  If these functions are available,
      *  they are more efficient and more accurate than estimating the values
      *  using difference quotients (the default approach).
-     *  @param partials  the array of partial derivative functions
+     *  @param grad  the gradient as explicit functions for partials
      */
-    def setDerivatives (partials: Array [FunctionV2S]): Unit =
+    def setDerivatives (grad: Array [FunctionV2S]): Unit =
         if g != null then flaw ("setDerivatives", "only works for unconstrained problems")
-        df = partials                           // use given functions for partial derivatives
+        df = grad                               // use given functions for partial derivatives
     end setDerivatives
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -137,7 +120,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Solve the following Non-Linear Programming (NLP) problem using BFGS:
      *  min { f(x) | g(x) <= 0 }.  To use explicit functions for gradient,
-     *  replace gradient (fg, x._1 + s) with gradientD (df,  x._1 + s).
+     *  replace "∇ (fg)(xn)" with "gradientD (df, xn)"
      *  @param x0     the starting point 
      *  @param step_  the initial step size
      *  @param toler  the tolerance
@@ -145,30 +128,31 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
     def solve (x0: VectorD, step_ : Double = STEP, toler: Double = TOL): FuncVec =
         debug ("solve", s"x0 = $x0, step_ = $step_, toler = $toler")
 
-        var step = step_                                      // set the current step size
-        var x    = (x0, ∇ (fg, x0))                           // current (point, gradient)
-        var xx:  (VectorD, VectorD) = (null, null)            // next (point, gradient)
-        var dir: VectorD = null                               // initial direction is -gradient
-        var s:   VectorD = null                               // step vector
+        var step = step_                                          // set the current step size
+        var x    = (x0, ∇ (fg)(x0))                               // current (point, gradient)
+        var xx:  (VectorD, VectorD) = (null, null)                // next (point, gradient)
+        var dir: VectorD = null                                   // initial direction is -gradient
+        var s:   VectorD = null                                   // step vector
 
-        binv = eye (x0.dim, x0.dim)                           // inverse of approx. Hessian matrix
+        var aHi = eye (x0.dim, x0.dim)                            // approximate Hessian inverse (aHi) matrix
+                                                                  // start with identity matrix
 
         debug ("solve", s"||gradient||^2 = ${x._2.normSq}")
 
-        var mgn         = 0.0                                 // mean gradient normSq
-        var diff        = 0.0                                 // diff between current and next point
-        val diffTol     = toler * toler                       // tolerance for changes in diff
-        var count       = 0                                   // number of times mgn stayed roughly same (< diffTol)
-        val maxCount    = 10                                  // max number of times mgn stayed roughly same => terminate
-        val n           = x0.dim                              // size of the parameter vector
-        var goodGrad    = true                                // good gradient value flag (not NaN nor infinity)
-        var xn: VectorD = null                                // next value for x (point)
+        var mgn         = 0.0                                     // mean gradient normSq
+        var diff        = 0.0                                     // diff between current and next point
+        val diffTol     = toler * toler                           // tolerance for changes in diff
+        var count       = 0                                       // number of times mgn stayed roughly same (< diffTol)
+        val maxCount    = 10                                      // max number of times mgn stayed roughly same => terminate
+        val n           = x0.dim                                  // size of the parameter vector
+        var goodGrad    = true                                    // good gradient value flag (not NaN nor infinity)
+        var xn: VectorD = null                                    // next value for x (point)
 
         breakable {
-            for k <- 1 to MAX_ITER do
-                debug ("solve", s"start of iteration $k: step = $step, f(x) = ${fg(x._1)}")
+            for it <- 1 to MAX_IT do
+                debug ("solve", s"start of iteration $it: step = $step, f(x) = ${fg(x._1)}")
                 if goodGrad then
-                    dir = if bfgs then -(binv * x._2) else -x._2
+                    dir = if bfgs then -(aHi * x._2) else -x._2
                 end if
                 s  = dir * lineSearch (x._1, dir, step)           // update step vector
                 xn = x._1 + s                                     // next x point
@@ -176,7 +160,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
                     for xx_i <- xn if xx_i.isNaN || xx_i.isInfinite do break ()
                     diff = (xn - x._1).normSq / n                 // measure of distance moved
                 end if
-                xx = (xn, ∇ (fg, xn))                             // compute the next point
+                xx = (xn, ∇ (fg)(xn))                             // compute the next point
                 mgn = xx._2.normSq / n                            // compute mean gradient normSq
                 debug ("solve", s"current mean gradient normSq = $mgn")
 
@@ -192,20 +176,88 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
                 end if
 
                 if goodGrad then
-                    if bfgs then updateBinv (s, xx._2 - x._2)     // update the deflection matrix binv
-                    debug ("solve", s"(k = $k) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
+                    if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
+                    debug ("solve", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
                     x = xx                                        // make the next point the current point
                 end if
             end for
         } // breakable
-        (fg(x._1), x._1)                                      // return functional value and current point
+        (fg(x._1), x._1)                                          // return functional value and current point
     end solve
+
+   //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Solve for an optima by finding a local optima close to the starting point/guess 'x0'.
+     *  This version uses explicit functions for the gradient (partials derivatives).
+     *  @param x0     the starting point/guess
+     *  @param grad   the gradient as explicit functions for partials
+     *  @param step_  the initial step size
+     *  @param toler  the tolerance
+     */
+    def solve2 (x0: VectorD, grad: FunctionV2V, step_ : Double = STEP, toler: Double = TOL): FuncVec =
+        debug ("solve2", s"x0 = $x0, step_ = $step_, toler = $toler")
+
+        var step = step_                                          // set the current step size
+        var x    = (x0, grad (x0))                                // current (point, gradient)
+        var xx:  (VectorD, VectorD) = (null, null)                // next (point, gradient)
+        var dir: VectorD = null                                   // initial direction is -gradient
+        var s:   VectorD = null                                   // step vector
+
+        var aHi = eye (x0.dim, x0.dim)                            // approximate Hessian inverse (aHi) matrix
+                                                                  // start with identity matrix
+
+        debug ("solve2", s"||gradient||^2 = ${x._2.normSq}")
+
+        var mgn         = 0.0                                     // mean gradient normSq
+        var diff        = 0.0                                     // diff between current and next point
+        val diffTol     = toler * toler                           // tolerance for changes in diff
+        var count       = 0                                       // number of times mgn stayed roughly same (< diffTol)
+        val maxCount    = 10                                      // max number of times mgn stayed roughly same => terminate
+        val n           = x0.dim                                  // size of the parameter vector
+        var goodGrad    = true                                    // good gradient value flag (not NaN nor infinity)
+        var xn: VectorD = null                                    // next value for x (point)
+
+        breakable {
+            for it <- 1 to MAX_IT do
+                debug ("solve2", s"start of iteration $it: step = $step, f(x) = ${fg(x._1)}")
+                if goodGrad then
+                    dir = if bfgs then -(aHi * x._2) else -x._2
+                end if
+                s  = dir * lineSearch (x._1, dir, step)           // update step vector
+                xn = x._1 + s                                     // next x point
+                if goodGrad then
+                    for xx_i <- xn if xx_i.isNaN || xx_i.isInfinite do break ()
+                    diff = (xn - x._1).normSq / n                 // measure of distance moved
+                end if
+                xx = (xn, grad (xn))                              // compute the next point
+                mgn = xx._2.normSq / n                            // compute mean gradient normSq
+                debug ("solve2", s"current mean gradient normSq = $mgn")
+
+                if mgn.isNaN || mgn.isInfinite then
+                    goodGrad = false                              // gradient blew up
+                    step /= 2.0                                   // halve the step size
+                else if mgn < toler || count > maxCount then { x = xx; break () }  // return when vanished gradient or haven't moved
+                else if goodGrad then
+                    if diff < diffTol then count += 1             // increment no movement counter
+                    if step < step_   then step  *= 1.5           // increase step size by 50%
+                else
+                    goodGrad = true                               // gradient is currently fine
+                end if
+
+                if goodGrad then
+                    if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
+                    debug ("solve2", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
+                    x = xx                                        // make the next point the current point
+                end if
+            end for
+        } // breakable
+        (fg(x._1), x._1)                                          // return functional value and current point
+    end solve2
 
 end BFGS
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `BFGS` companion object provides factory functions.
+/** The `BFGS` companion object provides factory methods.
  */
 object BFGS:
 
@@ -240,14 +292,18 @@ end BFGS
  */
 @main def bFGSTest (): Unit =
 
-    val n  = 2                                             // dimension of the search space
-    val x0 = new VectorD (n)
+    val step = 1.0                                          // step size (may need adjustment)
+    val n    = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                              // starting point
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
     def f (x: VectorD): Double = (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
 
+    def grad (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
+
     val optimizer = new BFGS (f)
-    val opt = optimizer.solve (x0)
+//  val opt = optimizer.solve (x0, step)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGSTest
@@ -260,38 +316,72 @@ end bFGSTest
  */
 @main def bFGSTest2 (): Unit =
 
-    val n  = 2                                             // dimension of the search space
-    val x0 = new VectorD (n)
+    val step = 1.0                                          // step size (may need adjustment)
+    val n  = 2                                              // dimension of the search space
+    val x0 = new VectorD (n)                                // starting point
 
     banner ("Minimize: x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
     def f (x: VectorD): Double = x(0)~^4 + (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
 
+    def grad (x: VectorD): VectorD = VectorD (4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
+
     val optimizer = new BFGS (f)
-    val opt = optimizer.solve (x0)
+//  val opt = optimizer.solve (x0, step)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGSTest2
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bFGSTest3` main function is used to test the `BFGS` class on f(x):
- *      f(x) = 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGSTest3` main function is used to test the `BFGS_NoLS` class.
+ *  This test uses the Rosenbrock function.
+        f(x) = (1 - x_0)^2 + 100 (x_1 - x_0^2)^2")
  *  > runMain scalation.optimization.bFGSTest3
  */
-@main def bFGSTest3 (): Unit =  
+@main def bFGSTest3 (): Unit =
 
-    val n  = 2                                             // dimension of the search space
-    val x0 = VectorD (0.1, 0.0)                            // starting location
+    val step = 1.0                                          // step size (may need adjustment)
+    val n    = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                              // starting point
+
+    banner ("Minimize: (1 - x_0)^2 + 100 (x_1 - x_0^2)^2")
+    def f (x: VectorD): Double = (1.0 - x(0))~^2 + 100.0 * (x(1) - x(0)~^2)~^2
+
+    def grad (x: VectorD): VectorD = VectorD (-2.0 * (1 - x(0)) - 400.0 * x(0) * (x(1) - x(0)~^2),
+                                              200.0 * (x(1) - x(0)~^2))
+
+    val optimizer = new BFGS (f)
+//  val opt = optimizer.solve (x0, step)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGSTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGSTest4` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1
+ *  > runMain scalation.optimization.bFGSTest4
+ */
+@main def bFGSTest4 (): Unit =  
+
+    val step = 1.0                                          // step size (may need adjustment)
+    val n    = 2                                            // dimension of the search space
+    val x0   = VectorD (0.1, 0.0)                           // starting location
 
     banner ("Minimize: 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
     def f (x: VectorD): Double = 1/x(0) + x(0)~^4 + (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
 
+    def grad (x: VectorD): VectorD = VectorD (-(x(0)~^(-2)) + 4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
+
     val optimizer = new BFGS (f)
-    var opt = optimizer.solve (x0)
+//  var opt = optimizer.solve (x0, step)                    // use numerical partials
+    var opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
-    opt = optimizer.resolve (n)
-    println (s"][ optimal solution (f(x), x) = $opt")
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
 
-end bFGSTest3
+end bFGSTest4
 

@@ -151,7 +151,7 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      *  @param z  the new vector to predict
      */
     def predictI (z: VectorI): Int = p_y.argmax ()
-    def predictI (z: VectorD): Int = p_y.argmax ()
+    def predictI (z: VectorD): Int // = p_y.argmax ()
 
     def predict (z: VectorD): Double = predictI (z.toInt)
 
@@ -160,7 +160,7 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      *  @param x_  the matrix to use for making predictions, one for each row
      */
     def predictI (x_ : MatrixD): VectorI =
-        VectorI (for i <- x_.indices yield predictI (x_(i).toInt))
+        VectorI (for i <- x_.indices yield predictI (x_(i)))
     end predictI
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -182,8 +182,8 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      */
     def classify (z: VectorI): (Int, String, Double) =
         val best = predictI (z)                                    // class with the highest probability
-        val prob = if p_yz != null then p_yz(best)                   // posterior probability
-                   else if p_y != null then p_y(best)                // prior probability
+        val prob = if p_yz != null then p_yz(best)                 // posterior probability
+                   else if p_y != null then p_y(best)              // prior probability
                    else NO_DOUBLE                                  // nothing applicable
         (best, cname(best), prob)                                  // return the best class, its name, and probability
     end classify
@@ -196,8 +196,8 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      */
     def classify (z: VectorD): (Int, String, Double) =
         val best = predictI (z)                                    // class with the highest probability
-        val prob = if p_yz != null then p_yz(best)                   // posterior probability
-                   else if p_y != null then p_y(best)                // prior probability
+        val prob = if p_yz != null then p_yz(best)                 // posterior probability
+                   else if p_y != null then p_y(best)              // prior probability
                    else NO_DOUBLE                                  // nothing applicable
         (best, cname(best), prob)                                  // return the best class, its name, and probability
     end classify
@@ -212,8 +212,8 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      */
     def lclassify (z: VectorI): (Int, String, Double) =
         val best = lpredictI (z)                                   // class with the highest probability
-        val prob = if p_yz != null then p_yz(best)                   // posterior probability
-                   else if p_y != null then p_y(best)                // prior probability
+        val prob = if p_yz != null then p_yz(best)                 // posterior probability
+                   else if p_y != null then p_y(best)              // prior probability
                    else NO_DOUBLE                                  // nothing applicable
         (best, cname(best), prob)                                  // return the best class, its name, and probability
     end lclassify
@@ -228,8 +228,8 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
      */
     def lclassify (z: VectorD): (Int, String, Double) =
         val best = lpredictI (z)                                   // class with the highest probability
-        val prob = if p_yz != null then p_yz(best)                   // posterior probability
-                   else if p_y != null then p_y(best)                // prior probability
+        val prob = if p_yz != null then p_yz(best)                 // posterior probability
+                   else if p_y != null then p_y(best)              // prior probability
                    else NO_DOUBLE                                  // nothing applicable
         (best, cname(best), prob)                                  // return the best class, its name, and probability
     end lclassify

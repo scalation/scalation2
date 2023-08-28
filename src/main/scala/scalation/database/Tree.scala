@@ -12,7 +12,6 @@ package scalation
 package database
 
 import scala.collection.mutable.{ArrayBuffer, Map}
-import scala.math.pow
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat.VectorI

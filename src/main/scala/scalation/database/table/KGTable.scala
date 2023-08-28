@@ -12,24 +12,12 @@ package scalation
 package database
 package table
 
-import com.google.gson.Gson
-
-import java.io.{BufferedReader, PrintWriter}
-import java.io.{FileInputStream, FileOutputStream}
-import java.io.{ObjectInputStream, ObjectOutputStream}
-
-import scala.collection.mutable.{ArrayBuffer => Bag, Map}
-import scala.math.min
-import scala.runtime.ScalaRunTime.stringOf
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `KGTable` companion object provides factory functions for creating
+/** The `KGTable` companion object provides factory methods for creating
  *  knowledge-graph-tables.
  *  Supported domains/data-types are 'D'ouble, 'I'nt, 'L'ong, 'S'tring, and 'T'imeNum.
  */
 object KGTable:
-
-    import Table.makeTuple
 
     private val debug = debugf ("KGTable", true)                            // debug function
     private val flaw  = flawf ("KGTable")                                   // flaw function
@@ -63,7 +51,7 @@ object KGTable:
 
 end KGTable
 
-import KGTable.{cntr, flaw, debug}
+import KGTable.cntr
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `KGTable` class (knowledge-graph-table) stores graph-relational data and

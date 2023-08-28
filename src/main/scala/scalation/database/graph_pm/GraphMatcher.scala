@@ -14,7 +14,6 @@ package graph_pm
 
 import scala.collection.mutable.{Set => SET}
 import scala.runtime.ScalaRunTime.stringOf
-import scala.util.control.Breaks.{break, breakable}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `GraphMatcher` trait serves as a template for implementing specific

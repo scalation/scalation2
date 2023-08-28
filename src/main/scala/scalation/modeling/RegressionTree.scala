@@ -19,7 +19,7 @@ import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTree` companion object is used to count the number of leaves
- *  and provide factory functions.
+ *  and provide factory methods for creating regression trees.
  */
 object RegressionTree:
 
@@ -38,8 +38,8 @@ object RegressionTree:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionTree` object from a combined data-response matrix.
      *  @param xy      the combined data-response matrix
-     *  @param fname   the names for all features/variables
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the names for all features/variables (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -49,10 +49,10 @@ object RegressionTree:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionTree` object from a data matrix and response vector.
-     *  @param x       the data matrix
-     *  @param y       the response vector
-     *  @param fname   the names for all features/variables
-     *  @param hparam  the hyper-parameters
+     *  @param x       the data/input matrix
+     *  @param y       the response/output vector
+     *  @param fname   the names for all features/variables (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                hparam: HyperParameter = hp): RegressionTree =
@@ -191,13 +191,13 @@ end Node
  *  The threshold for a feature is the value that minimizes sseL + sseR,
  *  the sum of the "sum of squared errors".
  *  @param x            the m-by-n input/data matrix
- *  @param y            the response m-vector
- *  @param fname_       the names of the model's features/variables
- *  @param hparam       the hyper-parameters for the model
- *  @param curDepth     current depth
- *  @param branchValue  the branch value for the tree node
- *  @param feature      the feature for the tree's parent node
- *  @param leaves       the leaf counter
+ *  @param y            the output/response m-vector
+ *  @param fname_       the names of the model's features/variables (defaults to null)
+ *  @param hparam       the hyper-parameters for the model (defaults to RegressionTree.hp)
+ *  @param curDepth     current depth (defaults to 0)
+ *  @param branchValue  the branch value for the tree node (defaults to -1)
+ *  @param feature      the feature for the tree's parent node (defaults to -1)
+ *  @param leaves       the leaf counter (defaults to Counter ())
  */
 class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                       hparam: HyperParameter = RegressionTree.hp, curDepth: Int = 0,

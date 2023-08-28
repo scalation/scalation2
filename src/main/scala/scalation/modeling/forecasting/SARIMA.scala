@@ -17,7 +17,7 @@ package scalation
 package modeling
 package forecasting
 
-import scala.math.{max, sqrt}
+import scala.math.sqrt
 
 import scalation.mathstat._
 import scalation.optimization.BFGS
@@ -32,7 +32,7 @@ object SARIMA:
 
     private val flaw  = flawf ("SARIMA_")                        // flaw function
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Difference the time series.  Return both the completely differenced time series
      *  and the intermediate (differenced once) time series (needed to scale back results later).
      *  @param y       the time series to be differenced
@@ -45,7 +45,7 @@ object SARIMA:
         (differenceSeason (y_, dd, period), y_)
     end difference
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Difference for seasonality.
      *  @param y_      the time series to be seasonally differenced,
      *                 this is usually the intermediate result after simple differencing.
@@ -66,7 +66,7 @@ object SARIMA:
         end match
     end differenceSeason
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Transform the fitted values on the training data of a differenced time series back
      *  to the original scale.
      *  @see stats.stackexchange.com/questions/32634/difference-time-series-before-arima-or-within-arima
@@ -82,7 +82,7 @@ object SARIMA:
         ARIMA.transformBack (xp_, y, d)
     end transformBack
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Transform the fitted values on the training data of a differenced time series back
      *  to the original scale. Undo seasonal differencing only.
      *  @see stats.stackexchange.com/questions/32634/difference-time-series-before-arima-or-within-arima
@@ -116,7 +116,7 @@ object SARIMA:
         end match
     end transformBackSeason
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Transform the forecast values of a differenced time series back to the
      *  original scale.
      *  @see stats.stackexchange.com/questions/32634/difference-time-series-before-arima-or-within-arima
@@ -133,7 +133,7 @@ object SARIMA:
         ARIMA.transformBackF (xf_, xx, d, t)
     end transformBackF
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Transform the forecast values of a differenced time series back to the
      *  original scale. Undo seasonal differencing only.
      *  @see stats.stackexchange.com/questions/32634/difference-time-series-before-arima-or-within-arima
@@ -214,18 +214,18 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
     differenced = d > 0 || dd > 0                                // flag indicating whether differencing will be applied
     init (y)                                                     // initialize vectors and parameters
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the model name including its current hyper-parameter.
      */
     modelName = if dd > 0 then s"SARIMA ($p, $d, $q) x ($pp, $dd, $qq)_${period}"
                 else s"SARIMA ($p, $d, $q)"
 
-   //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the maximum lag used by this model (its capacity to look into the past).
      */
     override def cap: Int = Array (p, q, pp*period, qq*period).max
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Initialize variables based on the working time-series v.
      *  Set/change the working time series.  May be used to set the time series
      *  to a different time window in order to produce newer forecast.
@@ -241,7 +241,7 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
         sig2   = z.variance                                      // sample variance
     end init
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set values for the models orders p, q, pp and qq.
      *  @param pq  the vector of model orders
      */
@@ -258,7 +258,7 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
         params = p + q + pp + qq + (if differenced then 0 else 1)   // number of parameters
     end setPQ
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `SARIMA` model to the times-series data in vector y_.  Must call setPQ first.
      *  Estimate the coefficient vectors doer a SARIMA(p, d, q, P, D, Q)_s model.
      *  It uses BFGS, a Quasi-Newton optimizer, to minimize the negative log-likelihood.
@@ -281,7 +281,7 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
         println (s"φφ  = $φφ")                                   // seasonal auto-regressive coefficients
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The negative log-likelihood function to be minimized.
      *  @see spia.uga.edu/faculty_pages/monogan/teaching/ts/Barima.pdf
      *  @see stats.stackexchange.com/questions/77663/arima-estimation-by-hand
@@ -299,7 +299,7 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
         updateFittedValues ()
     end nll
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the vector of fitted values zp, the vector of errors e, and
      *  return the negative log-likelihood -ll.
      *  @see `Fit` for definition of ll.
@@ -321,7 +321,7 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
         -ll (e.normSq / m, σ2, m)                                // return negative log likelihood
     end updateFittedValues
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the parameter vector (concatenation of φ, θ, φφ and θθ).
      */
     override def parameter: VectorD = φ ++ θ ++ φφ ++ θθ
@@ -519,9 +519,8 @@ end sARIMATest3
  */
 @main def sARIMATest4 (): Unit =
 
-    val path = BASE_DIR + "travelTime.csv"
-
-    val data = MatrixD.load (path)
+    val nfile = "travelTime.csv"
+    val data  = MatrixD.load (nfile)
 
     val t = data(?, 0)
     val y = data(?, 1)
@@ -561,7 +560,8 @@ end sARIMATest3
 
 end sARIMATest4
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `sARIMATest5` main function tests the `SARIMA` class on real data:
  *  Forecasting COVID-19.
  *  > runMain scalation.modeling.forecasting.sARIMATest5

@@ -29,8 +29,7 @@ import java.io._
 
 import scala.collection.immutable.StringOps
 import scala.collection.mutable.{ArrayBuffer => VEC, HashMap, IndexedSeq, Map}
-import scala.io.Source.fromInputStream
-import scala.math.min
+//import scala.io.Source.fromInputStream
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{break, breakable}
 
@@ -489,7 +488,7 @@ object Relation:
 //          columnlist = Vectr.:+ (columnlist,r.index(idx)(cPos),r.domain,cPos)
             columnlist = Vectr.:+ (columnlist,r.index(idx)(cPos))
             if count + 1 == r.grouplist(pointer) then
-                val thisroundsum = Vec.min(columnlist)
+                val thisroundsum = Vec.min (columnlist)
 //              minlist = Vectr.:+ (minlist, thisroundsum, r.domain, cPos)
                 minlist = Vectr.:+ (minlist, thisroundsum)
                 columnlist = null
@@ -632,7 +631,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     protected var hasIndex     = false                                       // whether this relation has an non-empty index
 
     if col == null then col = Vector.fill [Vectr] (schema.length)(null)
-    if schema.length != col.length then flaw ("constructor", "incompatible sizes for 'schema' and 'col'")
+    if schema.length != col.length then flaw ("init", "incompatible sizes for 'schema' and 'col'")
 
     @transient
     private val col2 = Vector.fill (schema.size)(VEC [ValueType] ())   // efficient holding area for building columns
@@ -1755,7 +1754,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
         case _: Long     => (col_j.asInstanceOf [VectorL])(i) = newVal.asInstanceOf [Long]
         case _: String   => (col_j.asInstanceOf [VectorS])(i) = newVal.asInstanceOf [String]
         case _: TimeNum  => (col_j.asInstanceOf [VectorT])(i) = newVal.asInstanceOf [TimeNum]
-        case _           => flaw ("assign", s"vector type ($first) not supported")
+        case null        => flaw ("assign", s"vector type ($first) not supported")
         end match
     end assign
 

@@ -17,8 +17,7 @@ import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.{AnimateCommand, CommandType, DgAnimator}
 import scalation.animation.CommandType._
-import scalation.mathstat.{Statistic, TimeStatistic}
-import scalation.random.{Exponential, Variate}
+import scalation.mathstat.Statistic
 import scalation.scala2d._
 import scalation.scala2d.Colors._
 

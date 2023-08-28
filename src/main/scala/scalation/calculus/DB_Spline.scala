@@ -14,8 +14,6 @@
 package scalation
 package calculus
 
-import java.io.FileOutputStream
-
 import scalation.mathstat._
 
 import DBasisFunction._

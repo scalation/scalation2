@@ -1,5 +1,5 @@
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  Hao Peng, John Miller
  *  @version 2.0
  *  @date    Sun Nov 19 12:27:00 EST 2017
@@ -22,7 +22,7 @@ import scala.collection.immutable.HashMap
 import scalation.mathstat.{MatrixD, VectorD, VectorS}
 import scalation.random.Normal
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The companion object for `KPSS` class, containing critical value coefficients
  *  needed in KPSS tests for Time Series Stationarity around a deterministic trend.
  */
@@ -97,7 +97,7 @@ end Stationarity_KPSS
 
 import Stationarity_KPSS.coeffKpss
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `KPSS` class provides capabilities of performing KPSS test to determine
  *  if a time series is stationary around a deterministic trend.
  *  This code is translated from the C++ code found in
@@ -113,12 +113,12 @@ class Stationarity_KPSS (yy : VectorD, lags_ : Int, lagsType_ : String, trend_ :
     private var y = yy.copy                                            // y may be demeaned/detrended
     private var stat: Double = -0.0                                    // test statistic
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reset y to the original data.
      */
     def setData (): Unit = y = yy.copy
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** OLS demeaning or detrending.
      */
     def olsDetrend (): Unit =
@@ -212,7 +212,7 @@ class Stationarity_KPSS (yy : VectorD, lags_ : Int, lagsType_ : String, trend_ :
 end Stationarity_KPSS
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `stationarity_KPSSTest` main function is used to test the `Stationarity_KPSS` class.
  *  Test whether white noise time-series has a unit root.
  *  > runMain scalation.modeling.forecasting.stationarity_KPSSTest
@@ -233,7 +233,7 @@ end Stationarity_KPSS
 end stationarity_KPSSTest
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `stationarity_KPSSTest2` main function is used to test the `Stationarity_KPSS` class.
  *  Test whether the Lake Levels time-series has a unit root.
  *  > runMain scalation.modeling.forecasting.stationarity_KPSSTest2
@@ -251,7 +251,7 @@ end stationarity_KPSSTest
 end stationarity_KPSSTest2
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `stationarity_KPSSTest3` main function is used to test the `Stationarity_KPSS` class.
  *  Test whether the differenced Lake Levels time-series has a unit root.
  *  > runMain scalation.modeling.forecasting.stationarity_KPSSTest3

@@ -11,8 +11,6 @@
 package scalation
 package dynamics
 
-import scala.util.control.Breaks.{breakable, break}
-
 import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -70,20 +68,18 @@ import scalation.mathstat._
 
     println ("                           H2,  O2,   O,    H,  OH,  H2O")
     println (s"> at t = ${"%6.3f".format(t0)}, c = $c")
-    val dt = tf / n                                       // time step
-    var t  = t0 + dt                                      // next time point to examine
+    val dt = tf / n                                        // time step
+    var t  = t0 + dt                                       // next time point to examine
 
-    breakable {
-        for i <- 1 to n do
-            _c = RungeKutta.integrateVV (odes, _c, dt)      // compute new concentrations using RK
-            c = DormandPrince.integrateVV (odes, c, dt)   // compute new concentrations using DP
-            _h2o(i) = _c.last
-            h2o(i)  = c.last
+    for i <- 1 to n do
+        _c = RungeKutta.integrateVV (odes, _c, dt)     // compute new concentrations using RK
+        c  = DormandPrince.integrateVV (odes, c, dt)   // compute new concentrations using DP
+        _h2o(i) = _c.last
+        h2o(i)  = c.last
 
-            println (s"> at t = ${"%6.3f".format(t)}, c = $c")
-            t += dt
-        end for
-    } // breakable
+        println (s"> at t = ${"%6.3f".format(t)}, c = $c")
+        t += dt
+    end for
 
     new Plot (null, _h2o, h2o,  "Plot x vs. t (black-RK, red-DP)")
 

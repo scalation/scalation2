@@ -17,8 +17,6 @@ import scala.math.{exp, log}
 import scalation.mathstat._
 import scalation.optimization.BFGS
 
-import ActivationFun.{sigmoid, sigmoid_}
-
 // FIX: needs improved optimization
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -45,7 +43,7 @@ class LogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] = null
 
     private val r_df  = (n-1.0) / (n-k-1.0)                              // ratio of degrees of freedom
 
-    modelName = "LogisticRegression"                                     // name of the model
+    modelName = s"LogisticRegression_$cThresh"                           // name of the model
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** For the full model, train the classifier by fitting the parameter vector
@@ -105,6 +103,31 @@ class LogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] = null
         vifV
     } // vif
 */
+
+end LogisticRegression
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `LogisticRegression` companion object provides a factory method.
+ */
+object LogisticRegression:
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a logistic regression model for the given combined matrix where the
+     *  column col is the response/classification vector.
+     *  @param xy      the combined data matrix (features and response)
+     *  @param fname   the names for all features/variables
+     *  @param cname   the names for all classes
+     *  @param hparam  the hyper-parameters
+     *  @param col     the designated response column (defaults to the last column)
+     */
+    def apply (xy: MatrixD, fname: Array [String] = null,
+               cname: Array [String]  = Array ("No", "Yes"),
+               hparam: HyperParameter = Classifier.hp)
+              (col: Int = xy.dim2 - 1): LogisticRegression =
+        val (x, y) = (xy.not(?, col), xy(?, col).toInt)                  // data matrix, response vector
+        new LogisticRegression (x, y, fname, cname, hparam)
+    end apply
 
 end LogisticRegression
 

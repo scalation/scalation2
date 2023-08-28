@@ -11,7 +11,8 @@
 package scalation
 package mathstat
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
+//import scala.collection.mutable.{ListBuffer => VEC}
 import scala.math.{abs, sqrt}
 
 private val flaw = flawf ("top")                               // flaw function
@@ -326,7 +327,7 @@ object Statistic:
      *  @param name      the name for the aggregated statistic
      *  @param unbiased  whether the estimators are restricted to be unbiased
      */
-    def aggregate (subStats: ListBuffer [Statistic], name: String = "a-stat",
+    def aggregate (subStats: VEC [Statistic], name: String = "a-stat",
                    unbiased: Boolean = false): Statistic =
         val m = subStats.size
         if m < 1 then { flaw ("aggregate", "there are no subparts to average"); return null }

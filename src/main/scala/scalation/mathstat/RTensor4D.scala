@@ -15,9 +15,6 @@
 package scalation
 package mathstat
 
-import scala.math.max
-import scala.runtime.ScalaRunTime.stringOf
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the sizes of all the third level arrays in u.
  *  @param u  the 4D array
@@ -67,7 +64,7 @@ class RTensor4D (val dim: Int, val dim2: VectorI, val dim3: VectorI, val dim4: I
         v = Array.ofDim [Array [Array [Array [Double]]]] (dim)
         for i <- indices do v(i) = Array.ofDim (dim2(i), dim3(i), dim4)
     else if dim != v.length || dim4 != v(0)(0)(0).length then
-        flaw ("constructor", "dimensions are wrong")
+        flaw ("init", "dimensions are wrong")
     end if
 
     /** Format string used for printing vector values (change using setFormat)

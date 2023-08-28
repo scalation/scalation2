@@ -12,9 +12,9 @@ package scalation
 package simulation
 package event
 
-import scalation.random.Exponential
-import scalation.random.RandomSeeds.N_STREAMS
 import scalation.mathstat.Statistic
+import scalation.random.Exponential
+//import scalation.random.RandomSeeds.N_STREAMS
 
 /*******************************************************************************
 See Example Models in sub-directories:

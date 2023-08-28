@@ -28,44 +28,18 @@ import scalation.scala2d.Colors._
  *  To change the value to max the resetLabel with title "Switch min and max value" can be used.
  *------------------------------------------------------------------------------
  *  @param x       the x vector of data values (horizontal), use null to use y's index
- *  @param y       the y vector of data values (primary vertical)
- *  @param z       the z vector of data values (secondary vertical) to compare with y
+ *  @param y       the y vector of data values (primary vertical, black)
+ *  @param z       the z vector of data values (secondary vertical, red) to compare with y
  *  @param _title  the title of the plot
  *  @param lines   flag for generating a line plot
  */
 class Plot (x: VectorD, y: VectorD, z: VectorD = null, _title: String = "Plot y vs. x", lines: Boolean = false)
       extends VizFrame (_title, null):
 
-    val resetLabel = new Label ()
-    resetLabel.setText ("Reset Plot")
-        
-    val maxLabel = new Label ()
-    maxLabel.setText ("Switch max and min value")
-
     val xx: VectorD = if x == null then VectorD.range (0, y.dim) else x
     val canvas      = new Canvas (xx, y, z, getW, getH, lines)
-    getContentPane.add (resetLabel, BorderLayout.NORTH)
-    getContentPane.add (maxLabel, BorderLayout.AFTER_LAST_LINE)
     getContentPane.add (canvas, BorderLayout.CENTER)
     setVisible (true)
-
-    // reset plot to original values
-    resetLabel.addMouseListener (new MouseListener () {
-        override def mouseClicked  (mouseEvent: MouseEvent): Unit = canvas.resetMinMax ()
-        override def mousePressed  (mouseEvent: MouseEvent): Unit = {}
-        override def mouseReleased (mouseEvent: MouseEvent): Unit = {}
-        override def mouseEntered  (mouseEvent: MouseEvent): Unit = {}
-        override def mouseExited   (mouseEvent: MouseEvent): Unit = {}
-    })
-
-    // mouse listener that switches max and min value
-    maxLabel.addMouseListener (new MouseListener () {
-        override def mouseClicked  (mouseEvent: MouseEvent): Unit = canvas.setMaxMinValue ()
-        override def mousePressed  (mouseEvent: MouseEvent): Unit = {}
-        override def mouseReleased (mouseEvent: MouseEvent): Unit = {}
-        override def mouseEntered  (mouseEvent: MouseEvent): Unit = {}
-        override def mouseExited   (mouseEvent: MouseEvent): Unit = {}
-    })
 
 end Plot
 
@@ -118,7 +92,8 @@ end FramelessPlot
  *  @param lines   flag for generating a line plot
  */
 class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines: Boolean = false)
-      extends Panel:
+//    extends Panel:
+      extends ZoomablePanel:
 
     private val EPSILON   = 1E-9
     private val SCALE     = 10                             // FIX - pass as a parameter
@@ -159,6 +134,8 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
     override def paintComponent (gr: Graphics): Unit =
         super.paintComponent (gr)
         val g2d = gr.asInstanceOf [Graphics2D]            // use hi-res
+
+        g2d.setTransform (at)                             // used for zooming
 
         var x_pos = 0
         var y_pos = 0
@@ -257,74 +234,6 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
             end for
         end if
 
-        // mouse listener to identify axis click
-        addMouseListener (new MouseListener {
-            //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-            /** Handle mouse clicked event
-             *  @param mouseEvent  the mouse clicked event
-             */
-            override def mouseClicked (mouseEvent: MouseEvent): Unit =
-                var x = mouseEvent.getX
-                var y = mouseEvent.getY
-
-                // give a gap of 4 points so click can be easily recognized
-                if linex.getY > y-4 && linex.getY < y+4 then
-                    var pointFound = false
-                    if x < linex.getMaxX && x > linex.getX then
-                        for a <- 0 until xlabels.size do
-                            if a == 0 then
-                                if xlabels(a).getMaxX > x && xlabels(a+1).getMinX < x then
-                                    pointFound = true
-                                    if setMin then      minX = xValues(a).toDouble
-                                    else if setMax then maxX = xValues(a).toDouble
-                                    deltaX = maxX - minX
-                                    repaint ()
-                                end if
-                            else if a == xlabels.size-1 && ! pointFound then
-                                if xlabels(a).getMinX < x && xlabels(a-1).getMinX > x then
-                                    pointFound = true
-                                    if setMin then      minX = xValues(a).toDouble
-                                    else if setMax then maxX = xValues(a).toDouble
-                                    deltaX = maxX - minX
-                                    repaint ()
-                                end if
-                            else if ! pointFound then
-                                if xlabels(a).getMinX < x && xlabels(a-1).getMinX > x then
-                                    pointFound = true
-                                    if setMin then      minX = xValues(a).toDouble
-                                    else if setMax then maxX = xValues(a).toDouble
-                                    deltaX = maxX - minX
-                                    repaint ()
-                                end if
-                            end if
-                        end for
-                    end if
-                end if
-
-                if liney.getX > mouseEvent.getX -4 && liney.getX < x+4 then
-                    var pointFound = false
-                    if y < liney.getMaxY && y > liney.getY then
-                        for a <- 0 until ylabels.size do
-                            if ! pointFound then
-                                if ylabels(a).getMaxY > y && ylabels(a+1).getMinY < y then
-                                    pointFound = true
-                                    if setMin then      minY = yValues(a).toDouble
-                                    else if setMax then maxY = yValues(a).toDouble
-                                    deltaY = maxY - minY
-                                    repaint ()
-                                end if
-                            end if
-                        end for
-                    end if
-                end if
-
-            end mouseClicked
-
-            override def mousePressed  (mouseEvent: MouseEvent): Unit = {}
-            override def mouseReleased (mouseEvent: MouseEvent): Unit = {}
-            override def mouseEntered  (mouseEvent: MouseEvent): Unit = {}
-            override def mouseExited   (mouseEvent: MouseEvent): Unit = {}
-        })
     end paintComponent
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -335,32 +244,6 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
         val s = x.toString 
         s.substring (0, min (s.length, 4))
     end clip
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Reset all plot values to their original.
-     */
-    def resetMinMax (): Unit =
-        minX   = origMinX
-        maxX   = origMinX
-        deltaX = origMaxX - origMinX
-        minY   = origMinX
-        maxY   = origMaxY
-        deltaY = origMaxY - origMinY
-        repaint ()
-    end resetMinMax
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Switch clicked location to be set as max or min.
-     */
-    def setMaxMinValue (): Unit =
-        if setMin then
-            setMin = false
-            setMax = true
-        else
-            setMin = true
-            setMax = false
-        end if
-    end setMaxMinValue
 
 end Canvas
 
@@ -377,7 +260,7 @@ end Canvas
     new Plot (x, y, null, "plot1", lines = true)
     val plot = new Plot (null, y, null, "plot2", lines = true)
 
-    writeImage (DATA_DIR + "plot.png", plot)
+//  writeImage (DATA_DIR + "plot.png", plot)
 
 end plotTest
 

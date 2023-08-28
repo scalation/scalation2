@@ -18,7 +18,6 @@ package scalation
 package optimization
 package linear_opt
 
-import scala.math.abs
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{breakable, break}
 
@@ -72,11 +71,11 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
 
     private var nn       = MpN + R + 1                       // # columns in tableau
     private var jj       = nn - 1                            // the last column (b)
-    private val MAX_ITER = 200 * N                           // maximum number of iterations
+    private val MAX_IT   = 200 * N                           // maximum number of iterations
     private var flip     = 1.0                               // 1(slack) or -1(surplus) depending on b_i
 
-    if b.dim != M then flaw ("constructor", s"b.dim = ${b.dim} != + $M")
-    if c.dim != N then flaw ("constructor", s"c.dim = ${c.dim} != + $N")
+    if b.dim != M then flaw ("init", s"b.dim = ${b.dim} != + $M")
+    if c.dim != N then flaw ("init", s"c.dim = ${c.dim} != + $N")
 
     private val t  = new MatrixD (MM, nn)                    // the MM-by-nn simplex tableau
     private var jr = -1                                      // index counter for artificial variables
@@ -138,8 +137,8 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
     /** Find the best variable x_l to enter the basis.  Determine the index of
      *  entering variable corresponding to column l (e.g., using Dantiz's Rule
      *  or Bland's Rule).  Return -1 to indicate no such column.
-     *  't(M).argmaxPos (jj)'       // use Dantiz's rule (index of max positive, cycling possible)
-     *  't(M).firstPos (jj)'        // use Bland's rule  (index of first positive, FPE possible)
+     *  t(M).argmaxPos (jj)       // use Dantiz's rule (index of max positive, cycling possible)
+     *  t(M).firstPos (jj)        // use Bland's rule  (index of first positive, FPE possible)
      */
     def entering (): Int = if DANTIZ then argmaxPos (t(M), jj) else firstPos (t(M), jj)
 
@@ -186,7 +185,7 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
         var l    = -1                                        // the entering variable (column)
 
         breakable {
-            for it <- 1 to MAX_ITER do
+            for it <- 1 to MAX_IT do
                 l = entering (); if l == -1 then break ()    // -1 => optimal solution found
                 k = leaving (l); if k == -1 then break ()    // -1 => solution is unbounded
                 pivot (k, l)                                 // pivot: k leaves and l enters
@@ -284,7 +283,7 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
     def showTableau (iter: Int): Unit =
         println ("showTableau: --------------------------------------------------------")
         println (this)
-        println (s"showTableau: after $iter iterations, with limit of $MAX_ITER")
+        println (s"showTableau: after $iter iterations, with limit of $MAX_IT")
     end showTableau
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

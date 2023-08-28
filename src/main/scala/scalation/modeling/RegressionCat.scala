@@ -48,7 +48,7 @@ end ExpandableVariable
  *  The problem is again to fit the parameter vector b in the augmented regression equation
  *      y  =  b dot x + e  =  b0  +  b_1   * x_1  +  b_2   * x_2  +  ... b_k * x_k
  *                                +  b_k+1 * d_1  +  b_k+2 * d_2  +  ... b_k+l * d_l + e
- *  where 'e' represents the residuals (the part not explained by the model).
+ *  where e represents the residuals (the part not explained by the model).
  *  Use Least-Squares (minimizing the residuals) to solve for the parameter vector b
  *  using the Normal Equations:
  *      x.t * x * b  =  x.t * y
@@ -58,8 +58,8 @@ end ExpandableVariable
  *  @param x_      the data/input matrix of continuous variables
  *  @param t       the treatment/categorical variable matrix 
  *  @param y       the response/output vector
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class RegressionCat (x_ : MatrixD, t: MatrixI, y: VectorD, fname_ : Array [String] = null,
                      hparam: HyperParameter = Regression.hp)
@@ -76,7 +76,7 @@ class RegressionCat (x_ : MatrixD, t: MatrixI, y: VectorD, fname_ : Array [Strin
     modelName = "RegressionCat"
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Expand the vector 'zt' into a vector of terms/columns including dummy variables.
+    /** Expand the vector zt into a vector of terms/columns including dummy variables.
      *  @param zt    the vector with categorical values (at the end) to expand
      *  @param nCat  the index at which the categorical variables start
      */
@@ -87,7 +87,7 @@ class RegressionCat (x_ : MatrixD, t: MatrixI, y: VectorD, fname_ : Array [Strin
     end expand
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Given the vector 'zt', expand it and predict the response value.
+    /** Given the vector zt, expand it and predict the response value.
      *  @param zt  the vector with categorical values (at the end) to expand
      */
     def predict_ex (zt: VectorD): Double = predict (expand (zt))
@@ -96,7 +96,7 @@ end RegressionCat
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RegressionCat` companion object provides helper functions.
+/** The `RegressionCat` companion object provides factory methods and other helper methods.
  */
 object RegressionCat:
 
@@ -106,39 +106,40 @@ object RegressionCat:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionCat` object from a single data matrix.
-     *  @param x       the data/input matrix of continuous variables
+     *  @param xt      the data/input matrix of continuous and categorical variables
      *  @param y       the response/output vector
-     *  @param nCat    the index at which the categorical variables start
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param nCat    the index at which the categorical variables start in xt
+     *                     requires the cont vars to be first, followed by the cat vars
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defualts to Regression.hp)
      */
     def apply (xt: MatrixD, y: VectorD, nCat: Int, fname: Array [String] = null,
                hparam: HyperParameter = Regression.hp): RegressionCat =
-        val x = xt(?, 0 until nCat)
-        val t: MatrixI = xt(?, nCat until xt.dim2)
+        val x = xt(?, 0 until nCat)                                        // cont vars
+        val t: MatrixI = xt(?, nCat until xt.dim2)                         // cat vars
         new RegressionCat (x, t, y, fname, hparam)
     end apply
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionCat` object from a continuous a data matrix and a categorical
-     *  data matrix.  This factory function does rescaling.
+     *  data matrix.  This method does rescaling.
      *  @param x       the data/input matrix of continuous variables
      *  @param t       the treatment/categorical variable matrix
      *  @param y       the response/output vector
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the feature/variable names (defualts to null)
+     *  @param hparam  the hyper-parameters (defualts to Regression.hp)
      */
     def rescale (x: MatrixD, t: MatrixI, y: VectorD, fname: Array [String] = null,
-                 hparam: HyperParameter = Regression.hp): RegressionCat = ???
+                 hparam: HyperParameter = Regression.hp): RegressionCat = ???      // FIX
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the shift in categorical/treatment variables to make tihem start at zero
-     *  as well as the maximum values after shifting.  Must call 'dummyVars' first.
+     *  as well as the maximum values after shifting.  Must call dummyVars first.
      */
     def get_shift_tmax: (VectorI, VectorI) = (shift, tmax)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Assign values for the dummy variables based on the categorical/treatment vector 't'.
+    /** Assign values for the dummy variables based on the categorical/treatment vector t.
      *  @see `Variable`
      *  Note: To maintain consistency `Variable` is the only place where values for
      *  dummy variables should be set
@@ -165,7 +166,7 @@ object RegressionCat:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Assign values for dummy variables based on a single categorical/treatment
-     *  vector 't'.
+     *  vector t.
      *  @see `Variable`
      *  Note:  To maintain consistency `Variable` is the only place where values for
      *  dummy variables should be set.

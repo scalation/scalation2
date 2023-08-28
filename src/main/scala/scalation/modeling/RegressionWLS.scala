@@ -43,9 +43,9 @@ import RegressionWLS._
  *  @param x       the data/input m-by-n matrix
  *                     (augment with a first column of ones to include intercept in model)
  *  @param y       the response/output m vector
- *  @param fname_  the feature/variable names
+ *  @param fname_  the feature/variable names (defaults to null)
  *  @param w       the weight vector (if null, compute in companion object)
- *  @param hparam  the hyper-parameters (it doesn't have any, but may be used by derived classes)
+ *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class RegressionWLS (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                      private var w: VectorD = null, hparam: HyperParameter = Regression.hp)
@@ -163,9 +163,9 @@ object RegressionWLS:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionWLS` object from a combined data-response matrix.
      *  @param xy      the combined data-response matrix (predictors and response)
-     *  @param fname   the feature/variable names
-     *  @param ww      the weight vector
-     *  @param hparam  the hyper-parameters
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param ww      the weight vector (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,

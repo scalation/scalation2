@@ -26,7 +26,7 @@ import scalation.mathstat._
  *  @param k       the number of classes
  *  @param cname_  the names for all classes
  *  @param conts   the set of feature indices for variables that are treated as continuous
- *  @param hparam  the hyper-parameters for the decision tree
+ *  @param hparam  the hyper-parameters
  */
 class DecisionTree_C45wp (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                           cname_ : Array [String] = Array ("No", "Yes"), 
@@ -65,13 +65,13 @@ object DecisionTree_C45wp:
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a decision tree (with pruning) for the given combined matrix where
-     *  the last column is the response/classification vector.
+     *  the column col is the response/classification vector.
      *  @param xy      the combined data matrix (features and response)
      *  @param fname   the names for all features/variables
      *  @param k       the number of classes
      *  @param cname   the names for all classes
      *  @param conts   the set of feature indices for variables that are treated as continuous
-     *  @param hparam  the hyper-parameters for the decision tree
+     *  @param hparam  the hyper-parameters
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null, k: Int = 2,
@@ -86,7 +86,7 @@ end DecisionTree_C45wp
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `decisionTree_C45wpTest` object is used to test the `DecisionTree_C45wp` class.
+/** The `decisionTree_C45wpTest` main function tests the `DecisionTree_C45wp` class.
  *  > runMain scalation.modeling.classifying.decisionTree_C45wpTest
  */
 @main def decisionTree_C45wpTest (): Unit =
@@ -106,12 +106,12 @@ end decisionTree_C45wpTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `decisionTree_C45wpTest2` object is used to test the `DecisionTree_C45wp` class.
+/** The `decisionTree_C45wpTest2` main function tests the `DecisionTree_C45wp` class.
  *  > runMain scalation.modeling.classifying.decisionTree_C45wpTest2
  */
 @main def decisionTree_C45wpTest2 (): Unit =
 
-    val nfile = BASE_DIR + "breast_cancer.csv"
+    val nfile = "breast_cancer.csv"
     val xy    = MatrixD.load (nfile)
     val fname = Array ("Clump Thickness", "Uniformity of Cell Size", "Uniformity of Cell Shape", "Marginal Adhesion",
                        "Single Epithelial Cell Size", "Bare Nuclei", "Bland Chromatin", "Normal Nucleoli", "Mitoses")

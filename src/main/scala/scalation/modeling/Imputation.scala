@@ -11,8 +11,6 @@
 package scalation
 package modeling
 
-import scala.math.{min, max}
-
 import scalation.mathstat._
 import scalation.random.Normal
 

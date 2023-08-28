@@ -87,6 +87,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
                         matched = false
                     end if
                 end for
+                if ! matched then break
             end for
         } // breakable
         matched

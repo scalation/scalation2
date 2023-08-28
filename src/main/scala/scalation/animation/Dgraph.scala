@@ -49,7 +49,7 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
      *  @param w        the width
      *  @param h        the height
      */
-//    case class Node (shape: RectangularShape, label: String, primary: Boolean, var color: Color,
+//  case class Node (shape: RectangularShape, label: String, primary: Boolean, var color: Color,
     case class Node (shape: RectPolyShape, label: String, primary: Boolean, var color: Color,
                      x: Double, y: Double, w: Double, h: Double):
 
@@ -103,6 +103,7 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
 
     end Node
 
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `Edge` class is used to represent edges in the graph.  If bend = 0, a
      *  straight line is created, otherwise a quadratic curve is created.
@@ -114,66 +115,34 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
      *  @param from     the origination node
      *  @param to       the destination node
      *  @param bend     the amount of bend in the curve (defaults to zero)
+     *  @param shift    amount of distance to shift the edge, e.g., to accommodate
+     *                  a bundle of edges in a composite edge
+     *  @param direct   whether to directly set the line or allow factory function to set it 
      */
     case class Edge (shape: CurvilinearShape, label: String, primary: Boolean, var color: Color,
-                     from: Node, to: Node, bend: Double = 0.0):
+                     from: Node, to: Node, bend: Double = 0.0, shift: Int = 0, direct: Boolean = true):
 
-        from.addEdge (this)                                      // add edge to outgoing edges of from node
+        from.addEdge (this)                                           // add edge to outgoing edges of from node
 
-        private val EPSILON = 1E-7                               // very small real number
-        private val id      = nextE ()                           // edge identifier
-                val tokens  = ListBuffer [Token] ()              // list of tokens current on this edge.
+        private val EPSILON = 1E-7                                    // very small real number
+        private val id      = nextE ()                                // edge identifier
+                val tokens  = ListBuffer [Token] ()                   // list of tokens current on this edge.
         private val p1      = VectorD (from.shape.getCenterX (), from.shape.getCenterY ())
         private val p2      = VectorD (to.shape.getCenterX (),   to.shape.getCenterY ())
+        private val gap     = 5                                       // for multiple edges between one pair of nodes
 
-        if abs (bend) > EPSILON then                             // hendle case where "def this" not called first
-            move2Boundary (p1, p2)
+        if abs (bend) > EPSILON then                                  // handle case where "def this" not called first
             shape.setLine (p1, p2, bend)
-        end if
-
-        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        /** Construct an edge as a line with explicit coordinates.
-         *  @param shape    the shape (line) of the edge
-         *  @param label    the label for the created edge
-         *  @param primary  whether it is a primary/transition/true or secondary/place node/false
-         *  @param color    the color of the edge
-         *  @param from     the origination node
-         *  @param to       the destination node
-         *  @param p1       the (x,y)-coordinates of the edge's start
-         *  @param p2       the (x,y)-coordinates of the edge's end
-         */
-        def this (shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
-                  from: Node, to: Node, p1: VectorD, p2: VectorD) =
-            this (shape, label, primary, color, from, to, 0.0)
-            move2Boundary (p1, p2)
+        else if direct then                                           // directly set the line (use factory methods to move)
             shape.setLine (p1, p2)
-        end this
-
-        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        /** Construct an edge as a curve with explicit coordinates.
-         *  @param shape    the shape (curve) of the edge
-         *  @param label    the label for the created edge
-         *  @param primary  whether it is a primary/transition/true or secondary/place node/false
-         *  @param color    the color of the edge
-         *  @param from     the origination node
-         *  @param to       the destination node
-         *  @param p1       the (x,y)-coordinates of the edge's start
-         *  @param pc       the (x,y)-coordinates of the edge's control point
-         *  @param p2       the (x,y)-coordinates of the edge's end
-         */
-        def this (shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
-                  from: Node, to: Node, p1: VectorD, pc: VectorD, p2: VectorD) =
-            this (shape, label, primary, color, from, to, 0.0)
-            move2Boundary (p1, p2)
-            shape.setLine (p1, pc, p2)
-        end this
+        end if
 
         //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         /** Move the edge endpoints so edge connects to vertex boundary, rather than center.
          *  Edge is from p1 to p2:  p1 --> p2.
          *  @param p1  the position of the center of the from vertex
          *  @param p2  the position of the center of the to vertex
-         */
+         * 
         def move2Boundary (p1: VectorD, p2: VectorD): Unit =
             val angle   = atan2 (p2(1) - p1(1), p2(0) - p1(0))
             val radius1 = (from.shape.getWidth () + from.shape.getHeight ()) / 4.0
@@ -182,6 +151,68 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
             p1(0) += radius1 * cos (angle);    p1(1) += radius1 * sin (angle)
             p2(0) += radius2 * cos (Pi+angle); p2(1) += radius2 * sin (Pi+angle)
         end move2Boundary
+         */
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Move the edge endpoints so edge connects to vertex boundary, rather than center.
+         *  Edge is from p1 to p2:  p1 --> p2.
+         *  @param p1  the position of the leftop of the from vertex
+         *  @param p2  the position of the leftop of the to vertex
+         */
+        def move2Boundary (p1: VectorD, p2: VectorD): Unit =
+            val gapShift  = shift * gap
+            val toCenterX = to.x + to.w / 2                             // p1(0)
+            val toCenterY = to.y + to.h / 2                             // p1(1)
+            val fromCenterX = from.x + from.w / 2                       // p2(0)
+            val fromCenterY = from.y + from.h / 2                       // p2(1)
+            val angle     = atan2 (toCenterY - fromCenterY, toCenterX - fromCenterX)
+
+            from.shape match
+                case _: Rectangle =>
+                    val p1Vec = pointOnRect (toCenterX, toCenterY, from.x, from.y, from.x + from.w, from.y + from.h)
+                    p1(0) = p1Vec(0)
+                    p1(1) = p1Vec(1)
+                    if shift != 0 then            // Yulong note: Either on top/bot shift or left/right shift
+                        if p1(0) == to.x || p1(0) == to.x + to.w then p1(1) += gapShift else p1(0) += gapShift
+
+                case _ =>
+                    // the circle is 'from' Yulong fixed the circle one way in case and shift
+                    // p1 is the left top
+                    val radius1 = (from.shape.getWidth () + from.shape.getHeight ()) / 4.0
+                    p1(0) += radius1 + radius1 * cos (angle + gapShift)
+                    p1(1) += radius1 + radius1 * sin (angle + gapShift)
+
+            to.shape match
+                case _: Rectangle =>
+                    val p2Vec = pointOnRect (fromCenterX, fromCenterY, to.x, to.y, to.x + to.w, to.y + to.h)
+                    p2(0) = p2Vec(0)
+                    p2(1) = p2Vec(1)
+                    if shift != 0 then
+                        if p2(0) == from.x || p2(0) == from.x + from.w then p2(1) += gapShift else p2(0) += gapShift
+
+                case _ =>
+                    // the circle is 'to'
+                    // p2 is the left top
+                    val radius2 = (to.shape.getWidth() + to.shape.getHeight()) / 4.0
+                    p2(0) += radius2 + radius2 * cos (Pi + angle - gapShift)
+                    p2(1) += radius2 + radius2 * sin (Pi + angle - gapShift)
+
+        end move2Boundary
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Set (or reset) the curve by delegating to shape.
+         *  @param p1  the first/starting point of the curve
+         *  @param pc  the control point of the curve
+         *  @param p1  the second/ending point of the curve
+         */
+        def setLine (p1: VectorD, pc: VectorD, p2: VectorD): Unit = shape.setLine (p1, pc, p2)
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Set (or reset) the line by delegating to shape.
+         *  @param p1  the first/starting point of the line
+         *  @param p1  the second/ending point of the line
+         */
+        def setLine (p1: VectorD, p2: VectorD): Unit = shape.setLine (p1, p2)
 
         //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         /** Set (or reset) the color.
@@ -201,6 +232,75 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
         override def toString: String = s"Edge $label [ $id ]"
 
     end Edge
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** The `Edge` companion object provides factory mathods for creating various
+     *  forms of edges.
+     */
+    object Edge:
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Construct an edge as a line with explicit coordinates.
+         *  @param shape    the shape (line) of the edge
+         *  @param label    the label for the created edge
+         *  @param primary  whether it is a primary/transition/true or secondary/place node/false
+         *  @param color    the color of the edge
+         *  @param from     the origination node
+         *  @param to       the destination node
+         *  @param p1       the (x,y)-coordinates of the edge's start
+         *  @param p2       the (x,y)-coordinates of the edge's end
+         *  @param shift    amount of distance to shift the edge, e.g., to accommodate composite edges
+         */
+        def apply (shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
+                   from: Node, to: Node, p1: VectorD, p2: VectorD, shift: Int): Edge =
+            val e = new Edge (shape, label, primary, color, from, to, 0.0, shift, false)
+            e.move2Boundary (p1, p2)
+            e.shape.setLine (p1, p2)
+            e
+        end apply
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Construct an edge as a curve with explicit coordinates.
+         *  @param shape    the shape (curve) of the edge
+         *  @param label    the label for the created edge
+         *  @param primary  whether it is a primary/transition/true or secondary/place node/false
+         *  @param color    the color of the edge
+         *  @param from     the origination node
+         *  @param to       the destination node
+         *  @param p1       the (x,y)-coordinates of the edge's start
+         *  @param pc       the (x,y)-coordinates of the edge's control point
+         *  @param p2       the (x,y)-coordinates of the edge's end
+         *  @param shift    amount of distance to shift the edge, e.g., to accommodate composite edges
+         */
+        def apply (shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
+                   from: Node, to: Node, p1: VectorD, pc: VectorD, p2: VectorD, shift: Int): Edge =
+            val e = new Edge (shape, label, primary, color, from, to, 0.0, shift, false)
+            //e.pc = pc
+            e.move2Boundary (p1, p2)
+            e.shape.setLine (p1, pc, p2)
+            e
+        end apply
+
+        //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+        /** Construct an edge as a curve with explicit coordinates.
+         *  @param shape    the shape (curve) of the edge
+         *  @param label    the label for the created edge
+         *  @param primary  whether it is a primary/transition/true or secondary/place node/false
+         *  @param color    the color of the edge
+         *  @param from     the origination node
+         *  @param to       the destination node
+         */
+        def apply (shape: CurvilinearShape, label: String, primary: Boolean, color: Color,
+                   from: Node, to: Node): Edge =
+            val e = new Edge (shape, label, primary, color, from, to, direct = false)
+            e.move2Boundary (e.p1, e.p2)
+            e.shape.setLine (e.p1, e.p2)
+            e
+        end apply
+
+    end Edge
+
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `Token` class is used to represent tokens in the graph.
@@ -254,6 +354,7 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
         def setOnNode (onNode2: Node): Unit = onNode = onNode2
 
     end Token
+
 
     /** List of nodes in the graph
      */
@@ -382,6 +483,7 @@ end Counter
     /** Build and test a directed graph.
      */
     def testDirectedGraph (g: Dgraph): Unit =
+
         // Create nodes
         val n1 = g.Node (Ellipse (), "node1", true, red, 100, 200, 20, 20)
         val n2 = g.Node (Ellipse (), "node2", true, blue, 300, 100, 20, 20)

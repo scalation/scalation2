@@ -14,7 +14,7 @@ package classifying
 
 import scala.collection.mutable.{ArrayBuffer, Set, SortedMap}
 
-import scalation.mathstat.{MatrixI, VectorD, VectorI}
+import scalation.mathstat.{VectorD, VectorI}
 import scalation.mathstat.Probability.entropy
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -27,19 +27,19 @@ object DecisionTree:
     /** hyper-parameters for tuning decision trees and random forests
      */
     val hp = new HyperParameter
-    hp += ("height",  5, 5)            // the height (edges in longest path) limit for the decision trees
+    hp += ("height",  4, 4)            // the height (edges in longest path) limit for the decision trees
     hp += ("cutoff",  0.01, 0.01)      // the cutoff (stop splitting) entropy threshold
-    hp += ("nTrees",  9, 9)            // the (odd) number of trees to create for the forest (defaults to Supreme Court)
+    hp += ("nTrees",  11, 11)          // the (odd) number of trees to create for the forest (e.g., 11 to 51)
     hp += ("bRatio",  0.7, 0.7)        // the bagging ratio (fraction of the data/rows to be used in building trees)
     hp += ("fbRatio", 0.7, 0.7)        // the feature bagging ratio (fraction of the features/columns to be used in building trees)
 
     // Before creating a new model, update some the hyper-parameter - the rest will take default values, e.g.,
     //
-    // Decision.hp("height") = 6.0
+    // Decision.hp("height") = 5
     //
     // Many trees may be needed to get good results for `RandomForest`
     //
-    // val hp2 = hp.updateReturn (("nTrees", 51), ("bRatio", 0.6), ("height", 7.0), ("fbRatio", 0.9))
+    // val hp2 = hp.updateReturn (("nTrees", 51), ("bRatio", 0.6), ("height", 6.0), ("fbRatio", 0.9))
     // val mod = new RandomForest (x, y, fname, k, cname, conts, hp2)
 
 end DecisionTree
@@ -222,11 +222,13 @@ end Node
 object Node:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /*  Recursively print the decision tree nodes, indenting each level.
+    /** Recursively print the decision tree nodes, indenting each level.
+     *  Requires node n to be not null
      *  @param n       the current node
      *  @param level   the level of node in the tree
      */
     def printT (n: Node, level: Int): Unit =
+        if n == null then println (s"X printT: n = $n, level = $level")
         if n.leaf then
             println ("\t" * level + "[ " + n + " ]")
         else

@@ -21,7 +21,7 @@ import scala.Double.NaN
 import scala.math.max
 import scala.util.control.Breaks.{break, breakable}
 
-import scalation.mathstat.{MatrixD, Plot, VectorD, VectorS}
+import scalation.mathstat._
 import scalation.random.{Normal, Variate}
 
 type CriticalValues = HashMap [Int, VectorD]

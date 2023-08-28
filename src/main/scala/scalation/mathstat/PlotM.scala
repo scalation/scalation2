@@ -67,7 +67,10 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a canvas on which to draw the plot.
      */
-    class CanvasP extends Panel:
+    class CanvasP
+//        extends Panel:
+          extends ZoomablePanel:
+
         setBackground (white)
         val colors = Array (red, green, blue, black, yellow, cyan, magenta)
 
@@ -78,6 +81,8 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
         override def paintComponent (gr: Graphics): Unit =
             super.paintComponent (gr)
             val g2d = gr.asInstanceOf [Graphics2D]            // use hi-res
+
+            g2d.setTransform (at)                             // used for zooming
 
             var x_pos = 0
             var y_pos = 0

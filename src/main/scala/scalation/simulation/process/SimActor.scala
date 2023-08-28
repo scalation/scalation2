@@ -12,8 +12,6 @@ package scalation
 package simulation
 package process
 
-import scalation.mathstat.VectorD
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `SimActor` abstract class represents entities that are active in the model.
  *  The act abstract method, which specifies entity behavior, must be defined

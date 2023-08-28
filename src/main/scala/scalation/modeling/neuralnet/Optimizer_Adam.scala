@@ -87,7 +87,7 @@ class Optimizer_Adam extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD, t: Int): MatrixD =
+        inline def updateWeight (x: MatrixD, y: MatrixD, t: Int): MatrixD =
             val yp  = f.fM (b * x)                                        // Yp = f(XB)
             val ee  = yp - y                                              // negative of the error matrix
             val gt  = f.dM (yp) *~ ee                                     // delta matrix for y
@@ -164,7 +164,7 @@ class Optimizer_Adam extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD): (NetParam, NetParam) =
+        inline def updateWeight (x: MatrixD, y: MatrixD): (NetParam, NetParam) =
             var z  = f.fM (a * x)                                         // Z  = f(XA)
             var yp = f1.fM (b * z)                                        // Yp = f(ZB)
             var ee = yp - y                                               // negative of the error matrix
@@ -238,7 +238,7 @@ class Optimizer_Adam extends Optimizer:
          *  @param x  the input matrix for the current batch
          *  @param y  the output matrix for the current batch
          */
-        def updateWeight (x: MatrixD, y: MatrixD): Double =
+        inline def updateWeight (x: MatrixD, y: MatrixD): Double =
             z(0) = x                                                      // initial activation, which is the input matrix
             for l <- layers do z(l+1) = f(l).fM (b(l) * z(l))             // feedforward and store all activations
 

@@ -25,9 +25,9 @@ import scalation.mathstat._
 class GridSearchLS (f: FunctionS2S)
       extends LineSearch:
 
-    private val debug    = debugf ("GridSearchLS", true)              // debug function
-    private val PLOT     = true                                       // show plot flag
-    private val MAX_ITER = 100                                        // maximum number of iterations
+    private val debug  = debugf ("GridSearchLS", true)                // debug function
+    private val PLOT   = true                                         // show plot flag
+    private val MAX_IT = 100                                          // maximum number of iterations
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Perform an exact Line Search (LS) using the Grid Search Algorithm with defaults.
@@ -42,7 +42,7 @@ class GridSearchLS (f: FunctionS2S)
      */
     def lsearch (xmax: Double = 2.0, x1: Double = 0.0): Double =
         val d   = xmax - x1                                           // grid distance
-        val xv  = VectorD.range (0, MAX_ITER) * d / MAX_ITER + x1     // vector of x values
+        val xv  = VectorD.range (0, MAX_IT) * d / MAX_IT + x1         // vector of x values
         val fxv = new VectorD (xv.dim)                                // vector of f(x) values
         var fm  = Double.MaxValue                                     // min f(x) value
         var xm  = x1                                                  // value of x at min f(x) value

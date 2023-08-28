@@ -10,9 +10,9 @@ package scalation
 package random
 
 import scala.collection.mutable.ArrayBuffer
-import scala.math.{abs, atan, exp, floor, Pi, pow, sqrt}
+import scala.math.{abs, atan, exp, floor, Pi, pow}
 
-import scalation.mathstat._
+import scalation.mathstat.{Plot, VectorD}
 import scalation.mathstat.Combinatorics.{rBetaC, rBetaF}
 
 /** Type definition for parameters to a distribution. `Vector` is used instead
@@ -384,7 +384,6 @@ object CDF:
      *  @param x   the x coordinate, argument to F(x)
      */  
 //  def normalCDF (x: Double): Double =
-//  {
 //      val a1 =  0.254829592
 //      val a2 = -0.284496736
 //      val a3 =  1.421413741
@@ -393,14 +392,14 @@ object CDF:
 //      val p  =  0.3275911
 //
 //      val sign = if x < 0 then -1 else 1
-//      val y = abs (x) / sqrt (2.0)
+//      val y = abs (x) / math.sqrt (2.0)
 //
 //      // A&S formula 7.1.26
 //      val t = 1.0 / (1.0 + p * y)
 //      val z = 1.0 - (((((a5*t + a4) * t) + a3) * t + a2) * t + a1) * t * exp (-y*y)
 //
 //      0.5 * (1.0 + sign * z)
-//  } // normalCDF
+//  end normalCDF
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the Cumulative Distribution Function (CDF) for the Normal

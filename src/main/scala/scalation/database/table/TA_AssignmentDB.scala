@@ -12,8 +12,6 @@ package scalation
 package database
 package table
 
-import scala.collection.mutable.{ArrayBuffer => Bag}
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TA_AssignmentDB` object contains table definitions for making TA Assignments.
  */

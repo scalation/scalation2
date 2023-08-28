@@ -52,15 +52,15 @@ class SimpleAnimator (title: String)
          *  @param gr  the graphics context
          */
         override def paintComponent (gr: Graphics): Unit =
-           super.paintComponent (gr)
-           val gr2 = gr.asInstanceOf [Graphics2D]                     // use hi-res
+            super.paintComponent (gr)
+            val gr2 = gr.asInstanceOf [Graphics2D]                    // use hi-res
 
-           gr2.setPaint (Color.blue)                                  // blue circle
-           gr2.draw (circle)
+            gr2.setPaint (Color.blue)                                 // blue circle
+            gr2.draw (circle)
 
-           gr2.setPaint (Color.red)                                   // read ball
-           ball.setFrame (ballPos.x - 10, ballPos.y - 10, 20, 20)
-           gr2.fill (ball)
+            gr2.setPaint (Color.red)                                  // read ball
+            ball.setFrame (ballPos.x - 10, ballPos.y - 10, 20, 20)
+            gr2.fill (ball)
         end paintComponent
 
     end Canvas
@@ -92,8 +92,13 @@ end SimpleAnimator
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `runSimpleAnimator` is a main function for invoking the `SimpleAnimator`.
-Abstract Window Toolkit *  > runMain scalation.animation.runSimpleAnimator
+/** The `simpleAnimatorTest` is a main function for invoking the `SimpleAnimator`.
+ *  Abstract Window Toolkit.
+ *  > runMain scalation.animation.simpleAnimatorTest
  */
-@main def runSimpleAnimator (): Unit = new SimpleAnimator ("SimpleAnimator")
+@main def simpleAnimatorTest (): Unit =
+
+     new SimpleAnimator ("SimpleAnimator")
+
+end simpleAnimatorTest
 

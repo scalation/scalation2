@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network with 3 Layers (input, hidden and output layers)
+ *  @title   Model: Neural Network with 4 Layers (input, hidden(+) and output layers)
  *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
@@ -24,7 +24,7 @@ import Initializer._
 import Optimizer._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `NeuralNet_XL` class supports multi-output, X-layer (input, hidden* and output)
+/** The `NeuralNet_XL` class supports multi-output, X-layer (input, hidden(+) and output)
  *  Neural-Networks.  It can be used for both classification and prediction,
  *  depending on the activation functions used.  Given several input vectors and output
  *  vectors (training data), fit the parameters [b] connecting the layers,
@@ -55,16 +55,17 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2, df = x.dim - x.dim2):                    // under-estimate of degrees of freedom
 
-    private val debug     = debugf ("NeuralNet_XL", false)                // debug function
-    private val flaw      = flawf ("NeuralNet_XL")                        // flaw function
-    private val eta       = hp("eta").toDouble                            // learning rate
-    private val bSize     = hp("bSize").toInt                             // batch size
-    private val maxEpochs = hp("maxEpochs").toInt                         // maximum number of training epochs/iterations
-    private val lambda    = hp ("lambda").toDouble                        // regularization hyper-parameter
-    private val nl        = f.length                                      // number of ACTIVE layers (i.e., with activation function)
-    private val layers    = 0 until nl                                    // range for active layers
-//          val opti      = new Optimizer_SGD ()                          // parameter optimizer SGD
-            val opti      = new Optimizer_SGDM ()                         // parameter optimizer SGDM
+    private   val debug     = debugf ("NeuralNet_XL", false)              // debug function
+    private   val flaw      = flawf ("NeuralNet_XL")                      // flaw function
+    private   val eta       = hp("eta").toDouble                          // learning rate
+    private   val bSize     = hp("bSize").toInt                           // batch size
+    private   val maxEpochs = hp("maxEpochs").toInt                       // maximum number of training epochs/iterations
+    private   val lambda    = hp ("lambda").toDouble                      // regularization hyper-parameter
+    private   val nl        = f.length                                    // number of ACTIVE layers (i.e., with activation function)
+    private   var flayer    = -1                                          // the layer to freeze (no changes to parameters)
+    protected val layers    = 0 until nl                                  // range for active layers
+//            val opti      = new Optimizer_SGD ()                        // parameter optimizer SGD
+              val opti      = new Optimizer_SGDM ()                       // parameter optimizer SGDM
 
     // Guidelines for setting the number of nodes in hidden layer:
     if nz == null then nz = compute_nz                                    // default number of nodes for each hidden layers
@@ -75,8 +76,8 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
 
     if nl < 2 then flaw ("init", s"must have at least two ACTIVE layers, but nl = $nl")
 
-    private val sizes = x.dim2 +: nz :+ y.dim2                            // sizes (# nodes) of all layers
-                bb = Array.ofDim [NetParam] (nl)                          // parameters for each active layer
+    protected val sizes = x.dim2 +: nz :+ y.dim2                          // sizes (# nodes) of all layers
+                  bb    = Array.ofDim [NetParam] (nl)                     // parameters for each active layer
 
     for l <- layers do
         bb(l) = new NetParam (weightMat (sizes(l), sizes(l+1)),           // parameters weights &
@@ -84,6 +85,20 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
     end for
 
     modelName = s"NeuralNet_XL_${stringOf (f.map (_.name))}"
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the network parameters (weights and biases) for the given layer.
+     *  @see `NeuralNet_XLT` (transfer learning)
+     *  @param layer  the layer to get the parameters from
+     */
+    def getNetParam (layer: Int = 1): NetParam = bb(layer)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Freeze the given layer (do not change its paramaters during back-propogation).
+     *  @see `NeuralNet_XLT` (transfer learning)
+     *  @param layer  the layer to freeze (defaults to -1 => no layers are frozen)
+     */
+    def freeze (layer: Int): Unit = flayer = layer
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute default values for the number nodes in each hidden layer, based on
@@ -102,6 +117,7 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
      *  @param y_  the training/full response/output matrix
      */
     def train (x_ : MatrixD = x, y_ : MatrixD = y): Unit =
+        if flayer >= 0 then opti.freeze (flayer)                          // optimizer to freeze flayer
         val epochs = opti.optimize (x_, y_, bb, eta, f)                   // optimize parameters bb
         println (s"ending epoch = $epochs")
         estat.tally (epochs._2)
@@ -137,6 +153,20 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
         (yp, qof)                                                        // return predictions and QoF vector
     end test
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Make plots for each output/response variable (column of matrix y).
+     *  Overriden as the response matrix may be transformed or rescaled.
+     *  @param yy_  the testing/full actual response/output matrix (defaults to full y)
+     *  @param yp   the testing/full predicted response/output matrix (defaults to full y)
+     */
+    override def makePlots (yy_ : MatrixD, yp: MatrixD): Unit =
+        val yy = if itran == null then yy_ else itran (yy_)               // undo scaling, if used
+        val (ryy, ryp) = orderByYY (yy, yp)                               // order by yy
+        for k <- ryy.indices2 do
+            new Plot (null, ryy(?, k), ryp(?, k), s"$modelName: y$k black/actual vs. red/predicted")
+        end for
+    end makePlots
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given a new input vector v, predict the output/response vector f(v).
      *  @param v  the new input vector
@@ -165,17 +195,32 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
         new NeuralNet_XL (x_cols, y, null, null, hparam, f, itran)
     end buildModel
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Produce a QoF summary for a model with diagnostics for each predictor x_j
+     *  and the overall Quality of Fit (QoF).
+     *  FIX - only known to be valid for id activation function
+     *  @see https://community.wolfram.com/groups/-/m/t/1319745
+     *  @param x_      the testing/full data/input matrix
+     *  @param fname_  the array of feature/variable names
+     *  @param b_      the parameters/coefficients for the model
+     */
+    def summary2 (x_ : MatrixD = getX, fname_ : Array [String] = fname,
+                  b_ : MatrixD = null): String =
+//      summary (x_, fname_, b_(?, 0), null)                              // summary from `Fit`
+        "summary2 not implemented yet"
+    end summary2
+
 end NeuralNet_XL
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `NeuralNet_XL` companion object provides factory functions for buidling multi-layer
- *  neural nets.
+/** The `NeuralNet_XL` companion object provides factory methods for creating multi-layer
+ *  (one+ hidden layers) neural networks.   Note, 'scale' is defined in `Scaling`.
  */
 object NeuralNet_XL extends Scaling:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `NeuralNet_XL` with automatic resclaing from a combined data matrix.
+    /** Create a `NeuralNet_XL` with automatic rescaling from a combined data matrix.
      *  @param xy      the combined input and output matrix
      *  @param fname   the feature/variable names
      *  @param nz      the number of nodes in each hidden layer, e.g., Array (5, 10) means 2 hidden with sizes 5 and 10
@@ -200,7 +245,7 @@ object NeuralNet_XL extends Scaling:
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `NeuralNet_XL` with automatic rescaling from a data matrix and response vector.
+    /** Create a `NeuralNet_XL` with automatic rescaling from a data matrix and response matrix.
      *  @param x       the input/data matrix
      *  @param y       the output/response matrix
      *  @param fname   the feature/variable names
@@ -227,42 +272,58 @@ end NeuralNet_XL
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_XLTest` main function is used to test the `NeuralNet_XL` class.
+ *  Try changing the eta and bSize hyper-parameters, as well as the activation function.
  *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest
  */
 @main def neuralNet_XLTest (): Unit =
 
-    val x = MatrixD ((5, 3), 1.0, 0.35, 0.9,                     // training data - input matrix (m=5 vectors)
-                             1.0, 0.20, 0.7,
-                             1.0, 0.30, 0.8,
-                             1.0, 0.25, 0.75,
-                             1.0, 0.40, 0.95)
-    val y = MatrixD ((5, 2), 0.5, 0.4,                           // training data - output matrix (m=5 vectors)
-                             0.3, 0.3,
-                             0.2, 0.35,
-                             0.3, 0.32,
-                             0.6, 0.5)
+    val x = MatrixD ((12, 3), 1.0, 0.2, 0.3,                     // training data - input matrix (m=12 vectors)
+                              1.0, 0.2, 0.5,
+                              1.0, 0.2, 0.7,
+                              1.0, 0.3, 0.3,
+                              1.0, 0.3, 0.5,
+                              1.0, 0.3, 0.7,
+
+                              1.0, 0.4, 0.3,
+                              1.0, 0.4, 0.3,
+                              1.0, 0.4, 0.7,
+                              1.0, 0.5, 0.5,
+                              1.0, 0.5, 0.3,
+                              1.0, 0.5, 0.7)
+
+    val y0 = x.map (x_i => sigmoid (VectorD (2.0, 1.0, 2.0) dot (x_i)))
+    val y1 = x.map (x_i => sigmoid (VectorD (2.0, 2.0, 2.0) dot (x_i)))
+    val y  = MatrixD (y0, y1).transpose
 
     println (s"input  matrix x = $x")
     println (s"output matrix y = $y")
 
-    val mod = new NeuralNet_XL (x, y)                            // create NeuralNet_XL model 
-//  mod.trainNtest ()()                                          // train and test the model
+    Optimizer.hp("eta")   = 3.0                                  // set the learning rate (large for small dataset)
+    Optimizer.hp("bSize") = 6.0                                  // set the batch size (small for small dataset)
+//  val mod = new NeuralNet_XL (x, y)                            // create NeuralNet_XL model with sigmoid (default)
+    val mod = new NeuralNet_XL (x, y, f = Array (f_tanh, f_tanh, f_id))   // create NeuralNet_XL model with tanh-tanh-id
+
+    banner ("Small Example - NeuralNet_XL: trainNtest")
+    mod.trainNtest ()()                                          // train and test the model
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+
+    banner ("Small Example - NeuralNet_XL: trainNtest2")
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
-//  println (mod.summary ())                                     // parameter/coefficient statistics - FIX - implement?
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+    println (mod.summary2 ())                                    // parameter/coefficient statistics
 
     banner ("neuralNet_XLTest: Compare with Linear Regression - first column of y")
-    val y0  = y(?, 0)                                            // use first column of response matrix y
     val rg0 = new Regression (x, y0)                             // create a Regression model
     rg0.trainNtest ()()                                          // train and test the model
     println (rg0.summary ())                                     // parameter/coefficient statistics
 
     banner ("neuralNet_XLTest: Compare with Linear Regression - second column of y")
-    val y1  = y(?, 1)                                            // use second column of response matrix y
     val rg1 = new Regression (x, y1)                             // create a Regression model
     rg1.trainNtest ()()                                          // train and test the model
     println (rg1.summary ())                                     // parameter/coefficient statistics
 
 end neuralNet_XLTest
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_XLTest2` main function tests the `NeuralNet_XL` class using the
@@ -271,41 +332,83 @@ end neuralNet_XLTest
  */
 @main def neuralNet_XLTest2 (): Unit =
 
-    import Example_Concrete._
+    import Example_Concrete.{x, y, x_fname}                      // don't include intercept, uses biases instead
 
-//  println (s"ox = $ox")
-//  println (s"y  = $y")
-    println (s"ox_fname = ${stringOf (ox_fname)}")
+//  println (s"x = $x")
+//  println (s"y = $y")
+    println (s"x_fname = ${stringOf (x_fname)}")
 
-    banner ("Concrete NeuralNet_XL")
-//  val mod = new NeuralNet_XL (ox, y, ox_fname)                 // create model with intercept (else pass x)
-    val mod = NeuralNet_XL.rescale (ox, y, ox_fname)             // create model with intercept (else pass x) - rescales
-//  mod.trainNtest ()()                                          // train and test the model
+//  val mod = new NeuralNet_XL (x, y, x_fname)                   // create model without intercept)
+    val mod = NeuralNet_XL.rescale (x, y, x_fname)               // create model without intercept - rescales
+
+    banner ("Concrete - NeuralNet_XL: trainNtest")
+    mod.trainNtest ()()                                          // train and test the model
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+
+    banner ("Concrete - NeuralNet_XL: trainNtest2")
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
-//  println (mod.summary ())                                     // parameter/coefficient statistics
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+    println (mod.summary2 ())                                    // parameter/coefficient statistics
 
-    banner ("Concrete Validation Test")
+    banner ("Concrete - NeuralNet_XL: validate")
     println (FitM.showFitMap (mod.validate ()(), QoF.values.map (_.toString)))
 
-/*
-    banner ("Concrete Cross-Validation Test")
+    banner ("Concrete - NeuralNet_XL: crossValidate")
     val stats = mod.crossValidate ()
-    Fit.showQofStatTable (stats)
-*/
+    FitM.showQofStatTable (stats)
 
 end neuralNet_XLTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_XLTest3` main function tests the `NeuralNet_XL` class using the
- *  AutoMPG dataset.
+ *  AutoMPG dataset.  There are two ways to create the model:
+ *      new NeuralNet_XL (x, yy, x_fname)       - depending on act. function user must rescale
+ *      NeuralNet_XL.rescale (x, yy, x_fname)   - automatically rescales, assumes matrix response
  *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest3
  */
 @main def neuralNet_XLTest3 (): Unit =
 
-    import Example_AutoMPG.{x, y, x_fname}                       // don't include intercept, uses biases instead
+    import Example_AutoMPG.{x, yy, x_fname}                      // don't include intercept, uses biases instead
 
-    val yy = MatrixD (y).transpose
+//  println (s"x  = $x")
+//  println (s"yy = $yy")Navya 
+    println (s"x_fname = ${stringOf (x_fname)}")
+ 
+    Optimizer.hp("eta") = 5.0
+    val f3 = Array (f_sigmoid, f_id)                             // this makes it a 3 layer network
+//  val mod = new NeuralNet_XL (x, yy, x_fname)                  // create model without intercept
+    val mod = NeuralNet_XL.rescale (x, yy, x_fname, f = f3)      // create model without intercept - rescales
+
+    banner ("AutoMPG - NeuralNet_XL: trainNtest")
+    mod.trainNtest ()()                                          // train and test the model
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+
+    banner ("AutoMPG - NeuralNet_XL: trainNtest2")
+    mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
+    println (mod.summary2 ())                                    // parameter/coefficient statistics
+    mod.opti.plotLoss ("NeuralNet_XL")                           // loss function vs epochs
+
+    banner ("AutoMPG - NeuralNet_XL: validate")
+    println (FitM.showFitMap (mod.validate ()(), QoF.values.map (_.toString)))
+
+/*
+    banner ("AutoMPG - NeuralNet_XL: crossValidate")
+    val stats = mod.crossValidate ()
+    FitM.showQofStatTable (stats)
+*/
+
+end neuralNet_XLTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `neuralNet_XLTest4` main function tests the `NeuralNet_XL` class using the
+ *  AutoMPG dataset.  It tests forward selection.
+ *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest4
+ */
+@main def neuralNet_XLTest4 (): Unit =
+
+    import Example_AutoMPG.{x, yy, x_fname}                      // don't include intercept, uses biases instead
 
 //  println (s"x  = $x")
 //  println (s"yy = $yy")
@@ -316,49 +419,14 @@ end neuralNet_XLTest2
     val mod = NeuralNet_XL.rescale (x, yy, x_fname)              // create model with intercept (else pass x) - rescales
 //  mod.trainNtest ()()                                          // train and test the model
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
-//  println (mod.summary ())                                     // parameter/coefficient statistics
-
-    banner ("AutoMPG Validation Test")
-    println (FitM.showFitMap (mod.validate ()(), QoF.values.map (_.toString)))
-
-/*
-    banner ("AutoMPG Cross-Validation Test")
-    val stats = mod.crossValidate ()
-    Fit.showQofStatTable (stats)
-*/
-
-end neuralNet_XLTest3
-
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `neuralNet_XLTest4` main function tests the `NeuralNet_XL` class using the AutoMPG
- *  dataset.  Assumes no missing values.  It tests forward selection.
- *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest4
- */
-@main def neuralNet_XLTest4 (): Unit =
-
-    import Example_AutoMPG.{x, y, x_fname}                       // don't include intercept, uses biases instead
-
-//  println (s"x  = $x")
-//  println (s"y  = $y")
-    println (s"x_fname = ${stringOf (x_fname)}")
-
-    val yy = MatrixD (y).transpose                               // vector to matrix with 1 column
-
-    banner ("AutoMPG NeuralNet_XL")
-//  val mod = new NeuralNet_XL (x, yy, x_fname)                  // create model with intercept (else pass x)
-    val mod = NeuralNet_XL.rescale (x, yy, x_fname)              // create model with intercept (else pass x) - rescales
-//  mod.trainNtest ()()                                          // train and test the model
-    mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
-//  println (mod.summary ())                                     // parameter/coefficient statistics
+    println (mod.summary2 ())                                    // parameter/coefficient statistics
 
     banner ("Feature Selection Technique: Forward")
-    val (cols, rSq) = mod.forwardSelAll ()                       // R^2, R^2 bar, R^2 cv
-//  val (cols, rSq) = mod.backwardElimAll ()                     // R^2, R^2 bar, R^2 cv
+    val (cols, rSq) = mod.forwardSelAll ()                       // R^2, R^2 bar, smape, R^2 cv
+//  val (cols, rSq) = mod.backwardElimAll ()                     // R^2, R^2 bar, smape, R^2 cv
     val k = cols.size
     println (s"k = $k, n = ${x.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "R^2 cv"),
+    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "smape", "R^2 cv"),
                s"R^2 vs n for ${mod.modelName}", lines = true)
     println (s"rSq = $rSq")
 
@@ -367,24 +435,22 @@ end neuralNet_XLTest4
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_XLTest5` main function tests the `NeuralNet_XL` class using the AutoMPG
- *  dataset.  Assumes no missing values.  It tests forward, backward and stepwise selection.
+ *  dataset.  It tests forward, backward and stepwise selection.
  *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest5
  */
 @main def neuralNet_XLTest5 (): Unit =
 
-    import Example_AutoMPG.{x, y, x_fname}                       // don't include intercept, uses biases instead
+    import Example_AutoMPG.{x, yy, x_fname}                      // don't include intercept, uses biases instead
 
-//  println (s"x = $x")
-//  println (s"y  = $y")
-
-    val yy = MatrixD (y).transpose                               // vector to matrix with 1 column
+//  println (s"x  = $x")
+//  println (s"yy = $yy")
 
     banner ("AutoMPG NeuralNet_XL")
 //  val mod = new NeuralNet_XL (x, yy, x_fname)                  // create model with intercept (else pass x)
     val mod = NeuralNet_XL.rescale (x, yy, x_fname)              // create model with intercept (else pass x) - rescales
 //  mod.trainNtest ()()                                          // train and test the model
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
-//  println (mod.summary ())                                     // parameter/coefficient statistics
+    println (mod.summary2 ())                                    // parameter/coefficient statistics
 
     banner ("Cross-Validation")
     FitM.showQofStatTable (mod.crossValidate ())
@@ -393,10 +459,10 @@ end neuralNet_XLTest4
 
     for tech <- SelectionTech.values do
         banner (s"Feature Selection Technique: $tech")
-        val (cols, rSq) = mod.selectFeatures (tech)              // R^2, R^2 bar, R^2 cv
+        val (cols, rSq) = mod.selectFeatures (tech)              // R^2, R^2 bar, smape, R^2 cv
         val k = cols.size
         println (s"k = $k, n = ${x.dim2}")
-        new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "R^2 cv"),
+        new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "smape", "R^2 cv"),
                    s"R^2 vs n for ${mod.modelName} with $tech", lines = true)
         println (s"$tech: rSq = $rSq")
     end for
@@ -406,20 +472,19 @@ end neuralNet_XLTest5
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_XLTest6` main function tests the `NeuralNet_XL` class using the
- *  AutoMPG dataset.  It tries all activation functions.
+ *  AutoMPG dataset.  It tries all activation functions combinations of form (f, g, id).
+ *  Ideally, eta should be initialized separately for each activation function.
  *  > runMain scalation.modeling.neuralnet.neuralNet_XLTest6
  */
 @main def neuralNet_XLTest6 (): Unit =
 
-    import Example_AutoMPG.{x, y, x_fname}                       // don't include intercept, uses biases instead
-
-    val yy = MatrixD (y).transpose
+    import Example_AutoMPG.{x, yy, x_fname}                      // don't include intercept, uses biases instead
 
 //  println (s"x  = $x")
 //  println (s"yy = $yy")
     println (s"x_fname = ${stringOf (x_fname)}")
 
-    Optimizer.hp ("eta") = 0.005                                 // some activation functions need smaller eta
+    Optimizer.hp ("eta") = 0.025                                 // some activation functions need smaller eta
     for f <- f_aff; f2 <- f_aff do                               // try all activation functions for first two layers
         banner (s"AutoMPG NeuralNet_XL with ${f.name}")
         val mod = NeuralNet_XL.rescale (x, yy, x_fname,

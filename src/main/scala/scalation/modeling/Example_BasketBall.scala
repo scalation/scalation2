@@ -14,6 +14,8 @@
 package scalation
 package modeling
 
+import scala.runtime.ScalaRunTime.stringOf
+
 import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -95,4 +97,49 @@ object Example_BasketBall:
     val ox_fname = Array ("intercept") ++ x_fname
  
 end Example_BasketBall
+
+import Example_BasketBall._
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `example_BasketBallTest` main function tests the `Regression` class using the
+ *  Basketball dataset.
+ *  > runMain scalation.modeling.example_BasketBallTest
+ */
+@main def example_BasketBallTest (): Unit =
+
+//  println (s"ox = $ox")
+//  println (s"y  = $y")
+    println (s"ox_fname = ${stringOf (ox_fname)}")
+
+    banner ("Basketball: Regression - no intercept")
+    var mod = new Regression (x, y, x_fname)                  // create model with no intercept
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+    banner ("Basketball: Regression - all columns")
+    mod = new Regression (ox, y, ox_fname)                    // create model with intercept (else pass x)
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+    banner ("Basketball: Quadratic Regression")
+    mod = SymbolicRegression.quadratic (x, y, x_fname)        // create quadratic model
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+    banner ("Basketball: Quadratic Regression with Cross Terms")
+    mod = SymbolicRegression.quadratic (x, y, x_fname, cross = true)  // create quadratic model with cross terms
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+    banner ("Basketball: Cubic Regression")
+    mod = SymbolicRegression.cubic (x, y, x_fname)            // create cubic model
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+    banner ("Basketball: Cubic Regression with Cross Terms")
+    mod = SymbolicRegression.cubic (x, y, x_fname, cross = true)   // create cubic model with cross terms
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+end example_BasketBallTest
 

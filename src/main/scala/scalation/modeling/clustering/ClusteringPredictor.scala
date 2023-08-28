@@ -13,12 +13,9 @@ package modeling
 package clustering
 
 import scala.runtime.ScalaRunTime.stringOf
-import scala.collection.mutable.Set
 
 import scalation.mathstat._
 import scalation.random.Bernoulli
-
-import Fit._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ClusteringPredictor` class is used to predict a response value for new vector 'z'.
@@ -37,7 +34,6 @@ class ClusteringPredictor (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
                            hparam: HyperParameter = ClusteringPredictor.hp)
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
-
 
     private val debug      = debugf ("ClusteringPredictor", false)   // debug flag
     private val MAX_DOUBLE = Double.PositiveInfinity                 // infinity
@@ -111,7 +107,7 @@ class ClusteringPredictor (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
         for i <- 0 until kappa do topK(i) = (-1, MAX_DOUBLE)     // initialize top-kappa
     end reset
 
-    override def buildModel (x_cols: MatrixD): Predictor =
+    override def buildModel (x_cols: MatrixD): Predictor & Fit =
         throw new UnsupportedOperationException ("ClusteringPredictor does not have feature selection")
     end buildModel
 

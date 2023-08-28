@@ -4,18 +4,18 @@
  *  @version 2.0
  *  @date    Sat Mar  9 19:19:53 EST 2013
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @title   Random Variate Matrix (RVM) Generators
  */
 
 package scalation
 package random
 
-import scala.math.{abs, exp, Pi, round, sqrt}
-
 import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `VariateMat` abstract class serves as a base class for all the random
- *  variate matrix (RVM) generators. They use one of the Random Number Generators
+/** The `VariateMat` abstract class serves as a base class for all the Random
+ *  Variate Matrix (RVM) generators. They use one of the Random Number Generators
  *  (RNG's) from Random.scala to generate numbers following their particular
  *  multivariate distribution.
  *-----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ abstract class VariateMat (stream: Int = 0):
     /** Determine the next random integer matrix for the particular distribution.
      *  It is only valid for discrete random variates.
      */
-//  def igen: MatrixI
+    def igen: MatrixD
 
 end VariateMat
 
@@ -77,6 +77,39 @@ object VariateMat:
     end corTransform
 
 end VariateMat
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `NormalMat` class generates Normal (Gaussian) random variate matrices according
+ *  to the Normal distribution with scalar mean 'mu' and variance 'sig2'.
+ *  This continuous RVM models multiple instances of normally distributed multidimensional
+ *  data and treats the variables as identical and independent.
+ *  @param mu      the mean
+ *  @param sig2    the variance (stdev^2)
+ *  @param stream  the random number stream
+ */
+case class NormalMat (m: Int, n: Int, mu: Double, sig2: Double, stream: Int = 0)
+     extends VariateMat (stream):
+
+    private val normal = Normal (mu, sig2, stream)           // generator for standard normals
+
+    def mean: MatrixD = MatrixD.fill (m, n, mu)              // m rows and n columns
+
+    def pf (z: MatrixD): Double =
+        var d = 1.0                                          // density f(z)
+        for i <- 0 until m; j <- 0 until n do d *= normal.pf (z(i, j))
+        d
+    end pf
+
+    def gen: MatrixD =
+        val y = new MatrixD (m, n)                            // m rows and n columns
+        for i <- 0 until m; j <- 0 until n do y(i, j) = normal.gen
+        y
+    end gen
+
+    def igen: MatrixD = gen.toInt
+
+end NormalMat
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -101,7 +134,7 @@ case class RandomMatD (dim: Int = 5, dim2: Int = 10, max: Double = 20.0, min: Do
 
     def gen: MatrixD = MatrixD (for i <- 0 until dim yield rvec.gen)
 
-//  def igen: MatrixI = gen.toInt
+    def igen: MatrixD = gen.toInt
 
 end RandomMatD
 
@@ -116,6 +149,11 @@ end RandomMatD
      import VariateMat.corTransform
 
      var rvm: VariateMat = null                                // variate matrix
+
+     banner ("Test: NormalMat_ random matrix generation")
+     rvm = NormalMat (4, 5, 0.0, 0.01)                         // random normal matrix generator
+     println ("mean = " + rvm.mean)                            // with mean 0 and variance 0.01
+     for k <- 0 until 10 do println (rvm.gen)
 
      banner ("Test: RandomMatD random matrix generation")
      rvm = RandomMatD (2, 100)                                 // random matrix generator

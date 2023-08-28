@@ -37,7 +37,7 @@ class RandomWalk (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
 
     private val debug = debugf ("RandomWalk", true)                    // debug function
     private val flaw  = flawf ("RandomWalk")                           // flaw function
-                m     = y.dim                                          // number of time points (@see `FitM`)
+//              m     = y.dim                                          // number of time points (@see `FitM`)
 
     modelName = s"RandomWalk"
 
@@ -52,7 +52,7 @@ class RandomWalk (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         debug ("train", s"parameters for $modelName = $parameter")     // []
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of a RandomWalk forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the full set) or out-of-sample (on the testing set) as determined
@@ -68,7 +68,7 @@ class RandomWalk (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of a RandomWalk forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -206,7 +206,7 @@ end randomWalkTest2
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `randomWalkTest3` main function tests the `RandomWalk` class on real data:
- *  Forecasting lake levels.
+ *  Forecasting runMain scalation.modeling.forecasting.aRTest3lake levels.
  *  Test forecasts (1 to h steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.randomWalkTest3

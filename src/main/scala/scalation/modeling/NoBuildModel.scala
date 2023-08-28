@@ -28,7 +28,7 @@ trait NoSubModels:
      *  NOT SUPPORTED for this model, so throw an EXCEPTION.
      *  @param x_cols  the columns that the new model is restricted to
      */
-    def buildModel (x_cols: MatrixD): Predictor =
+    def buildModel (x_cols: MatrixD): Predictor & Fit =
         throw new UnsupportedOperationException
               ("buildModel: this model does not support building sub-models for feature selection")
     end buildModel

@@ -1,5 +1,5 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
  *  @version 2.0
  *  @date    Sat Jun 13 01:27:00 EST 2017
@@ -12,15 +12,14 @@ package scalation
 package modeling
 package forecasting
 
-import scala.collection.mutable.Set
-import scala.math.{max, min}
+import scala.math.max
 
 import scalation.mathstat._
-import scalation.random.{Normal, Random}
+import scalation.random.Normal
 
 //import RollingValidation.trSize
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `MovingAverage` class provides basic time series analysis capabilities.
  *  For a `MovingAverage` model with the time series data stored in vector y, the
  *  next value 'y_t = y(t)' may be predicted based on the mean of prior values
@@ -52,7 +51,7 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
      */
     def train (x_null: MatrixD, y_ : VectorD): Unit = {}
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test PREDICTIONS of an AR forecasting model y_ = f(lags (y_)) + e
      *  and return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -68,7 +67,7 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
         (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test FORECASTS of an AR forecasting model y_ = f(lags (y_)) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
@@ -150,7 +149,7 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
 end MovingAverage
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `MovingAverage` companion object provides factory methods for the `MovingAverage` class.
  */
 object MovingAverage:
@@ -160,7 +159,7 @@ object MovingAverage:
     val hp = new HyperParameter
     hp += ("q", 3, 3)                                                  // number of prior values for mean
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `MovingAverage` object.
      *  @param y       the response vector (time series data)
      *  @param tt      the time points, if needed
@@ -173,7 +172,7 @@ object MovingAverage:
 end MovingAverage
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `movingAverageTest` main function tests the `MovingAverage` class on simulated data.
  *  > runMain scalation.modeling.forecasting.movingAverageTest
  */
@@ -196,7 +195,7 @@ end MovingAverage
 end movingAverageTest
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `movingAverageTest2` main function is used to test the `MovingAverage` class.
  *  > runMain scalation.modeling.forecasting.movingAverageTest2
  */
@@ -224,7 +223,7 @@ end movingAverageTest
 end movingAverageTest2
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `movingAverageTest3` main function is used to test the `MovingAverage` class.
  *  Forecasting lake levels.
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
@@ -254,7 +253,7 @@ end movingAverageTest2
 end movingAverageTest3
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `movingAverageTest4` main function is used to test the `MovingAverage` class.
  *  > runMain scalation.modeling.forecasting.movingAverageTest4
  */

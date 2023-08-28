@@ -13,8 +13,7 @@ package random
 
 import scala.math.{abs, exp, log, Pi, sqrt}
 
-import scalation.mathstat._
-import scalation.mathstat.Combinatorics.rBetaF
+import scalation.mathstat.{Plot, VectorD}
 
 import CDF.{buildEmpiricalCDF, chiSquareCDF, fisherCDF}
 
@@ -41,7 +40,7 @@ object Quantile:
      *  @param p      the p-th quantile, e.g., .95 (95%)
      *  @param x_min  the smallest value in the distribution's domain
      */
-    def check (p: Double, x_min: Double = NEGATIVE_INFINITY): Tuple2 [Boolean, Double] =
+    def check (p: Double, x_min: Double = NEGATIVE_INFINITY): (Boolean, Double) =
         if p < 0.0 || p > 1.0 then
             flaw ("check", "probability parameter p must be in the range [0, 1]")
             return (true, -0.0)
@@ -76,7 +75,7 @@ object Quantile:
      *  @param p     the p-th quantile, e.g., .95 (95%)
      *  @param eCDF  the empirical CDF
      */
-    def empiricalInv (p: Double, eCDF: Tuple2 [VectorD, VectorD]): Double =
+    def empiricalInv (p: Double, eCDF: (VectorD, VectorD)): Double =
         eCDF._1 (eCDF._2.indexWhere (p <= _))
     end empiricalInv
 
@@ -335,7 +334,7 @@ object Quantile:
      *  @param p   the p-th quantile, e.g., .95 (95%)
      *  @param df  the pair of degrees of freedom ('df1' and 'df2')
      */
-    def fisherInv (p: Double, df: Tuple2 [Int, Int]): Double =
+    def fisherInv (p: Double, df: (Int, Int)): Double =
         fisherInv (p, Vector (df._1.toDouble, df._2.toDouble))
     end fisherInv
 

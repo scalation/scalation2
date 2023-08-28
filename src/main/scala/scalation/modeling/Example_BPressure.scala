@@ -71,7 +71,7 @@ object Example_BPressure:
     val y = VectorD (105.0, 115.0, 116.0, 117.0, 112.0, 121.0, 121.0, 110.0, 110.0, 114.0,
                      114.0, 115.0, 114.0, 106.0, 125.0, 114.0, 106.0, 113.0, 110.0, 122.0)
 
-    val x01 = x(?, 0 to 2)                                          // first two columns (0 and 1) of data matrix x
+    val x01 = x(?, 0 to 1)                                          // first two columns (0 and 1) of data matrix x
     val xy  = x :^+ y                                               // combined data matrix including the response column
     val _1  = VectorD.one (x.dim)                                   // column of all ones
     val ox  = _1 +^: x                                              // data matrix with _1 prepended for intercept models
@@ -99,4 +99,28 @@ import Example_BPressure._
     new Plot (null, y, null, "y vs. t")
 
 end example_BPressureTest
+
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `example_BPressureTest2` main function tests the multi-collinearity method in
+ *  the `Regression` class using the following regression equation.
+ *      y  =  b dot x  =  b_1*x_1 + b_2*x_2 + b_3*x_3 + b_4 * x_4
+ *  @see online.stat.psu.edu/online/development/stat501/12multicollinearity/05multico_vif.html
+ *  @see online.stat.psu.edu/online/development/stat501/data/bloodpress.txt
+ *  > runMain scalation.modeling.example_BPressureTest2
+ */
+@main def example_BPressureTest2 (): Unit =
+
+    import Example_BPressure._
+
+    var mod = new Regression (x, y)                                 // regression model x0, x1, x2, x3 with no intercept
+    mod.trainNtest ()()                                             // train and test the model
+    println (mod.summary ())                                        // parameter/coefficient statistics
+
+    mod = new Regression (x01, y)                                   // regression model x0, x1 with no intercept
+    mod.trainNtest ()()                                             // train and test the model
+    println (mod.summary ())                                        // parameter/coefficient statistics
+
+end example_BPressureTest2
 

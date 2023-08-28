@@ -14,8 +14,6 @@ package process
 
 import scala.util.control.Breaks.{break, breakable}
 
-import scala.math.min
-
 import scalation.random.Variate
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

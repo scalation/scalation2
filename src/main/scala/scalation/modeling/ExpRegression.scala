@@ -26,9 +26,9 @@ import scalation.optimization.BFGS
  *  @see www.stat.uni-muenchen.de/~leiten/Lehre/Material/GLM_0708/chapterGLM.pdf 
  *  @param x       the data/input matrix
  *  @param y       the response/output vector
- *  @param fname_  the feature/variable names
+ *  @param fname_  the feature/variable names (defaults to null)
  *  @param hparam  the hyper-parameters (currently none)
- *  @param nonneg  whether to check that responses are nonnegative
+ *  @param nonneg  whether to check that responses are nonnegative (defaults to true)
  */
 class ExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                      hparam: HyperParameter = null, nonneg: Boolean = true)
@@ -151,7 +151,8 @@ end ExpRegression
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ExpRegression` companion object provides factory apply functions and a testing method.
+/** The `ExpRegression` companion object provides factory methods for creating
+ *  exponential regression models.
  */
 object ExpRegression:
 
@@ -159,9 +160,9 @@ object ExpRegression:
     /** Create an `ExpRegression` object from a combined data-response matrix.
      *  The last column is assumed to be the response column.
      *  @param xy      the combined data-response matrix (predictors and response)
-     *  @param fname   the feature/variable names
-     *  @param hparam  the hyper-parameters
-     *  @param nonneg  whether to check that responses are nonnegative
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (currently nome)
+     *  @param nonneg  whether to check that responses are nonnegative (defaults to true)
      *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
@@ -172,13 +173,13 @@ object ExpRegression:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ExpRegression` object from a data matrix and a response vector.
-     *  This factory function provides data rescaling.
+     *  This method provides data rescaling.
      *  @param x       the data/input m-by-n matrix
      *                     (augment with a first column of ones to include intercept in model)
      *  @param y       the response/output m-vector
-     *  @param fname   the feature/variable names (use null for default)
-     *  @param hparam  the hyper-parameters (use null for default)
-     *  @param nonneg  whether to check that responses are nonnegative
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (currently none)
+     *  @param nonneg  whether to check that responses are nonnegative (defaults to true)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = null, nonneg: Boolean = true): ExpRegression =

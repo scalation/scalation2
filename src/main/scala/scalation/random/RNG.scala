@@ -23,7 +23,7 @@ abstract class RNG (stream: Int):
     private val flaw = flawf ("RNG")                          // flaw function
 
     if stream < 0 || stream >= RandomSeeds.N_STREAMS then
-        flaw ("constructor", "the stream must be in the range 0 to " + (RandomSeeds.N_STREAMS - 1))
+        flaw ("init`", "the stream must be in the range 0 to " + (RandomSeeds.N_STREAMS - 1))
     end if
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -84,8 +84,7 @@ end RNGStream
  */
 object RNGTester:
 
-    import scalation.mathstat.{Histogram, VectorD}
-    import scalation.modeling.forecasting.Correlogram
+    import scalation.mathstat.{Correlogram, Histogram, VectorD}
 
     private val flaw = flawf ("RNG")                          // flaw function
 

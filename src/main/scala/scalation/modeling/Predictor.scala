@@ -122,9 +122,9 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
         println (report (qof))                                         // report on Quality of Fit (QoF)
         if DO_PLOT then
             val lim = min (yy.dim, LIMIT)
-            val (qyy, qyp) = (yy(0 until lim), yp(0 until lim))                // slice to LIMIT
-            val (ryy, ryp) = orderByY (qyy, qyp)                               // order by yy
-            new Plot (null, ryy, ryp, s"$modelName: y actual, predicted")
+            val (qyy, qyp) = (yy(0 until lim), yp(0 until lim))        // slice to LIMIT
+            val (ryy, ryp) = orderByY (qyy, qyp)                       // order by yy
+            new Plot (null, ryy, ryp, s"$modelName: y black/actual vs. yp red/predicted")
         end if
         (yp, qof)
     end trainNtest
@@ -139,6 +139,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict the value of vector y = f(x_, b), e.g., x_ * b for `Regression`.
+     *  May override for efficiency.
      *  @param x_  the matrix to use for making predictions, one for each row
      */
     def predict (x_ : MatrixD): VectorD =
@@ -166,7 +167,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
      *  Otherwise, use @see `NoBuildModel
      *  @param x_cols  the columns that the new model is restricted to
      */
-    def buildModel (x_cols: MatrixD): Predictor
+    def buildModel (x_cols: MatrixD): Predictor & Fit
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `BestStep` is used to record the best improvement step found so far.
@@ -174,7 +175,30 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
      *  @param qof  the Quality of Fit (QoF) for this step
      *  @param mod  the model including selected features/variables for this step
      */
-    case class BestStep (col: Int = -1, qof: VectorD = null, mod: Predictor = null)
+    case class BestStep (col: Int = -1, qof: VectorD = null, mod: Predictor & Fit = null)
+
+    private var theBest = BestStep ()                                        // record the best model from feature selection
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Reset the best-step to default
+     */
+    def resetBest (): Unit = theBest = BestStep ()
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the best model found from feature selection.
+     */
+    def getBest: BestStep = theBest
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** When the new best-step is better than theBest, replace theBest.
+     *  Note: for QoF where smaller if better, must switch to '<'.
+     *  @param best   new best-step found during feature selection
+     *  @param idx_q  index of Quality of Fit (QoF) to use for comparing quality
+     */
+    private def updateBest (best: BestStep, idx_q: Int = QoF.rSqBar.ordinal): Unit =
+        if best.qof != null then
+            if theBest.qof == null || best.qof(idx_q) > theBest.qof(idx_q) then theBest = best
+    end updateBest
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the rSq-based QoF results for the l-th iteration.
@@ -259,6 +283,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
      */
     def forwardSelAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
                       (LinkedHashSet [Int], MatrixD) =
+        resetBest ()
         val rSq  = new MatrixD (x.dim2, Fit.qofVectorSize)                   // QoF: R^2, R^2 Bar, sMAPE, R^2 cv
         val cols = LinkedHashSet (0)                                         // start with x_0 in model (e.g., intercept)
         updateQoF (rSq, 0, cross, select0 (idx_q))                           // update Qof results for 0-th variable
@@ -269,6 +294,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
             for l <- 1 until x.dim2 do
                 val best = forwardSel (cols, idx_q)                          // add most predictive variable
                 if best.col == -1 then break ()                              // could not find variable to add
+                updateBest (best)
                 cols += best.col                                             // add variable x_j
                 updateQoF (rSq, l, cross, best)                              // update QoF results for l-th variable
                 val (jj, jj_qof) = (best.col, best.qof(idx_q))
@@ -278,7 +304,6 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
 
         (cols, rSq)
     end forwardSelAll
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the relative importance of selected variables, ordered highest to
@@ -345,6 +370,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
      */
     def backwardElimAll (idx_q: Int = QoF.rSqBar.ordinal, first: Int = 1, cross: Boolean = true):
                         (LinkedHashSet [Int], MatrixD) =
+        resetBest ()
         val rSq  = new MatrixD (x.dim2, Fit.qofVectorSize)                   // R^2, R^2 Bar, sMAPE, R^2 cv
         val cols = LinkedHashSet.range (0, x.dim2)                           // start with all x_j in model
         val rem  = ArrayBuffer [Int] ()                                      // start with no columns removed
@@ -358,6 +384,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
             for l <- 1 until x.dim2 - 1 do                                   // l indicates number of variables eliminated
                 val best = backwardElim (cols, idx_q, first)                 // remove least predictive variable
                 if best.col == -1 then break ()                              // could not find variable to remove
+                updateBest (best)
                 cols -= best.col                                             // remove variable x_j
                 rem  += best.col                                             // keep track of removed columns
                 updateQoF (rSq, l, cross, best)                              // update QoF results
@@ -384,7 +411,8 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
      */
     def stepRegressionAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
                           (LinkedHashSet [Int], MatrixD) =
-        val SWAP   = false                                                   // whether to include swapping
+        resetBest ()
+        val SWAP   = true                                                    // whether to include swapping
         val rSq    = new MatrixD (x.dim2 - 1, Fit.qofVectorSize)             // QoF: R^2, R^2 Bar, sMAPE, R^2 cv
         val cols   = LinkedHashSet (0)                                       // start with x_0 in model
         var last_q = -MAX_VALUE                                              // current best QoF
@@ -400,6 +428,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
 
                 if (bestb.col == -1 || bestf.qof(idx_q) >= bestb.qof(idx_q)) &&   // forward as good as backward
                    (bestf.col != -1 && bestf.qof(idx_q) > last_q) then            // a better model has been found
+                    updateBest (bestf)
                     vars  += bestf.col
                     cols  += bestf.col                                            // ADD variable bestf.col
                     last_q = bestf.qof(idx_q)
@@ -409,6 +438,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
                     banner (s"stepRegressionAll: (l = $l) ADD variable ($jj, ${fname(jj)}) => cols = $cols @ $jj_qof")
 
                 else if bestb.col != -1 && bestb.qof(idx_q) > last_q then         // a better model has been found
+                    updateBest (bestb)
                     vars  += bestb.col
                     cols  -= bestb.col                                            // REMOVE variable bestb.col 
                     last_q = bestb.qof(idx_q)
@@ -421,6 +451,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
                     if ! SWAP then break ()
                     val (out, in) = (bestb.col, bestf.col)
                     val bestfb = swapVars (cols, out, in)
+                    updateBest (bestfb)
                     if out != -1 && in != -1 && bestfb.qof(idx_q) > last_q then    // a better model has been found
                         vars  += bestb.col
                         vars  += bestf.col
@@ -612,7 +643,7 @@ end Predictor
     test (new SimpleRegression (ox(?, Set (0, 4)), y, fname_04))             // 3
     test (new Regression (x, y, x_fname))                                    // 4 - no intercept
     test (new Regression (ox, y, ox_fname))                                  // 5
-    test (RidgeRegression (x, y, x_fname, null))                             // 6 - no intercept
+    test (RidgeRegression.center (x, y, x_fname))                            // 6 - no intercept
     test (new LassoRegression (x, y, x_fname))                               // 7 - no intercept
     test (new LassoRegression (ox, y, ox_fname))                             // 8
     test (new RegressionWLS (ox, y, ox_fname))                               // 9

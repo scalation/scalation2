@@ -31,8 +31,8 @@ import Initializer._
  *  Note, b0 is treated as the bias, so x0 must be 1.0.
  *  @param x       the data/input m-by-n matrix (data consisting of m input vectors)
  *  @param y       the response/output m-vector (data consisting of m output values)
- *  @param fname_  the feature/variable names
- *  @param hparam  the hyper-parameters for the model/network
+ *  @param fname_  the feature/variable names (defaults to null)
+ *  @param hparam  the hyper-parameters for the model/network (defaults to Perceptron.hp)
  *  @param f       the activation function family for layers 1->2 (input to output)
  *  @param itran   the inverse transformation function returns responses to original scale
  */
@@ -46,7 +46,7 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val debug     = debugf ("Perceptron", false)                // debug function
     private val flaw      = flawf ("Perceptron")                        // flaw function
     private val (m, n)    = x.dims                                      // input data matrix dimensions
-    private var eta       = hparam ("eta").toDouble                     // the learning/convergence rate (requires adjustment)
+    private var η         = hparam ("eta").toDouble                     // the learning/convergence rate (requires adjustment)
     private val maxEpochs = hparam ("maxEpochs").toInt                  // the maximum number of training epcochs/iterations
     private val _1        = VectorD.one (m)                             // vector of all ones
 
@@ -64,12 +64,6 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     def setWeights (w0: VectorD): Unit = b = w0
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Reset the learning rate eta.
-     *  @param eta  the learning rate
-     */
-    def reset (eta_ : Double): Unit = eta = eta_
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given training data x_ and y_, fit the parameter/weight vector b.
      *  Minimize the error in the prediction by adjusting the weight vector b.
      *  The error e is simply the difference between the target value y_ and the
@@ -80,22 +74,22 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      *  @param y_  the training/full response/output vector
      */
     def train (x_ : MatrixD = x, y_ : VectorD = y): Unit =
-        println (s"train: eta = $eta")
-        if b == null then b = weightVec (n)                              // initialize parameters/weights
+        println (s"train: eta η = $η")
+        if b == null then b = weightVec (n)                             // initialize parameters/weights
         var sse0 = Double.MaxValue
 
         var (go, epoch) = (true, 1)
-        cfor (go && epoch <= maxEpochs, epoch += 1) {                    // epoch learning phase
-            val yp = f.f_ (x_ * b)                                       // predicted output vector yp = f(Xb)
-            e      = y_ - yp                                             // error vector for y
-            val d  = -f.d (yp) * e                                       // delta vector for y
-            b     -= x_.transpose * d * eta                              // update the parameters/weights
+        cfor (go && epoch <= maxEpochs, epoch += 1) {                   // epoch learning phase
+            val yp = f.f_ (x_ * b)                                      // predicted output vector yp = f(Xb)
+            e      = y_ - yp                                            // error vector for y (protected var from `Predictor)
+            val δ  = -f.d (yp) * e                                      // delta vector for y (protected var from `Predictor)
+            b     -= x_.Ƭ * δ * η                                       // update the parameters/weights (Ƭ for transpose)
 
-            val sse = (y_ - f.f_ (x_ * b)).normSq                        // recompute sum of squared errors
-            collectLoss (sse)                                            // collect loss per epoch
+            val sse = (y_ - f.f_ (x_ * b)).normSq                       // recompute sum of squared errors
+            collectLoss (sse)                                           // collect loss per epoch
             debug ("train", s"parameters for $epoch th epoch: b = $b, sse = $sse")
-            if sse >= sse0 then go = false                               // stop when sse increases
-            else sse0 = sse                                              // save prior sse
+            if sse >= sse0 then go = false                              // stop when sse increases
+            else sse0 = sse                                             // save prior sse
         } // cfor
     end train
 
@@ -108,19 +102,42 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      *  @param y_  the testing/full response/output vector (defaults to full y)
      */
     def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
-        val yp = predict (x_)                                            // make predictions
-        val yy = if itran == null then y_ else itran (y_)                // undo scaling, if used
-        e = yy - yp                                                      // RECORD the residuals/errors (@see `Predictor`)
-        (yp, diagnose (yy, yp))                                          // return predictions and QoF vector
+        val yp = predict (x_)                                           // make predictions
+        val yy = if itran == null then y_ else itran (y_)               // undo scaling, if used
+        e = yy - yp                                                     // RECORD the residuals/errors (@see `Predictor`)
+        (yp, diagnose (yy, yp))                                         // return predictions and QoF vector
     end test
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Train and test the predictive model y_ = f(x_) + e and report its QoF
+     *  and plot its predictions.
+     *  FIX - currently must override if y is transformed, @see `Predictor`
+     *  @param x_  the training/full data/input matrix (defaults to full x)
+     *  @param y_  the training/full response/output vector (defaults to full y)
+     *  @param xx  the testing/full data/input matrix (defaults to full x)
+     *  @param yy  the testing/full response/output vector (defaults to full y)
+     */
+    override def trainNtest (x_ : MatrixD = x, y_ : VectorD = getY)
+                            (xx: MatrixD = x, yy: VectorD = y): (VectorD, VectorD) =
+        train (x_, y_)
+        debug ("trainNTest", s"b = $b")
+        val (yp, qof) = test (xx, yy)
+        println (report (qof))
+        if DO_PLOT then
+            val yy_ = if itran == null then yy else itran (yy)          // undo scaling, if used
+            val (ryy, ryp) = orderByY (yy_, yp)                         // order by yy
+            new Plot (null, ryy, ryp, s"$modelName: y actual, predicted")
+        end if
+        (yp, qof)
+    end trainNtest
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given a new input vector z, predict the output/response value f(z).
      *  @param z  the new input vector
      */
     override def predict (z: VectorD): Double =
-       val yp = f.f (b dot z)                                            // scaled prediction
-       if itran == null then yp else itran (VectorD (yp))(0)             // back to original scale
+       val yp = f.f (b dot z)                                           // scaled prediction
+       if itran == null then yp else itran (VectorD (yp))(0)            // back to original scale
     end predict
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -128,8 +145,8 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      *  @param z  the new input matrix
      */
     override def predict (z: MatrixD = x): VectorD =
-       val yp = f.f_ (z * b)                                             // scaled predictions
-       if itran == null then yp else itran (yp)                          // back to original scale
+       val yp = f.f_ (z * b)                                            // scaled predictions
+       if itran == null then yp else itran (yp)                         // back to original scale
     end predict
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -144,57 +161,61 @@ end Perceptron
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Perceptron` companion object provides factory functions for buidling perceptrons.
+/** The `Perceptron` companion object provides factory methods for creating perceptrons.
  */
 object Perceptron extends Scaling:
 
     /** hyper-parameters for tuning the optimization algorithms - user tuning
      */
     val hp = new HyperParameter
-    hp += ("eta", 0.1, 0.1)                                              // learning/convergence rate
-    hp += ("maxEpochs", 400, 400)                                        // maximum number of epochs/iterations
+    hp += ("eta", 0.1, 0.1)                                             // learning/convergence rate
+    hp += ("maxEpochs", 400, 400)                                       // maximum number of epochs/iterations
+
+    private val debug = debugf ("Perceptron", false)                    // debug function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `Perceptron` with automatic rescaling from a combined data matrix.
-     *  @param xy       the combined data/input and response/output matrix
-     *  @param fname    the feature/variable names
-     *  @param hparam   the hyper-parameters
-     *  @param f        the activation function family for layers 1->2 (input to output)
+     *  @param xy      the combined data/input and response/output matrix
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
+     *  @param f       the activation function family for layers 1->2 (input to output)
+     *  @param col     the designated response column (defaults to the last column)
      */
     def apply (xy: MatrixD, fname: Array [String] = null,
                hparam: HyperParameter = hp, f: AFF = f_sigmoid)
-               (col: Int = xy.dim2 - 1): Perceptron =
-        var itran: FunctionV2V = null                                    // inverse transform -> original scale
-        val (x, y) = (xy.not(?, col), xy(?, col))                        // column col is the response
+              (col: Int = xy.dim2 - 1): Perceptron =
+        var itran: FunctionV2V = null                                   // inverse transform -> original scale
+        val (x, y) = (xy.not(?, col), xy(?, col))                       // column col is the response
 
         val x_s = if scale then rescaleX (x, f)
                   else x
         val y_s = if f.bounds != null then { val y_i = rescaleY (y, f); itran = y_i._2; y_i._1 }
                   else y
 
-        println (s" scaled: x = $x_s \n scaled y = $y_s")
+        debug ("apply", s" scaled: x = $x_s \n scaled y = $y_s")
         new Perceptron (x_s, y_s, fname, hparam, f, itran)
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `Perceptron` with automatic rescaling from a data matrix and response vector.
-     *  @param x        the data/input matrix
-     *  @param y        the response/output vector
-     *  @param fname    the feature/variable names
-     *  @param hparam   the hyper-parameters
-     *  @param f        the activation function family for layers 1->2 (input to output)
+     *  @param x       the data/input matrix
+     *  @param y       the response/output vector
+     *  @param fname   the feature/variable names (defaults to null)
+     *  @param hparam  the hyper-parameters (defaults to hp)
+     *  @param f       the activation function family for layers 1->2 (input to output)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                  hparam: HyperParameter = hp, f: AFF = f_sigmoid): Perceptron =
-        var itran: FunctionV2V = null                                    // inverse transform -> original scale
+        var itran: FunctionV2V = null                                   // inverse transform -> original scale
 
         val x_s = if scale then rescaleX (x, f)
                   else x
         val y_s = if f.bounds != null then { val y_i = rescaleY (y, f); itran = y_i._2; y_i._1 }
                   else y
 
-        println (s" scaled: x = $x_s \n scaled y = $y_s")
+        debug ("rescale", s"scaled: x = $x_s \n scaled y = $y_s")
         new Perceptron (x_s, y_s, fname, hparam, f, itran)
+    end rescale
 
 end Perceptron
 
@@ -240,14 +261,15 @@ import Perceptron.hp
                               1.0,  1.0,  0.5,  0.8,
                               1.0,  1.0,  1.0,  0.5)
 
-//  val b = VectorD (0.1, 0.2, 0.1)                                 // initial weights/parameters
-    val b = VectorD (0.1, 0.1, 0.1)                                 // initial weights/parameters
+    val b = VectorD (0.1, 0.2, 0.1)                                 // initial weights/parameters
+//  val b = VectorD (0.1, 0.1, 0.1)                                 // initial weights/parameters
 
     val _1 = VectorD.one (xy.dim)                                   // vector of all ones
 
     println (s"xy = $xy")
     val (x, y) = (xy.not(?, 3), xy(?, 3))                           // input matrix, output/response vector
     val sst = (y - y.mean).normSq                                   // sum of squares total
+    println (s"sst = $sst")
 
     var eta   = 0.5 
     hp("eta") = eta                                                 // try several values for eta
@@ -259,7 +281,7 @@ import Perceptron.hp
 
     nn.setWeights (b)                                               // set the parameters/weights
  
-    for epoch <- 1 to 10 do
+    for epoch <- 1 to 2 do
         banner (s"improvement step $epoch")
         val u   = x * b                                             // pre-activation value
         val yp  = nn.predict ()                                     // predicted response from nn
@@ -267,8 +289,8 @@ import Perceptron.hp
         val yp2 = reLU_ (u)                                         // predicted response from calculation for reLU
         assert (yp == yp2)
         val e   = y - yp                                            // error
-//      val fp  = yp * (_1 - yp)                                    // derivative (f') for sigmoid
-        val fp  = u.map (z => is_ (z >= 0.0))                       // derivative (f') for reLU
+        val fp  = yp * (_1 - yp)                                    // derivative (f') for sigmoid
+//      val fp  = u.map (z => is_ (z >= 0.0))                       // derivative (f') for reLU
         val d   = - e * fp                                          // delta
         val g   = x.transpose * d                                   // gradient
         val bup = g * eta                                           // parameter update
@@ -331,10 +353,10 @@ end perceptronTest
     println (s"x = $x")
 
     banner ("Perceptron with scaled y values")
-    val mod = Perceptron.rescale (x, y, fname)                      // factory function automatically rescales
+    hp("eta") = 0.5                                                 // try several values for the learning rate
+    val mod = Perceptron.rescale (x, y, fname)                      // factory method automatically rescales
 //  val mod = new Perceptron (x, y, fname)                          // constructor does not automatically rescale
 
-    mod.reset (eta_ = 0.5)                                          // try several values for the learning rate
     mod.trainNtest ()()                                             // train and test the model
 //  println (mod.summary ())                                        // parameter/coefficient statistics - FIX implement?
 
@@ -355,7 +377,7 @@ import Example_AutoMPG._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `perceptronTest3` main function tests the `Perceptron` class using the AutoMPG
- *  dataset.  Assumes no missing values.  It test cross validation.
+ *  dataset.  It test cross validation.
  *  > runMain scalation.modeling.perceptronTest3
  */
 @main def perceptronTest3 (): Unit =
@@ -365,8 +387,8 @@ import Example_AutoMPG._
     println (s"ox_fname = ${stringOf (ox_fname)}")
 
     banner ("AutoMPG Perceptron")
+    hp("eta") = 0.015                                               // try several values for the learning rate
     val mod = Perceptron.rescale (ox, y, ox_fname)                  // create model with intercept (else pass x)
-    mod.reset (eta_ = 0.01)                                         // try several values for the learning rate
     mod.trainNtest ()()                                             // train and test the model
     mod.plotLoss ("Perceptron")                                     // loss function vs epochs
 //  println (mod.summary ())                                        // parameter/coefficient statistics
@@ -393,8 +415,8 @@ end perceptronTest3
     println (s"ox_fname = ${stringOf (ox_fname)}")
 
     banner ("AutoMPG Perceptron")
+    hp("eta") = 0.01                                                // try several values for the learning rate
     val mod = Perceptron.rescale (ox, y, ox_fname)                  // create model with intercept (else pass x)
-    mod.reset (eta_ = 0.01)                                         // try several values for the learning rate
     mod.trainNtest ()()                                             // train and test the model
 //  println (mod.summary ())                                        // parameter/coefficient statistics
 
@@ -421,8 +443,8 @@ end perceptronTest4
 //  println (s"y  = $y")
 
     banner ("AutoMPG Perceptron")
+    hp("eta") = 0.01                                                // try several values for the learning rate
     val mod = Perceptron.rescale (ox, y, ox_fname)                  // create model with intercept (else pass x)
-    mod.reset (eta_ = 0.01)                                         // try several values for the learning rate
     mod.trainNtest ()()                                             // train and test the model
 //  println (mod.summary ())                                        // parameter/coefficient statistics
 

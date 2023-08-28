@@ -49,17 +49,17 @@ class Transport (name: String, val from: Component, val to: Component,
     val curve    = QCurve ()                              // shadow QCurve for computing locations as tokens move along curve
     val (p1, p2) = calcEndPoints                          // first and second endpoints
     val pc       = calcControlPoint2 (p1, p2, bend)       // control point (determines curvature)
-    debug ("constructor", s"p1 = $p1, pc = $pc, p2 = $p2")
+    debug ("init", s"p1 = $p1, pc = $pc, p2 = $p2")
 
     private var onTransport = 0                           // the number of entities/sim-actors on this Transport
 
-    debug ("constructor", s"located at ${stringOf (at)}")
+    debug ("init", s"located at ${stringOf (at)}")
 
     /** Random variate for selecting next direction, defaults to left (.25), straight (.50), right (.25)
      */
     var selector: Variate = Discrete (VectorD (0.25, 0.5, 0.25))
 
-    debug ("constructor", s"p1, pc, p2 = $p1, $pc, $p2")
+    debug ("init", s"p1, pc, p2 = $p1, $pc, $p2")
 
     if abs (bend) < EPSILON then
         curve.setLine (p1, p2)

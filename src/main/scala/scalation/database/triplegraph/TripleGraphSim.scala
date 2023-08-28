@@ -12,7 +12,7 @@ package scalation
 package database
 package triplegraph
 
-import scala.collection.mutable.{ArrayBuffer => Bag, Map, Set => SET}
+import scala.collection.mutable.{ArrayBuffer => Bag, Set => SET}
 import scala.util.control.Breaks.{break, breakable}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

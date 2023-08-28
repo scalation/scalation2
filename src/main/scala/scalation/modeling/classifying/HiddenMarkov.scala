@@ -13,6 +13,8 @@
  *  @see www.parralab.org/teaching/biomed-dsp/class10.pdf
  */
 
+//  U N D E R   D E V E L O P M E N T
+
 package scalation
 package modeling
 package classifying
@@ -47,7 +49,7 @@ class HiddenMarkov (y: VectorI, m: Int, n: Int, cname_ : Array [String] = null,
                     private var b:  MatrixD = null,
                     hparam: HyperParameter = null)
       extends Classifier (null, y, null, n, cname_, hparam)           // hidden state vector x = null here
-         with FitC (y, n):
+         with FitC (n):
                                                                       // feature names fn = null
     private val debug = debugf ("HiddenMarkov", true)                 // debug function
     private val MIT   = 1000                                          // Maximum ITerations
@@ -325,6 +327,8 @@ class HiddenMarkov (y: VectorI, m: Int, n: Int, cname_ : Array [String] = null,
         val t = z.dim - 1                                             // time of last observation
         alp(t).argmax ()                                              // state with max probability
     end predictI
+
+    inline def predictI (z: VectorD): Int = predictI (z.toInt)
 
 end HiddenMarkov
 

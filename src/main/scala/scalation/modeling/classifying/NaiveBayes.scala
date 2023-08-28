@@ -14,8 +14,6 @@ package scalation
 package modeling
 package classifying
 
-import scala.runtime.ScalaRunTime.stringOf
-
 import scalation.mathstat._
 
 import Classifier.{shift2zero, vc_fromData}
@@ -39,13 +37,13 @@ import Probability.plog
  *  @param k       the number of classes
  *  @param cname_  the name for each class
  *  @param vc      the value count (number of distinct values) for each feature/variable xj
- *  @param hparam  the hyper-parameters the Naive Bayes classifier
+ *  @param hparam  the hyper-parameters
  */
 class NaiveBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
                   cname_ : Array [String] = Array ("No", "Yes"), private var vc: VectorI = null,
                   hparam: HyperParameter = NaiveBayes.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k):
+         with FitC (k):
 
     private val debug = debugf ("NaiveBayes", true)                      // debug function
 
@@ -108,7 +106,7 @@ class NaiveBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                          // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                    // diagnose from actual and predicted
-        debug ("test", s" yp = $yp \n qof = $qof")
+//      debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 
@@ -124,6 +122,8 @@ class NaiveBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int
         for j <- z.indices do p_yz *= p_Xy(j, z(j))                      // multiply P(X_j = z_j | y = c)
         p_yz.argmax ()                                                   // return class with highest probability
     end predictI
+
+    inline def predictI (z: VectorD): Int = predictI (z.toInt)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict the integer value of y = f(z) by computing the product of the class

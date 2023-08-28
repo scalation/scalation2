@@ -1,5 +1,5 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  Hao Peng, John Miller
  *  @version 2.0
  *  @date    Sat Jun 13 01:27:00 EST 2017
@@ -17,13 +17,13 @@ package scalation
 package modeling
 package forecasting
 
-import scala.math.{max, sqrt}
+import scala.math.sqrt
 
 import scalation.mathstat._
 import scalation.optimization._
-import scalation.random.{Normal, Uniform}
+import scalation.random.Normal
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Companion object for class `ARIMA`.  Includes features related to differencing
  *  and automated order selection.
  *  @see www.jstatsoft.org/article/view/v027i03/v27i03.pdf
@@ -142,7 +142,7 @@ end ARIMA
 
 import ARIMA._
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARIMA` class provides basic time series analysis capabilities for Auto-
  *  Regressive 'AR' Integrated 'I' Moving-Average 'MA' models.  In an
  *  ARIMA(p, d, q) model, p and q refer to the order of the Auto-Regressive
@@ -240,7 +240,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
         showParameterEstimates ()
     end train
 
-   //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The negative log-likelihood function to be minimized.
      *  @see math.unice.fr/~frapetti/CorsoP/Chapitre_4_IMEA_1.pdf, page 36
      *  @see spia.uga.edu/faculty_pages/monogan/teaching/ts/Barima.pdf
@@ -277,7 +277,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
         -ll (e.normSq / m, σ2, m)                                // return negative log likelihood
     end updateFittedValues
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the error (difference between actual and predicted) and useful
      *  diagnostics for the dataset.
      *  @param y    vector of observed values
@@ -290,7 +290,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
         (yp, diagnose (y, yp))
     end test
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the vector of predicted/fitted values on the training/full dataset.
      *  Based on 'zp' calculated in the 'updateFittedValues' method.
      *  @param y_  the given time-series
@@ -299,7 +299,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
         if differenced then transformBack (zp, y, d) else zp + μ
     end predictAll
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce h-steps-ahead forecast for ARIMA models.
      *  @see ams.sunysb.edu/~zhu/ams586/Forecasting.pdf
      *  @param t  the time point from which to make forecasts (in the original scale)
@@ -397,7 +397,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
     end forecastAll2
 ***/
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Obtain residuals/errors in the original scale.
      */
     def residuals: VectorD = if differenced then y - predictAll (y) else e
@@ -405,7 +405,7 @@ class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
 end ARIMA
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aRIMATest` main function tests the `ARIMA` class on real data:
  *  Forecasting lake levels.
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
@@ -419,8 +419,8 @@ end ARIMA
 //  val d = 1                                                    // apply d-th order differencing - first differences
 
     for h <- 1 to 1 do                                           // forecasting horizon
-        for p <- 1 to 2 do                                       // auto-regressive hyper-parameter settings
-            for q <- 0 to 1 if p+q > 0 do                        // moving-average hyper-parameter settings
+        for p <- 1 to 7 do                                       // auto-regressive hyper-parameter settings
+            for q <- 0 to 2 do                                   // moving-average hyper-parameter settings
                 banner (s"Test: ARIMA ($p, $d, $q) with h = $h")
                 hp("p") = p; hp("d") = d; hp("q") = q            // set p, d and q for the ARIMA model
                 val mod = new ARIMA (y)                          // create an ARIMA model
@@ -451,7 +451,8 @@ end ARIMA
 
 end aRIMATest
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aRIMATest2` main function tests the `ARIMA` class.
  *  Test simulated data.
  *  > runMain scalation.modeling.forecasting.aRIMATest2
@@ -478,16 +479,15 @@ end aRIMATest
 end aRIMATest2
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aRIMATest3` main function tests the `ARIMA` class.
  *  Traffic dataset.
  *  > runMain scalation.modeling.forecasting.aRIMATest3
  */
 @main def aRIMATest3 (): Unit =
 
-    val path = BASE_DIR + "travelTime.csv"
-
-    val data = MatrixD.load (path)
+    val nfile = "travelTime.csv"
+    val data  = MatrixD.load (nfile)
 
     val t = data(?, 0)
     val y = data(?, 1)
@@ -508,7 +508,7 @@ end aRIMATest2
 end aRIMATest3
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aRIMATest4` main function tests the `ARIMA` class.
  *  Simulated data with a quadratic pattern.
  *  > runMain scalation.modeling.forecasting.aRIMATest4

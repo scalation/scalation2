@@ -12,7 +12,7 @@ package scalation
 package database
 package graph_pm
 
-import scala.collection.mutable.{Map, PriorityQueue, TreeMap}
+import scala.collection.mutable.{Map, PriorityQueue}
 import scala.collection.mutable.{Set => SET}
 
 import scalation.mathstat._
