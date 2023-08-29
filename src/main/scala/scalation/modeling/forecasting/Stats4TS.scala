@@ -13,7 +13,6 @@ package modeling
 package forecasting
 
 import scalation.mathstat.{Plot, VectorD}
-import scalation.random._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Stats` case class is used to hold basic statistical information:
