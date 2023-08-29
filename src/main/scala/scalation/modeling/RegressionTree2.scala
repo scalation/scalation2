@@ -11,7 +11,7 @@
 package scalation
 package modeling
 
-import scala.collection.mutable.{ArrayBuffer, Queue, Set}
+import scala.collection.mutable.{Queue, Set}
 import scala.math.abs
 import scala.runtime.ScalaRunTime.stringOf
 

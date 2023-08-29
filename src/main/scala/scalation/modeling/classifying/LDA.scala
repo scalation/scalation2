@@ -34,7 +34,7 @@ class LDA (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: Int = 2,
            cname_ : Array [String] = Array ("No", "Yes"),
            hparam: HyperParameter = Classifier.hp)
       extends Classifier (x, y, fname_, k, cname_, hparam)
-         with FitC (y, k):
+         with FitC (k):
 
     private val debug = debugf ("LDA", true)                             // debug function
     private val flaw  = flawf ("LDA")                                    // flaw function
