@@ -11,6 +11,8 @@
 package scalation
 package mathstat
 
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
@@ -981,6 +983,21 @@ class VectorD (val dim: Int,
      */
     def standardize: VectorD = (this - mean) / stdev
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Copies the contents of the `VectorD` to the `destination`
+     *  [[MemorySegment]]. Assumes `destination` was allocated with the memory
+     *  layout of a sequence layout of JAVA_DOUBLE with size bigger or equal to
+     *  `dim`.
+     *
+     *  @param destination  [[MemorySegment]] where the `VectorD` contents are
+     *                      copied to. Should have been allocated with a memory
+     *                      layout of a sequence layout of JAVA_DOUBLE with size
+     *                      bigger or equal to `dim`.
+     */
+    def copyToMemorySegment(destination: MemorySegment): Unit =
+        for i <- 0 until dim do
+            destination.setAtIndex(JAVA_DOUBLE, i, v(i))
+
 end VectorD
 
 
@@ -1021,6 +1038,20 @@ object VectorD:
         end for
         y
     end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Creates a `VectorD` from the `source` [[MemorySegment]] by copying the
+     *  contents of the latter. Assumes `source` was allocated with the memory
+     *  layout of a sequence layout of JAVA_DOUBLE.
+     *
+     *  @param source   [[MemorySegment]] whose content is copied to initialize
+     *                  a new `VectorD`. Should have been allocated with a
+     *                  memory layout of a sequence layout of JAVA_DOUBLE.
+     */
+    def fromMemorySegment(source: MemorySegment): VectorD =
+        val values: Array[Double] = source.toArray(JAVA_DOUBLE)
+
+        new VectorD(values.length, values)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `VectorD` from a mutable indexed sequence of `String`.

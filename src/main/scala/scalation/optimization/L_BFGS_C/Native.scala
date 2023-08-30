@@ -118,18 +118,12 @@ object Native:
                 MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
                 arena.scope()
             )
-
-            for i <- 0 until n do
-                xMemorySegment.setAtIndex(JAVA_DOUBLE, i, x(i))
-
             val fxMemorySegment: MemorySegment = MemorySegment.allocateNative(JAVA_DOUBLE, arena.scope())
-
             val evaluateMemorySegment: MemorySegment = linker.upcallStub(
                 evaluateMethodHandle,
                 LBFGS_EVALUATE_FUNCTION_DESCRIPTOR,
                 arena.scope()
             )
-
             val progressMemorySegment: MemorySegment = progressMethodHandle match
                 case null => MemorySegment.NULL
                 case _ => linker.upcallStub(
@@ -137,11 +131,12 @@ object Native:
                     LBFGS_PROGRESS_FUNCTION_DESCRIPTOR,
                     arena.scope()
                 )
-
             val paramsMemorySegment: MemorySegment = MemorySegment.allocateNative(
                 LBFGSParameters.memoryLayout,
                 arena.scope()
             )
+            
+            x.copyToMemorySegment(xMemorySegment)
             params.copyToMemorySegment(paramsMemorySegment)
 
             val optimizationReturnCode = lbfgsNativeStubHandle.invokeWithArguments(
@@ -154,11 +149,7 @@ object Native:
                 paramsMemorySegment
             ).asInstanceOf[Int]
 
-            val xFinalValues: VectorD = new VectorD(n)
-
-            for i <- 0 until n do
-                xFinalValues(i) = xMemorySegment.getAtIndex(JAVA_DOUBLE, i)
-
+            val xFinalValues: VectorD = VectorD.fromMemorySegment(xMemorySegment)
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
             LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
