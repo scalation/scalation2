@@ -5,12 +5,12 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  @title   Model: Auto-Regressive, Integrated, Moving Average (ARIMA)
  *
- *  @title   Auto-Regressive, Integrated, Moving Average (ARIMA) Model
+ *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
+ *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation

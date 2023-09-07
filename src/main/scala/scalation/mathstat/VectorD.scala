@@ -44,6 +44,8 @@ class VectorD (val dim: Int,
          with PartiallyOrdered [VectorD]
          with DefaultSerializable:
 
+    
+    private val EPSILON = 1E-9                                    // number close to zero
     private val flaw    = flawf ("VectorD")                       // partial invocation of flaw function
     private var fString = "%g,\t"                                 // output format spec
 
@@ -980,6 +982,7 @@ class VectorD (val dim: Int,
      *  dividing by the standard deviation (e.g., Normal -> Standard Normal).
      */
     def standardize: VectorD = (this - mean) / stdev
+    def standardize2: VectorD = (this - mean) / (stdev + EPSILON)
 
 end VectorD
 
