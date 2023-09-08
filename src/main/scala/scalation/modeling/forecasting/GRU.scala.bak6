@@ -56,7 +56,7 @@ package forecasting
 
 import scala.math.log
 
-import scalation.mathstat.{MatrixD, Plot, VectorD}
+import scalation.mathstat.{MatrixD, VectorD}
 import scalation.random.{NormalMat, NormalVec_c}
 
 import ActivationFun.{sigmoid_, softmax_, tanh_}
@@ -98,11 +98,11 @@ end Gate
  *  @param fname   the feature/variable names
  *  @param n_mem   the size for hidden state (h) (dimensionality of memory)
  */
-class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8):   // 4
+class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4):
 
     private val CLASSIF    = false                                     // whether to apply classification (e.g., guess next word) or forecast a value 
-    private val max_epochs = 31                                        // maximum number of iterations
-    private val eta        = 0.001                                     // the learning rate (use 0.25 for gRUTest)
+    private val max_epochs = 20                                        // maximum number of iterations
+    private val eta        = 0.02                                      // the learning rate (0.25 for gRUTest)
 
     private val n_seq = x.dim                                          // e.g., 20, number of words in a sentence (including start and end symbol)
     private val n_var = x.dim2                                         // e.g., 64, number of variables or distinct words (vocabulary size)
@@ -156,20 +156,13 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
             forward ()            // forward propagate: get intermediate and output results
 
             println (s"train: for epoch $it: loss function L = $L")
-            banner (s"train: for epoch $it: total loss function L.sum = ${L.sum}")
+            println (s"train: for epoch $it: total loss function L.sum = ${L.sum}")
 
             backward ()           // back propagate: calculate gradients (partial derivatives)
 
             update_params ()      // update parameters (weights and biases)
         end for
     end train
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test the RNN predictions.
-     */
-    def test (): Unit =
-        new Plot (null, y(?, 0), yp(?, 0), "Plot of y vs yp for RNN", lines = true)
-    end test
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forward propagate calculates yp, loss and intermediate variables for each step.
@@ -180,7 +173,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
             z(t) = sigmoid_ (Uz * x(t) + Wz * h_pre + b_z)             // update gate
             r(t) = sigmoid_ (Ur * x(t) + Wr * h_pre + b_r)             // reset gate
             c(t) = tanh_ (Uc * x(t) + Wc * (h_pre * r(t)) + b_c)       // candidate state
-            h(t) = (_1 - z(t)) * h_pre + z(t) * c(t)                   // hidden state
+            h(t) = z(t) * h_pre + (_1 - z(t)) * c(t)                   // hidden state
             if CLASSIF then
                 yp(t) = softmax_ (V * h(t) + b_V)                      // activation: softmax for classification
                 L(t)  = (-y(t) * log_ (yp(t))).sum                     // cross-entropy loss function
@@ -223,7 +216,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
             r  += (dIn, x(t), h(t-1))                                  // update partials for r gate
             dh += Wr.Ƭ * dIn + dh_bk * z(t)
 
-            dIn = dh_bk * (c(t) - h(t-1)) * sigmoidD (z(t))            // input to sigmoid update gate z
+            dIn = dh_bk * (h(t-1) - c(t)) * sigmoidD (z(t))            // input to sigmoid update gate z
             z  += (dIn, x(t), h(t-1))                                  // update partials for z gate
             dh += Wz.Ƭ * dIn
         end for
@@ -241,7 +234,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
         r  += (dIn, x(0), h_m1)                                        // update partials for r gate @ t = 0
         dh_m1 += Wr.Ƭ * dIn + dh * z(0)
 
-        dIn = dh * (c(0) - h_m1) * sigmoidD (z(0))
+        dIn = dh * (h_m1 - c(0)) * sigmoidD (z(0))
         z  += (dIn, x(0), h_m1)                                        // update partials for z gate @ t = 0
         dh_m1 += Wz.Ƭ * dIn
     end backward
@@ -355,7 +348,7 @@ end genSequenceData
     banner ("Create a Gated Recurrent Unit (GRU)")
     val mod = new GRU (x_t, y_t)
     mod.train ()
-    mod.test ()
+//  mod.test ()
 
 end gRUTest
 
@@ -394,7 +387,7 @@ end gRUTest2
     banner ("Create a Gated Recurrent Unit (GRU)")
     val mod = new GRU (x, yy)                                         // call constructor
     mod.train ()
-    mod.test ()
+//  mod.test ()
 
 end gRUTest3
 

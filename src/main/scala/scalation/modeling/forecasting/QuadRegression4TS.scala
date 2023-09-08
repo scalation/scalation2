@@ -453,7 +453,7 @@ end quadRegression4TSTest5
  */
 @main def quadRegression4TSTest6 (): Unit =
 
-    val MX_LAGS = 7
+    val LAGS = 7
 
     val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
@@ -465,7 +465,7 @@ end quadRegression4TSTest5
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
     banner ("Test In-Sample QuadRegression4TS.exo on COVID-19 Weekly Data")
-    val mod = QuadRegression4TS.exo (y, MX_LAGS, ex)(1, MX_LAGS+1)       // create model for time series data with exo
+    val mod = QuadRegression4TS.exo (y, LAGS, ex)(1, LAGS+1)             // create model for time series data with exo
 
     val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
     new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)

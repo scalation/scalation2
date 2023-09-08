@@ -150,7 +150,7 @@ object Regression4TS:
         for j <- 1 until ex.dim2 do
             xx = xx ++^ buildMatrix4TS_exo (ex(?, j), lags, elag1, elag2)
         end for
-        println (s"addExoVars: collects lags of $ex.dim2 exo variables into #xx.dim2 columns")
+        println (s"addExoVars: collects lags of ${ex.dim2} exo variables into #xx.dim2 columns")
         xx
     end makeExoCols
 

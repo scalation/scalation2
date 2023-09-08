@@ -22,7 +22,7 @@ import neuralnet.{NeuralNet_XL, Optimizer}
  *  for Time Series data.  Given a response vector y, a predictor matrix x is built
  *  that consists of lagged y vectors.
  *      y_t = f2 (b dot f(a dot x))
- *  where x = [y_{t-1}, y_{t-2}, ... y_{t-lag}].
+ *  where x = [y_{t-1}, y_{t-2}, ... y_{t-lags}].
  */
 object NeuralNet_XL4TS:
 
@@ -34,19 +34,19 @@ object NeuralNet_XL4TS:
     /** Create a `NeuralNet_XL` object from a response vector.  The input/data matrix
      *  x is formed from the lagged y vectors as columns in matrix x.
      *  @param y       the original un-expanded output/response vector
-     *  @param lag     the maximum lag included (inclusive)
+     *  @param lags    the maximum lag included (inclusive)
      *  @param h       the forecasting horizon (1, 2, ... h)
      *  @param nz      the number of nodes in hidden layer (-1 => use default formula)
      *  @param hparam  the hyper-parameters (use Optimizer.hp for default)
      *  @param f       the array of activation function family for layers k->k+1
      */
-    def apply (y: VectorD, lag: Int, h: Int, nz: Int = -1,
+    def apply (y: VectorD, lags: Int, h: Int, nz: Int = -1,
                hparam: HyperParameter = Optimizer.hp,
                f: Array [AFF] = Array (f_eLU, f_eLU, f_tanh)): NeuralNet_XL =
-        var (x, yy) = buildMatrix4TS (y, lag, h)                          // column for each lag
+        var (x, yy) = buildMatrix4TS (y, lags, h)                         // column for each lag
 
         val mod = NeuralNet_XL.rescale (x, yy, null, null, hparam, f)
-        mod.modelName = s"NeuralNet_XL4TS_$lag"
+        mod.modelName = s"NeuralNet_XL4TS_$lags"
         mod
     end apply
 
@@ -119,6 +119,9 @@ end neuralNet_XL4TSTest2
  */
 @main def neuralNet_XL4TSTest4 (): Unit =
 
+    val LAGS = 10                                                           // number of lags
+    val h    = 4                                                            // forecasting horizon
+
     val (x, y) = Example_Covid.loadData (Array ("new_cases", "hosp_patients", "icu_patients"), "new_deaths")
 
     println (s"x.dims = ${x.dims}, y.dim = ${y.dim}")
@@ -127,14 +130,14 @@ end neuralNet_XL4TSTest2
 //  Optimizer.hp ("eta") = 0.1
     
     banner ("Test NeuralNet_XL4TS on COVID-19 Weekly Data")
-    val mod = NeuralNet_XL4TS (y, 5, 4)  //, f = f_)                                        // create model for time series data
-//  val mod = NeuralNet_XL4TS.exo (y, 10, x(?, 0), x(?, 1), x(?, 2), 4)(1, 11)  // create model for time series data
+    val mod = NeuralNet_XL4TS (y, LAGS, h)  //, f = f_)                               // create model for time series data
+//  val mod = NeuralNet_XL4TS.exo (y, LAGS, x(?, 0), x(?, 1), x(?, 2), h)(1, LAGS+1)  // create model for time series data
 
 //  val (x_, y_, xx, yy) = NeuralNet_XL4TS.split_TnT (mod.getX, mod.getY)
 //  val (yp, qof) = mod.trainNtest (x_, y_)(xx, yy)                             // train on (x_, y_) and test on (xx, yy)
 
     val (yp, qof) = mod.trainNtest ()()                                         // train on full and test on full
-    val yy = y(10 until y.dim)
+    val yy = y(LAGS until y.dim)
     new Plot (null, yy, yp(?, 0), s"${mod.modelName}, yy vs. yp", lines = true)
 
     banner (s"Feature Selection Technique: stepRegression")
