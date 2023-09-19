@@ -14,8 +14,9 @@ package scalation
 package optimization
 
 import scala.math.{abs, max, min, sqrt}
+import scalation.mathstat.*
 
-import scalation.mathstat.VectorD
+import scala.Double.PositiveInfinity
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return true if variables x and y have different signs.
@@ -35,7 +36,7 @@ inline def fsigndiff (x: Double, y: Double): Boolean = x * (y / abs (y)) < 0.0
  */
 class MoreThuenteLS (f: FunctionV2S, g: FunctionV2V,
                      c1: Double = 0.0001, c2: Double = 0.0,
-                     minStep = 0.01, maxStep: Double = 100.0,
+                     minStep: Double = 0.01, maxStep: Double = 100.0,
                      xtol: Double = 0.0001, ftol: Double = 0.0001, gtol: Double = 0.0001)
       extends WolfeConditions (f, g, c1, c2): 
 
@@ -78,7 +79,7 @@ class MoreThuenteLS (f: FunctionV2S, g: FunctionV2V,
         var stage1 = true                                              // in stage 1
 
         if step <= 0.0 then flaw ("lsearch", "step size must be strictly positive")
-        if gxp > 0 then     flaw ("lsearch", "p must be descent direction") 
+        if gxp > 0 then     flaw ("lsearch", "p must be descent direction")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Improve the current point x by moving in the search direction s.
@@ -188,7 +189,7 @@ class MoreThuenteLS (f: FunctionV2S, g: FunctionV2V,
                 go = false
     
             if f <= ftest1 && abs (dg) <= gtol * (-dginit) then
-                println ("lsearch: done as sufficient decrease cond. and the directional deriv cond. hold.
+                println ("lsearch: done as sufficient decrease cond. and the directional deriv cond. hold.")
                 go = false
     
             // In the first stage we seek a step for which the modified
