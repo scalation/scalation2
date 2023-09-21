@@ -5,9 +5,9 @@
  *  @note    Wed Apr 19 14:38:29 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Trait to specify the optimization logic that describes a problem for the
- *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm.
+ *  Trait to specify the optimization logic used by the wrapper implementation
+ *  of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound
+ *  constrained optimization (L-BFGS-B) algorithm.
  */
 
 // Package.
@@ -18,32 +18,30 @@ import java.lang.foreign.MemorySegment
 
 // Trait
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `OptimizationLogic` trait sets the necessary requirements for the logic
- *  to be used in each step of a L-BFGS variable minimization done by the
- *  `lbfgsMain` and `lbfgsMainCWrapper` methods of the [[Wrapper]] object. The
- *  methods provided in this trait are called as a `MethodHandle` by the L-BFGS
- *  C library shared object, such that pointer arguments are declared with the
- *  [[MemorySegment]] type.
+/** The `OptimizationLogicWrapper` trait specifies the requirements for the
+ *  logic to be used in each step of a L-BFGS variable minimization done by the
+ *  `lbfgsMain` method of the [[Wrapper]] object. The methods provided in this
+ *  trait are called as a `MethodHandle` by the L-BFGS C library shared object,
+ *  such that pointer arguments are declared with the [[MemorySegment]] type.
  *
- *  Classes mixing in this trait must implement two methods: evaluate and
+ *  Classes extending this trait must implement two methods: evaluate and
  *  progress. The evaluate method is used to evaluate the gradients and
  *  objective function for a given state of the variables. The progress method
  *  is used to report on how the minimization process is progressing.
  */
-trait OptimizationLogic:
+trait OptimizationLogicWrapper:
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Evaluates the gradients and objective function according to the state of
      *  the variables during the minimization process.
      *
-     *  @param instance User data provided by each call of the `lbfgsMain` or
-     *                  `lbfgsMainCWrapper` method. Can have any `MemoryLayout`
-     *                  defined by the user as long as the same layout is
-     *                  utilized in the `progress` method implementation for the
-     *                  class mixing in this trait and on the corresponding
-     *                  `lbfgsMain` or `lbfgsMainCWrapper` calls from the
-     *                  [[Wrapper]] object that rely on this
-     *                  `OptimizationLogic`.
+     *  @param instance User data provided by each call of the `lbfgsMain`
+     *                  method of the [[Wrapper]] object. Can have any
+     *                  `MemoryLayout` defined by the user as long as the same
+     *                  layout is utilized in the `progress` method
+     *                  implementation for the class extending this trait and on
+     *                  the corresponding `lbfgsMain` calls from the [[Wrapper]]
+     *                  object that relies on this `OptimizationLogicWrapper`.
      *  @param x        Current values of the variables presented in a
      *                  [[MemorySegment]] containing `n` elements with the
      *                  `ValueLayout` of `JAVA_DOUBLE`.
@@ -71,14 +69,13 @@ trait OptimizationLogic:
      *  be used to display or record said progress and to determine if the
      *  optimization should continue or be cancelled.
      *
-     *  @param instance User data provided by each call of the `lbfgsMain` or
-     *                  `lbfgsMainCWrapper` method. Can have any `MemoryLayout`
-     *                  defined by the user as long as the same layout is
-     *                  utilized in the `evaluate` method implementation for the
-     *                  class mixing in this trait and on the corresponding
-     *                  `lbfgsMain` or `lbfgsMainCWrapper` calls from the
-     *                  [[Wrapper]] object that rely on this
-     *                  `OptimizationLogic`.
+     *  @param instance User data provided by each call of the `lbfgsMain`
+     *                  method of the [[Wrapper]] object. Can have any
+     *                  `MemoryLayout` defined by the user as long as the same
+     *                  layout is utilized in the `evaluate` method
+     *                  implementation for the class extending this trait and on
+     *                  the corresponding `lbfgsMain` calls from the [[Wrapper]]
+     *                  object that relies on this `OptimizationLogicWrapper`.
      *  @param x        Current values of the variables presented in a
      *                  [[MemorySegment]] containing `n` elements with the
      *                  `ValueLayout` of `JAVA_DOUBLE`.
@@ -109,4 +106,4 @@ trait OptimizationLogic:
         k: Int,
         ls: Int
     ): Int
-end OptimizationLogic
+end OptimizationLogicWrapper

@@ -93,14 +93,14 @@ object Wrapper:
      *                                  evaluation on the values of the
      *                                  variables. Method signature must follow
      *                                  the one outlined for the `evaluate`
-     *                                  method in [[OptimizationLogic]].
+     *                                  method in [[OptimizationLogicWrapper]].
      *  @param progressMethodHandle     [[MethodHandle]] to report the progress
      *                                  on the minimization of the variables.
      *                                  Can be set to `null` if a progress
      *                                  report is not required. If not `null`,
      *                                  the method signature must follow the one
      *                                  outlined for the `progress` method in
-     *                                  [[OptimizationLogic]].
+     *                                  [[OptimizationLogicWrapper]].
      *  @param instanceMemorySegment    [[MemorySegment]] with user data to be
      *                                  provided to the `evaluate` and
      *                                  `progress` methods. Can be set to
