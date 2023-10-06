@@ -5,9 +5,9 @@
  *  @note    Mon Sep 11 22:06:31 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Step trial interval data needed by the line search logic used by the native
- *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm.
+ *  Step trial interval data used by the line search algorithms when selecting
+ *  the next step that should be taken in an optimization process that seeks to
+ *  minimize an objective function.
  */
 
 // Package.
@@ -15,7 +15,7 @@ package scalation.optimization
 
 // Case class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `LBFGSLineSearchTrialInterval` class represents a trial interval for
+/** The `LineSearchTrialInterval` class represents a trial interval for
  *  determining an optimal step, including the next step that should be
  *  evaluated based on the current endpoints of the trial interval. This class
  *  is used by the line search algorithm when attempting to minimize the
@@ -45,7 +45,7 @@ package scalation.optimization
  *                  Mathematical Software (TOMS), Vol 20, No 3, pp. 286-307,
  *                  1994.
  */
-case class LBFGSLineSearchTrialInterval(
+case class LineSearchTrialInterval(
     x: Double,
     fx: Double,
     dx: Double,
