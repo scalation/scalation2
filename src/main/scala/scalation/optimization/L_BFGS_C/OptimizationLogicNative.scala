@@ -28,51 +28,21 @@ import scalation.mathstat.VectorD
  *  objective function for a given state of the variables. The progress method
  *  is used to report on how the minimization process is progressing.
  */
-trait OptimizationLogicNative:
-    // Public methods.
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Evaluates the gradients and objective function according to the state of
-     *  the variables during the minimization process.
-     *
-     *  @param instance                         User data provided by each call
-     *                                          of the `lbfgsMain` method. Can
-     *                                          have [[Any]] type defined by the
-     *                                          user as long as the same type is
-     *                                          utilized in the `progress`
-     *                                          method implementation for the
-     *                                          class extending this trait and
-     *                                          on the corresponding `lbfgsMain`
-     *                                          calls from the [[Native]] object
-     *                                          that relies on this
-     *                                          `OptimizationLogicNative`.
-     *  @param x                                [[VectorD]] with the current
-     *                                          values of the variables.
-     *  @param n                                The number of variables.
-     *  @param step                             Current step used by the line
-     *                                          search routine.
-     *  @return LBFGSVariableEvaluationResults  Results obtained from evaluating
-     *                                          the variables.
-     *                                          
-     */
-    def evaluate(
-        instance: Any,
-        x: VectorD,
-        n: Int,
-        step: Double
-    ): LBFGSVariableEvaluationResults
-
+trait OptimizationLogicNative extends EvaluationLogicNative:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Receives the progress of each iteration of the optimization process. Can
      *  be used to display or record said progress and to determine if the
-     *  optimization should continue or be cancelled.
+     *  optimization should continue or be cancelled. A default implementation
+     *  is provided to just print the contents of the current iteration of the
+     *  optimization.
      *
      *  @param instance User data provided by each call of the `lbfgsMain`
-     *                  method of the [[Native]] object. Can have [[Any]] type defined by the user as
-     *                  long as the same type is utilized in the `evaluate`
-     *                  method implementation for the class extending this trait
-     *                  and on the corresponding `lbfgsMain` calls from the
-     *                  [[Native]] object that relies on this
-     *                  `OptimizationLogicNative`.
+     *                  method of the [[Native]] object. Can have [[Any]] type
+     *                  defined by the user as long as the same type is utilized
+     *                  in the `evaluate` method implementation for the class
+     *                  extending this trait and on the corresponding
+     *                  `lbfgsMain` calls from the [[Native]] object that relies
+     *                  on this `OptimizationLogicNative`.
      *  @param x        [[VectorD]] with the current values of the variables.
      *  @param g        [[VectorD]] with the current value of the gradient
      *                  vector.
@@ -98,5 +68,20 @@ trait OptimizationLogicNative:
         n: Int,
         k: Int,
         ls: Int
-    ): Int
+    ): LBFGSReturnCode =
+
+        println(s"""
+    Iteration $k:
+    x \t\t= $x
+    g \t\t= $g
+    fx \t\t= $fx
+    xnorm \t= $xnorm
+    gnorm \t= $gnorm
+    step \t= $step
+    n \t\t= $n
+    ls \t\t= $ls
+        """
+        )
+
+        LBFGSReturnCode.Success
 end OptimizationLogicNative
