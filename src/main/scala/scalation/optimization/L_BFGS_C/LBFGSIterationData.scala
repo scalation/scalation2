@@ -19,9 +19,10 @@ import scalation.mathstat.VectorD
 // Case class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `LBFGSIterationData` class stores relevant data regarding the changes
- *  made to the variable and gradient values in a single iteration of the L-BFGS
- *  algorithm. This data is used in future iterations of the algorithm to
- *  improve the search direction used to minimize the function value.
+ *  made to the variable and gradient values in a single iteration of the native
+ *  implementation of the L-BFGS algorithm. This data is used in future
+ *  iterations of the algorithm to improve the search direction used to minimize
+ *  the function value.
  *
  *  @param s        [[VectorD]] containing the difference between the estimates
  *                  of the variable values (`x`), each stored in a [[VectorD]],
@@ -38,17 +39,17 @@ import scalation.mathstat.VectorD
  *                  direction to take when minimizing the function value, hence
  *                  it is calculated for each iteration. For the ''k''-th
  *                  iteration of the algorithm, the resulting ρ,,k,, will be:
- *                  ρ,,k,, = 1 / (`y`,,k,,^t^ &bull; `s`,,k,,)
+ *                  ρ,,k,, = 1 / (`y`,,k,,^t^ &bull; `s`,,k,,).
  *  @param alpha    Product between `rho` and the dot product between `s` and
  *                  `q` of this iteration and next iteration, respectively. This
  *                  value is used to recalculate the `q` values for past
  *                  iterations that are kept by the algorithm. For the ''k''-th
  *                  iteration of the algorithm, the resulting α,,k,, will be:
- *                  α,,k,, = ρ,,k,, * (`s`,,k,,^t^ &bull; `q`,,k+1,,)
+ *                  α,,k,, = ρ,,k,, * (`s`,,k,,^t^ &bull; `q`,,k+1,,).
  */
 case class LBFGSIterationData(
     s: VectorD,
     y: VectorD,
     rho: Double,
-    alpha: Double
+    var alpha: Double
 )

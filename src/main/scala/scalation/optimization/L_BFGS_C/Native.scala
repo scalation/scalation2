@@ -20,144 +20,296 @@
 package scalation.optimization.L_BFGS_C
 
 // General imports.
-import java.lang.foreign.{Arena, Linker, MemoryLayout, MemorySegment, SegmentScope, SymbolLookup}
-import java.lang.foreign.ValueLayout.JAVA_DOUBLE
-import java.lang.invoke.{MethodHandle, MethodHandles, MethodType}
-import java.nio.file.Path
-import scala.util.{Failure, Success, Try, Using}
+import scala.math.abs
 
 // Project imports.
 import scalation.mathstat.VectorD
-
-// Module imports.
-import FunctionDescriptors.LBFGS_EVALUATE_FUNCTION_DESCRIPTOR
-import FunctionDescriptors.LBFGS_NATIVE_STUB_FUNCTION_DESCRIPTOR
-import FunctionDescriptors.LBFGS_PROGRESS_FUNCTION_DESCRIPTOR
+import scalation.optimization.{LBFGSLineSearch, LBFGSLineSearchStep, LBFGSMoreThuente}
 
 // Object.
 object Native:
-
-    // Library constants.
-    private val LBFGS_LIBRARY_PATH_STRING = "src/main/scala/scalation/optimization/L_BFGS_C/lib/C/lbfgs/lbfgs.so"
-
-    // Method downcall handle configuration (testing stub during development).
-    private val lbfgsLookup: SymbolLookup = SymbolLookup.libraryLookup(
-        Path.of(LBFGS_LIBRARY_PATH_STRING),
-        SegmentScope.auto()
-    )
-    private val linker: Linker = Linker.nativeLinker
-
-    private val lbfgsNativeStubHandle: MethodHandle = linker.downcallHandle(
-        lbfgsLookup.find("lbfgs_native_stub").orElseThrow(),
-        LBFGS_NATIVE_STUB_FUNCTION_DESCRIPTOR
-    )
-
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Performs the L-BFGS optimization that optimizes variables to minimize a
      *  function value.
-     *
-     *  @param n                        The number of variables.
-     *  @param x                        [[VectorD]] with the initial values of
-     *                                  the variables.
-     *  @param evaluateMethodHandle     [[MethodHandle]] to perform gradient
-     *                                  evaluation on the values of the
-     *                                  variables. Method signature must follow
-     *                                  the one outlined for the `evaluate`
-     *                                  method in [[OptimizationLogicWrapper]].
-     *  @param progressMethodHandle     [[MethodHandle]] to report the progress
-     *                                  on the minimization of the variables.
-     *                                  Can be set to `null` if a progress
-     *                                  report is not required. If not `null`,
-     *                                  the method signature must follow the one
-     *                                  outlined for the `progress` method in
-     *                                  [[OptimizationLogicWrapper]].
-     *  @param instanceMemorySegment    [[MemorySegment]] with user data to be
-     *                                  provided to the `evaluate` and
-     *                                  `progress` methods. Can be set to
-     *                                  [[MemorySegment.NULL]] if no user data
-     *                                  is required on the `evaluate` or
-     *                                  `progress` method calls. If not set to
-     *                                  [[MemorySegment.NULL]], it must be
-     *                                  encoded in the same [[MemoryLayout]] as
-     *                                  the one expected by the implementations
-     *                                  contained in the `evaluate` and
-     *                                  `progress` method handles.
-     *  @param params                   [[LBFGSParameters]] class representing
-     *                                  the parameters chosen to control the
-     *                                  L-BFGS optimization. The default
-     *                                  parameters used are the defaults of the
-     *                                  [[LBFGSParameters]] constructor.
-     *  @return LBFGSResults            Results for the L-BFGS optimization. The
-     *                                  `optimizedVariables` field represents
-     *                                  the values of `x` that have been
-     *                                  optimized to minimize the objective
-     *                                  function. In this implementation, if the
-     *                                  objective function is never evaluated
-     *                                  due to errors in the arguments from the
-     *                                  method call, the `finalFunctionValue`
-     *                                  returned will be [[None]].
      */
     def lbfgsMain(
          n: Int,
          x: VectorD,
-         evaluateMethodHandle: MethodHandle,
-         progressMethodHandle: MethodHandle = null,
-         instanceMemorySegment: MemorySegment = MemorySegment.NULL,
-         params: LBFGSParameters = LBFGSParameters()
+         functionLogic: EvaluationLogicNative | OptimizationLogicNative,
+         params: LBFGSParameters = LBFGSParameters(),
+         instance: Any = None
     ): LBFGSResults =
         checkLBFGSArgumentsForErrors(n, params) match
             case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
-            case None =>
+            case _ =>
 
         adjustLBFGSArguments(n, params)
 
-        val result: Try[LBFGSResults] = Using(Arena.openConfined()) { arena =>
+        var xNew: VectorD = x
 
-            val xMemorySegment: MemorySegment = MemorySegment.allocateNative(
-                MemoryLayout.sequenceLayout(n, JAVA_DOUBLE),
-                arena.scope()
-            )
-            val fxMemorySegment: MemorySegment = MemorySegment.allocateNative(JAVA_DOUBLE, arena.scope())
-            val evaluateMemorySegment: MemorySegment = linker.upcallStub(
-                evaluateMethodHandle,
-                LBFGS_EVALUATE_FUNCTION_DESCRIPTOR,
-                arena.scope()
-            )
-            val progressMemorySegment: MemorySegment = progressMethodHandle match
-                case null => MemorySegment.NULL
-                case _ => linker.upcallStub(
-                    progressMethodHandle,
-                    LBFGS_PROGRESS_FUNCTION_DESCRIPTOR,
-                    arena.scope()
-                )
-            val paramsMemorySegment: MemorySegment = MemorySegment.allocateNative(
-                LBFGSParameters.memoryLayout,
-                arena.scope()
-            )
-            
-            x.copyToMemorySegment(xMemorySegment)
-            params.copyToMemorySegment(paramsMemorySegment)
+        var k = 1
+        var end = 0
+        var i, j, ls, bound = 0
+        var step = 0.0
 
-            val optimizationReturnCode = lbfgsNativeStubHandle.invokeWithArguments(
-                n,
-                xMemorySegment,
-                fxMemorySegment,
-                evaluateMemorySegment,
-                progressMemorySegment,
-                instanceMemorySegment,
-                paramsMemorySegment
-            ).asInstanceOf[Int]
+        /* Constant parameters and their default values. */
+        val m = params.m
 
-            val xFinalValues: VectorD = VectorD.fromMemorySegment(xMemorySegment)
-            val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
+        try {
+            var xp, g, gp, pg, d = new VectorD(n)
+            var pf, s, y = VectorD.nullv
+            val lm = Array.ofDim[LBFGSIterationData](m)
 
-            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
+            var ys, yy, xnorm, gnorm, beta, fx, rate = 0.0
+
+            val linesearch: LBFGSLineSearch = LBFGSMoreThuente
+
+            /* Construct a callback data. */
+            val cd = LBFGSCallbackData(n, instance, functionLogic)
+
+            /* Allocate working space. */
+            //        if (param.orthantwise_c != 0.) {
+            //            /* Allocate working space for OW-LQN. */
+            //            pg = (lbfgsfloatval_t *) vecalloc (n * sizeof(lbfgsfloatval_t));
+            //            if (pg == NULL) {
+            //                ret = LBFGSERR_OUTOFMEMORY;
+            //                goto lbfgs_native_stub_exit;
+            //            }
+            //        }
+
+            /* Allocate an array for storing previous values of the objective function.
+             */
+            if 0 < params.past then pf = new VectorD(params.past)
+
+            /* Evaluate the function value and its gradient. */
+            val evaluationResults = cd.evaluationLogic.evaluate(cd.instance, x, cd.n, 0)
+            fx = evaluationResults.objectiveFunctionValue
+            g = evaluationResults.gradientVector
+
+            //        if (0. != params.orthantwise_c) {
+            //            /* Compute the L1 norm of the variable and add it to the object value.
+            //             */
+            //            xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
+            //            fx += xnorm * param.orthantwise_c;
+            //            owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c,
+            //                param.orthantwise_start, param.orthantwise_end);
+            //        }
+
+            /* Store the initial value of the objective function. */
+            if pf != VectorD.nullv then pf(0) = fx
+
+            /*
+                Compute the direction;
+                we assume the initial hessian matrix H_0 as the identity matrix.
+             */
+            d = -g
+
+//            if params.orthantwiseC == 0 then
+//                d = -g
+//            else
+//                d = -pg
+//            end if
+
+            /*
+               Make sure that the initial variables are not a minimizer.
+             */
+            xnorm = x.norm
+            gnorm = g.norm
+
+            //        if (param.orthantwise_c == 0.) {
+            //            vec2norm(& gnorm, g, n);
+            //        } else {
+            //            vec2norm(& gnorm, pg, n);
+            //        }
+
+            if xnorm < 1.0 then xnorm = 1.0
+
+            if gnorm / xnorm <= params.epsilon then
+                return LBFGSResults(LBFGSReturnCode.AlreadyMinimized, xNew, Some(fx))
+            //            goto lbfgs_native_stub_exit
+            end if
+
+            /* Compute the initial step:
+                step = 1.0 / sqrt(vecdot(d, d, n))
+             */
+            step = 1.0 / d.norm
+
+            while true do
+                /* Store the current position and gradient vectors. */
+                xp = xNew
+                gp = g
+
+                /* Search for an optimal step. */
+                linesearch.lineSearch(n, xNew, fx, g, d, step, cd, params) match
+                    case lineSearchStep: LBFGSLineSearchStep =>
+                        xNew = lineSearchStep.x
+                        g = lineSearchStep.g
+                        fx = lineSearchStep.fx
+                        step = lineSearchStep.step
+                        ls = lineSearchStep.numberOfIterations
+                    case returnCode: LBFGSReturnCode =>
+                        return LBFGSResults(returnCode, xp, Some(fx))
+
+                //            if params.orthantwiseC == 0 then
+                //                ls = linesearch.lineSearch(n, x, & fx, g, d, & step, xp, gp, w, & cd, & param);
+                //            else
+                //                ls = linesearch.lineSearch(n, x, & fx, g, d, & step, xp, pg, w, & cd, & param);
+                //                owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c,
+                //                    param.orthantwise_start,
+                //                    param.orthantwise_end);
+                //            if (ls < 0) {
+                //                /* Revert to the previous point. */
+                //                veccpy(x, xp, n);
+                //                veccpy(g, gp, n);
+                //                ret = ls;
+                //                goto lbfgs_native_stub_exit;
+                //            }
+                //            end if
+
+                /* Compute x and g norms. */
+                xnorm = xNew.norm
+                gnorm = g.norm
+
+//                if params.orthantwiseC == 0 then
+//                    gnorm = g.norm
+//                else
+//                    gnorm = pg.norm
+//                end if
+//
+
+                /* Report the progress. */
+                functionLogic match
+                    case o: OptimizationLogicNative =>
+                        val ret = o.progress(cd.instance, xNew, g, fx, xnorm, gnorm, step, cd.n, k, ls)
+                        if ret != LBFGSReturnCode.Success then return LBFGSResults(ret, xNew, Some(fx))
+                    case _ =>
+
+                /*
+                Convergence test.
+                The criterion is given by the following formula:
+                    |g(x)| / \max(1, |x|) < \epsilon
+             */
+                if xnorm < 1.0 then xnorm = 1.0
+
+                if gnorm / xnorm <= params.epsilon then
+                    return LBFGSResults(LBFGSReturnCode.Success, xNew, Some(fx))
+                end if
+
+                /*
+                Test for stopping criterion.
+                The criterion is given by the following formula:
+                    |(f(past_x) - f(x))| / f(x) < \delta
+             */
+                if pf != VectorD.nullv then
+                    /* We don't test the stopping criterion while k < past. */
+                    if params.past <= k then
+                        /* Compute the relative improvement from the past. */
+                        rate = (pf(k % params.past) - fx) / fx
+
+                        /* The stopping criterion. */
+                        if abs(rate) < params.delta then
+                            return LBFGSResults(LBFGSReturnCode.Stop, xNew, Some(fx))
+                        end if
+                    end if
+
+                    /* Store the current value of the objective function. */
+                    pf(k % params.past) = fx
+                end if
+
+                if params.maxIterations != 0 && params.maxIterations < k + 1 then
+                    return LBFGSResults(LBFGSReturnCode.MaximumIteration, xNew, Some(fx))
+                end if
+
+                /*
+                Update vectors s and y:
+                    s_{k+1} = x_{k+1} - x_{k} = \step * d_{k}.
+                    y_{k+1} = g_{k+1} - g_{k}.
+                */
+                s = xNew - xp
+                y = g - gp
+
+                /*
+                Compute scalars ys and yy:
+                    ys = y^t \cdot s = 1 / \rho.
+                    yy = y^t \cdot y.
+                Notice that yy is used for scaling the hessian matrix H_0 (Cholesky
+               factor).
+             */
+                ys = y dot s
+                yy = y dot y
+
+                lm(end) = LBFGSIterationData(s, y, 1 / ys, 0)
+
+                /*
+                Recursive formula to compute dir = -(H \cdot g).
+                    This is described in page 779 of:
+                    Jorge Nocedal.
+                    Updating Quasi-Newton Matrices with Limited Storage.
+                    Mathematics of Computation, Vol. 35, No. 151,
+                    pp. 773--782, 1980.
+             */
+                bound = if m <= k then m else k
+                k += 1
+                end = (end + 1) % m
+
+                /* Compute the steepest direction. */
+                d = -g
+
+//                if params.orthantwiseC == 0 then
+//                /* Compute the negative of gradients. */
+//                    d = -g
+//                else
+//                    d = -pg
+//                end if
+
+                j = end
+                for i <- 0 until bound do
+                    j = (j + m - 1) % m
+                    /* if (--j == -1) j = m-1; */
+                    val it = lm(j)
+                    /* \alpha_{j} = \rho_{j} s^{t}_{j} \cdot q_{k+1}. */
+                    it.alpha = it.s dot d
+                    it.alpha = it.alpha * it.rho
+                    /* q_{i} = q_{i+1} - \alpha_{i} y_{i}. */
+                    d += (it.y * (-it.alpha))
+                end for
+
+                d *= (ys / yy)
+
+                for i <- 0 until bound do
+                    val it = lm(j)
+                    /* \beta_{j} = \rho_{j} y^t_{j} \cdot \gamma_{i}. */
+                    beta = it.y dot d
+                    beta *= it.rho
+                    /* \gamma_{i+1} = \gamma_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
+                    d += it.s * (it.alpha - beta)
+                    j = (j + 1) % m
+                /* if (++j == m) j = 0; */
+                end for
+
+                /*
+                    Constrain the search direction for orthant-wise updates.
+                 */
+                //            if params.orthantwiseC != 0 then
+                //                for (i = param.orthantwise_start; i < param.orthantwise_end; ++ i) {
+                //                    if (d[i] * pg[i] >= 0) {
+                //                        d[i] = 0;
+                //                    }
+                //                }
+                //            end if
+
+                /*
+                    Now the search direction d is ready. We try step = 1 first.
+                 */
+                step = 1.0
+            end while
+
+            LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx))
         }
-
-        result match
-            case Success(v) => v
-            case Failure(e) => throw e
+        catch {
+            case e: OutOfMemoryError => LBFGSResults(LBFGSReturnCode.OutOfMemory, x, None)
+        }
 
     // Private methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -215,6 +367,10 @@ object Native:
         end if
 
         None
+        
+    private def determineLineSearchAlgorithm(): LBFGSLineSearch =
+        // Placeholder.
+        LBFGSMoreThuente
 end Native
 
 // Test functions.
@@ -223,7 +379,7 @@ end Native
  *  provided by the [[Native]] object. Multiple tests are performed with
  *  different values for the variables, dimensions for the variables vector and
  *  L-BFGS optimization parameters, but always using the evaluate and progress
- *  methods provided in [[OptimizationLogicExample]].
+ *  methods provided in [[OptimizationLogicNativeExample]].
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
@@ -232,56 +388,8 @@ end Native
  */
 @main def lbfgsMainNativeTest(): Unit =
     // Variable declaration.
-    val instance: MemorySegment = MemorySegment.NULL
+    val logic: OptimizationLogicNative = OptimizationLogicNativeExample
 
-    // Setup Scala method handles.
-    val evaluateHandle: MethodHandle = MethodHandles.lookup.findStatic(
-        classOf[OptimizationLogicExample],
-        "evaluate",
-        MethodType.methodType(
-            classOf[Double],
-            classOf[MemorySegment],
-            classOf[MemorySegment],
-            classOf[MemorySegment],
-            classOf[Int],
-            classOf[Double]
-        )
-    )
-
-    val progressHandle: MethodHandle = MethodHandles.lookup.findStatic(
-        classOf[OptimizationLogicExample],
-        "progress",
-        MethodType.methodType(
-            classOf[Int],
-            classOf[MemorySegment],
-            classOf[MemorySegment],
-            classOf[MemorySegment],
-            classOf[Double],
-            classOf[Double],
-            classOf[Double],
-            classOf[Double],
-            classOf[Int],
-            classOf[Int],
-            classOf[Int]
-        )
-    )
-
-    println(Native.lbfgsMain(2, VectorD(-1.2, 1.0), evaluateHandle, progressHandle))
-    println(Native.lbfgsMain(2, VectorD(-35.2, -128.43), evaluateHandle, progressHandle))
-    println(Native.lbfgsMain(
-        2,
-        VectorD(-35.2, -128.43),
-        evaluateHandle,
-        progressHandle,
-        instance,
-        LBFGSParameters(minStep = 5, maxStep = 4)
-    ))
-    println(Native.lbfgsMain(
-        4,
-        VectorD(-35.2, -128.43, 0, -44),
-        evaluateHandle,
-        progressHandle,
-        instance,
-        LBFGSParameters(lineSearch = LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe)
-    ))
+    // Testing.
+    println(Native.lbfgsMain(2, VectorD(0, 0), logic))
 end lbfgsMainNativeTest
