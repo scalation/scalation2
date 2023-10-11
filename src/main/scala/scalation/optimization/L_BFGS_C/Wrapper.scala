@@ -313,7 +313,7 @@ end Wrapper
  *  method provided by the [[Wrapper]] object. Multiple tests are performed with
  *  different values for the variables, dimensions for the variables vector and
  *  L-BFGS optimization parameters, but always using the evaluate and progress
- *  methods provided in [[OptimizationLogicExample]].
+ *  methods provided in [[OptimizationLogicWrapperExample]].
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
@@ -326,7 +326,7 @@ end Wrapper
 
     // Setup Scala method handles.
     val evaluateHandle: MethodHandle = MethodHandles.lookup.findStatic(
-        classOf[OptimizationLogicExample],
+        classOf[OptimizationLogicWrapperExample],
         "evaluate",
         MethodType.methodType(
             classOf[Double],
@@ -339,7 +339,7 @@ end Wrapper
     )
 
     val progressHandle: MethodHandle = MethodHandles.lookup.findStatic(
-        classOf[OptimizationLogicExample],
+        classOf[OptimizationLogicWrapperExample],
         "progress",
         MethodType.methodType(
             classOf[Int],
@@ -356,24 +356,8 @@ end Wrapper
         )
     )
 
-    println(Wrapper.lbfgsMain(2, VectorD(-1.2, 1.0), evaluateHandle, progressHandle))
+    println(Wrapper.lbfgsMain(2, VectorD(0.0, 0.0), evaluateHandle, progressHandle))
     println(Wrapper.lbfgsMain(2, VectorD(-35.2, -128.43), evaluateHandle, progressHandle))
-    println(Wrapper.lbfgsMain(
-        2,
-        VectorD(-35.2, -128.43),
-        evaluateHandle,
-        progressHandle,
-        instance,
-        LBFGSParameters(minStep = 5, maxStep = 4)
-    ))
-    println(Wrapper.lbfgsMain(
-        4,
-        VectorD(-35.2, -128.43, 0, -44),
-        evaluateHandle,
-        progressHandle,
-        instance,
-        LBFGSParameters(lineSearch = LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe)
-    ))
 end lbfgsMainCWrapperTest
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

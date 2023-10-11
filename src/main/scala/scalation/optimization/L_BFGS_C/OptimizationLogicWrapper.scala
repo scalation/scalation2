@@ -15,6 +15,7 @@ package scalation.optimization.L_BFGS_C
 
 // General imports.
 import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 
 // Trait
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -68,6 +69,11 @@ trait OptimizationLogicWrapper:
     /** Receives the progress of each iteration of the optimization process. Can
      *  be used to display or record said progress and to determine if the
      *  optimization should continue or be cancelled.
+     *  
+     *  The default implementation of this method always returns 0 and prints
+     *  the iteration, function value, the value of each variable, the euclidean
+     *  norms of the variables and the gradient vector and the step used in the
+     *  line search in this iteration.
      *
      *  @param instance User data provided by each call of the `lbfgsMain`
      *                  method of the [[Wrapper]] object. Can have any
@@ -105,5 +111,15 @@ trait OptimizationLogicWrapper:
         n: Int,
         k: Int,
         ls: Int
-    ): Int
+    ): Int =
+        println()
+        println(s"Iteration $k:")
+        println(s"fx = $fx")
+
+        for i <- 0 until n do
+            println(s"x[$i]: ${x.getAtIndex(JAVA_DOUBLE, i)}")
+
+        println(s"xnorm = $xnorm, gnorm = $gnorm, step = $step\n")
+
+        0
 end OptimizationLogicWrapper

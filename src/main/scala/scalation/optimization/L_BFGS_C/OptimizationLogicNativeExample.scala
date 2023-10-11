@@ -2,7 +2,7 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Mon Sep 25 13:37:22 EDT 2023
+ *  @note    Fri Sep 29 13:55:03 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Example of an optimization logic that outlines the evaluation logic needed

@@ -2,7 +2,7 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Tue Mar 28 10:49:34 EDT 2023
+ *  @note    Fri Sep 29 14:08:16 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Example of an optimization logic that outlines a problem to be solved by the
@@ -11,16 +11,16 @@
  */
 
 // Package.
-package scalation.optimization.L_BFGS_C
+package scalation
+package optimization
+package L_BFGS_C
 
 // General imports.
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 import scala.annotation.static
-import scala.math.pow
 
 // Project imports.
-import scalation.calculus.Differential
 import scalation.mathstat.VectorD
 
 // Object.
@@ -32,17 +32,8 @@ import scalation.mathstat.VectorD
  *  latter to have its evaluate and progress methods annotated with [[static]]
  *  to ensure that they can be both converted to a `MethodHandle` by the
  *  `MethodHandles` class.
- *
- *  For this example logic, the `evaluate` method minimizes the following
- *  function for every even value of ''i'' that is smaller than `n`:
- *  f(x) = (x,,i,, - 2)^2^ + (x,,i+1,, - 3)^2^ + 1.
- *
- *  As such, the chosen `n` must be even. The `progress` method always returns 0
- *  and prints the iteration, function value, the value of each variable, the
- *  euclidean norms of the variables and the gradient vector and the step used
- *  in the line search in this iteration.
  */
-object OptimizationLogicExample:
+object OptimizationLogicWrapperExample:
     // Static methods.
     @static
     def evaluate(
@@ -52,21 +43,21 @@ object OptimizationLogicExample:
         n: Int,
         step: Double
     ): Double =
-        def fx(x: VectorD): Double = pow(x(0) - 2, 2) + pow(x(1) - 3, 2) + 1
-        var fx_sum: Double = 0
+        def fx(x: VectorD): Double = (1.0 - x(0))~^2 + 100.0 * (x(1) - x(0)~^2)~^2
+        val xVectorD : VectorD = VectorD(
+            x.getAtIndex(JAVA_DOUBLE, 0),
+            x.getAtIndex(JAVA_DOUBLE, 1)
+        )
+        val gVectorD: VectorD = VectorD(
+            -2.0 * (1 - xVectorD(0)) - 400.0 * xVectorD(0) * (xVectorD(1) - xVectorD(0) ~^ 2),
+            200.0 * (xVectorD(1) - xVectorD(0) ~^ 2)
+        )
+        val fxObjectiveValue: Double = fx(xVectorD)
 
-        for i <- 0 until n by 2 do
-            val interval_variables: VectorD = VectorD(
-                x.getAtIndex(JAVA_DOUBLE, i),
-                x.getAtIndex(JAVA_DOUBLE, i + 1)
-            )
+        g.setAtIndex(JAVA_DOUBLE, 0, gVectorD(0))
+        g.setAtIndex(JAVA_DOUBLE, 1, gVectorD(1))
 
-            g.setAtIndex(JAVA_DOUBLE, i, Differential.partial(0)(fx, interval_variables))
-            g.setAtIndex(JAVA_DOUBLE, i+1, Differential.partial(1)(fx, interval_variables))
-
-            fx_sum += fx(interval_variables)
-
-        fx_sum
+        fxObjectiveValue
 
     @static
     def progress(
@@ -82,19 +73,19 @@ object OptimizationLogicExample:
         ls: Int
     ): Int =
         println()
-        println(s"Iteration ${k}:")
-        println(s"fx = ${fx}")
+        println(s"Iteration $k:")
+        println(s"fx = $fx")
 
         for i <- 0 until n do
-            println(s"x[${i}]: ${x.getAtIndex(JAVA_DOUBLE, i)}")
+            println(s"x[$i]: ${x.getAtIndex(JAVA_DOUBLE, i)}")
 
-        println(s"xnorm = ${xnorm}, gnorm = ${gnorm}, step = ${step}\n")
+        println(s"xnorm = $xnorm, gnorm = $gnorm, step = $step\n")
 
         0
-end OptimizationLogicExample
+end OptimizationLogicWrapperExample
 
 // Companion class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** See the documentation for the accompanying companion object.
  */
-class OptimizationLogicExample
+class OptimizationLogicWrapperExample
