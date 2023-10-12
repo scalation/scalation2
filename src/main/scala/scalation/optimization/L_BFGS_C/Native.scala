@@ -17,14 +17,15 @@
  */
 
 // Package.
-package scalation.optimization.L_BFGS_C
+package scalation
+package optimization
+package L_BFGS_C
 
 // General imports.
 import scala.math.abs
 
 // Project imports.
 import scalation.mathstat.VectorD
-import scalation.optimization.{LBFGSLineSearch, LBFGSLineSearchStep, LBFGSMoreThuente}
 
 // Object.
 object Native:
@@ -375,21 +376,37 @@ end Native
 
 // Test functions.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `lbfgsMainNativeTest` main function tests the `lbfgsMain` method
- *  provided by the [[Native]] object. Multiple tests are performed with
- *  different values for the variables, dimensions for the variables vector and
- *  L-BFGS optimization parameters, but always using the evaluate and progress
- *  methods provided in [[OptimizationLogicNativeExample]].
+/** The `boothFunctionNativeTest` main function uses the Booth Function to test
+ *  the `lbfgsMain` method provided by the [[Native]] object. Multiple tests are
+ *  performed with different values for the variables.
+ *
+ *  The Booth Function can be described as follows:
+ *
+ *  - Input dimension: 2;
+ *
+ *  - Function domain: -10 &le; x,,i,, &le; 10;
+ *
+ *  - Function definition: f(x) = (x,,0,, + 2 * x,,1,, - 7)^2^ + (2 * x,,0,, +
+ *  x,,1,, - 5)^2^;
+ *
+ *  - Global minimum: x* = (1, 3); f(x*) = 0;
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
- *  > runMain scalation.optimization.L_BFGS_C.lbfgsMainNativeTest
+ *  > runMain scalation.optimization.L_BFGS_C.boothFunctionNativeTest
  *  }}}
  */
-@main def lbfgsMainNativeTest(): Unit =
+@main def boothFunctionNativeTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+    def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
+
     // Variable declaration.
-    val logic: OptimizationLogicNative = OptimizationLogicNativeExample
+    val functionOptimizationLogic = FunctionOptimizationNative(objectiveFunction, gradientFunction)
 
     // Testing.
-    println(Native.lbfgsMain(2, VectorD(0, 0), logic))
-end lbfgsMainNativeTest
+    println(Native.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
+    println(Native.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
+    println(Native.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
+    println(Native.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
+end boothFunctionNativeTest
