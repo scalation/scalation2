@@ -10,8 +10,8 @@
  *  (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation.optimization
 
 // Enumeration.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

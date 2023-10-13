@@ -10,8 +10,8 @@
  *  optimization (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation.optimization
 
 // General imports.
 import java.lang.foreign.{MemoryLayout, MemorySegment, StructLayout}
@@ -49,7 +49,7 @@ import scala.annotation.static
  *                          value of the current iteration. The default value is
  *                          1e-5.
  *  @param maxIterations    The maximum number of iterations. The `lbfgsMain`
- *                          and `lbfgsMainCWrapper` methods in [[Wrapper]]
+ *                          and `lbfgsMainCWrapper` methods in `Wrapper`
  *                          terminate an optimization process with the
  *                          [[LBFGSReturnCode.MaximumIteration]] return code
  *                          when the iteration count exceeds this parameter.

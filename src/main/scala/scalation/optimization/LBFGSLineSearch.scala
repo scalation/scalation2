@@ -11,12 +11,12 @@
  *  (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization
+// Package definition.
+package scalation
+package optimization
 
 // Project imports.
 import scalation.mathstat.VectorD
-import scalation.optimization.L_BFGS_C.{LBFGSCallbackData, LBFGSParameters, LBFGSReturnCode}
 
 // Trait.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

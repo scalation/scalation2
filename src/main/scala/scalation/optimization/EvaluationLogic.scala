@@ -10,8 +10,8 @@
  *  constrained optimization (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation.optimization
 
 // Project imports.
 import scalation.mathstat.VectorD
@@ -20,14 +20,14 @@ import scalation.mathstat.VectorD
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `EvaluationLogicNative` trait specifies the requirements for the logic
  *  to be used for variable evaluation against the objective function in the
- *  `lbfgsMain` method of the [[Native]] object. The methods provided in this
- *  trait are called directly by the code used by the [[Native]] class.
+ *  `lbfgsMain` method of the [[LBFGS]] object. The methods provided in this
+ *  trait are called directly by the code used by the [[LBFGS]] class.
  *
  *  Classes mixing in this trait must implement the evaluate method, which is
  *  used to evaluate the gradients and objective function for a given state of
  *  the variables.
  */
-trait EvaluationLogicNative:
+trait EvaluationLogic:
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Evaluates the gradients and objective function according to the state of
@@ -55,4 +55,4 @@ trait EvaluationLogicNative:
         n: Int,
         step: Double
     ): LBFGSVariableEvaluationResults
-end EvaluationLogicNative
+end EvaluationLogic

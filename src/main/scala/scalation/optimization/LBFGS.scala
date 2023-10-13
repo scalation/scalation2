@@ -16,10 +16,9 @@
  *  @see github.com/chokkan/liblbfgs
  */
 
-// Package.
+// Package definition.
 package scalation
 package optimization
-package L_BFGS_C
 
 // General imports.
 import scala.math.abs
@@ -28,7 +27,7 @@ import scala.math.abs
 import scalation.mathstat.VectorD
 
 // Object.
-object Native:
+object LBFGS:
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Performs the L-BFGS optimization that optimizes variables to minimize a
@@ -37,7 +36,7 @@ object Native:
     def lbfgsMain(
          n: Int,
          x: VectorD,
-         functionLogic: EvaluationLogicNative | OptimizationLogicNative,
+         functionLogic: EvaluationLogic | OptimizationLogic,
          params: LBFGSParameters = LBFGSParameters(),
          instance: Any = None
     ): LBFGSResults =
@@ -181,7 +180,7 @@ object Native:
 
                 /* Report the progress. */
                 functionLogic match
-                    case o: OptimizationLogicNative =>
+                    case o: OptimizationLogic =>
                         val ret = o.progress(cd.instance, xNew, g, fx, xnorm, gnorm, step, cd.n, k, ls)
                         if ret != LBFGSReturnCode.Success then return LBFGSResults(ret, xNew, Some(fx))
                     case _ =>
@@ -368,16 +367,16 @@ object Native:
         end if
 
         None
-        
+
     private def determineLineSearchAlgorithm(): LBFGSLineSearch =
         // Placeholder.
         LBFGSMoreThuente
-end Native
+end LBFGS
 
 // Test functions.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `boothFunctionNativeTest` main function uses the Booth Function to test
- *  the `lbfgsMain` method provided by the [[Native]] object. Multiple tests are
+ *  the `lbfgsMain` method provided by the [[LBFGS]] object. Multiple tests are
  *  performed with different values for the variables.
  *
  *  The Booth Function can be described as follows:
@@ -402,11 +401,11 @@ end Native
     def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
 
     // Variable declaration.
-    val functionOptimizationLogic = FunctionOptimizationNative(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
 
     // Testing.
-    println(Native.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
-    println(Native.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
-    println(Native.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
-    println(Native.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
 end boothFunctionNativeTest

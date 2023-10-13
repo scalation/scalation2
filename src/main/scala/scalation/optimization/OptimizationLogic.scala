@@ -10,8 +10,8 @@
  *  constrained optimization (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation.optimization
 
 // Project imports.
 import scalation.mathstat.VectorD
@@ -20,15 +20,15 @@ import scalation.mathstat.VectorD
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `OptimizationLogicNative` trait specifies the requirements for the logic
  *  to be used in each step of a L-BFGS variable minimization done by the
- *  `lbfgsMain` method of the [[Native]] object. The methods provided in this
- *  trait are called directly by the code used by the [[Native]] class.
+ *  `lbfgsMain` method of the [[LBFGS]] object. The methods provided in this
+ *  trait are called directly by the code used by the [[LBFGS]] class.
  *
  *  Classes mixing in this trait must implement two methods: evaluate and
  *  progress. The evaluate method is used to evaluate the gradients and
  *  objective function for a given state of the variables. The progress method
  *  is used to report on how the minimization process is progressing.
  */
-trait OptimizationLogicNative extends EvaluationLogicNative:
+trait OptimizationLogic extends EvaluationLogic:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Receives the progress of each iteration of the optimization process. Can
      *  be used to display or record said progress and to determine if the
@@ -37,11 +37,11 @@ trait OptimizationLogicNative extends EvaluationLogicNative:
      *  optimization.
      *
      *  @param instance User data provided by each call of the `lbfgsMain`
-     *                  method of the [[Native]] object. Can have [[Any]] type
+     *                  method of the [[LBFGS]] object. Can have [[Any]] type
      *                  defined by the user as long as the same type is utilized
      *                  in the `evaluate` method implementation for the class
      *                  extending this trait and on the corresponding
-     *                  `lbfgsMain` calls from the [[Native]] object that relies
+     *                  `lbfgsMain` calls from the [[LBFGS]] object that relies
      *                  on this `OptimizationLogicNative`.
      *  @param x        [[VectorD]] with the current values of the variables.
      *  @param g        [[VectorD]] with the current value of the gradient
@@ -84,4 +84,4 @@ trait OptimizationLogicNative extends EvaluationLogicNative:
         )
 
         LBFGSReturnCode.Success
-end OptimizationLogicNative
+end OptimizationLogic

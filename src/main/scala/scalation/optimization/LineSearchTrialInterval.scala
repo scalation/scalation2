@@ -10,8 +10,9 @@
  *  minimize an objective function.
  */
 
-// Package.
-package scalation.optimization
+// Package definition.
+package scalation
+package optimization
 
 // Case class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

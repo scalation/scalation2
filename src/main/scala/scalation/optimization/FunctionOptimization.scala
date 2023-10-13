@@ -11,18 +11,18 @@
  *  for Bound constrained optimization (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation.optimization
 
 // Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.{FunctionV2S, FunctionV2V, VectorD}
 
 // Case class.
-case class FunctionOptimizationNative(
+case class FunctionOptimization(
     objectiveFunction: FunctionV2S,
     gradientFunction: FunctionV2V
-) extends OptimizationLogicNative:
+) extends OptimizationLogic:
     // Constructor definitions.
     def this(objectiveFunction: FunctionV2S) = this(
         objectiveFunction,
@@ -38,11 +38,11 @@ case class FunctionOptimizationNative(
         step: Double
     ): LBFGSVariableEvaluationResults =
         LBFGSVariableEvaluationResults(objectiveFunction(x), gradientFunction(x))
-end FunctionOptimizationNative
+end FunctionOptimization
 
 // Companion object.
-case object FunctionOptimizationNative:
+case object FunctionOptimization:
     // Public methods.
     def apply(objectiveFunction: FunctionV2S) =
-        new FunctionOptimizationNative(objectiveFunction)
-end FunctionOptimizationNative
+        new FunctionOptimization(objectiveFunction)
+end FunctionOptimization

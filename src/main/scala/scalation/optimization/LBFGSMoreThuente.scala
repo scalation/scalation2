@@ -14,15 +14,15 @@
  *  @see github.com/chokkan/liblbfgs
  */
 
-// Package.
-package scalation.optimization
+// Package definition.
+package scalation
+package optimization
 
 // General imports.
-import scala.math.{abs, max, min, pow, sqrt}
+import scala.math.{abs, max, min, sqrt}
 
 // Project imports.
 import scalation.mathstat.VectorD
-import scalation.optimization.L_BFGS_C.{LBFGSCallbackData, LBFGSParameters, LBFGSReturnCode}
 
 // Object.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -482,7 +482,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         var r = abs(dv)
         val s = max(p, max(q, r))
         val a = theta / s
-        var gamma = s * sqrt(pow(a, 2) - (du/s) * (dv/ s))
+        var gamma = s * sqrt(a~^2 - (du/s) * (dv/ s))
         if v < u then gamma = -gamma
         p = gamma - du + theta
         q = gamma - du + gamma + dv
@@ -517,7 +517,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         var r = abs(dv)
         val s = max(p, max(q, r))
         val a = theta / s
-        var gamma = s * sqrt(max(0, pow(a, 2) - (du/s) * (dv/ s)))
+        var gamma = s * sqrt(max(0, a~^2 - (du/s) * (dv/ s)))
         if u < v then gamma = -gamma
         p = gamma - dv + theta
         q = gamma - dv + gamma + du
