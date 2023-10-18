@@ -1050,11 +1050,15 @@ object VectorD:
      *  @param source   [[MemorySegment]] whose content is copied to initialize
      *                  a new `VectorD`. Should have been allocated with a
      *                  memory layout of a sequence layout of JAVA_DOUBLE.
+     *  @param n        The number of JAVA_DOUBLE elements in `source`.
      */
-    def fromMemorySegment(source: MemorySegment): VectorD =
-        val values: Array[Double] = source.toArray(JAVA_DOUBLE)
+    def fromMemorySegment(source: MemorySegment, n: Int): VectorD =
+        val result = new VectorD(n)
 
-        new VectorD(values.length, values)
+        for i <- 0 until n do
+            result(i) = source.getAtIndex(JAVA_DOUBLE, i)
+
+        result
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `VectorD` from a mutable indexed sequence of `String`.

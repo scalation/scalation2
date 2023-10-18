@@ -5,13 +5,16 @@
  *  @note    Tue Mar 14 14:51:56 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Function descriptors from the functions of the C library shared object
- *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm.
+ *  Function descriptors for the functions in the L-BFGS C library shared
+ *  object. Used in the FFM implementation of the Limited memory
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
+ *  (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation
+package optimization
+package LBFGS_FFM
 
 // General imports.
 import java.lang.foreign.FunctionDescriptor
@@ -20,9 +23,9 @@ import java.lang.foreign.ValueLayout.{ADDRESS, JAVA_DOUBLE, JAVA_INT}
 // Object.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `FunctionDescriptors` object provides a set of [[FunctionDescriptor]]
- *  values to model each function contained in the L-BFGS C library..
+ *  values to model each function contained in the L-BFGS C library.
  *
- *  Use the values provided by this object when constructing a `MethodHandle` to
+ *  Used by the [[LBFGS_FFM]] object when constructing a `MethodHandle` to
  *  access a desired function from the L-BFGS C library shared object.
  */
 object FunctionDescriptors:
@@ -51,16 +54,6 @@ object FunctionDescriptors:
         ADDRESS,
         ADDRESS
     )
-    val LBFGS_NATIVE_STUB_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-        JAVA_INT,
-        JAVA_INT,
-        ADDRESS,
-        ADDRESS,
-        ADDRESS,
-        ADDRESS,
-        ADDRESS,
-        ADDRESS
-    )
     val LBFGS_PARAMETER_INIT_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.ofVoid(
         ADDRESS
     )
@@ -80,18 +73,5 @@ object FunctionDescriptors:
     val LBFGS_STRERROR_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
         ADDRESS.asUnbounded(),
         JAVA_INT
-    )
-    val REDUCED_LBFGS_MAIN_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-        JAVA_INT,
-        JAVA_INT,
-        ADDRESS,
-        ADDRESS
-    )
-    val REDUCED_LBFGS_MAIN2_FUNCTION_DESCRIPTOR: FunctionDescriptor = FunctionDescriptor.of(
-        JAVA_INT,
-        JAVA_INT,
-        ADDRESS,
-        ADDRESS,
-        ADDRESS
     )
 end FunctionDescriptors

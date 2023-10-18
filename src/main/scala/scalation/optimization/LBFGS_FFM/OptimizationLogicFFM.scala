@@ -10,8 +10,10 @@
  *  constrained optimization (L-BFGS-B) algorithm.
  */
 
-// Package.
-package scalation.optimization.L_BFGS_C
+// Package definition.
+package scalation
+package optimization
+package LBFGS_FFM
 
 // General imports.
 import java.lang.foreign.MemorySegment
@@ -21,7 +23,7 @@ import java.lang.foreign.ValueLayout.JAVA_DOUBLE
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `OptimizationLogicWrapper` trait specifies the requirements for the
  *  logic to be used in each step of a L-BFGS variable minimization done by the
- *  `lbfgsMain` method of the [[Wrapper]] object. The methods provided in this
+ *  `lbfgsMain` method of the [[LBFGS_FFM]] object. The methods provided in this
  *  trait are called as a `MethodHandle` by the L-BFGS C library shared object,
  *  such that pointer arguments are declared with the [[MemorySegment]] type.
  *
@@ -30,19 +32,20 @@ import java.lang.foreign.ValueLayout.JAVA_DOUBLE
  *  objective function for a given state of the variables. The progress method
  *  is used to report on how the minimization process is progressing.
  */
-trait OptimizationLogicWrapper:
+trait OptimizationLogicFFM:
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Evaluates the gradients and objective function according to the state of
      *  the variables during the minimization process.
      *
      *  @param instance User data provided by each call of the `lbfgsMain`
-     *                  method of the [[Wrapper]] object. Can have any
+     *                  method of the [[LBFGS_FFM]] object. Can have any
      *                  `MemoryLayout` defined by the user as long as the same
      *                  layout is utilized in the `progress` method
      *                  implementation for the class extending this trait and on
-     *                  the corresponding `lbfgsMain` calls from the [[Wrapper]]
-     *                  object that relies on this `OptimizationLogicWrapper`.
+     *                  the corresponding `lbfgsMain` calls from the
+     *                  [[LBFGS_FFM]] object that relies on this
+     *                  `OptimizationLogicWrapper`.
      *  @param x        Current values of the variables presented in a
      *                  [[MemorySegment]] containing `n` elements with the
      *                  `ValueLayout` of `JAVA_DOUBLE`.
@@ -76,12 +79,13 @@ trait OptimizationLogicWrapper:
      *  line search in this iteration.
      *
      *  @param instance User data provided by each call of the `lbfgsMain`
-     *                  method of the [[Wrapper]] object. Can have any
+     *                  method of the [[LBFGS_FFM]] object. Can have any
      *                  `MemoryLayout` defined by the user as long as the same
      *                  layout is utilized in the `evaluate` method
      *                  implementation for the class extending this trait and on
-     *                  the corresponding `lbfgsMain` calls from the [[Wrapper]]
-     *                  object that relies on this `OptimizationLogicWrapper`.
+     *                  the corresponding `lbfgsMain` calls from the
+     *                  [[LBFGS_FFM]] object that relies on this
+     *                  `OptimizationLogicWrapper`.
      *  @param x        Current values of the variables presented in a
      *                  [[MemorySegment]] containing `n` elements with the
      *                  `ValueLayout` of `JAVA_DOUBLE`.
@@ -122,4 +126,4 @@ trait OptimizationLogicWrapper:
         println(s"xnorm = $xnorm, gnorm = $gnorm, step = $step\n")
 
         0
-end OptimizationLogicWrapper
+end OptimizationLogicFFM

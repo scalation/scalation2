@@ -752,14 +752,4 @@ licence.
   <a href="http://cctbx.sourceforge.net/current_cvs/c_plus_plus/namespacescitbx_1_1lbfgs.html">scitbx::lbfgs</a>.
 */
 
-// Test functions.
-int reduced_lbfgs(int n, lbfgsfloatval_t *x, lbfgsfloatval_t *ptr_fx);
-int reduced_lbfgs2(
-    int n,
-    lbfgsfloatval_t *x,
-    lbfgsfloatval_t *ptr_fx,
-    lbfgs_parameter_t *param
-);
-void sample();
-
 #endif/*__LBFGS_H__*/
