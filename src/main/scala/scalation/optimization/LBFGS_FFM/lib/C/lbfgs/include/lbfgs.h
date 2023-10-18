@@ -262,6 +262,12 @@ typedef struct {
     int             max_linesearch;
 
     /**
+     * The default step of the line search routine.
+     *  The default value is \c 1.0.
+     */
+    lbfgsfloatval_t default_step;
+
+    /**
      * The minimum step of the line search routine.
      *  The default value is \c 1e-20. This value need not be modified unless
      *  the exponents are too large for the machine being used, or unless the

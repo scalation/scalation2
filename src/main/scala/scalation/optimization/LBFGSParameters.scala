@@ -63,6 +63,8 @@ import scala.annotation.static
  *                          Controls the number of function and gradient
  *                          evaluations per iteration for the line search
  *                          routine. The default value is 40.
+ *  @param defaultStep      The default step selected for the line search
+ *                          routine. The default value is 1.0.
  *  @param minStep          Minimum step of the line search routine. Does not
  *                          need to be modified unless the exponents are too
  *                          large for the machine being used, or unless the
@@ -148,6 +150,7 @@ case class LBFGSParameters(
     maxIterations: Int = 0,
     lineSearch: LBFGSLineSearchAlgorithm = LBFGSLineSearchAlgorithm.Default,
     maxLineSearch: Int = 40,
+    defaultStep: Double = 1.0,
     minStep: Double = 1e-20,
     maxStep: Double = 1e20,
     ftol: Double = 1e-4,
@@ -179,15 +182,16 @@ case class LBFGSParameters(
         destination.set(JAVA_INT, 32, maxIterations)
         destination.set(JAVA_INT, 36, lineSearch.number)
         destination.set(JAVA_INT, 40, maxLineSearch)
-        destination.set(JAVA_DOUBLE, 48, minStep)
-        destination.set(JAVA_DOUBLE, 56, maxStep)
-        destination.set(JAVA_DOUBLE, 64, ftol)
-        destination.set(JAVA_DOUBLE, 72, wolfe)
-        destination.set(JAVA_DOUBLE, 80, gtol)
-        destination.set(JAVA_DOUBLE, 88, xtol)
-        destination.set(JAVA_DOUBLE, 96, orthantwiseC)
-        destination.set(JAVA_INT, 104, orthantwiseStart)
-        destination.set(JAVA_INT, 108, orthantwiseEnd)
+        destination.set(JAVA_DOUBLE, 48, defaultStep)
+        destination.set(JAVA_DOUBLE, 56, minStep)
+        destination.set(JAVA_DOUBLE, 64, maxStep)
+        destination.set(JAVA_DOUBLE, 72, ftol)
+        destination.set(JAVA_DOUBLE, 80, wolfe)
+        destination.set(JAVA_DOUBLE, 88, gtol)
+        destination.set(JAVA_DOUBLE, 96, xtol)
+        destination.set(JAVA_DOUBLE, 104, orthantwiseC)
+        destination.set(JAVA_INT, 112, orthantwiseStart)
+        destination.set(JAVA_INT, 116, orthantwiseEnd)
 end LBFGSParameters
 
 // Companion object.
@@ -208,6 +212,7 @@ case object LBFGSParameters:
         JAVA_INT.withName("linesearch"),
         JAVA_INT.withName("max_linesearch"),
         MemoryLayout.paddingLayout(32),
+        JAVA_DOUBLE.withName("default_step"),
         JAVA_DOUBLE.withName("min_step"),
         JAVA_DOUBLE.withName("max_step"),
         JAVA_DOUBLE.withName("ftol"),

@@ -113,7 +113,7 @@ typedef struct tag_iteration_data iteration_data_t;
 static const lbfgs_parameter_t _defparam = {
     6, 1e-5, 0, 1e-5,
     0, LBFGS_LINESEARCH_DEFAULT, 40,
-    1e-20, 1e20, 1e-4, 0.9, 0.9, 1.0e-16,
+    1.0, 1e-20, 1e20, 1e-4, 0.9, 0.9, 1.0e-16,
     0.0, 0, -1,
 };
 
@@ -609,9 +609,9 @@ int lbfgs(
         }
 
         /*
-            Now the search direction d is ready. We try step = 1 first.
+            Now the search direction d is ready. We try the default step first.
          */
-        step = 1.0;
+        step = param.default_step;
     }
 
 lbfgs_exit:

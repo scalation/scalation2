@@ -300,9 +300,9 @@ object LBFGS:
                 //            end if
 
                 /*
-                    Now the search direction d is ready. We try step = 1 first.
+                    Now the search direction d is ready. We try the default step first.
                  */
-                step = 1.0
+                step = params.defaultStep
             end while
 
             LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx))
@@ -375,7 +375,7 @@ end LBFGS
 
 // Test functions.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `boothFunctionNativeTest` main function uses the Booth Function to test
+/** The `boothFunctionLBFGSTest` main function uses the Booth Function to test
  *  the `lbfgsMain` method provided by the [[LBFGS]] object. Multiple tests are
  *  performed with different values for the variables.
  *
@@ -395,7 +395,7 @@ end LBFGS
  *  > runMain scalation.optimization.L_BFGS_C.boothFunctionNativeTest
  *  }}}
  */
-@main def boothFunctionNativeTest(): Unit =
+@main def boothFunctionLBFGSTest(): Unit =
     // Function definitions.
     def objectiveFunction(x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
     def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
@@ -408,4 +408,4 @@ end LBFGS
     println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
-end boothFunctionNativeTest
+end boothFunctionLBFGSTest
