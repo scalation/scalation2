@@ -56,14 +56,14 @@ object LBFGS:
         /* Constant parameters and their default values. */
         val m = params.m
 
-        try {
+        try
             var xp, g, gp, pg, d = new VectorD(n)
             var pf, s, y = VectorD.nullv
             val lm = Array.ofDim[LBFGSIterationData](m)
 
             var ys, yy, xnorm, gnorm, beta, fx, rate = 0.0
 
-            val linesearch: LBFGSLineSearch = LBFGSMoreThuente
+            val linesearch: LBFGSLineSearch = determineLineSearchImplementation(params.lineSearch)
 
             /* Construct a callback data. */
             val cd = LBFGSCallbackData(n, instance, functionLogic)
@@ -302,14 +302,13 @@ object LBFGS:
                 /*
                     Now the search direction d is ready. We try the default step first.
                  */
+                // Previously, the default step was hardcoded to 1.
                 step = params.defaultStep
             end while
 
             LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx))
-        }
-        catch {
+        catch
             case e: OutOfMemoryError => LBFGSResults(LBFGSReturnCode.OutOfMemory, x, None)
-        }
 
     // Private methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -368,9 +367,25 @@ object LBFGS:
 
         None
 
-    private def determineLineSearchAlgorithm(): LBFGSLineSearch =
-        // Placeholder.
-        LBFGSMoreThuente
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Determines what [[LBFGSLineSearch]] implementation to use in the L-BFGS
+     *  optimization.
+     *
+     *  @param selection        [[LBFGSLineSearchAlgorithm]] that describes the
+     *                          user selection for the line search algorithm to
+     *                          be used in the L-BFGS optimization.
+     *  @return LBFGSLineSearch [[LBFGSLineSearch]] implementation of the line
+     *                          search algorithm selected by the user to be
+     *                          used in the L-BFGS optimization.
+     */
+    private def determineLineSearchImplementation(selection: LBFGSLineSearchAlgorithm): LBFGSLineSearch =
+        selection match
+            case LBFGSLineSearchAlgorithm.Default => LBFGSMoreThuente
+            case LBFGSLineSearchAlgorithm.MoreThuente => LBFGSMoreThuente
+            case LBFGSLineSearchAlgorithm.BacktrackingDefault => LBFGSBacktrackingWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingArmijo => LBFGSBacktrackingArmijo
+            case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
 end LBFGS
 
 // Test functions.
