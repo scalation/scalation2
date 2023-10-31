@@ -64,7 +64,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         var stx, fx, dgx = 0.0
         var sty, fy, dgy = 0.0
         var fxm, dgxm, fym, dgym, fm, dgm = 0.0
-        var finit, ftest1, dginit, dgtest = 0.0
+        var ftest1, dginit, dgtest = 0.0
         var width, prev_width = 0.0
         var stmin, stmax = 0.0
 
@@ -85,7 +85,6 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
 
         /* Initialize local variables. */
         stage1 = 1
-        finit = f
         dgtest = params.ftol * dginit
         width = params.maxStep - params.minStep
         prev_width = 2.0 * width
@@ -101,8 +100,8 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         */
         stx = 0.0
         sty = 0.0
-        fx = finit
-        fy = finit
+        fx = f
+        fy = f
         dgx = dginit
         dgy = dginit
 
@@ -144,7 +143,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
 
             dg = gNew dot s
 
-            ftest1 = finit + stpNew * dgtest
+            ftest1 = f + stpNew * dgtest
             count += 1
 
             /* Test for errors and convergence. */

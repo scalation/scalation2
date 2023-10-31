@@ -41,7 +41,7 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
         var count = 0
         var width = 0.0
         var dg = 0.0
-        var finit, dginit = 0.0
+        var dginit = 0.0
         var dgtest = 0.0
         val dec = 0.5
         val inc = 2.1
@@ -65,7 +65,6 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
         end if
     
         /* The initial value of the objective function. */
-        finit = f
         dgtest = params.ftol * dginit
     
         while true do
@@ -78,7 +77,7 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
     
             count += 1
     
-            if fNew > finit + stpNew * dgtest then
+            if fNew > f + stpNew * dgtest then
                 width = dec
             else
                 /* Exit with the Armijo condition. */
