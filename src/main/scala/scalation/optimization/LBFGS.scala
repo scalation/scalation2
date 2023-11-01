@@ -5,7 +5,7 @@
  *  @note    Tue Aug 22 15:39:53 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Native Scala implementation of the Limited memory
+ *  LBFGS Scala implementation of the Limited memory
  *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
  *  (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in 1995. See the
  *  first two links for the original paper and authors' software (written in
@@ -74,7 +74,7 @@ object LBFGS:
             //            pg = (lbfgsfloatval_t *) vecalloc (n * sizeof(lbfgsfloatval_t));
             //            if (pg == NULL) {
             //                ret = LBFGSERR_OUTOFMEMORY;
-            //                goto lbfgs_native_stub_exit;
+            //                goto lbfgs_LBFGS_stub_exit;
             //            }
             //        }
 
@@ -127,7 +127,7 @@ object LBFGS:
 
             if gnorm / xnorm <= params.epsilon then
                 return LBFGSResults(LBFGSReturnCode.AlreadyMinimized, xNew, Some(fx))
-            //            goto lbfgs_native_stub_exit
+            //            goto lbfgs_LBFGS_stub_exit
             end if
 
             /* Compute the initial step:
@@ -163,7 +163,7 @@ object LBFGS:
                 //                veccpy(x, xp, n);
                 //                veccpy(g, gp, n);
                 //                ret = ls;
-                //                goto lbfgs_native_stub_exit;
+                //                goto lbfgs_LBFGS_stub_exit;
                 //            }
                 //            end if
 
@@ -407,7 +407,7 @@ end LBFGS
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
- *  > runMain scalation.optimization.L_BFGS_C.boothFunctionNativeTest
+ *  > runMain scalation.optimization.L_BFGS_C.boothFunctionLBFGSTest
  *  }}}
  */
 @main def boothFunctionLBFGSTest(): Unit =
@@ -424,3 +424,117 @@ end LBFGS
     println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
 end boothFunctionLBFGSTest
+
+@main def bealeFunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (1.5 - x(0) + x(0) * x(1)) * (-1 + x(1)) +
+      2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (-1 + (x(1)~^2)) +
+      2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (-1 + (x(1)~^3)),
+        2 * (1.5 - x(0) + x(0) * x(1)) * x(0) +
+          2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (2 * x(0) * x(1)) +
+          2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (3 * x(0) * (x(1)~^2)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-4.5, -4.5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-2, 2), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(0, 1), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(2, -2), functionOptimizationLogic))
+end bealeFunctionLBFGSTest
+
+@main def bohachevsky1FunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) - 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)),
+        4 * x(1) - 0.4 * 4 * math.Pi * math.sin(4 * math.Pi * x(1)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end bohachevsky1FunctionLBFGSTest
+
+@main def bohachevsky2FunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
+        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end bohachevsky2FunctionLBFGSTest
+
+@main def bohachevsky3FunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)),
+        4 * x(1) + 0.3 * 4 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end bohachevsky3FunctionLBFGSTest
+
+@main def camel3FunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+    def gradientFunction(x: VectorD): VectorD = VectorD(4 * x(0) - 4.2 * x(0)~^3 + x(0)~^5 + x(1), x(0) + 2 * x(1))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end camel3FunctionLBFGSTest
+
+@main def cubeFunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+    def gradientFunction(x: VectorD): VectorD = VectorD(-200 * (x(1) - x(0)~^3) * (3 * x(0)~^2) - 2 * (1 - x(0)), 200 * (x(1) - x(0)~^3))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end cubeFunctionLBFGSTest
+
+@main def freudensteinRothFunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) + 2 * (x(0) - 29 + x(1) * ((x(1) + 1) * x(1) - 14)),
+        2 * x(1) * ((5 - x(1)) * x(1) - 2) + 2 * (x(1) * ((x(1) + 1) * x(1) - 14) + (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) * ((5 - x(1)) * x(1) - 2)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
+    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
+end freudensteinRothFunctionLBFGSTest
