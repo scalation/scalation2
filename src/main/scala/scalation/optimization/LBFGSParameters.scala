@@ -105,42 +105,18 @@ import scala.annotation.static
  *                          [[LBFGSReturnCode.RoundingError]] if the relative
  *                          width of the interval of uncertainty is less than
  *                          this parameter. The default value is 1.0e-16.
- *  @param orthantwiseC     Coefficient for the L1 norm of variables. Should be
- *                          set to zero for standard minimization problems.
- *                          Setting it to a positive value activates the
- *                          Orthant-Wise Limited-memory Quasi-Newton (OWL-QN)
- *                          method, which minimizes the objective function F(x)
- *                          combined with the L1 norm |x| of the variables:
- *                          F(x) + C|x|. This parameter is the coefficient ''C''
- *                          for the |x| term. As the L1 norm |x| is not
- *                          differentiable at zero, the library modifies
- *                          function and gradient evaluations from a client
- *                          program suitably. Thus, a client program only has to
- *                          return the function value F(x) and gradients G(x) as
- *                          usual. The default value is 0.
- *  @param orthantwiseStart Start index for computing L1 norm of the variables.
- *                          Only used for the OWL-QN method (i.e.: when
- *                          `orthantwiseC` != 0). This parameter, which we shall
- *                          henceforth call ''b'', must be selected such that
- *                          0 &le; ''b'' &lt; N. It specifies the index number
- *                          from which the L1 norm of the variables `x` will be
- *                          computed:
- *                          |x| = |x,,''b'',,| + |x,,''b''+1,,| + ... +
- *                          |x,,N,,|.
- *                          In other words, variables x,,1,,, ...,
- *                          x,,''b''-1,, are not used for computing the L1
- *                          norm. Setting ''b'' to a non-zero value can
- *                          protect variables x,,1,,, ..., x,,''b''-1,, from
- *                          being regularized (e.g.: if they represent a
- *                          bias term of logistic regression). The default
- *                          value is 0.
- *  @param orthantwiseEnd   End index for computing L1 norm of the variables.
- *                          Only used for the OWL-QN method (i.e.: when
- *                          `orthantwiseC` != 0). This parameter, which we shall
- *                          henceforth call ''e'', must be selected such that
- *                          0 &lt; ''e'' &le; N. It specifies the index number
- *                          at which the library stops computing the L1 norm of
- *                          the variables `x`.
+ *  @param orthantWise      [[Option]] of type [[OrthantWiseParameters]] that
+ *                          specifies whether the Orthant-Wise Limited-memory
+ *                          Quasi-Newton (OWL-QN) optimization method should be
+ *                          used when calculating the value to be optimized. If
+ *                          this parameter is set to `Some`, then the
+ *                          `lineSearch` parameter should always be set to
+ *                          [[LBFGSLineSearchAlgorithm.BacktrackingOrthantWise]]
+ *                          or the optimization will terminate with the return
+ *                          code [[LBFGSReturnCode.InvalidLineSearch]]. The same
+ *                          will occur when the `lineSearch` parameter is set to
+ *                          [[LBFGSLineSearchAlgorithm.BacktrackingOrthantWise]]
+ *                          and this parameter is set to `None`.
  */
 case class LBFGSParameters(
     m: Int = 6,
@@ -157,9 +133,7 @@ case class LBFGSParameters(
     wolfe: Double = 0.9,
     gtol: Double = 0.9,
     xtol: Double = 1.0e-16,
-    orthantwiseC: Double = 0.0,
-    orthantwiseStart: Int = 0,
-    var orthantwiseEnd: Int = -1
+    orthantWise: Option[OrthantWiseParameters] = None
 ):
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -175,6 +149,8 @@ case class LBFGSParameters(
      *                      [[MemoryLayout]].
      */
     def copyToMemorySegment(destination: MemorySegment): Unit =
+        val orthantWiseParams = orthantWise.getOrElse(OrthantWiseParameters(0, 0, Some(-1)))
+
         destination.set(JAVA_INT, 0, m)
         destination.set(JAVA_DOUBLE, 8, epsilon)
         destination.set(JAVA_INT, 16, past)
@@ -189,9 +165,9 @@ case class LBFGSParameters(
         destination.set(JAVA_DOUBLE, 80, wolfe)
         destination.set(JAVA_DOUBLE, 88, gtol)
         destination.set(JAVA_DOUBLE, 96, xtol)
-        destination.set(JAVA_DOUBLE, 104, orthantwiseC)
-        destination.set(JAVA_INT, 112, orthantwiseStart)
-        destination.set(JAVA_INT, 116, orthantwiseEnd)
+        destination.set(JAVA_DOUBLE, 104, orthantWiseParams.c)
+        destination.set(JAVA_INT, 112, orthantWiseParams.start)
+        destination.set(JAVA_INT, 116, orthantWiseParams.end.getOrElse(-1))
 end LBFGSParameters
 
 // Companion object.

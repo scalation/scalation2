@@ -34,19 +34,18 @@ object LBFGS:
      *  function value.
      */
     def lbfgsMain(
-         n: Int,
-         x: VectorD,
-         functionLogic: EvaluationLogic | OptimizationLogic,
-         params: LBFGSParameters = LBFGSParameters(),
-         instance: Any = None
+        n: Int,
+        x: VectorD,
+        functionLogic: EvaluationLogic | OptimizationLogic,
+        params: LBFGSParameters = LBFGSParameters(),
+        instance: Any = None
     ): LBFGSResults =
         checkLBFGSArgumentsForErrors(n, params) match
             case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
             case _ =>
 
-        adjustLBFGSArguments(n, params)
-
         var xNew: VectorD = x
+        var lineSearchResults: LBFGSLineSearchReturn = null
 
         var k = 1
         var end = 0
@@ -57,8 +56,8 @@ object LBFGS:
         val m = params.m
 
         try
-            var xp, g, gp, pg, d = new VectorD(n)
-            var pf, s, y = VectorD.nullv
+            var xp, g, gp, d = new VectorD(n)
+            var pg, pf, s, y = VectorD.nullv
             val lm = Array.ofDim[LBFGSIterationData](m)
 
             var ys, yy, xnorm, gnorm, beta, fx, rate = 0.0
@@ -69,14 +68,10 @@ object LBFGS:
             val cd = LBFGSCallbackData(n, instance, functionLogic)
 
             /* Allocate working space. */
-            //        if (param.orthantwise_c != 0.) {
-            //            /* Allocate working space for OW-LQN. */
-            //            pg = (lbfgsfloatval_t *) vecalloc (n * sizeof(lbfgsfloatval_t));
-            //            if (pg == NULL) {
-            //                ret = LBFGSERR_OUTOFMEMORY;
-            //                goto lbfgs_LBFGS_stub_exit;
-            //            }
-            //        }
+            if params.orthantWise.nonEmpty then
+            /* Allocate working space for OW-LQN. */
+                pg = new VectorD(n)
+            end if
 
             /* Allocate an array for storing previous values of the objective function.
              */
@@ -87,14 +82,15 @@ object LBFGS:
             fx = evaluationResults.objectiveFunctionValue
             g = evaluationResults.gradientVector
 
-            //        if (0. != params.orthantwise_c) {
-            //            /* Compute the L1 norm of the variable and add it to the object value.
-            //             */
-            //            xnorm = owlqn_x1norm(x, param.orthantwise_start, param.orthantwise_end);
-            //            fx += xnorm * param.orthantwise_c;
-            //            owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c,
-            //                param.orthantwise_start, param.orthantwise_end);
-            //        }
+            if params.orthantWise.nonEmpty then
+                /* Compute the L1 norm of the variable and add it to the object value.
+                 */
+                val orthantWiseParams = params.orthantWise.get
+                xnorm = orthantWiseParams.x1Norm(x)
+                fx += xnorm * orthantWiseParams.c
+                pg = orthantWiseParams.pseudoGradient(x, g)
+            end if
+
 
             /* Store the initial value of the objective function. */
             if pf != VectorD.nullv then pf(0) = fx
@@ -103,31 +99,28 @@ object LBFGS:
                 Compute the direction;
                 we assume the initial hessian matrix H_0 as the identity matrix.
              */
-            d = -g
-
-//            if params.orthantwiseC == 0 then
-//                d = -g
-//            else
-//                d = -pg
-//            end if
+            if params.orthantWise.isEmpty then
+                d = -g
+            else
+                d = -pg
+            end if
 
             /*
                Make sure that the initial variables are not a minimizer.
              */
             xnorm = x.norm
-            gnorm = g.norm
 
-            //        if (param.orthantwise_c == 0.) {
-            //            vec2norm(& gnorm, g, n);
-            //        } else {
-            //            vec2norm(& gnorm, pg, n);
-            //        }
+            if params.orthantWise.isEmpty then
+                gnorm = g.norm
+            else
+                gnorm = pg.norm
+            end if
+
 
             if xnorm < 1.0 then xnorm = 1.0
 
             if gnorm / xnorm <= params.epsilon then
                 return LBFGSResults(LBFGSReturnCode.AlreadyMinimized, xNew, Some(fx))
-            //            goto lbfgs_LBFGS_stub_exit
             end if
 
             /* Compute the initial step:
@@ -141,7 +134,13 @@ object LBFGS:
                 gp = g
 
                 /* Search for an optimal step. */
-                linesearch.lineSearch(n, xNew, fx, g, d, step, cd, params) match
+                if params.orthantWise.isEmpty then
+                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, g, d, step, cd, params)
+                else
+                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, pg, d, step, cd, params)
+                end if
+
+                lineSearchResults match
                     case lineSearchStep: LBFGSLineSearchStep =>
                         xNew = lineSearchStep.x
                         g = lineSearchStep.g
@@ -149,34 +148,22 @@ object LBFGS:
                         step = lineSearchStep.step
                         ls = lineSearchStep.numberOfIterations
                     case returnCode: LBFGSReturnCode =>
+                        /* Return with the value of the previous point. */
                         return LBFGSResults(returnCode, xp, Some(fx))
 
-                //            if params.orthantwiseC == 0 then
-                //                ls = linesearch.lineSearch(n, x, & fx, g, d, & step, xp, gp, w, & cd, & param);
-                //            else
-                //                ls = linesearch.lineSearch(n, x, & fx, g, d, & step, xp, pg, w, & cd, & param);
-                //                owlqn_pseudo_gradient(pg, x, g, n, param.orthantwise_c,
-                //                    param.orthantwise_start,
-                //                    param.orthantwise_end);
-                //            if (ls < 0) {
-                //                /* Revert to the previous point. */
-                //                veccpy(x, xp, n);
-                //                veccpy(g, gp, n);
-                //                ret = ls;
-                //                goto lbfgs_LBFGS_stub_exit;
-                //            }
-                //            end if
+                if params.orthantWise.isDefined then
+                    val orthantWiseParams = params.orthantWise.get
+                    pg = orthantWiseParams.pseudoGradient(xNew, g)
+                end if
 
                 /* Compute x and g norms. */
                 xnorm = xNew.norm
-                gnorm = g.norm
 
-//                if params.orthantwiseC == 0 then
-//                    gnorm = g.norm
-//                else
-//                    gnorm = pg.norm
-//                end if
-//
+                if params.orthantWise.isEmpty then
+                    gnorm = g.norm
+                else
+                    gnorm = pg.norm
+                end if
 
                 /* Report the progress. */
                 functionLogic match
@@ -254,14 +241,12 @@ object LBFGS:
                 end = (end + 1) % m
 
                 /* Compute the steepest direction. */
-                d = -g
-
-//                if params.orthantwiseC == 0 then
-//                /* Compute the negative of gradients. */
-//                    d = -g
-//                else
-//                    d = -pg
-//                end if
+                if params.orthantWise.isEmpty then
+                /* Compute the negative of gradients. */
+                    d = -g
+                else
+                    d = -pg
+                end if
 
                 j = end
                 for i <- 0 until bound do
@@ -291,13 +276,14 @@ object LBFGS:
                 /*
                     Constrain the search direction for orthant-wise updates.
                  */
-                //            if params.orthantwiseC != 0 then
-                //                for (i = param.orthantwise_start; i < param.orthantwise_end; ++ i) {
-                //                    if (d[i] * pg[i] >= 0) {
-                //                        d[i] = 0;
-                //                    }
-                //                }
-                //            end if
+                if params.orthantWise.nonEmpty then
+                    val orthantWiseParams = params.orthantWise.get
+                    for i <- orthantWiseParams.start until orthantWiseParams.end.getOrElse(d.length) do
+                        if d(i) * pg(i) >= 0 then
+                            d(i) = 0
+                        end if
+                    end for
+                end if
 
                 /*
                     Now the search direction d is ready. We try the default step first.
@@ -311,17 +297,6 @@ object LBFGS:
             case e: OutOfMemoryError => LBFGSResults(LBFGSReturnCode.OutOfMemory, x, None)
 
     // Private methods.
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Adjusts the L-BFGS optimization arguments so that the L-BFGS
-     *  optimization will work correctly.
-     *
-     *  @param n        The number of variables.
-     *  @param params   [[LBFGSParameters]] class representing the parameters
-     *                  chosen to control the L-BFGS optimization.
-     */
-    private def adjustLBFGSArguments(n: Int, params: LBFGSParameters): Unit =
-        if params.orthantwiseEnd < 0 then params.orthantwiseEnd = n
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Checks if the L-BFGS optimization arguments have an error and returns an
      *  [[Option]] with the [[LBFGSReturnCode]] that represents the first error
@@ -353,15 +328,22 @@ object LBFGS:
         if params.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
         if params.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
         if params.maxLineSearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
-        if params.orthantwiseC < 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
-        if params.orthantwiseStart < 0 || n < params.orthantwiseStart then
-            return Some(LBFGSReturnCode.InvalidOrthantwiseStart)
-        end if
-        if n < params.orthantwiseEnd then return Some(LBFGSReturnCode.InvalidOrthantwiseEnd)
-        if params.orthantwiseC != 0.0 &&
-            params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingDefault &&
-            params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingWolfe
-        then
+        if params.orthantWise.nonEmpty then
+            val orthantWiseParams = params.orthantWise.get
+            if orthantWiseParams.c <= 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
+            if orthantWiseParams.start < 0 || n <= orthantWiseParams.start then
+                return Some(LBFGSReturnCode.InvalidOrthantwiseStart)
+            end if
+            if orthantWiseParams.end.isDefined then
+                val orthantWiseParamsEnd = orthantWiseParams.end.get
+                if orthantWiseParamsEnd <= orthantWiseParams.start || n < orthantWiseParamsEnd then
+                    return Some(LBFGSReturnCode.InvalidOrthantwiseEnd)
+                end if
+            end if
+            if params.lineSearch != LBFGSLineSearchAlgorithm.BacktrackingOrthantWise then
+                return Some(LBFGSReturnCode.InvalidLineSearch)
+            end if
+        else if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingOrthantWise then
             return Some(LBFGSReturnCode.InvalidLineSearch)
         end if
 
@@ -386,6 +368,7 @@ object LBFGS:
             case LBFGSLineSearchAlgorithm.BacktrackingArmijo => LBFGSBacktrackingArmijo
             case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
             case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
 end LBFGS
 
 // Test functions.

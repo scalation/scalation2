@@ -18,6 +18,19 @@ package optimization
 // Project imports.
 import scalation.mathstat.VectorD
 
+// Type declarations.
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `LBFGSLineSearchReturn` type is a union type representing the return
+ * value for the [[lineSearch]] method of line search algorithms used by
+ * the native implementation of the L-BFGS algorithm.
+ *
+ * A successful execution should return [[LBFGSLineSearchStep]], while an
+ * execution with errors should return a [[LBFGSReturnCode]] error code.
+ * Returning a [[LBFGSReturnCode]] success code triggers undefined
+ * behavior.
+ */
+type LBFGSLineSearchReturn = LBFGSLineSearchStep | LBFGSReturnCode
+
 // Trait.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `LBFGSLineSearch` trait specifies the requirements for a line search
@@ -28,19 +41,6 @@ import scalation.mathstat.VectorD
  *  line, to be taken to minimize an objective function value.
  */
 trait LBFGSLineSearch:
-    // Type declarations.
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** The `LBFGSLineSearchReturn` type is a union type representing the return
-     *  value for the [[lineSearch]] method of line search algorithms used by
-     *  the native implementation of the L-BFGS algorithm.
-     *
-     *  A successful execution should return [[LBFGSLineSearchStep]], while an
-     *  execution with errors should return a [[LBFGSReturnCode]] error code.
-     *  Returning a [[LBFGSReturnCode]] success code triggers undefined
-     *  behavior.
-     */
-    type LBFGSLineSearchReturn = LBFGSLineSearchStep | LBFGSReturnCode
-
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Searches for an optimal step to take along a given line in order to

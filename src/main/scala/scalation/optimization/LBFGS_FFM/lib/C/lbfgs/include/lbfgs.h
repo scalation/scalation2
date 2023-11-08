@@ -188,6 +188,8 @@ enum {
      *  a is the step length.
      */
     LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE = 3,
+    /** Backtracking method with Orthant-Wise. */
+    LBFGS_LINESEARCH_BACKTRACKING_ORTHANTWISE = 4,
 };
 
 /**

@@ -65,4 +65,6 @@ enum LBFGSLineSearchAlgorithm(val number: Int = 0):
      *  and ''a'' is the step length.
      */
     case BacktrackingStrongWolfe extends LBFGSLineSearchAlgorithm(3)
+    /** Backtracking method with Orthant-Wise. */
+    case BacktrackingOrthantWise extends LBFGSLineSearchAlgorithm(4)
 end LBFGSLineSearchAlgorithm
