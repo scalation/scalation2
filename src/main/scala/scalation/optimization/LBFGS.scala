@@ -24,10 +24,11 @@ package optimization
 import scala.math.abs
 
 // Project imports.
+import scalation.mathstat.PlotC
 import scalation.mathstat.VectorD
 
 // Object.
-object LBFGS:
+object LBFGS extends PathMonitor:
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Performs the L-BFGS optimization that optimizes variables to minimize a
@@ -40,11 +41,15 @@ object LBFGS:
         params: LBFGSParameters = LBFGSParameters(),
         instance: Any = None
     ): LBFGSResults =
+        clearPath()
+
         checkLBFGSArgumentsForErrors(n, params) match
             case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
             case _ =>
 
         var xNew: VectorD = x
+        add2Path(x)
+
         var lineSearchResults: LBFGSLineSearchReturn = null
 
         var k = 1
@@ -147,6 +152,7 @@ object LBFGS:
                         fx = lineSearchStep.fx
                         step = lineSearchStep.step
                         ls = lineSearchStep.numberOfIterations
+                        add2Path(xNew)
                     case returnCode: LBFGSReturnCode =>
                         /* Return with the value of the previous point. */
                         return LBFGSResults(returnCode, xp, Some(fx))
@@ -399,13 +405,18 @@ end LBFGS
     def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
 
     // Variable declaration.
+    val functionDomainLowerBound = VectorD(-10, -10)
+    val functionDomainUpperBound = VectorD(10, 10)
+    val functionMinimum = VectorD(1, 3)
     val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
 
     // Testing.
-    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
+//    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
+//    println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
+//    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
+    
+    new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
 end boothFunctionLBFGSTest
 
 @main def bealeFunctionLBFGSTest(): Unit =
