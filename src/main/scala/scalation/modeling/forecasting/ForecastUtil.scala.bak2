@@ -94,48 +94,10 @@ end buildMatrix4TS_exo
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Build a 3D tensor that collects and (lag) expands the endogenous variable and all
- *  exogenous variables into the form 'time x lags x variables' --> INPUT TENSOR.
- *  Lags for endogenous variable:  1, 2, ... lags
- *  Lags for exogenous variables:  el, el+1, ... el-1+lags 
- *  For models like SARIMAX with weekly data, exo variables are not forecasted, so it
- *  is not possible to use exogenous lag 1 to make week-two forecasts.
- *  Also build a matrix of target values for each forecasting horizon --> OUTPUT MATRIX.
- *  The number of rows m = y.dim - el, as forecasts cannot be made unless there is at
- *  least one endogenous and one exogenous lag (past value) available to the model.
- *  Model: yy_hat = f(xx) with loss function, e.g., || yy - yy_hat ||_F
- *  NOTE: for models not taking tensor input, flatten into a matrix.
- *  @param y     the endogenous variable vector over time (e.g., new_deaths)
- *  @param ex    the exogenous variable matrix over time x exo_vars (e.g., icu_patients, hosp_patient)
- *  @param lags  the maximum lag included (inclusive)
- *  @param h     the forecasting horizon (1, 2, ... h)
- *  @param el    the first exogenous lag (may be larger than 1)
- */
-def buildTensor4TS (y: VectorD, ex: MatrixD, lags: Int, h: Int = 1)(el: Int = h): (TensorD, MatrixD) =
-    val flaw = flawf ("top")
-    if y.dim != ex.dim then
-        flaw ("buildTensor4TS", s"endo and exo variable sizes do not match: y.dim = ${y.dim} != ex.dim = ${ex.dim}")
-    val m = y.dim - el                                                     // number of rows
-
-    val xx = new TensorD (m, lags, 1 + ex.dim2)                            // input tensor from endo and exo vars
-    for i <- xx.indices; j <- xx.indices2; k <- xx.indices3 do             // time x lags x variables
-        xx(i, j, k) = if k == 0 then y(max(i - el - j, 0))
-                      else ex(max(i - el - j, 0), k-1)
-
-    val yy = new MatrixD (m, h)                                            // output matrix from endo vars
-    for i <- yy.indices; j <- yy.indices2 do                               // time x horizons
-        yy(i, j) = y(max(i - el - j, 0))
-
-    println (s"buildTensor4TS: xx.dims = ${xx.dims}, yy.dims = ${yy.dims}")
-    (xx, yy)                                                               // tuple of (input tensor, output matrix)
-end buildTensor4TS
-
-
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Test the actual response vector vs. forecasted matrix, returning the QoF
  *  for all forecasting horizons 1 to h.
  *  @param mod  the fittable model (one that extends `Fit`)
- *  @param y    the original actual response vector
+ *  @param y    the orginal actual response vector
  *  @param yf   the forecasted response matrix
  *  @param p    the number of variables/lags used in the model
  */

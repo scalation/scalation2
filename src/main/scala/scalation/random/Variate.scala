@@ -1148,7 +1148,7 @@ end RandiU0
  *  @param x       the value for this constant distribution
  *  @param stream  the random number stream
  */
-case class Sharp (x: Double = 1, stream: Int = 0)
+case class Sharp (x: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
     _discrete = true

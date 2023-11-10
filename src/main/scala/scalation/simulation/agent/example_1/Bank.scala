@@ -13,7 +13,7 @@ package simulation.agent
 package example_1                                     // One-Shot
 
 import scalation.mathstat.VectorD
-import scalation.random.{Exponential, Uniform}
+import scalation.random.{Exponential, Sharp, Uniform}
 import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -52,7 +52,6 @@ class BankModel (name: String = "Bank", reps: Int = 1, startSim: Double = 0.0,
     val iArrivalRV = Exponential (HOUR / lambda, stream)
     val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
     val moveRV     = Uniform (4 * MINUTE, 6 * MINUTE, (stream + 2) % N_STREAMS)
-    val jumpRV     = Uniform (0.4 * MINUTE, 0.6 * MINUTE, (stream + 3) % N_STREAMS)
 
     //--------------------------------------------------
     // Create the Graph Model: Vertices and Edges
@@ -65,7 +64,7 @@ class BankModel (name: String = "Bank", reps: Int = 1, startSim: Double = 0.0,
     val teller    = Resource ("teller", this, serviceRV, nTellers, pos = Resource.at (380, 285))
     val door      = Sink ("door", this, pos = Sink.at (600, 290))
     val toTellerQ = Transport ("toTellerQ", this, entry.vert, tellerQ, moveRV)
-    val toTeller  = Link ("to", this, tellerQ, teller, jumpRV)
+    val toTeller  = Link ("to", this, tellerQ, teller, Sharp (0.0))
     val toDoor    = Transport ("toDoor", this, teller, door, moveRV)
 
     //--------------------------------------------------

@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller
+/** @author  John Miller, Yousef Fekri Dabanloo
  *  @version 2.0
  *  @date    Mon Sep  4 13:09:52 EDT 2023
  *  @see     LICENSE (MIT style license file).
@@ -8,6 +8,7 @@
  *  @title   Model Framework: Context and Attention for Transformers
  *
  *  @see https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html
+ *  @see https://arxiv.org/pdf/1706.03762.pdf (main paper)
  */
 
 package scalation
@@ -17,41 +18,111 @@ package forecasting
 import scala.math.sqrt
 
 import scalation.mathstat._
-import scalation.random.RandomMatD
+import scalation.random.{RandomMatD, RandomTenD}
 
 import ActivationFun.f_softmax
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Compute the Context Vector.
- *  @param q_t  the query vector at time t (based on input vector x_t)
- *  @param k    the key matrix
- *  @param v    the value matrix
+/** The `Attention` trait provides methods for computing context vectors, single-head
+ *  attention matrices and multi-head attention matrices.
+ *  @param n_var  the size of the input vector x_t (number of variables)
+ *  @param n_mod  the size of the output (dimensionality of the model, d_model)
+ *  @param heads  the number of attention heads
+ *  @param n_v    the size of the value vectors
  */
-def context (q_t: VectorD, k: MatrixD, v: MatrixD): VectorD =
-    val root_n = sqrt (q_t.dim)
-    f_softmax.f_ (k * (q_t / root_n)) *: v
-end context
+trait Attention (n_var: Int, n_mod: Int = 512, heads: Int = 8, n_v: Int = -1):
+
+    private val debug = debugf ("Attention", true)                       // debug function
+
+    val n_k = n_mod / heads                                              // size per head (dimensionality d_k, d_v)
+    debug ("init", s"n_k = $n_k")
+
+    val n_val = if n_v > 0 then n_v else n_k
+    val rmg   = RandomMatD (n_mod, n_var, 1)                             // random (0, 1) matrix generator for q, k
+    val rmg_v = RandomMatD (heads*n_val, n_var, 1)                       // random (0, 1) matrix generator for v
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the Query, Key, Value matrices from the given input and weight matrices.
+     *  @param x    the input matrix
+     *  @param w_q  the weight matrix for query Q
+     *  @param w_v  the weight matrix for key K
+     *  @param w_v  the weight matrix for value V
+     */
+    def queryKeyValue (x: MatrixD, w_q: MatrixD, w_k: MatrixD, w_v: MatrixD): (MatrixD, MatrixD, MatrixD) =
+        (x * w_q.transpose, x * w_k.transpose, x * w_v.transpose)
+    end queryKeyValue
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute a Context Vector from the given query at time t (q_t), key (K) and value (V).
+     *  @param q_t  the query vector at time t (based on input vector x_t)
+     *  @param k    the key matrix K
+     *  @param v    the value matrix V
+     */
+    def context (q_t: VectorD, k: MatrixD, v: MatrixD): VectorD =
+        val root_n = sqrt (q_t.dim)
+        val kq_t_root = k * (q_t / root_n)
+        val cxt = v.transpose * f_softmax.f_ (kq_t_root)
+        debug ("context", s"q_t.dim: ${q_t.dim}, k.dims: ${k.dims}, v.dims: ${v.dims}, cxt.dims: ${cxt.dim}")
+        cxt
+    end context
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute a Self-Attention Weight Matrix from the given query (Q), key (K) and value (V).
+     *  @param q  the query matrix Q (q_t over all time)
+     *  @param k  the key matrix K
+     *  @param v  the value matrix V
+     */
+    def attention (q: MatrixD, k: MatrixD, v: MatrixD): MatrixD =
+        val root_n = sqrt (q.dim2)
+        val qkT_root = q * (k.transpose / root_n)
+        val attention_weights = f_softmax.fM (qkT_root)
+        attention_weights * v
+    end attention
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute a Multi-Head, Self-Attention Weight Matrix by taking attention for each head
+     *  and concatenating them; finally multiplying by the overall weight matrix w_o.
+     *  The operator ++^ concatenates matrices column-wise.
+     *  @param q    the query matrix Q (q_t over all time)
+     *  @param k    the key matrix K
+     *  @param v    the value matrix V
+     *  @param w_q  the weight tensor for query Q (w_q(i) matrix for i-th head)
+     *  @param w_v  the weight tensor for key K (w_k(i) matrix for i-th head)
+     *  @param w_v  the weight tensor for value V (w_v(i) matrix for i-th head)
+     *  @param w_o  the overall weight matrix to be applied to concatenated attention
+     */
+    def attentionMH (q: MatrixD, k: MatrixD, v: MatrixD,
+                     w_q: TensorD, w_k: TensorD, w_v: TensorD,
+                     w_o: MatrixD): MatrixD =
+        // x: (6, 16) * w_q: (72, 16) --> q=x.w_q.T : (6, 72)
+        // q: (6, 72) * wt_q: (72, 72) = q.wt_q: (6, 72)   --> split head: (3, 6, 24)
+        // then go to Scaled-dot (3, 6, 24) --> combine head: (6, 72) * w_o: (72, 72)
+        // aw: (6, 72)
+
+        debug ("attentionMH", s"q.dims = ${q.dims}, k.dims: ${k.dims}, v.dims: ${v.dims}")
+        debug ("attentionMH", s"w_q.dims = ${w_q.dims}, w_k.dims = ${w_k.dims}, w_v.dims = ${w_v.dims}")
+        debug ("attensionMH", "w_o.dims = ${w_o.dims}")
+
+        println (s"(q * w_q(0)).dims: ${(q * w_q(0)).dims}")
+        println (s"(k * w_k(0)).dims: ${(k * w_k(0)).dims}")
+        println (s"(v * w_v(0)).dims: ${(v * w_v(0)).dims}")
+
+        var att = attention (q * w_q(0), k * w_k(0), v * w_v(0))
+        for i <- 1 until heads do
+            att = att ++^ attention (q * w_q(i), k * w_k(i), v * w_v(i))
+        debug ("attentionMH", s"att = $att")
+        att * w_o
+    end attentionMH
+
+end Attention
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Compute Self-Attention Weight Matrix.
- *  @param q  the query matrix (q_t over all time)
- *  @param k  the key matrix
- *  @param v  the value matrix
- */
-def attention (q: MatrixD, k: MatrixD, v: MatrixD): MatrixD =
-    val root_n = sqrt (q.dim2)
-    f_softmax.fM (q * (k.transpose / root_n)) * v
-end attention
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `attentionTest` function tests the `context` and `attention` top-level functions.
- *  Input matrix taking from:
+/** The `Attention` object contains sample a input matrix from
  *  @see https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html
- *  > runMain scalation.modeling.forecasting.attentionTest
+ *  The example is from 6 words with 16 dimensional encoding.
  */
-@main def attentionTest (): Unit =
+object Attention:
 
     val x = MatrixD ((6, 16), 0.3374, -0.1778, -0.3035, -0.5880,  0.3486,  0.6603, -0.2196, -0.3792,    // row 0
                               0.7671, -1.1925,  0.6984, -1.4097,  0.1794,  1.8951,  0.4954,  0.2692,
@@ -73,21 +144,28 @@ end attention
 
     val m   = x.dim                                                       // number of time points
     val n   = x.dim2                                                      // size of input x_t
-    val n_v = x.dim2                                                      // number of variables
-    val n_k = 24                                                          // size of each query/key vector (q_t, k_t)
-    val n_u = 24                                                          // number of units (size of context vector)
-//  val n_u = 28                                                          // number of units (size of context vector) - FIX only runs if n_u = n_k
+    println (s"m = $m, n= $n")
+end Attention
 
-    val rmg1 = RandomMatD (n_k, n, 1)                                     // random (0, 1) matrix generator 1 for q and k
-    val rmg2 = RandomMatD (n_u, n, 1)                                     // random (0, 1) matrix generator 2 for v
+import Attention._
 
-    val w_q = rmg1.gen                                                    // query weight matrix
-    val w_k = rmg1.gen                                                    // key weight matrix
-    val w_v = rmg2.gen                                                    // value weight matrix
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `attentionTest` main function tests the `context` and `attention` top-level functions.
+ *  Test Self-Attention.
+ *  > runMain scalation.modeling.forecasting.attentionTest
+ */
+@main def attentionTest (): Unit =
 
-    val q = w_q * x.transpose                                             // query matrix
-    val k = w_k * x.transpose                                             // key matrix
-    val v = w_v * x.transpose                                             // value matrix
+    val n_var = x.dim2                                                    // number of variables in input vector x_t
+    val n_mod = 24                                                        // size of each query/key vector (q_t, k_t)
+    val n_val = 28                                                        // size of the value vector v_t
+    val heads = 1                                                         // number of attention heads
+    object att extends Attention (n_var, n_mod, heads, n_val)
+
+    val w_q = att.rmg.gen
+    val w_k = att.rmg.gen
+    val w_v = att.rmg_v.gen
+    val (q, k, v) = att.queryKeyValue (x, w_q, w_k, w_v)
 
     banner ("Dimensions for input x, query q, key k, value v")
     println (s"x.dims = ${x.dims}")
@@ -96,17 +174,219 @@ end attention
     println (s"v.dims = ${v.dims}")
 
     banner ("Attention Matrix")
-    val att = attention (q, k, v)
-    println (s"att.dims = ${att.dims}")
-    println (s"att      = $att")
+    val aw = att.attention (q, k, v)
+    println (s"aw.dims = ${aw.dims}")
+    println (s"aw      = $aw")
 
     banner ("Context Vectors Collected into Matrix")
-    val cxt = new MatrixD (att.dim, att.dim2)
+    val cxt = new MatrixD (aw.dim, aw.dim2)
     println (s"cxt.dims = ${cxt.dims}")
-    for i <- q.indices do cxt(i) = context (q(i), k, v)
+    for i <- q.indices do cxt(i) = att.context (q(i), k, v)
     println (s"cxt      = $cxt")
-
-    assert (cxt =~ att)
+    assert (cxt =~ aw)
+    println ("succeed")
   
 end attentionTest
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `attentionTest2` main function tests the `attentionMH` top-level function.
+ *  Test Multi-Head, Self-Attention.
+ *  > runMain scalation.modeling.forecasting.attentionTest2
+ */
+@main def attentionTest2 (): Unit =
+
+    val n_var = x.dim2                                                    // number of variables in input vector x_t
+    println (s"n_var = $n_var")
+    val n_mod = 72                                                        // size of each query/key vector (q_t, k_t, v_t)
+    val heads = 3                                                         // number of attention heads
+    val n_val = 28
+    object att extends Attention (n_var, n_mod, heads, n_val)
+
+    val w_q = att.rmg.gen
+    val w_k = att.rmg.gen
+    val w_v = att.rmg.gen
+    val (q, k, v) = att.queryKeyValue (x, w_q, w_k, w_v)
+
+    banner ("Dimensions for input x, query q, key k, value v")
+    println (s"x.dims = ${x.dims}")
+    println (s"q.dims = ${q.dims}")
+    println (s"k.dims = ${k.dims}")
+    println (s"v.dims = ${v.dims}")
+
+    // Multi-Head (MH)
+    println (s"att.n_k: ${att.n_k}")
+    val rtg   = RandomTenD (heads, n_mod, att.n_k, 1)                     // random (0, 1) tensor generator for q, k
+    val rtg_v = RandomTenD (heads, n_mod, n_val, 1)                       // random (0, 1) tensor generator for v
+    val rmg_o = RandomMatD (heads*n_val, n_mod, 1)                        // random (0, 1) matrix generator for for w_o
+
+    val wt_q = rtg.gen                                                    // MH query weight tensor:   heads x n_mod x n_k
+    val wt_k = rtg.gen                                                    // MH key weight tensor:     heads x n_mod x n_k
+    val wt_v = rtg_v.gen                                                  // MH value weight tensor;   heads x n_mod x n_k
+    val w_o  = rmg_o.gen                                                  // MH overall weight matrix: n_mod x n_mod 
+
+    banner ("Dimensions for query wt_q, key wt_k, value wt_v, overall w_o")
+    println (s"wt_q.dims = ${wt_q.dims}")
+    println (s"wt_k.dims = ${wt_k.dims}")
+    println (s"wt_v.dims = ${wt_v.dims}")
+    println (s"w_o.dims  = ${w_o.dims}")
+
+    banner ("Multi-Head Attention Matrix")
+    val aw = att.attentionMH (q, k, v, wt_q, wt_k, wt_v, w_o)
+    println (s"aw.dims = ${aw.dims}")
+//  println (s"aw      = $aw")
+
+end attentionTest2
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `attentionTest3` main function tests the `attention` and `context` top-level function.
+ *  Test Self-Attention.  Read in weight matrices to compare with PyTorch.
+ *  > runMain scalation.modeling.forecasting.attentionTest3
+ */
+@main def attentionTest3 (): Unit =
+
+    val n_var = x.dim2                                                    // number of variables in input vector x_t
+    println (s"n_var = $n_var")
+    val n_mod = 24                                                        // size of each query/key vector (q_t, k_t, v_t)
+    val heads = 1                                                         // number of attention heads
+    val n_val = 28
+    object att extends Attention (n_var, n_mod, heads, n_val)
+
+    import scalation.database.table.Table
+
+    val data_q = Table.load ("W_query.csv", "W_query", n_var, "0")
+    val W_query = data_q.toMatrix ()     // Array(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
+//  println (W_query)
+    val data_k = Table.load ("W_key.csv", "W_key", n_var, "0")
+    val W_key = data_k.toMatrix ()
+
+    val data_v = Table.load ("W_value.csv", "W_value", n_var, "0")
+    val W_value = data_v.toMatrix ()
+
+    val (q, k, v) = att.queryKeyValue (x, W_query, W_key, W_value)
+
+    banner ("Dimensions for input x, query q, key k, value v")
+    println (s"x.dims = ${x.dims}")
+    println (s"q.dims = ${q.dims}")
+    println (s"k.dims = ${k.dims}")
+    println (s"v.dims = ${v.dims}")
+    banner("q Matrix")
+    println (q(1))
+    banner("k Matrix")
+    println (k(1))
+    banner("v Matrix")
+    println (v(1))
+
+    // Attention
+    banner ("Attention Matrix")
+    val aw1 = att.attention (q, k, v)
+    println (s"aw1.dims = ${aw1.dims}")
+    println (s"aw1(1)   = ${aw1(1)}")
+
+    banner ("Context Vectors Collected into Matrix")
+    val cxt = new MatrixD (aw1.dim, aw1.dim2)
+    println (s"cxt.dims = ${cxt.dims}")
+    for i <- q.indices do cxt(i) = att.context (q(i), k, v)
+    println (s"cxt(1) = ${cxt(1)}")
+    assert (cxt =~ aw1)
+    println ("succeed")
+
+end attentionTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `attentionTest4` main function tests the `attentionMH` top-level function.
+ *  Test Multi-Head, Self-Attention.  Read in weight matrices to compare with PyTorch.
+ *  > runMain scalation.modeling.forecasting.attentionTest4
+ */
+@main def attentionTest4 (): Unit =
+
+    val n_var = x.dim2                                                    // number of variables in input vector x_t
+    println (s"n_var = $n_var")
+    val n_mod = 72                                                        // size of each query/key vector (q_t, k_t, v_t)
+    val heads = 3                                                         // number of attention heads
+    val n_val = 24
+    object att extends Attention (n_var, n_mod, heads, n_val)
+
+    val q = MatrixD.load ("Q.csv")
+    val k = MatrixD.load ("K.csv")
+    val v = MatrixD.load ("V.csv")
+
+    // Multi-Head (MH)
+    banner ("Dimensions for input x, query q, key k, value v")
+    println (s"x.dims = ${x.dims}")
+    println (s"q.dims = ${q.dims}")
+    println (s"k.dims = ${k.dims}")
+    println (s"v.dims = ${v.dims}")
+    banner ("q Matrix")
+    println (q(1))
+    banner ("k Matrix")
+    println (k(1))
+    banner ("v Matrix")
+    println (v(1))
+
+    val w_q = MatrixD.load ("w_q.csv")
+    val w_k = MatrixD.load ("w_k.csv")
+    val w_v = MatrixD.load ("w_v.csv")
+    val w_o = MatrixD.load ("w_o.csv")
+
+    banner ("Dimensions")
+    println (s"w_q.dims = ${w_q.dims}")
+    println (s"w_k.dims = ${w_k.dims}")
+    println (s"w_v.dims = ${w_v.dims}")
+    banner ("w_q Matrix")
+    println (w_q(1))
+    banner ("w_k Matrix")
+    println (w_k(1))
+    banner ("w_v Matrix")
+    println (w_v(1))
+    banner ("w_o Tensors")
+    println (w_o(1))
+
+    val wt_q = new TensorD (heads, n_mod, att.n_k)                        // MH query weight tensor:   heads x n_mod x n_k
+    val wt_k = new TensorD (heads, n_mod, att.n_k)                        // MH key weight tensor:     heads x n_mod x n_k
+    val wt_v = new TensorD (heads, n_mod, att.n_k)                        // MH value weight tensor;   heads x n_mod x n_k
+
+    for i <- 0 until heads do                                             // (72, 72)  --->  (3, 72, 24)
+        val Mq = w_q(?, (i*att.n_k) to ((i + 1) * att.n_k)-1)
+        wt_q(i) = Mq
+
+        val Mk = w_k(?, (i * att.n_k) to ((i + 1) * att.n_k) - 1)
+        wt_k(i) = Mk
+
+        val Mv = w_v(?, (i * att.n_k) to ((i + 1) * att.n_k) - 1)
+        wt_v(i) = Mv
+    end for
+
+    banner ("wt_q, key wt_k, value wt_v after splitting heads (72, 72)  --->  (3, 72, 24)")
+    println (s"wt_q.dims = ${wt_q.dims}")
+    println (s"wt_k.dims = ${wt_k.dims}")
+    println (s"wt_v.dims = ${wt_v.dims}")
+    println (s"w_o.dims = ${w_o.dims}")
+    banner ("wt_q Tensors")
+    println (wt_q(0)(1))
+    println (wt_q(1)(1))
+    println (wt_q(2)(1))
+    banner ("wt_k Tensors")
+    println (wt_k(0)(1))
+    println (wt_k(1)(1))
+    println (wt_k(2)(1))
+    banner ("wt_v Tensors")
+    println (wt_v(0)(1))
+    println (wt_v(1)(1))
+    println (wt_v(2)(1))
+
+    banner ("after linear")
+    println (s"q * wt_q(1): ${(q * wt_q(1))}")
+    println (s"k * wt_k(1): ${(k * wt_k(1))}")
+    println (s"v * wt_v(1): ${(v * wt_v(1))}")
+
+    banner ("Multi-Head Attention Matrix")
+    val aw = att.attentionMH (q, k, v, wt_q, wt_k, wt_v, w_o)
+    banner ("att after w_o")
+    println (s"aw.dims = ${aw.dims}")
+    for i <- 0 until 3 do println (s"aw($i)      = ${aw(i)}\n\n")
+
+end attentionTest4
 

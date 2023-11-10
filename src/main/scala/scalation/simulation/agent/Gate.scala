@@ -48,13 +48,14 @@ class Gate (name: String, director: Model, time: Double, line: WaitQueue,
     private val RELEASE_GAP = 50.0                                   // release time gap - FIX should be model dependent
     private val MAX_FLIPS   = 5000                                   // maximum number of flips before forced shut down
 
-    private val debug = debugf ("Gate", true)                        // debug function 
+    private val debug = debugf ("Gate", false)                       // debug function 
     private val flaw  = flawf ("Gate")                               // flaw function
     private var _open = open0                                        // initial value for _open
             val vert  = new Vertex (name, prop, pos)                 // internal vertex
     private var flips = 0                                            // the number of gate flips/cycles
 
     Gate.add (this)
+    director.statList += this
  
     debug ("init", s"name = $me, director = ${director.id}, time = $time, line = ${line.me}, " +
                    s"onTimeRV = $onTimeRV, offTimeRV = $offTimeRV, open0 = $open0, cap = $cap, " +
@@ -93,18 +94,18 @@ class Gate (name: String, director: Model, time: Double, line: WaitQueue,
     def act (): Unit =
         director.animate (this, SetPaintNode, gateColor, Octagon ())      // Octagon
         while flips < MAX_FLIPS && director.simulating do                 // continue until simulation is over
-            debug ("act", s"SimAgent.nAgents = ${SimAgent.nAgents}")
+            debug ("act", s"SimAgent.nAgents = ${director.nAgents}")
             val dur = duration                                            // keep gate with current for duration units
             tallyStats (dur)    
             director.schedule (this, dur)                                 // delay until gate color change
-            yieldToDirector ()
+            yieldToDirector ()                                            // yield to/through director
 
             flip ()                                                       // change gate color
             debug ("act", s"$me changes gate color to $gateColor at ${director.clock}")
             if _open then release ()
             director.animate (this, SetPaintNode, gateColor, Octagon ())  // Octagon
         end while
-        yieldToDirector (true)    
+        yieldToDirector (true)                                            // yield to/through director
     end act
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -142,7 +143,7 @@ object Gate
     Model.add (Gate)
 
             val gates = VEC [Gate] ()                                // collection of gates
-    private val debug = debugf ("Gate", true)                        // debug function
+    private val debug = debugf ("Gate", false)                       // debug function
     private val wh    = (20.0, 20.0)                                 // default display size
             val delX  = wh._1 - 3                                    // delta in x direction
             val delY  = wh._2 - 3                                    // delta in y direction

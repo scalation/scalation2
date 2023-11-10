@@ -32,8 +32,9 @@ class Sink (name: String, director: Model,
          with Statistical (name):
 
     Sink.add (this)
+    director.statList += this                                        // add to director's variable to keep track of
 
-    private val debug = debugf ("Sink", true)                    // debug function 
+    private val debug = debugf ("Sink", false)                       // debug function 
 
     debug ("init", s"name = $me, director = ${director.me}, " +
                    s"prop = $prop, pos = $pos")
@@ -42,10 +43,11 @@ class Sink (name: String, director: Model,
     /** Leave the model, effectively terminating the entity `SimAgent`.
      */
     def leave (agent: SimAgent): Unit =
+        debug ("leave", s"agent ${agent.id} leaving")
         tallyStats (director.clock - agent.arrivalT)
         director.log.trace (this, "terminates", agent, director.clock)
         director.animate (agent, DestroyToken)
-        agent.yieldToDirector (true)                             // yield and terminate
+        agent.yieldToDirector (true)                                 // yield and terminate
     end leave
 
 end Sink
@@ -61,8 +63,8 @@ object Sink
 
     Model.add (Sink)
 
-    private val debug = debugf ("Sink_", true)                   // debug function
-    private val wh = (22.0, 22.0)                                // default display size
+    private val debug = debugf ("Sink_", false)                      // debug function
+    private val wh = (22.0, 22.0)                                    // default display size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the position extended with the wh = (width, height).
@@ -79,7 +81,7 @@ object Sink
         verts += sink
     end add
 
-      //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a group of related sinks using defaults for width 'w' and height 'h'.
      *  @param director  the director controlling the model
      *  @param prop      the properties of these sinks
