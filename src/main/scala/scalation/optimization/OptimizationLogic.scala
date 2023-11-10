@@ -16,7 +16,7 @@ package scalation.optimization
 // Project imports.
 import scalation.mathstat.VectorD
 
-// Trait
+// Trait.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `OptimizationLogicNative` trait specifies the requirements for the logic
  *  to be used in each step of a L-BFGS variable minimization done by the

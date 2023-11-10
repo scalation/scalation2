@@ -5,7 +5,7 @@
  *  @note    Tue Aug 22 15:39:53 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  LBFGS Scala implementation of the Limited memory
+ *  Native Scala implementation of the Limited memory
  *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
  *  (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in 1995. See the
  *  first two links for the original paper and authors' software (written in
@@ -176,7 +176,7 @@ object LBFGS:
                 Convergence test.
                 The criterion is given by the following formula:
                     |g(x)| / \max(1, |x|) < \epsilon
-             */
+                */
                 if xnorm < 1.0 then xnorm = 1.0
 
                 if gnorm / xnorm <= params.epsilon then
@@ -187,7 +187,7 @@ object LBFGS:
                 Test for stopping criterion.
                 The criterion is given by the following formula:
                     |(f(past_x) - f(x))| / f(x) < \delta
-             */
+                */
                 if pf != VectorD.nullv then
                     /* We don't test the stopping criterion while k < past. */
                     if params.past <= k then
@@ -221,8 +221,8 @@ object LBFGS:
                     ys = y^t \cdot s = 1 / \rho.
                     yy = y^t \cdot y.
                 Notice that yy is used for scaling the hessian matrix H_0 (Cholesky
-               factor).
-             */
+                factor).
+                */
                 ys = y dot s
                 yy = y dot y
 
@@ -230,12 +230,12 @@ object LBFGS:
 
                 /*
                 Recursive formula to compute dir = -(H \cdot g).
-                    This is described in page 779 of:
-                    Jorge Nocedal.
-                    Updating Quasi-Newton Matrices with Limited Storage.
-                    Mathematics of Computation, Vol. 35, No. 151,
-                    pp. 773--782, 1980.
-             */
+                This is described in page 779 of:
+                Jorge Nocedal.
+                Updating Quasi-Newton Matrices with Limited Storage.
+                Mathematics of Computation, Vol. 35, No. 151,
+                pp. 773--782, 1980.
+                */
                 bound = if m <= k then m else k
                 k += 1
                 end = (end + 1) % m
