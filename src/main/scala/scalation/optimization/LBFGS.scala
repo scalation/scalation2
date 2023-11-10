@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  André Filipe Caldas Laranjeira
+/** @author  André Filipe Caldas Laranjeira, Shivam Anant Rathi
  *  @version 2.0
  *  @note    Tue Aug 22 15:39:53 EDT 2023
  *  @see     LICENSE (MIT style license file).
@@ -415,7 +415,7 @@ end LBFGS
 //    println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
 //    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
-    
+
     new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
 end boothFunctionLBFGSTest
 
