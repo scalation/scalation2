@@ -16,6 +16,8 @@
 package scalation
 package mathstat
 
+import scala.collection.mutable.IndexedSeq
+import scala.math.round
 import scala.runtime.ScalaRunTime.stringOf
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -81,6 +83,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      *  @param u  the three dimensional array
      */
     def this (u: Array [Array [Array [Double]]]) = { this (u.size, u(0).size, u(0)(0).size, u) }
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the row, column and sheet dimensions of this tensor.
+     */
+    inline def dims: (Int, Int, Int) = (dim, dim2, dim3)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the format to the newFormat.
@@ -291,7 +298,9 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      *  @param i  1st dimension (row) index of the tensor
      *  @param x  the matrix to be updated at the above position in the tensor
      */
-    def update (i: Int, x: MatrixD): Unit = v(i) = null   // FIX x.toArray
+    def update (i: Int, x: MatrixD): Unit =
+        for j <- indices2 do v(i)(j) = x(j).toArray
+    end update
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set all the tensor element values to x.
@@ -407,6 +416,15 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
         dim <= b.dim && dim2 <= b.dim2 && dim3 <= b.dim3
     end leDimensions
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert this tensor to a matrix where all the elements have integer values.
+     */
+    def toInt: TensorD =
+        val x = new TensorD (dim, dim2, dim3)
+        for i <- indices; j <- indices2; k <- indices3 do x.v(i)(j)(k) = round (v(i)(j)(k)).toDouble
+        x
+    end toInt
+
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this tensor to a string with a double line break after each sheet
      *  and a single line break after each row.
@@ -463,11 +481,61 @@ object TensorD:
         t
     end apply 
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a tensor from a variable argument list of matrices (row-wise).
+     *  Use transpose to make it column-wise.
+     *  @param vs  the vararg list of matrices
+     */
+    def apply (vs: MatrixD*): TensorD =
+        val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
+        val a = Array.ofDim [Array [Array [Double]]] (m)
+        for i <- vs.indices do a(i) = vs(i).v
+        new TensorD (m, n, p, a)
+    end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a tensor from an mutable `IndexedSeq` of matrices (row-wise).
+     *  Use transpose to make it column-wise.
+     *  @param vs  the indexed sequence of matrices
+     */
+    def apply (vs: IndexedSeq [MatrixD]): TensorD =
+        val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
+        val a = Array.ofDim [Array [Array [Double]]] (m)
+        for i <- vs.indices do a(i) = vs(i).v
+        new TensorD (m, n, p, a)
+    end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a tensor from an immutable `IndexedSeq` of matrices (row-wise),
+     *  as produce by for yield.  Use transpose to make it column-wise.
+     *  @param vs  the indexed sequence of matrices
+     */
+    def apply (vs: collection.immutable.IndexedSeq [MatrixD]): TensorD =
+        val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
+        val a = Array.ofDim [Array [Array [Double]]] (m)
+        for i <- vs.indices do a(i) = vs(i).v
+        new TensorD (m, n, p, a)
+    end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a tensor of dimensions dim by dim2 by dim3 where all elements equal
+     *  to the given value.
+     *  @param dim    the row dimension
+     *  @param dim2   the column dimension
+     *  @param dim2   the sheet dimension
+     *  @param value  the given value to assign to all elements
+     */
+    def fill (dim: Int, dim2: Int, dim3: Int, value: Double): TensorD =
+        val a = Array.fill (dim, dim2, dim3)(value)
+        new TensorD (dim, dim2, dim3, a)
+    end fill
+
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the cross-correlation tensor for the given data matrix for up to
      *  maxLags.
      *  @param x        the given data matrix (row are instances, columns are variables)
      *  @param maxLags  the maximum number of lags to consider
+     *
     def crossCorr (x: MatrixD, maxLags: Int = 10): TensorD =
         val n = x.dim2
         if 2 * maxLags >= x.dim then flaw ("crossCorr", "not enough data for maxLags = $maxLags") 

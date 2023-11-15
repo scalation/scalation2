@@ -11,11 +11,10 @@
 package scalation
 package mathstat
 
-import scala.math.{ceil, floor, round}
-import scalation.scala2d.*
-import scalation.scala2d.Colors.*
-
 import scala.collection.mutable.ArrayBuffer
+import scala.math.{ceil, floor, round}
+import scalation.scala2d._
+import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PlotC` class takes a function f and displays color-coded values for

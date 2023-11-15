@@ -99,7 +99,7 @@ object QuadRegressionMV4TS:
         val endoCols = x.dim2
         println (s"endogenous: columns = $endoCols")
 
-        x = x ++^ Regression4TS.makeExoCols (lags, ex, elag1, elag2)      // add columns for each lagged exo var
+        x = x ++^ ARX.makeExoCols (lags, ex, elag1, elag2)                // add columns for each lagged exo var
         println (s"exogenous: columns = ${x.dim2 - endoCols}")
 
         println (s"exo: x.dims = ${x.dims}, yy.dim = ${yy.dim}")

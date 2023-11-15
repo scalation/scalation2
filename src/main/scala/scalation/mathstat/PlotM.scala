@@ -176,7 +176,7 @@ object PlotM:
      */
     def apply (x: VectorD, y: VectorD*): PlotM =
         val yy = new MatrixD (y.length, x.dim)
-        for i <- 0 until y.length do yy(i) = y(i)
+        for i <- y.indices do yy(i) = y(i)
         new PlotM (x, yy)
     end apply
 

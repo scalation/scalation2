@@ -21,8 +21,8 @@ import scalation.mathstat.{Statistic, TimeStatistic}
  */
 trait Statistical (name: String):
 
-    private val sampStatistic = new Statistic (name)              // sample statistics
-    private val persStatistic = new TimeStatistic (name)          // time-persistent statistics
+    private val sampStatistic = new Statistic (name)                   // sample statistics
+    private val persStatistic = new TimeStatistic ("p-"+name)          // time-persistent statistics
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Tally sample statistics.
@@ -49,7 +49,7 @@ trait Statistical (name: String):
      */
     private [agent] def collectStats (duration: Double, count: Int, time: Double): Unit =
         sampStatistic.tally (duration)
-        persStatistic.accum (count, time)
+        if ! this.isInstanceOf [Source | Sink | Gate ] then persStatistic.accum (count, time)
     end collectStats
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -58,8 +58,18 @@ trait Statistical (name: String):
      */
     private [agent] def addStats (list: VEC [Statistic]): Unit =
         list += sampStatistic
-        list += persStatistic
+        if ! this.isInstanceOf [Source | Sink | Gate ] then list += persStatistic
     end addStats
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return sample statistics for durations for this component (e.g., Time in queue).
+     */
+    def durationStat: Statistic = sampStatistic
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return time persistent statistics for value for this component (e.g. Number in queue).
+     */
+    def persistentStat: TimeStatistic = persStatistic
 
 end Statistical
 

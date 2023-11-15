@@ -39,10 +39,11 @@ class WaitQueue (name: String, director: Model, cap: Int = Int.MaxValue,
          with Statistical (name):
 
     WaitQueue.add (this)
+    director.statList += this                                        // add to director's variable to keep track of
 
-    private val debug   = debugf ("WaitQueue", true)           // debug function
-    private val que     = Queue [SimAgent] ()                  // the actual queue
-    private var nBarred = 0                                    // number of entities barred from entering when full
+    private val debug   = debugf ("WaitQueue", false)                // debug function
+    private val que     = Queue [SimAgent] ()                        // the actual queue
+    private var nBarred = 0                                          // number of entities barred from entering when full
 
     debug ("init", s"name = $me, director = ${director.me}, cap = $cap, " +
                    s"prop = $prop, pos = $pos")
@@ -68,21 +69,26 @@ class WaitQueue (name: String, director: Model, cap: Int = Int.MaxValue,
     inline def barred: Int = nBarred
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Clear (remove all elements from) the wait queue.
+     */
+    inline def clear (): Unit = que.clear ()
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Wait in the queue, recording the waiting time.  Return whether the entity
      *  was able to actually join the queue or was barred.
      *  @param agent  the agent trying to wait in this queue
      */
     def waitIn (agent: SimAgent): Boolean =
         val timeIn = director.clock
-        accumStats (que.length, timeIn)                        // collect for persistent statistics
+        accumStats (que.length, timeIn)                              // collect for persistent statistics
         director.log.trace (this, "wait begins", agent, timeIn)
 
         val joined = if isFull then
-            nBarred += 1                                       // entity/agent barred
+            nBarred += 1                                             // entity/agent barred
             false
         else
-            que += agent                                       // entity/agent joins queue
-            agent.yieldToDirector ()                           // indefinite delay
+            que += agent                                             // entity/agent joins queue
+            agent.yieldToDirector ()                                 // indefinite delay
             true
         end joined
 
@@ -110,7 +116,8 @@ class WaitQueue (name: String, director: Model, cap: Int = Int.MaxValue,
      *  and likely progress to starting service now.
      */
     def ping (): Unit =
-        if ! que.isEmpty then director.schedule (que.dequeue (), director.clock)
+        if que != null && que.nonEmpty then director.reschedule (que.dequeue ())
+//      if que.nonEmpty then director.schedule (que.dequeue (), director.clock)
     end ping
 
 end WaitQueue
@@ -126,8 +133,8 @@ object WaitQueue
 
     Model.add (WaitQueue)
 
-    private val debug = debugf ("WaitQueue_", true)            // debug function
-    private val wh    = (22.0, 22.0)                           // default display size
+    private val debug = debugf ("WaitQueue_", false)                 // debug function
+    private val wh    = (22.0, 22.0)                                 // default display size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the position extended with the wh = (width, height).

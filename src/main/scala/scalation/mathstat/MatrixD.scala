@@ -521,7 +521,7 @@ class MatrixD (val dim:  Int,
      */
     def ++ (y: MatrixD): MatrixD =
         if dim2 != y.dim2 then
-            flaw ("++", s"requires same column dimensions: dim2 = $dim2 != y.dim2 = $y.dim2")
+            flaw ("++", s"requires same column dimensions: dim2 = $dim2 != y.dim2 = ${y.dim2}")
 
         new MatrixD (dim + y.dim, dim2, v ++ y.v)
     end ++
@@ -533,7 +533,7 @@ class MatrixD (val dim:  Int,
      */
     def ++^ (y: MatrixD): MatrixD =
         if dim != y.dim then
-            flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = $y.dim")
+            flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = ${y.dim}")
 
         val n = dim2 + y.dim2
         val a = Array.ofDim [Double] (dim, n)

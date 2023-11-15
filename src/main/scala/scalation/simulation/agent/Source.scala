@@ -26,7 +26,7 @@ import scalation.scala2d.Colors._
  *  a simulation `Vertex` and special `SimAgent` and therefore runs in own thread.
  *  @param name        the name of this source
  *  @param director    the director controlling the model
- *  @param time        the activation time for this source
+ *  @param _time       the activation time for this source
  *  @param iArrivalRV  the inter-arrival time distribution
  *  @param makeEntity  the function to make entities of a specified type
  *  @param units       the number of entities to make
@@ -34,15 +34,16 @@ import scalation.scala2d.Colors._
  *  @param prop        the properties of this source
  *  @param pos         the position (Euclidean coordinates) of this source
  */
-class Source (name: String, director: Model, time: Double, iArrivalRV: Variate,
+class Source (name: String, director: Model, _time: Double, iArrivalRV: Variate,
               makeEntity: () => SimAgent, units: Int, subtype: Int = 0,
               prop: Property = null, pos: VectorD = null)
-      extends SimAgent (name, time, director, pos, loc = (null, 0.0))
+      extends SimAgent (name, _time, director, pos, loc = (null, 0.0))
          with Statistical (name):
 
-    private val debug = debugf ("Source", true)                        // debug function
-            val vert  = new Vertex (name, prop, pos)                   // internal vertex
+    private val debug = debugf ("Source", false)                     // debug function
+            val vert  = new Vertex (name, prop, pos)                 // internal vertex
     Source.add (this)
+    director.statList += this                                        // add to director's variable to keep track of
     
     debug ("init", s"name = $me, director = ${director.me}, time = $time, iArrivalRV = $iArrivalRV, " +
                    s"makeEntity = $makeEntity, units = $units, subtype = $subtype, " +
@@ -68,10 +69,13 @@ class Source (name: String, director: Model, time: Double, iArrivalRV: Variate,
             val agent     = makeEntity ()                            // make new agent
             agent.subtype = subtype                                  // set the agent's subtype
             agent.time    = director.clock                           // set the agent's time to now
-            agent.setPos (pos(0), pos(1))                            // FIX - put at boundary, not center
+//          agent.setPos (pos(0), pos(1))                            // FIX - put at boundary, not center
+            agent.setPos (pos(0)+pos(2)/2, pos(1)+pos(3)/2)          // pos at boundary
             agent.fore    = prevAgent                                // place it in doubly-linked list
+
 //          prevAgent.aft = agent                                    // FIX - linking agents
 //          prevAgent     = agent
+
             director.log.trace (this, "generates", agent, director.clock)
             director.animate (agent, CreateToken, randomColor (agent.id), Ellipse ())
             director.schedule (agent)

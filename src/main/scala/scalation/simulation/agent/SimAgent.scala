@@ -20,20 +20,24 @@ import scalation.mathstat.VectorD
 import simulation.Coroutine
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `SimAgent` companion object keeps track of the number of live agents.
+/** The `SimAgent` companion object provides static information for the class.
+ *  The director keeps track of the current number of live agents (nAgents).
+ *  `Gate`s are not considered live, since they simply cycle until the simulation ends.
+ *  `Source`s are considered live, since they produce application agents and terminate
+ *  when their production finishes.
  */
 object SimAgent:
 
-    private val wh       = (10.0, 10.0)                             // default display size
-    private var _nAgents = 0                                        // current number of live agents
+    private val wh = (10.0, 10.0)                                   // default display size
+
+    private var THROUGH = false                                     // yield THROUGH (true) or TO director (false)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the current number of live agents.  `Gate`s are not considered live,
-     *  since they simply cycle until the simulation ends.  `Source`s are considered
-     *  live, since they produce application agents and terminate when their production
-     *  finishes.
+    /** By default each yield is TO an active director (has an act method), but a
+     *  faster option is yield THROUGH a passive director to the first `SimAgent` in
+     *  the director's agenda, e.g., `Model2` calls `setTHROUGH` to set THROUGH to true
      */
-    def nAgents: Int = _nAgents
+    def setTHROUGH (): Unit = THROUGH = true
 
 end SimAgent
 
@@ -43,7 +47,7 @@ import SimAgent._
 /** The `SimAgent` abstract class represents entities that are active in the model.
  *  The act abstract method, which specifies entity behavior, must be defined
  *  for each subclass.  Each `SimAgent` extends extends `Coroutine` and may be
- *  roughly thought of as running in its own thread.
+ *  roughly thought of as running in its own thread/virtual-thread.
  *  SimAgent adds knowledge of its own properties, the agents it follows, and the
  *  component it is currently at.
  *  @param _name     the name of this simulation agent (name from `Identifiable`)
@@ -67,15 +71,15 @@ abstract class SimAgent (_name: String, _time: Double, director: Model,
 
     var subtype = 0                                                 // indicator of subtype of this agent
 
-    private val debug = debugf ("SimAgent", true)                   // debug function
-    private val flaw  = flawf ("SimAgent")                          // flaw function
+    private val debug   = debugf ("SimAgent", true)                 // debug function
+    private val flaw    = flawf ("SimAgent")                        // flaw function
 
     private [agent] var fore: SimAgent = null                       // the SimAgent ahead
     private [agent] var aft: SimAgent  = null                       // the SimAgent behind
     private [agent] val arrivalT       = time                       // time agent started/arrived at the model
     private [agent] var nextTransport: Transport = null             // the next transport to move along
 
-    if ! this.isInstanceOf [Gate] then _nAgents += 1                // increment the number of live agents
+    if ! this.isInstanceOf [Gate] then director.nAgents += 1        // increment the number of live agents
 
     debug ("init", s" <-- SimAgent $me created at time $time = ${director.clock}")
 
@@ -94,8 +98,8 @@ abstract class SimAgent (_name: String, _time: Double, director: Model,
      *  @param y  the y-coordinate
      */
     def setPos (x: Double, y: Double): Unit =
-        pos(0) = x + wh._1 / 2.0                                    // x + half width
-        pos(1) = y + wh._2 / 2.0                                    // y + half height
+        pos(0) = x - wh._1 / 2.0                                    // x - half width
+        pos(1) = y - wh._2 / 2.0                                    // y - half height
     end setPos
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -147,8 +151,8 @@ abstract class SimAgent (_name: String, _time: Double, director: Model,
         for a <- agents do
             val diff = a.dist - dist
             if diff > 0 && diff < minDiff then
-               minDiff = diff
-               minA    = a.asInstanceOf [SimAgent]
+                minDiff = diff
+                minA    = a.asInstanceOf [SimAgent]
             end if
         end for
         minA
@@ -161,13 +165,22 @@ abstract class SimAgent (_name: String, _time: Double, director: Model,
     def reorient (): Unit = aft.fore = fore
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Yield control to the director so the director can take the next action.
+    /** Yield control TO the director so the director can take the next action.
+     *  For efficiency, can yield THROUGH the director to the next agent, rather
+     *  than TO the director itself.  CURRENTLY ONLY THROUGH WORKS.
      *  @param quit  the flag indicating whether this agent is done
      */
     def yieldToDirector (quit: Boolean = false): Unit =
-        director.log.trace (this, "resumes", director, director.clock)
-        if quit && ! this.isInstanceOf [Gate] then _nAgents -= 1               // decrement the number of live agents
-        yyield (director, quit)
+        director.yield2Next (this, quit)                                           // skips resuming director's act method 
+/*
+        if THROUGH then
+            director.yield2Next (this, quit)                                       // skips resuming director's act method 
+        else
+            director.log.trace (this, "resumes", director, director.clock)
+            if quit && ! this.isInstanceOf [Gate] then director.nAgents -= 1       // decrement the number of live agents
+            yyield (director, quit)                                                // resumes the director's act method
+        end if
+*/
     end yieldToDirector
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

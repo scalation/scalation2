@@ -5,7 +5,7 @@
  *  @date    Tue Feb 22 23:14:31 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Quadratic Regression for Time Series
+ *  @title   Model: Quadratic AutoRegressive with eXogenous Variables (Quadratic Time Series Regression)
  */
 
 package scalation
@@ -17,7 +17,7 @@ import scala.math.{max, min}
 import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `QuadRegression4TS` class supports quadratic regression for Time Series data.
+/** The `ARX_Quad` class supports quadratic regression for Time Series data.
  *  Given a response vector y, a predictor matrix x is built that consists of
  *  lagged y vectors,
  *
@@ -30,16 +30,16 @@ import scalation.mathstat._
  *  @param fname   the feature/variable names
  *  @param hparam  the hyper-parameters (use Regression.hp for default)
  */
-class QuadRegression4TS (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
-                         hparam: HyperParameter = Regression.hp)
+class ARX_Quad (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
+                hparam: HyperParameter = Regression.hp)
       extends Regression (x, yy, fname, hparam)
          with ForecasterX (x, yy, lags):
 
-    private val debug   = debugf ("QuadRegression4TS", true)             // debug function
-    private val flaw    = flawf ("QuadRegression4TS")                    // flaw function
+    private val debug   = debugf ("ARX_Quad", true)                      // debug function
+    private val flaw    = flawf ("ARX_Quad")                             // flaw function
     private val MISSING = -0.0                                           // missing value
 
-    modelName = s"QuadRegression4TS$lags"
+    modelName = s"ARX_Quad$lags"
 
     debug ("init", s"$modelName: x.dims = ${x.dims}, yy.dim = ${yy.dim}")
 
@@ -139,7 +139,7 @@ class QuadRegression4TS (x: MatrixD, yy: VectorD, lags: Int, fname: Array [Strin
     end forecastAll
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of a `Regression4TS` forecasting model y_ = f(x) + e
+    /** Test FORECASTS of a `ARX_Quad` forecasting model y_ = f(x) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
      *  by the parameters passed in.  Note: must call train and forecastAll before testF.
@@ -156,18 +156,18 @@ class QuadRegression4TS (x: MatrixD, yy: VectorD, lags: Int, fname: Array [Strin
         (yfh, diagnose (yy, yfh))                                        // return predictions and QoF vector
     end testF
 
-end QuadRegression4TS
+end ARX_Quad
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `QuadRegression4TS` companion object provides factory methods.
+/** The `ARX_Quad` companion object provides factory methods.
  */
-object QuadRegression4TS:
+object ARX_Quad:
 
-    private val flaw = flawf ("QuadRegression4TS")                       // flaw function
+    private val flaw = flawf ("ARX_Quad")                                // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `QuadRegression4TS` object to fit a quadratic surface from a response vector.
+    /** Create a `ARX_Quad` object to fit a quadratic surface from a response vector.
      *  The input/data matrix x is formed from the lagged y vectors as columns in matrix x.
      *  surface to Time Series data.
      *  @param y       the original un-expanded output/response vector
@@ -175,7 +175,7 @@ object QuadRegression4TS:
      *  @param hparam  the hyper-parameters (use Regression.hp for default)
      */
     def apply (y: VectorD, lags: Int, 
-               hparam: HyperParameter = Regression.hp): QuadRegression4TS =
+               hparam: HyperParameter = Regression.hp): ARX_Quad =
         var (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
         val xx = new MatrixD (x.dim, 2*x.dim2+1) 
         xx(?, 0) = VectorD.one (yy.dim)                                  // add first column of all ones
@@ -186,11 +186,11 @@ object QuadRegression4TS:
 
         println (s"apply: xx.dims = ${xx.dims}, yy.dim = ${yy.dim}")
 //      println (s"apply: xx = $xx \n yy = $yy")
-        new QuadRegression4TS (xx, yy, lags, null, hparam)
+        new ARX_Quad (xx, yy, lags, null, hparam)
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `QuadRegression4TS` object to fit a quadratic surface from a response vector.
+    /** Create a `ARX_Quad` object to fit a quadratic surface from a response vector.
      *  The input/data matrix x is formed from the lagged y vectors as columns in matrix x.
      *  In addition, lagged exogenous variables are added.
      *  @param y       the original un-expanded output/response vector
@@ -202,7 +202,7 @@ object QuadRegression4TS:
      */
     def exo (y: VectorD, lags: Int, ex: MatrixD, hparam: HyperParameter = Regression.hp)
             (elag1: Int = max (1, lags / 5),
-             elag2: Int = max (1, lags)): QuadRegression4TS =
+             elag2: Int = max (1, lags)): ARX_Quad =
         val (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
         var xx = new MatrixD (x.dim, 2*x.dim2+1) 
         xx(?, 0) = VectorD.one (yy.dim)                                  // add first column of all ones
@@ -213,31 +213,31 @@ object QuadRegression4TS:
         val endoCols = xx.dim2
         println (s"exo: endogenous: columns = $endoCols")
 
-        xx = xx ++^ Regression4TS.makeExoCols (lags, ex, elag1, elag2)   // add columns for each lagged exo var
+        xx = xx ++^ ARX.makeExoCols (lags, ex, elag1, elag2)             // add columns for each lagged exo var
         println (s"exogenous: columns = ${xx.dim2 - endoCols}")
 
         println (s"exo: xx.dims = ${xx.dims}, yy.dim = ${yy.dim}")
 //      println (s"exo: xx = $xx \n yy = $yy")
-        new QuadRegression4TS (xx, yy, lags, null, hparam)
+        new ARX_Quad (xx, yy, lags, null, hparam)
     end exo
 
-end QuadRegression4TS
+end ARX_Quad
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest` main function tests the `QuadRegression4TS` class.
+/** The `ARX_QuadTest` main function tests the `ARX_Quad` class.
  *  This test is used to CHECK that the buildMatrix4TS function is working correctly.
  *  May get NaN for some maximum lags (p) due to multi-collinearity.
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest
  */
-@main def quadRegression4TSTest (): Unit =
+@main def ARX_QuadTest (): Unit =
 
     val m = 30
     val y = VectorD.range (1, m)                                         // used to CHECK the buildMatrix4TS function
 
     for p <- 1 to 10 do                                                  // autoregressive hyper-parameter p
-        banner (s"Test: QuadRegression4TS with $p lags")
-        val mod = QuadRegression4TS (y, p)                               // create model for time series data
+        banner (s"Test: ARX_Quad with $p lags")
+        val mod = ARX_Quad (y, p)                                        // create model for time series data
         mod.trainNtest ()()                                              // train the model on full dataset
         println (mod.summary)
 
@@ -245,24 +245,24 @@ end QuadRegression4TS
         new Plot (null, mod.getY, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
     end for
 
-end quadRegression4TSTest
+end ARX_QuadTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest2` main function tests the `QuadRegression4TS` class on real data:
+/** The `ARX_QuadTest2` main function tests the `ARX_Quad` class on real data:
  *  Forecasting lake levels.
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest2
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest2
  */
-@main def quadRegression4TSTest2 (): Unit =
+@main def ARX_QuadTest2 (): Unit =
 
     import Example_LakeLevels.y
     val m = y.dim
     val h = 2                                                            // the forecasting horizon
 
     for p <- 1 to 8 do                                                   // autoregressive hyper-parameter p
-        banner (s"Test: QuadRegression4TS with $p lags")
-        val mod = QuadRegression4TS (y, p)                               // create model for time series data
+        banner (s"Test: ARX_Quad with $p lags")
+        val mod = ARX_Quad (y, p)                                        // create model for time series data
         mod.trainNtest ()()                                              // train the model on full dataset
         println (mod.summary)                                            // parameter/coefficient statistics
 
@@ -288,15 +288,15 @@ end quadRegression4TSTest
 //      println (Fit.fitMap (mod.testf (k, y)))                          // evaluate k-units ahead forecasts
     end for
 
-end quadRegression4TSTest2
+end ARX_QuadTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest3` main function tests the `QuadRegression4TS` class on real data:
+/** The `ARX_QuadTest3` main function tests the `ARX_Quad` class on real data:
  *  Forecasting COVID-19.  Does In-Sample Testing on Endogenous variable.
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest3
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest3
  */
-@main def quadRegression4TSTest3 (): Unit =
+@main def ARX_QuadTest3 (): Unit =
 
     val LAGS = 5                                                         // number of lags of y
     val h    = 2                                                         // forecasting horizon
@@ -310,8 +310,8 @@ end quadRegression4TSTest2
     val y  = yy(iskip until yy.dim)
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
-    banner ("Test QuadRegression4TS on COVID-19 Weekly Data")
-    val mod = QuadRegression4TS (y, LAGS)                                // create model for time series data
+    banner ("Test ARX_Quad on COVID-19 Weekly Data")
+    val mod = ARX_Quad (y, LAGS)                                         // create model for time series data
     val (yp, qof) = mod.trainNtest ()()                                  // train the model on full dataset
     new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)
 
@@ -341,7 +341,7 @@ end quadRegression4TSTest2
     val k = cols.size
     println (s"k = $k, n = ${mod.getX.dim2}")
     new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for QuadRegression4TS with tech", lines = true)
+               s"R^2 vs n for ARX_Quad with tech", lines = true)
     println (mod.summary ())
 
     banner ("Feature Importance")
@@ -349,17 +349,17 @@ end quadRegression4TSTest2
     val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${ox_fname(c)}, \t importance = $r")
 
-end quadRegression4TSTest3
+end ARX_QuadTest3
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest4` main function tests the `QuadRegression4TS` class on real data:
+/** The `ARX_QuadTest4` main function tests the `ARX_Quad` class on real data:
  *  Forecasting COVID-19 Weekly Data.  Does In-Sample Testing on endogenous and exogenous variables.
  *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47, 18, 9, 6 best R^2-bar
  *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47           best sMAPE
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest4
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest4
  */
-@main def quadRegression4TSTest4 (): Unit =
+@main def ARX_QuadTest4 (): Unit =
 
     val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
@@ -370,8 +370,8 @@ end quadRegression4TSTest3
     val y  = yy(iskip until yy.dim)
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
-    banner ("Test In-Sample QuadRegression4TS.exo on COVID-19 Weekly Data")
-    val mod = QuadRegression4TS.exo (y, 10, ex)(1, 11)                   // create model for time series data with exo
+    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
+    val mod = ARX_Quad.exo (y, 10, ex)(1, 11)                            // create model for time series data with exo
     val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
     new Plot (null, mod.getY, yp, s"${mod.modelName}, yy vs. yp", lines = true)
 
@@ -384,7 +384,7 @@ end quadRegression4TSTest3
     val k = cols.size
     println (s"k = $k, n = ${mod.getX.dim2}")
     new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for QuadRegression4TS with tech", lines = true)
+               s"R^2 vs n for ARX_Quad with tech", lines = true)
     println (mod.summary ())
 
     banner ("Feature Importance")
@@ -392,18 +392,18 @@ end quadRegression4TSTest3
     val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${Example_Covid.header(c)}, \t importance = $r")
 
-end quadRegression4TSTest4
+end ARX_QuadTest4
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest5` main function tests the `QuadRegression4TS` class on real data:
+/** The `ARX_QuadTest5` main function tests the `ARX_Quad` class on real data:
  *  Forecasting COVID-19 Weekly Data.  Does TnT Testing on endogenous and exogenous variables.
  *  Determine the terms to include in the model for TnT from using Stepwise on In-Sample.
  *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47, 18, 9, 6 best R^2-bar
  *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47           best sMAPE
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest5
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest5
  */
-@main def quadRegression4TSTest5 (): Unit =
+@main def ARX_QuadTest5 (): Unit =
 
     val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
@@ -414,8 +414,8 @@ end quadRegression4TSTest4
     val y  = yy(iskip until yy.dim)
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
-    banner ("Test In-Sample QuadRegression4TS.exo on COVID-19 Weekly Data")
-    val mod = QuadRegression4TS.exo (y, 10, ex)(1, 11)                   // create model for time series data with exo
+    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
+    val mod = ARX_Quad.exo (y, 10, ex)(1, 11)                            // create model for time series data with exo
     val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
     new Plot (null, mod.getY, yp, s"${mod.modelName}, yy vs. yp", lines = true)
 
@@ -428,7 +428,7 @@ end quadRegression4TSTest4
     val k = cols.size
     println (s"k = $k, n = ${mod.getX.dim2}")
     new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for QuadRegression4TS with tech", lines = true)
+               s"R^2 vs n for ARX_Quad with tech", lines = true)
     println (mod.summary ())
 
     banner ("Feature Importance")
@@ -438,20 +438,20 @@ end quadRegression4TSTest4
 
     banner ("Run TnT on Best model")
     val bmod = mod.getBest._3                                            // get the best model from feature selection
-    val (x_, y_, xtest, ytest) = Regression4TS.split_TnT (bmod.getX, bmod.getY)
+    val (x_, y_, xtest, ytest) = ARX.split_TnT (bmod.getX, bmod.getY)
     val (yptest, qoftest) = bmod.trainNtest (x_, y_)(xtest, ytest)       // train on (x_, y_) and test on (xtest, ytest)
     new Plot (null, ytest, yptest, s"${mod.modelName}, ytest vs. yptest", lines = true)
 
-end quadRegression4TSTest5
+end ARX_QuadTest5
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `quadRegression4TSTest6` main function tests the `QuadRegression4TS` class on real data:
+/** The `ARX_QuadTest6` main function tests the `ARX_Quad` class on real data:
  *  Forecasting COVID-19 Weekly Data.  Does Rolling Validation on endogenous and exogenous variables.
  *  Determine the terms to include in the model  HOW?
- *  > runMain scalation.modeling.forecasting.quadRegression4TSTest6
+ *  > runMain scalation.modeling.forecasting.ARX_QuadTest6
  */
-@main def quadRegression4TSTest6 (): Unit =
+@main def ARX_QuadTest6 (): Unit =
 
     val LAGS = 7
 
@@ -464,8 +464,8 @@ end quadRegression4TSTest5
     val y  = yy(iskip until yy.dim)
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
-    banner ("Test In-Sample QuadRegression4TS.exo on COVID-19 Weekly Data")
-    val mod = QuadRegression4TS.exo (y, LAGS, ex)(1, LAGS+1)             // create model for time series data with exo
+    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
+    val mod = ARX_Quad.exo (y, LAGS, ex)(1, LAGS+1)                      // create model for time series data with exo
 
     val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
     new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)
@@ -479,7 +479,7 @@ end quadRegression4TSTest5
     val k = cols.size
     println (s"k = $k, n = ${mod.getX.dim2}")
     new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for Regression4TS with tech", lines = true)
+               s"R^2 vs n for ARX with tech", lines = true)
     println (mod.summary ())
 
     banner ("Feature Importance")
@@ -487,14 +487,14 @@ end quadRegression4TSTest5
     val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
-    banner ("Run Rolling Validation on QuadRegression4TS Best model")
+    banner ("Run Rolling Validation on ARX_Quad Best model")
     val bmod = mod.getBest._3                                            // get the best model from feature selection
-    Regression4TS.rollValidate (bmod, 1)
+    ARX.rollValidate (bmod, 1)
 
-end quadRegression4TSTest6
+end ARX_QuadTest6
 
 /*
-Results for quadRegression4TSTest4
+Results for ARX_QuadTest4
 key:
 0      intercept - forced in the model
 1..10  new_deaths

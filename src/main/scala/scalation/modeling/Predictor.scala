@@ -668,7 +668,7 @@ end Predictor
     test (new KNN_Regression (x, y, x_fname), "k=7")                         // 26
     test (RegressionCat (oxr, y, 6, xr_fname))                               // 27 - include the origin cat. col.
     test (new RegressionTree (x, y, x_fname))                                // 28
-//  test (new RegressionTree_GB (x, y, x_fname))                             // 29
+//  test (new RegressionTreeGB (x, y, x_fname))                              // 29
 
 end predictorTest
 

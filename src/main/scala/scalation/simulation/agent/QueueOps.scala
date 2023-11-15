@@ -37,6 +37,11 @@ trait QueueOps:
     def barred: Int
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Clear (remove all elements from) the wait queue.
+     */
+    def clear (): Unit
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Wait in the queue, recording the waiting time.  Return whether the entity
      *  was able to actually join the queue or was barred.
      *  @param agent  the agent trying to wait in this queue
