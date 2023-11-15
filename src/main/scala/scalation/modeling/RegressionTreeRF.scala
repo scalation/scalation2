@@ -5,8 +5,10 @@
  *  @date    Fri Jan  5 16:54:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Regression Tree Random Forest (RF) (subsampling only)
+ *  @title   Model: Regression Tree Random Forest (RF)
  */
+
+// FIX - implement for case where use_fb = true
 
 package scalation
 package modeling
@@ -20,15 +22,17 @@ import modeling.{RegressionTree  => REG_TREE}                                // 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTreeRF` class uses several randomly built reegression trees for prediction.
- *  It randomly selects sub-samples of 'bRatio * x.dim1' size from the data x and y to
+ *  It randomly selects sub-samples of 'bRatio * x.dim' size from the data x and y to
  *  build nTrees regression trees.  The predict method uses the average over all trees.
- *  Note: this version does not select sub-features to build the trees.
+ *  Note:  By default this class does not select sub-features to build the trees (like Bagging Trees)
+ *         Set use_fb (feature bagging) to true to turn this capability on
  *  @param x       the input/data matrix (instances by features)
  *  @param y       the ouput/response vector (instances)
- *  @param fname_  the names of the variables/features (defaults to null)
+ *  @param fname_  the names of the variables/features (defaults to null => auto-generate))
+ *  @param use_fb  whether to use feature bagging (select subsets of the features)
  *  @param hparam  the hyper-parameters to the random forest (defaults to RegressionTree.hp)
  */
-class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
+class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null, use_fb: Boolean = false,
                         hparam: HyperParameter = RegressionTree.hp)
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):                    // call resetDF once tree is built
@@ -38,11 +42,13 @@ class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val depth      = hparam("maxDepth").toInt                         // the max depth for the base regression trees
     private val nTrees     = hparam ("nTrees").toInt                          // number of trees
     private val bRatio     = hparam ("bRatio").toDouble                       // bagging ratio 
+    private val fbRatio    = hparam ("fbRatio").toDouble                      // feature bagging ratio 
     private val sampleSize = (bRatio * x.dim).toInt                           // size of matrix sub-samples
     private val forest     = Array.ofDim [REG_TREE] (nTrees)                  // forest of regression trees
 
-    if nTrees <= 0 then                flaw ("init", "RF number of tree must be at least one")
-    if bRatio <= 0 || bRatio >= 1 then flaw ("init", "RF bagging ratio restricted to (0, 1)")
+    if nTrees <= 0 then                  flaw ("init", "RF number of tree must be at least one")
+    if bRatio <= 0  || bRatio >= 1  then flaw ("init", "RF bagging ratio restricted to (0, 1)")
+    if fbRatio <= 0 || fbRatio >= 1 then flaw ("init", "RF feature bagging ratio restricted to (0, 1)")
 
     modelName = s"RegressionTreeRF ($depth, $nTrees)"
 

@@ -18,8 +18,8 @@ import Initializer._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `DenseLayer` class applies an (optionally activated) linear transformation to
- *  the input x.
- *     Yp = f(W X + b)
+ *  the input matrix X.
+ *     Yp = f(X W + b)
  *  When f is null, it acts as a Linear Layer.
  *  @see pytorch.org/docs/stable/generated/torch.nn.Linear.html#torch.nn.Linear
  *  @param n_x  the second dimension of the input matrix (m by n_x)
@@ -36,8 +36,8 @@ case class DenseLayer (n_x: Int, n_y: Int, f: AFF = null):
      *  @param x  the m by nx input matrix (full or batch)
      */
     def apply (x: MatrixD): MatrixD =
-        if f != null then f.fM (w * x + b)
-        else w * x + b
+        if f != null then f.fM (x * w + b)
+        else x * w + b
     end apply
 
 end DenseLayer

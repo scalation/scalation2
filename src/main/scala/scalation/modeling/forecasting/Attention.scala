@@ -60,10 +60,7 @@ trait Attention (n_var: Int, n_mod: Int = 512, heads: Int = 8, n_v: Int = -1):
      */
     def context (q_t: VectorD, k: MatrixD, v: MatrixD): VectorD =
         val root_n = sqrt (q_t.dim)
-        val kq_t_root = k * (q_t / root_n)
-        val cxt = v.transpose * f_softmax.f_ (kq_t_root)
-        debug ("context", s"q_t.dim: ${q_t.dim}, k.dims: ${k.dims}, v.dims: ${v.dims}, cxt.dims: ${cxt.dim}")
-        cxt
+        v.transpose * f_softmax.f_ (k * (q_t / root_n))
     end context
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -74,9 +71,7 @@ trait Attention (n_var: Int, n_mod: Int = 512, heads: Int = 8, n_v: Int = -1):
      */
     def attention (q: MatrixD, k: MatrixD, v: MatrixD): MatrixD =
         val root_n = sqrt (q.dim2)
-        val qkT_root = q * (k.transpose / root_n)
-        val attention_weights = f_softmax.fM (qkT_root)
-        attention_weights * v
+        f_softmax.fM (q * (k.transpose / root_n)) * v
     end attention
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

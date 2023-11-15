@@ -49,7 +49,7 @@ end buildMatrix4TS
 /** Given a response vector y, build and return
  *  (1) an input/predictor MATRIX xx and 
  *  (2) an output/single-horizon output/response VECTOR yy. 
- *  Used by Single-Variate forecast models such as `Regression4TS`.
+ *  Used by Single-Variate forecast models such as `ARX`.
  *  that use RECURSIVE multi-horizon forecasting.
  *  The first response can't be predicted due to missing past values.
  *  Therefore the number of rows in xx and yy is reduced to y.dim - 1.

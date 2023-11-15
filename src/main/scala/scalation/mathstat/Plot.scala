@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller, Michael Cotterell, Aiman Munir
+/** @author  John Miller, Michael Cotterell
  *  @version 2.0
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file). 
@@ -18,14 +18,14 @@ import scalation.scala2d.BorderLayout._
 import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Plot` class takes 'x' and 'y' vectors of data values and plots the '(x, y)'
- *  data points.  Optionally, a 'z' vector may be plotted with 'y'.  Note, axes are
- *  determined by the 'x' and 'y' vectors only.  For more vertical vectors use `PlotM`.
+/** The `Plot` class takes x and y vectors of data values and plots the (x, y)
+ *  data points.  Optionally, a z vector may be plotted with y.  Note, axes are
+ *  determined by the x and y vectors only.  For more vertical vectors use `PlotM`.
  *------------------------------------------------------------------------------
  *  Zoom functionality has two options:
- *  When clicked on the plot label the value on that label will be selected as min/max value.
- *  By default, the clicked value on x and y axis will be chosen as min value.
- *  To change the value to max the resetLabel with title "Switch min and max value" can be used.
+ *  (1) mouse wheel controls the amount of zooming (in/out);
+ *  (2) mouse dragging repositions the objects in the panel (drawing canvas).
+ *  @see ZoomablePanel
  *------------------------------------------------------------------------------
  *  @param x       the x vector of data values (horizontal), use null to use y's index
  *  @param y       the y vector of data values (primary vertical, black)
@@ -61,6 +61,62 @@ object Plot:
         new Plot (x.toDouble, y.toDouble, if z == null then null else z.toDouble, _title, lines)
     end apply
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Draw the x-axis and y-axis.
+     *  @param g2d     the hi-res graphics
+     *  @param baseX   the base for x
+     *  @param baseY   the base for y
+     *  @param frameW  the frame width
+     *  @param frameH  the frame width
+     *  @param offset  the offset in y coordinate
+     */
+    def drawAxes (g2d: Graphics2D, baseX: Int, baseY: Int, frameW: Int, frameH: Int,
+                  offset: Int, minX: Double, maxY: Double, deltaX: Double, deltaY: Double): Unit =
+        val stepsX = 10                                    // number of x-steps for axis
+        val stepsY = 10                                    // number of y-steps for axis
+
+        val axis = Line (0, 0, 0, 0)
+        g2d.setPaint (black)
+        g2d.setStroke (new BasicStroke (2.0f))
+
+        // Draw the x-axis and y-axis
+
+        axis.setLine (baseX - 1, baseY + 1, baseX + 10 + frameW - 2 * offset, baseY + 1)
+        g2d.draw (axis)
+        axis.setLine (baseX - 1, offset - 10, baseX - 1, baseY + 1)
+        g2d.draw (axis)
+
+        // Draw the labels on the x-axis
+
+        var x_pos = 0
+        var y_pos = baseY + 15
+        var step  = deltaX / stepsX                        // for x-axis
+        for j <- 0 to stepsX do
+            val x_val = clip (minX + j * step)
+            x_pos = offset - 8 + j * (frameW - 2 * offset) / stepsX
+            g2d.drawString (x_val, x_pos, y_pos)
+        end for
+
+        // Draw the labels on the y-axis
+
+        x_pos = baseX - 30
+        step  = deltaY / stepsY                            // for y-axis
+        for j <- 0 to stepsY do
+            val y_val = clip (maxY - j * step)
+            y_pos = offset + 2 + j * (frameH - 2 * offset) / stepsY
+            g2d.drawString (y_val, x_pos, y_pos)
+        end for
+    end drawAxes
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert value to string and cut out the first four characters.
+     *  @param x  the value to convert and cut
+     */
+    def clip (x: Double): String =
+        val s = x.toString 
+        s.substring (0, min (s.length, 4))
+    end clip
+
 end Plot
 
 
@@ -87,43 +143,32 @@ end FramelessPlot
  *  @param x       the x vector of data values (horizontal)
  *  @param y       the y vector of data values (primary vertical)
  *  @param z       the z vector of data values (secondary vertical) to compare with y
- *  @param width   the width
- *  @param height  the height
+ *  @param width   the frame width
+ *  @param height  the frame height
  *  @param lines   flag for generating a line plot
  */
 class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines: Boolean = false)
 //    extends Panel:
       extends ZoomablePanel:
 
-    private val EPSILON   = 1E-9
-    private val SCALE     = 10                             // FIX - pass as a parameter
-    private val frameW    = width
-    private val frameH    = height
-    private val offset    = 80
-    private val baseX     = offset
-    private val baseY     = frameH - offset
-    private val stepsX    = 10
-    private val stepsY    = 10
+    private val EPSILON  = 1E-9                             // number close to zero
+    private val SCALE    = 10                               // FIX - pass as a parameter
+    private val offset   = 80                               // offset frame to axis
+    private val frameW   = width                            // frame width
+    private val frameH   = height                           // frame height
+    private val baseX    = offset                           // base for x-axis
+    private val baseY    = frameH - offset                  // base for y-axis
 
-    private var minX      = floor (SCALE * x.min) / SCALE.toDouble
-    private var maxX      = ceil (x.max + EPSILON)
-    private var minY      = floor (SCALE * y.min) / SCALE.toDouble
-    private var maxY      = ceil (y.max)
-//  private var maxY      = ceil (y.max + EPSILON)
+    private var minX     = floor (SCALE * x.min) / SCALE.toDouble
+    private var maxX     = ceil (x.max + EPSILON)
+    private var minY     = floor (SCALE * y.min) / SCALE.toDouble
+    private var maxY     = ceil (y.max)
+//  private var maxY     = ceil (y.max + EPSILON)
+    private var deltaX   = maxX - minX
+    private var deltaY   = maxY - minY
 
-    private var deltaX    = maxX - minX
-    private var deltaY    = maxY - minY
-
-    private val diameter  = 4
-    private val dot       = Ellipse ()
-    private val axis      = Line (0, 0, 0, 0)
-
-    private var setMin    = true
-    private val origMinX  = minX
-    private val origMaxX  = maxX
-    private val origMinY  = minY
-    private val origMaxY  = maxY
-    private var setMax    = false
+    private val diameter = 4
+    private val dot      = Ellipse ()
 
     setBackground (white)
 
@@ -133,68 +178,23 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
      */
     override def paintComponent (gr: Graphics): Unit =
         super.paintComponent (gr)
-        val g2d = gr.asInstanceOf [Graphics2D]            // use hi-res
+        val g2d = gr.asInstanceOf [Graphics2D]              // use hi-res graphics
 
-        g2d.setTransform (at)                             // used for zooming
+        g2d.setTransform (at)                               // used for zooming (at @see `ZoomablePanel`)
 
-        var x_pos = 0
-        var y_pos = 0
-        var step  = 0.0
-
-        //:: Draw the axes
-
-        g2d.setPaint (black)
-        g2d.setStroke (new BasicStroke (2.0f))
-        axis.setLine (baseX - 1, baseY + 1, baseX + 10 + frameW - 2 * offset, baseY + 1)
-        val linex = axis.getBounds
-        g2d.draw (axis)
-        axis.setLine (baseX - 1, offset - 10, baseX - 1, baseY + 1)
-        val liney = axis.getBounds
-        g2d.draw (axis)
-
-        //:: Draw the labels on the axes
-
-        var xlabels = List [Rectangle2D] ()
-        var xValues = List [String] ()
-        y_pos = baseY + 15
-        step  = deltaX / stepsX.asInstanceOf [Double]       // for x-axis
-        for j <- 0 to stepsX do
-            val x_val = clip (minX + j * step)
-            x_pos = offset - 8 + j * (frameW - 2 * offset) / stepsX
-            g2d.drawString (x_val, x_pos, y_pos)
-
-            xValues = xValues.::(x_val)                // store  the postion of x y labels to know the postion of click
-            var resumeRect = g2d.getFontMetrics.getStringBounds (x_val, g2d)
-            resumeRect.setRect (x_pos, y_pos - g2d.getFontMetrics ().getAscent (),
-                                resumeRect.getWidth (), resumeRect.getHeight ())
-            xlabels = xlabels.::(resumeRect)
-        end for
-
-        var ylabels = List [Rectangle2D] ()
-        var yValues = List [String] ()
-        x_pos = baseX - 30
-        step  = deltaY / stepsY.asInstanceOf [Double]       // for y-axis
-        for j <- 0 to stepsY do
-            val y_val = clip (maxY - j * step)
-            y_pos = offset + 2 + j * (frameH - 2 * offset) / stepsY
-            g2d.drawString (y_val, x_pos, y_pos)
-
-            yValues = yValues.::(y_val)
-            var resumeRect = g2d.getFontMetrics.getStringBounds (y_val, g2d)
-            resumeRect.setRect (x_pos, y_pos - g2d.getFontMetrics ().getAscent (),
-                                resumeRect.getWidth (), resumeRect.getHeight ())
-            ylabels = ylabels.::(resumeRect)
-        end for
+        Plot.drawAxes (g2d, baseX, baseY, frameW, frameH, offset, minX, maxY, deltaX, deltaY)
 
         //:: Draw the dots for the data points being plotted
 
-        var px_pos = 0                 // previous x
-        var py_pos = 0                 // previous y
+        var x_pos  = 0                                      // current x position
+        var y_pos  = 0                                      // current y position
+        var px_pos = 0                                      // previous x position
+        var py_pos = 0                                      // previous y position
 
         for i <- 0 until y.dim do
-            val xx = round ((x(i) - minX) * (frameW - 2 * offset).asInstanceOf [Double])
+            val xx = round ((x(i) - minX) * (frameW - 2 * offset))
             x_pos = (xx / deltaX).asInstanceOf [Int] + offset
-            val yy = round ((maxY - y(i)) * (frameH - 2 * offset).asInstanceOf [Double])
+            val yy = round ((maxY - y(i)) * (frameH - 2 * offset))
             y_pos = (yy / deltaY).asInstanceOf [Int] + offset
             dot.setFrame (x_pos, y_pos, diameter, diameter)         // x, y, w, h
 
@@ -207,17 +207,17 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
                 g2d.drawLine (px_pos+1, py_pos+1, x_pos+1, y_pos+1)
             end if
 
-            px_pos = x_pos             // update previous x
-            py_pos = y_pos             // update previous y
+            px_pos = x_pos                                  // update previous x
+            py_pos = y_pos                                  // update previous y
         end for
 
         g2d.setStroke (new BasicStroke (2.0f))
 
         if z != null then
             for i <- 0 until min (y.dim, z.dim) do
-                val xx = round ((x(i) - minX) * (frameW - 2 * offset).asInstanceOf [Double])
+                val xx = round ((x(i) - minX) * (frameW - 2 * offset))
                 x_pos = (xx / deltaX).asInstanceOf [Int] + offset
-                val yy = round ((maxY - z(i)) * (frameH - 2 * offset).asInstanceOf [Double])
+                val yy = round ((maxY - z(i)) * (frameH - 2 * offset))
                 y_pos = (yy / deltaY).asInstanceOf [Int] + offset
                 dot.setFrame (x_pos, y_pos, diameter, diameter)         // x, z, w, h
                 g2d.setPaint (red)
@@ -229,21 +229,12 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
                     g2d.drawLine (px_pos+1, py_pos+1, x_pos+1, y_pos+1)
                 end if
 
-                px_pos = x_pos         // update previous x
-                py_pos = y_pos         // update previous y
+                px_pos = x_pos                              // update previous x
+                py_pos = y_pos                              // update previous y
             end for
         end if
 
     end paintComponent
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Convert value to string and cut out the first four characters.
-     *  @param x  the value to convert and cut
-     */
-    def clip (x: Double): String =
-        val s = x.toString 
-        s.substring (0, min (s.length, 4))
-    end clip
 
 end Canvas
 

@@ -2,10 +2,10 @@
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
  *  @version 2.0
- *  @date    Sun Aug 27 14:03:25 EDT 2023
+ *  #date    Sun Aug 27 14:03:25 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Vector AutoRegressive (VAR)
+ *  #title   Model: Vector AutoRegressive (VAR)
  */
 
 package scalation
@@ -43,7 +43,7 @@ object VAR:
     def apply (y: MatrixD, lags: Int, h: Int, intercept: Boolean = true,
                hparam: HyperParameter = Regression.hp): RegressionMV =
 
-        var x = Regression4TS.makeExoCols (lags, y, 1, lags+1)            // add columns for each lagged vars
+        var x = ARX.makeExoCols (lags, y, 1, lags+1)                      // add columns for each lagged vars
         val yy = y(lags until y.dim)                                      // trim y
         if intercept then x = VectorD.one (yy.dim) +^: x                  // add first column of all ones
 
