@@ -118,14 +118,33 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
             //:: Draw the dots for the points on a search path, if given
 
             if path != null then
+                val basicStroke = g2d.getStroke.asInstanceOf[BasicStroke]
+                val dashedLine = Line (0, 0, 0, 0)
+                val dashedStroke = new BasicStroke(0.5, basicStroke.getEndCap, basicStroke.getLineJoin, 1.0, Array[Float](2), 0);
+                var xPosPrev: Int = Int.MinValue
+                var yPosPrev: Int = Int.MinValue
+
                 for p <- path do
+                    // Draw point in path.
                     val xx    = round ((p(0) - lb(0)) * (frameW - 2 * offset))
                     x_pos     = (xx / deltaX).asInstanceOf [Int] + offset
                     val yy    = round ((ub(1) - p(1)) * (frameH - 2 * offset))
                     y_pos     = (yy / deltaY).asInstanceOf [Int] + offset - diameter
                     dot.setFrame (x_pos, y_pos, diameter, diameter)      // x, y, w, h
-                    g2d.setPaint (yellow)
+                    g2d.setPaint (darkyellow)
                     g2d.fill (dot)
+
+                    // Draw line connecting previous point to this point.
+                    if xPosPrev != Int.MinValue && yPosPrev != Int.MinValue then
+                        dashedLine.setLine(xPosPrev + (diameter/2.0), yPosPrev + (diameter/2.0), x_pos  + (diameter/2.0), y_pos + (diameter/2.0))
+                        g2d.setStroke(dashedStroke)
+                        g2d.setPaint (black)
+                        g2d.draw(dashedLine)
+                        g2d.setStroke(basicStroke)
+
+                    // Update previous positions.
+                    xPosPrev = x_pos
+                    yPosPrev = y_pos
             end if
 
             if opt != VectorD.nullv then
