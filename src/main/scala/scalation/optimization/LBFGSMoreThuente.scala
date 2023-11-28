@@ -54,18 +54,13 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         cd: LBFGSCallbackData,
         params: LBFGSParameters
     ): LBFGSLineSearchReturn =
-
-        var brackt = false
+    
         var count = 0
-        var stage1 = 0
         var errorCode: Option[LBFGSReturnCode] = None
 
         var dg = 0.0
-        var stx, fx, dgx = 0.0
-        var sty, fy, dgy = 0.0
         var fxm, dgxm, fym, dgym, fm, dgm = 0.0
-        var ftest1, dginit, dgtest = 0.0
-        var width, prev_width = 0.0
+        var ftest1 = 0.0
         var stmin, stmax = 0.0
 
         var xNew = x
@@ -77,17 +72,17 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         if stp <= 0 then return LBFGSReturnCode.InvalidParameters
 
         /* Compute the initial gradient in the search direction. */
-        dginit = gNew dot s
+        val dginit = g dot s
 
         /* Make sure that s points to a descent direction. */
         if 0 < dginit then return LBFGSReturnCode.IncreaseGradient
-
-
+        
         /* Initialize local variables. */
-        stage1 = 1
-        dgtest = params.ftol * dginit
-        width = params.maxStep - params.minStep
-        prev_width = 2.0 * width
+        var brackt = false
+        var stage1 = true
+        val dgtest = params.ftol * dginit
+        var width = params.maxStep - params.minStep
+        var prev_width = 2.0 * width
 
         /*
             The variables stx, fx, dgx contain the values of the step,
@@ -98,12 +93,9 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
             The variables stp, f, dg contain the values of the step,
             function, and derivative at the current step.
         */
-        stx = 0.0
-        sty = 0.0
-        fx = f
-        fy = f
-        dgx = dginit
-        dgy = dginit
+        var stx, sty = 0.0
+        var fx, fy = f
+        var dgx, dgy = dginit
 
         while true do
             /*
@@ -115,7 +107,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 stmax = max(stx, sty)
             else
                 stmin = stx
-                stmax = stpNew + 4.0 * (stpNew-stx)
+                stmax = stpNew + 4.0 * (stpNew - stx)
             end if
 
             /* Clip the step in the range of [stpmin, stpmax]. */
@@ -182,8 +174,8 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 In the first stage we seek a step for which the modified
                 function has a non-positive value and non-negative derivative.
              */
-            if stage1 != 0 && fNew <= ftest1 && min(params.ftol, params.gtol) * dginit <= dg then
-                stage1 = 0
+            if stage1 && fNew <= ftest1 && min(params.ftol, params.gtol) * dginit <= dg then
+                stage1 = false
             end if
 
             /*
@@ -193,7 +185,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 derivative, and if a lower function value has been
                 obtained but the decrease is not sufficient.
              */
-            if stage1 != 0 && ftest1 < fNew && fNew <= fx then
+            if stage1 && ftest1 < fNew && fNew <= fx then
                 /* Define the modified function and derivative values. */
                 fm = fNew - stpNew * dgtest
                 fxm = fx - stx * dgtest
@@ -288,8 +280,8 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         var newy = y
         var newfy = fy
         var newdy = dy
-        var bound: Int = 0
-        val dsign: Boolean = (dt * dx) < 0
+        var bound: Boolean = false
+        val dsign: Boolean = (dt * (dx/abs(dx))) < 0
         var mc: Double = 0.0
         /* minimizer of an interpolated cubic. */
         var mq: Double = 0.0
@@ -325,7 +317,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 the average of the minimizers is taken.
              */
             newBrackt = true
-            bound = 1
+            bound = true
             mc = cubicMinimizer(x, fx, dx, t, ft, dt)
             mq = quadMinimizer(x, fx, dx, t, ft)
             if abs(mc - x) < abs(mq - x) then
@@ -341,7 +333,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 the cubic one is taken, else the quadratic one is taken.
              */
             newBrackt = true
-            bound = 0
+            bound = false
             mc = cubicMinimizer(x, fx, dx, t, ft, dt)
             mq = quadMinimizer2(x, dx, t, dt)
             if abs(mc - t) > abs(mq - t) then
@@ -361,7 +353,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 then the the minimizer closest to x is taken, else the one
                 farthest away is taken.
              */
-            bound = 1
+            bound = true
             mc = cubicMinimizer2(x, fx, dx, t, ft, dt, tmin, tmax)
             mq = quadMinimizer2(x, dx, t, dt)
             if brackt then
@@ -384,8 +376,8 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
                 not decrease. If the minimum is not brackt, the step
                 is either tmin or tmax, else the cubic minimizer is taken.
              */
-            bound = 0
-            if newBrackt then
+            bound = false
+            if brackt then
                 newt = cubicMinimizer(t, ft, dt, y, fy, dy)
             else if x < t then
                 newt = tmax
@@ -431,7 +423,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
             Redefine the new trial value if it is close to the upper bound
             of the interval.
          */
-        if newBrackt && bound != 0 then
+        if newBrackt && bound then
             mq = newx + 0.66 * (newy - newx)
             if newx < newy then
                 if mq < newt then
