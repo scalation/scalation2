@@ -5,7 +5,7 @@
  *  @date    Sat Mar 21 20:34:23 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  Coroutine implementation options: (1) Java Threads, (2) Java Virtual Threads
+ *  @note    Coroutine implementation options: (1) Java Threads, (2) Java Virtual Threads
  */
 
 package scalation
@@ -234,7 +234,7 @@ end Coroutine
  *   Cor2: phase 2
  *  > runMain scalation.simulation.runCoroutineTest
  */
-object CoroutineTest:            // requires object since it needs forward reference
+object CoroutineTest:                      // requires object since it needs forward reference
 
     class Cor1 extends Coroutine:
         override def act (): Unit =
@@ -260,16 +260,16 @@ object CoroutineTest:            // requires object since it needs forward refer
         end act
     end Cor2
 
-    val cor1 = Cor1 ()           // initialization, hold the reference to the object/instance
+    val cor1 = Cor1 ()                     // initialization, hold the reference to the object/instance
     val cor2 = Cor2 ()
 
     println ("start coroutines")
 
     @main def runCoroutineTest (): Unit =
         println ("runCoroutineTest: start test from main func")
-        val corfuture = cor1.start ()                      // start the coroutine cor1
+        cor1.start ()                                            // start the coroutine cor1
         if Coroutine.useVirtualThread then Coroutine.shutdown ()
-//      if !Coroutine.useVirtualThread then Coroutine.shutdown ()
+//      if ! Coroutine.useVirtualThread then Coroutine.shutdown ()
     end runCoroutineTest
 
 end CoroutineTest

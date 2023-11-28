@@ -5,7 +5,7 @@
  *  @date    Mon Jun 19 01:30:58 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Modified Wolfe Line Search Optimizer
+ *  @note    Modified Wolfe Line Search Optimizer
  *
  *  @see arch.library.northwestern.edu/concern/generic_works/jm214p59n?locale=en
  */
@@ -44,7 +44,6 @@ class WolfeLS3 (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Dou
                 c3: Double = 0.0, eg: Double = 0.0):
 
     private val debug   = debugf ("WolfeLS3", true)                 // debug function
-    private val POS_INF = Double.PositiveInfinity                   // Positive Infinity
     private val MAX_IT  = 30                                        // maximum number of iterations
 
     if g == null then g = (x: VectorD) => ∇ (f)(x)                  // no function for gradient => use numerical
@@ -120,7 +119,7 @@ class WolfeLS3 (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Dou
             debug ("lsearch", s"(it = $it) after  a = $a in [$l, $u]")
         } // cfor
 
-        var b = a
+        val b = a
         if split then splitPhase (x, fx, gx, p, gxp, a, b)
         else (a, b)
     end lsearch
@@ -145,13 +144,12 @@ class WolfeLS3 (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Dou
             debug ("splitPhase", s"a = $a, y = $y, fy = $fy")
             wolfe1 (fx, fy, a, gxp) == false                        // Wolfe condition 1: SDC
         do a /= 10.0                                                // backtrack
-/*
+
         while
             val y  = x + p * a                                      // new point based on b
-            val (fy, gy) = (f(y), g(y))                             // functional value and gradient
-            noiseControl (gx, gy, p)                                // noise control condition
+            noiseControl (gx, g(y), p)                              // noise control condition
         do b *= 2                                                   // lengthen step
-*/
+
         (a, b)
     end splitPhase
 

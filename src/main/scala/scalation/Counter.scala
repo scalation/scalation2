@@ -5,7 +5,7 @@
  *  @date    Sat Jan  1 13:54:44 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Class used for Counting
+ *  @note    Class Used for Counting
  */
 
 package scalation

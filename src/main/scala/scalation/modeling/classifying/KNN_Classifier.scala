@@ -5,7 +5,7 @@
  *  @date    Sun Sep 22 18:45:44 EDT 2013 
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Nearest Neighbors (KNN) Classifier
+ *  @note    Model: K-Nearest Neighbors (KNN) Classifier
  */
 
 package scalation
@@ -166,8 +166,8 @@ end KNN_Classifier
                                9, 1, 0,
                               10, 1, 0)
 
-    val x = xy.not (?, xy.dim2-1)
-    val y = xy(?, xy.dim2-1).toInt
+//  val x = xy.not (?, xy.dim2-1)
+//  val y = xy(?, xy.dim2-1).toInt
 
     val fname = Array ("x1", "x2")                           // feature/variable names
     val cname = Array ("No", "Yes")                          // class names
@@ -184,6 +184,7 @@ end KNN_Classifier
     val z2 = VectorD (3.0, 3.0)
     println ("knn.predictI ($z2) = " + knn.predictI (z2))
 
+//  val yp = knn.predict (x)
 //  new Plot (xy(?, 0), y.toDouble, yp.toDouble)
 
 end kNN_ClassifierTest
@@ -211,8 +212,9 @@ end kNN_ClassifierTest
     val fname = Array ("x1", "x2")                           // feature/variable names
     val cname = Array ("No", "Yes")                          // class names
 
-    println ("xy = " + xy)
-    println ("x = " + x)
+    println (s"xy = $xy")
+    println (s"x  = $x")
+    println (s"y  = $y")
 
     val knn = KNN_Classifier (xy, fname, 2, cname)()         // create classifier
     knn.trainNtest ()()                                      // no training; test

@@ -5,7 +5,7 @@
  *  @date    Mon Sep 27 15:03:10 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Temporal Objects are Time-Based
+ *  @note    Temporal Objects are Time-Based
  */
 
 package scalation

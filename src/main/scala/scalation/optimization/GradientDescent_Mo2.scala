@@ -5,7 +5,7 @@
  *  @date    Sun Mar  6 14:01:47 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gradient Descent with Momentum Optimizer (Adam-like)
+ *  @note    Gradient Descent with Momentum Optimizer (Adam-like)
  *
  *  @see https://arxiv.org/pdf/1412.6980.pdf
  */
@@ -30,10 +30,8 @@ class GradientDescent_Mo2 (f: FunctionV2S, gr: FunctionV2V, hparam: HyperParamet
          with StoppingRule (hparam("upLimit").toInt):                   // limit on increasing loss
 
     private val debug = debugf ("GradientDescent_Mo2", true)            // debug function
-    private val flaw  = flawf ("GradientDescent_Mo2")                   // flaw function
 
-    private val β       = hp("beta").toDouble                           // momentum hyper-parameter
-    private val upLimit = hp("upLimit").toInt                           // limit on increasing loss
+    private val β     = hp("beta").toDouble                             // momentum hyper-parameter
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Solve the Non-Linear Programming (NLP) problem by starting at x0 and
@@ -46,7 +44,7 @@ class GradientDescent_Mo2 (f: FunctionV2S, gr: FunctionV2V, hparam: HyperParamet
     def solve (x0: VectorD, α: Double = eta): FuncVec =
         var mt   = new VectorD (x0.dim)                                 // first moment estimate
         var mht  = VectorD.nullv                                        // bias-corrected first moment estimate
-        var x    = x0                                                   // start parameters at initial guess
+        val x    = x0                                                   // start parameters at initial guess
         var f_x  = -0.0                                                 // loss function, value indefined
         var best = (f_x, x)                                             // start with best = initial
 
@@ -78,7 +76,7 @@ end GradientDescent_Mo2
  */
 @main def gradientDescent_Mo2Test (): Unit =
 
-    var x0    = VectorD (0.0, 0.0)                                      // starting point
+    val x0    = VectorD (0.0, 0.0)                                      // starting point
     hp("eta") = 1.0                                                     // learning rate (problem dependent)
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -86,7 +84,7 @@ end GradientDescent_Mo2
     def gr (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
 
     val optimizer = new GradientDescent_Mo2 (f, gr)
-    var opt = optimizer.solve (x0)
+    val opt = optimizer.solve (x0)
     println (s"][ optimal solution f(x), x) = $opt")
 
 end gradientDescent_Mo2Test

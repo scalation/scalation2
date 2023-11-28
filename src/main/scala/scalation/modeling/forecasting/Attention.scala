@@ -5,7 +5,7 @@
  *  @date    Mon Sep  4 13:09:52 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Context and Attention for Transformers
+ *  @note    Model Framework: Context and Attention for Transformers
  *
  *  @see https://sebastianraschka.com/blog/2023/self-attention-from-scratch.html
  *  @see https://arxiv.org/pdf/1706.03762.pdf (main paper)

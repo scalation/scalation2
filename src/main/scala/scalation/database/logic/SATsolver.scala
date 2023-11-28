@@ -5,7 +5,7 @@
  *  @date    Tue Oct  6 16:15:23 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   SATsolver - Simple (Inefficient) Satisfiablity Solver
+ *  @note    SATsolver - Simple (Inefficient) Satisfiablity Solver
  *
  *  @see Satisfiability Solvers
  *  https://www.cs.cornell.edu/gomes/pdf/2008_gomes_knowledge_satisfiability.pdf

@@ -5,7 +5,7 @@
  *  @date    Sun Feb  6 00:08:23 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Optimization: Stochastic Gradient Descent with Momentum Optimizer
+ *  @note    Optimization: Stochastic Gradient Descent with Momentum Optimizer
  */
 
 package scalation
@@ -26,7 +26,6 @@ import Optimizer._
 class Optimizer_SGDM extends Optimizer:
 
     private val debug = debugf ("Optimizer_SGDM", false)                  // debug function
-    private val flaw  = flawf ("Optimizer_SGDM")                          // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given training data x and y for a 2-layer, multi-output Neural Network, fit
@@ -109,7 +108,6 @@ class Optimizer_SGDM extends Optimizer:
      */
     def optimize3 (x: MatrixD, y: MatrixD,
                    bb: NetParams, eta: Double, ff: Array [AFF]): (Double, Int) =
-        val idx       = VectorI.range (0, x.dim)                          // instance index range
         val permGen   = permGenerator (x.dim)                             // permutation vector generator
         val (a, b)    = (bb(0), bb(1))                                    // two sets of net-parameters
         val (f, f1)   = (ff(0), ff(1))                                    // two activation functions
@@ -206,7 +204,7 @@ class Optimizer_SGDM extends Optimizer:
         val z      = Array.ofDim [MatrixD] (nl+1)                         // array to store activations, layer by layer
         val δ      = Array.ofDim [MatrixD] (nl)                           // array to store all delta matrices
         val g      = Array.ofDim [MatrixD] (nl)                           // array to store all gradiant matrices
-        var p      = Array.ofDim [MatrixD] (nl)                           // momentum array
+        val p      = Array.ofDim [MatrixD] (nl)                           // momentum array
         for l <- layers do p(l) = new MatrixD (b(l).w.dim, b(l).w.dim2)
 
         var sse_best_   = -0.0

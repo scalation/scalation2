@@ -5,7 +5,7 @@
  *  @date    Wed Jun  8 13:16:15 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   EasyWriter Allows Switching between Standard Output and Files
+ *  @note    EasyWriter Allows Switching between Standard Output and Files
  */
 
 package scalation

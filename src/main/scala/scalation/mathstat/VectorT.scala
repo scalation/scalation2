@@ -5,7 +5,7 @@
  *  @date    Thu Jun 17 19:29:23 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Vector Data Structure of Time-Numbers `TimeNum`
+ *  @note    Vector Data Structure of Time-Numbers `TimeNum`
  */
 
 package scalation

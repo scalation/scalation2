@@ -5,7 +5,7 @@
  *  @date    Wed Oct 20 14:54:48 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   A Bus Is Used to Transport Several SimActors Together
+ *  @note    A Bus Is Used to Transport Several SimActors Together
  */
 
 package scalation
@@ -46,7 +46,7 @@ abstract class Bus (name: String, director: Model, lTime: Variate, cap: Int)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Unload actors/riders from this bus onto transport t.
-     *  @param tran      the transport for actors departing this bus
+     *  @param tran  the transport for actors departing this bus
      */
     def unload (tran: Transport): Unit =
         for i <- 0 until nRiders do

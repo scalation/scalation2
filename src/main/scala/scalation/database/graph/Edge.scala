@@ -5,7 +5,7 @@
  *  @date    Sat Oct  2 18:36:01 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Edge in a Property Graph
+ *  @note    Edge in a Property Graph
  */
 
 package scalation
@@ -36,7 +36,7 @@ class Edge (_name: String, val from: Vertex, val prop: Property, val to: Vertex,
 
     val tokens = Set [Topological] ()                     // topological objects/tokens at this edge
 
-    private val GAP = 5                                   // gap distance between edges in a bundle
+//  private val GAP = 5                                   // gap distance between edges in a bundle
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this edge object to a string.
@@ -49,7 +49,7 @@ class Edge (_name: String, val from: Vertex, val prop: Property, val to: Vertex,
     end toString
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** When shift is non-zero, the endpoints for the edge must be shifted by shift * GAP
+    /*  When shift is non-zero, the endpoints for the edge must be shifted by shift * GAP
      *  in the direction orthogonal to the edge.
      *
     def calcEndPoints: (VectorD, VectorD) = 

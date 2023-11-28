@@ -5,7 +5,7 @@
  *  @date    Sun Mar 12 16:49:17 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Tight Clustering (consistent cluster assignment across subsample)
+ *  @note    Tight Clustering (consistent cluster assignment across subsample)
  *
  *  @see www.jstor.org/stable/3695642?seq=1#page_scan_tab_contents
  */

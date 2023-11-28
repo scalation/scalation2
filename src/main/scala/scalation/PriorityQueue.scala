@@ -4,13 +4,12 @@
  *  @version 2.0
  *  @date    Sun Jun  6 15:07:08 EDT 2021
  *
- *  @title   Extension to Scala's Priority Queue class
+ *  @note    Extension to Scala's Priority Queue class
  *           with decreaseKey, increaseKey, printInOrder 
  */
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/*
- * Scala (https://www.scala-lang.org)
+/* Scala (https://www.scala-lang.org)
  *
  * Copyright EPFL and Lightbend, Inc.
  *
@@ -21,7 +20,6 @@
  * additional information regarding copyright ownership.
  *
  * @authur John Miller added decreaseKey, increaseKey, printInOrder
- * @date   Sun Jun  6 15:07:08 EDT 2021
  */
 
 package scalation

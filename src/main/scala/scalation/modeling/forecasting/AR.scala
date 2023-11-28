@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Auto-Regressive (AR)
+ *  @note    Model: Auto-Regressive (AR)
  *
  *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
  *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
@@ -348,7 +348,7 @@ end aRTest3
 
     for h <- 1 to hh do
         val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
-        val yy = y(h until m)                                          // actual response aligned with yfh
+//      val yy = y(h until m)                                          // actual response aligned with yfh
         println (s"Evaluate QoF for horizon $h:")
         println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
         println (s"Fit.mae (y, yfh, h)  = ${Fit.mae (y, yfh, h)}")     // evaluate h-steps ahead forecasts with MAE

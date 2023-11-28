@@ -5,7 +5,7 @@
  *  @date    Sun May  7 18:20:18 EDT 2023 
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Extensions Method for `Boolean`: and, or, not, xor
+ *  @note    Extensions Method for `Boolean`: and, or, not, xor
  */
 
 package scalation

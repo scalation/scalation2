@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Tue Jun 29 18:56:40 EDT 2021
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note   Untility for Scalation Developers to Make VectorI.scala from VectorD.scala
  */
 
 package scalation

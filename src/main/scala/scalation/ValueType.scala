@@ -5,7 +5,10 @@
  *  @date    Sat Aug 29 14:14:32 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   ValueType - union datatype for atomic database values
+ *  @note    ValueType - Union Datatype for Atomic Database Values
+ *           (includes useful related values and methods)
+ *
+ *  @see     "type ValueType" below
  */
 
 package scalation

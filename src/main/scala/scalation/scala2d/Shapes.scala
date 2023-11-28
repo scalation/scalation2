@@ -4,6 +4,9 @@
  *  @version 2.0
  *  @date    Tue May 13 16:18:42 EDT 2014
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Type Aliases for Basic Java awt Types
+ *
  *  -----------------------------------------------------------------------------
  *  The `scala2d` package defines/redefines Java2D shapes (see `java.awt` and
  *  `java.awt.geom`).  The shapes are divided into five groups based on their

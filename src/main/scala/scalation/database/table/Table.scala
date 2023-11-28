@@ -5,7 +5,7 @@
  *  @date    Fri Jun 17 11:19:14 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Relational Algebra (RA) for Row-Oriented Relational DBMS
+ *  @note    Relational Algebra (RA) for Row-Oriented Relational DBMS
  *
  *  RA Operators: rename, project, select, union, minus, intersect, product, join,
  *                leftJoin, divide, groupBy, aggregate, orderBy
@@ -287,11 +287,11 @@ object Table:
      */
     def load (fileName: String, name: String): Table =
         val jsonArr = readFileIntoArray (fileName)
-        val nlines  = jsonArr.size 
+//      val nlines  = jsonArr.size 
         val jsonStr: String = jsonArr(0)
         debug ("load", s"jsonStr = ${jsonStr.slice (0, 5000)}")
-        var tab: Table = null
-        val gson = new Gson ()
+        val tab: Table = null                                              // FIX - change to var
+//      val gson = new Gson ()
 //      val tableType  = new TypeToken [Table] ().getType                  // FIX - fails
 //      tab = gson.fromJson (jsonStr, tableType)
         tab

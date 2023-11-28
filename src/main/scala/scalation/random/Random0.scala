@@ -5,7 +5,7 @@
  *  @date    Fri Aug  6 12:35:22 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *  
- *  @title   First Attempt at a Random Number Generator
+ *  @note   First Attempt at a Simple Random Number Generator (for learning purposes)
  */
 
 package scalation
@@ -14,7 +14,9 @@ package random
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Random0` class generates random real numbers in the range (0, 1).
  *  It implements, using 32-bit integers (Int's).
+ *
  *      x_i = (x_i-1 + 1) % m
+ *
  *  @see `Random` for a better random number generator
  *  @param stream  the random number stream index
  */

@@ -5,7 +5,7 @@
  *  @date    Sun May 21 01:50:40 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Reverse Mode Automatic Differentiation
+ *  @note    Reverse Mode Automatic Differentiation
  *
  *  @see https://www.jmlr.org/papers/volume18/17-468/17-468.pdf
  *       https://alexander-schiendorfer.github.io/2020/02/16/automatic-differentiation.html
@@ -94,7 +94,7 @@ class AutoDiff (y: MatrixD):
         val sz = pipe.size
 //      pipe(sz-1).vb = MatrixD.fill (e.dim, e.dim2, 1.0)
         pipe(sz-1).vb = e
-        var dv2, b2: MatrixD = null
+        var dv2: MatrixD = null
         for i <- sz-2 to 1 by -1 do
             val (v, f, b) = (pipe(i).v, pipe(i).f, pipe(i).b)
             banner (s"backward: step $i")
@@ -149,7 +149,7 @@ end AutoDiff
     val sst = (y - y.mean).normSq                                   // sum of squares total
     println (s"sst = $sst")
 
-    var eta   = 1.0 
+    val eta = 1.0 
 
     for epoch <- 1 to 1 do
         banner (s"improvement step $epoch")
@@ -164,6 +164,7 @@ end AutoDiff
         b      -= bup                                               // new parameter vector
         val sse = e dot e                                           // sum of squared errors
 
+        println (s"epoch = $epoch, sse = $sse")
         println (s"forward:  $u <- u \n $yp <- yp \n $e <- e \n $ls <- ls")
         println (s"backward: $fp <- fp \n $d <- d \n $g <- g")
     end for
@@ -215,10 +216,10 @@ end autoDiffTest
 
     banner ("initialize")
     val ad = new AutoDiff (y)                                       // Automatic Differentiation
-    var aa = MatrixD.fill (2, 2, 0.1)                               // input to hidden layer 2x2 weight matrix
-    var a_ = MatrixD.fill (1, 2, 0.1)                               // hidden layer 1x2 bias matrix
-    var bb = MatrixD.fill (2, 1, 0.1)                               // hidden to output layer weight matrix
-    var b_ = MatrixD.fill (1, 1, 0.1)                               // output layer 1x1 bias matrix
+    val aa = MatrixD.fill (2, 2, 0.1)                               // input to hidden layer 2x2 weight matrix
+    val a_ = MatrixD.fill (1, 2, 0.1)                               // hidden layer 1x2 bias matrix
+    val bb = MatrixD.fill (2, 1, 0.1)                               // hidden to output layer weight matrix
+    val b_ = MatrixD.fill (1, 1, 0.1)                               // output layer 1x1 bias matrix
 
     println (s"hidden layer aa = $aa, a_ = $a_")                    // weight and bias matrices
     println (s"output layer bb = $bb, b_ = $b_")                    // weight and bias matrices

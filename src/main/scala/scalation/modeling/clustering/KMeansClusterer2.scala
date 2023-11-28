@@ -5,7 +5,7 @@
  *  @date    Tue May 29 14:45:32 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Means Clustering (pick random points as initial centroids)
+ *  @note    Model: K-Means Clustering (pick random points as initial centroids)
  */
 
 package scalation
@@ -28,8 +28,6 @@ import scalation.random.RandomVecI
  */
 class KMeansClusterer2 (x: MatrixD, k: Int, flags: Array [Boolean] = Array (false, false))
       extends KMeansClusterer (x, k, flags):
-
-    private val DEBUG = false                                            // debug flag
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Randomly pick vectors/points to serve as the initial 'k' centroids 'cent'.

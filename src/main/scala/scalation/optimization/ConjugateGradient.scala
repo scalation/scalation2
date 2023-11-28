@@ -5,6 +5,8 @@
  *  @date    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Polak-Ribiere Conjugate Gradient (PR-CG)
+ *
  *  @see http://www.neos-guide.org/NEOS/index.php/Nonlinear_Conjugate_Gradient_Method
  */
 

@@ -5,7 +5,7 @@
  *  @date    Fri Oct 13 22:21:37 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Normalization Layer
+ *  @note    Model Framework: Normalization Layer
  */
 
 package scalation
@@ -25,6 +25,13 @@ case class NormLayer (atransform: Boolean = true, eps: Double = 1E-5):
 
     private var w = 1.0                                                   // learnable weight 
     private var b = 0.0                                                   // learnable bias
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Reset the weight and bias.
+     *  @param w_  the new weight
+     *  @param b_  the new bias
+     */
+    def reset (w_ : Double, b_ : Double): Unit = { w = w_; b = b_ }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forward pass: calculate the output of this layer.

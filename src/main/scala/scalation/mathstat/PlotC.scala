@@ -5,14 +5,14 @@
  *  @date    Mon Oct 17 16:01:39 EDT 2011
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Contour Plots for z = f(x, y) using color-coding for z
+ *  @note    Contour Plots for z = f(x, y) using color-coding for z
  */
 
 package scalation
 package mathstat
 
+import scala.collection.mutable.ArrayBuffer
 import scala.math.{ceil, floor, round}
-
 import scalation.scala2d._
 import scalation.scala2d.Colors._
 
@@ -35,12 +35,11 @@ import scalation.scala2d.Colors._
  *  @param lbF     the lower bound on the functional value
  *  @param _title  the title of the plot
  */
-class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: List [VectorD] = null,
-             private var deltaF: Double = -1.0, private var lbF: Double = 0.0,
+class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [VectorD] = null,
+             opt: VectorD = VectorD.nullv, private var deltaF: Double = -1.0, private var lbF: Double = 0.0,
              _title: String = "Contour Plot of f(x, y)")
       extends VizFrame (_title, null):
 
-    private val EPSILON  = 1E-9                                 // number close to zero
     private val _1_3     = 1.0 / 3.0                            // one third
     private val _2_3     = 2.0 / 3.0                            // two thirds
     private val offset   = 50                                   // offset frame to axis
@@ -118,14 +117,43 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: List [VectorD] = nu
             //:: Draw the dots for the points on a search path, if given
 
             if path != null then
+                val basicStroke = g2d.getStroke.asInstanceOf[BasicStroke]
+                val dashedLine = Line (0, 0, 0, 0)
+                val dashedStroke = new BasicStroke(0.5, basicStroke.getEndCap, basicStroke.getLineJoin, 1.0, Array[Float](2), 0);
+                var xPosPrev: Int = Int.MinValue
+                var yPosPrev: Int = Int.MinValue
+
                 for p <- path do
+                    // Draw point in path.
                     val xx    = round ((p(0) - lb(0)) * (frameW - 2 * offset))
                     x_pos     = (xx / deltaX).asInstanceOf [Int] + offset
                     val yy    = round ((ub(1) - p(1)) * (frameH - 2 * offset))
                     y_pos     = (yy / deltaY).asInstanceOf [Int] + offset - diameter
                     dot.setFrame (x_pos, y_pos, diameter, diameter)      // x, y, w, h
-                    g2d.setPaint (yellow)
+                    g2d.setPaint (darkyellow)
                     g2d.fill (dot)
+
+                    // Draw line connecting previous point to this point.
+                    if xPosPrev != Int.MinValue && yPosPrev != Int.MinValue then
+                        dashedLine.setLine(xPosPrev + (diameter/2.0), yPosPrev + (diameter/2.0), x_pos  + (diameter/2.0), y_pos + (diameter/2.0))
+                        g2d.setStroke(dashedStroke)
+                        g2d.setPaint (black)
+                        g2d.draw(dashedLine)
+                        g2d.setStroke(basicStroke)
+
+                    // Update previous positions.
+                    xPosPrev = x_pos
+                    yPosPrev = y_pos
+            end if
+
+            if opt != VectorD.nullv then
+                val xx = round((opt(0) - lb(0)) * (frameW - 2 * offset))
+                x_pos = (xx / deltaX).asInstanceOf[Int] + offset
+                val yy = round((ub(1) - opt(1)) * (frameH - 2 * offset))
+                y_pos = (yy / deltaY).asInstanceOf[Int] + offset - diameter
+                dot.setFrame(x_pos + (diameter/4.0), y_pos + (diameter/4.0), diameter/2.0, diameter/2.0) // x, y, w, h
+                g2d.setPaint(black)
+                g2d.fill(dot)
             end if
         end paintComponent
 
@@ -170,18 +198,20 @@ end PlotC
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `plotCTest` main function is used to test the `PlotC` class.
+ *  @see scalation.scala2d.writeImage
  *  > runMain scalation.mathstat.plotCTest
  */
 @main def plotCTest (): Unit =
 
     def f(x: VectorD): Double = (x(0)/2 - 3)~^2 + (x(1)/3 - 2)~^2
 
-    val lb     = VectorD (0, 0)
-    val ub     = VectorD (10, 10)
-    val deltaF = 18.0
-    val path   = List (VectorD (0, 0), VectorD (3, 2), VectorD (6, 6)) 
-    val plot   = new PlotC (f, lb, ub, path)
+    val lb   = VectorD (0, 0)
+    val ub   = VectorD (10, 10)
+    val path = ArrayBuffer (VectorD (0, 0), VectorD (3, 2), VectorD (6, 6))
+    val plot = new PlotC (f, lb, ub, path)
     println (s"plot = $plot")
+
+    writeImage (DATA_DIR + "plotc.png", plot)
 
 end plotCTest
 

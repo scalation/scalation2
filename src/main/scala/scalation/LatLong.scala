@@ -5,7 +5,7 @@
  *  @date    Sat Aug 11 16:00:10 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Class for Latitude-Longitude coordinates
+ *  @note   Class for Latitude-Longitude coordinates
  *
  *  Support Latitude-Longitude coordinates as well as conversions from
  *  LatLong coordinates to UTM coordinates and UTM coordinates to
@@ -32,7 +32,6 @@ import Earth._
 
 val CENTRAL_MERIDIAN = 500000        // 500,000 meters designated for Central Meridian for each of the 60 Zones
 val EQUATOR          = 10000000      // 10,000,000 meters designated for Equator for Southern Hemisphere, 0 for Northern
-
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `LatLong` class stores Latitude-Longitude coordinates.

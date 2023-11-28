@@ -5,7 +5,7 @@
  *  @date    Sun Jan 19 20:30:33 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   EventNode Graphically Represent and Event Type
+ *  @note    EventNode Graphically Represent and Event Type
  */
 
 package scalation

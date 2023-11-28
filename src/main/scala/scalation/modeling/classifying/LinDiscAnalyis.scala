@@ -5,7 +5,7 @@
  *  @date    Sat Jan  9 21:48:57 EST 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Linear Discriminant Analysis (LDA) Classifier
+ *  @note    Model: Linear Discriminant Analysis (LDA) Classifier
  *
  *  FIX - extend the code to work for k > 2.
  */

@@ -5,7 +5,7 @@
  *  @date    Mon Sep 20 15:47:16 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Active Entity/Simulation Agent
+ *  @note    Active Entity/Simulation Agent
  */
 
 package scalation
@@ -66,13 +66,12 @@ abstract class SimAgent (_name: String, _time: Double, director: Model,
             with Temporal (_time)
             with Spatial (_pos)
             with Topological (loc._1, loc._2):                      // (element, distance)
-//            with Ordered [SimAgent]:                              // ordered in time
-//            with PartiallyOrdered [SimAgent]:                     // partially ordered in space
+//          with Ordered [SimAgent]:                                // ordered in time
+//          with PartiallyOrdered [SimAgent]:                       // partially ordered in space
 
     var subtype = 0                                                 // indicator of subtype of this agent
 
     private val debug   = debugf ("SimAgent", true)                 // debug function
-    private val flaw    = flawf ("SimAgent")                        // flaw function
 
     private [agent] var fore: SimAgent = null                       // the SimAgent ahead
     private [agent] var aft: SimAgent  = null                       // the SimAgent behind

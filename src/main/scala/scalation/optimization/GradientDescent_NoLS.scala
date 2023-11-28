@@ -5,7 +5,7 @@
  *  @date    Sun Mar  6 14:01:47 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gradient Descent without Line Search Optimizer
+ *  @note    Gradient Descent without Line Search Optimizer
  *
  *  @see https://arxiv.org/pdf/1412.6980.pdf
  */
@@ -26,7 +26,7 @@ import scalation.mathstat._
  */
 class GradientDescent_NoLS (f: FunctionV2S, grad: FunctionV2V, hparam: HyperParameter = Minimize.hp)
       extends Minimize
-         with StoppingRule (Minimize.hp("upLimit").toInt):              // limit on increasing loss
+         with StoppingRule (hparam("upLimit").toInt):                   // limit on increasing loss
 
     private val debug = debugf ("GradientDescent_NoLS", true)           // debug function
 
@@ -39,7 +39,7 @@ class GradientDescent_NoLS (f: FunctionV2S, grad: FunctionV2V, hparam: HyperPara
      *  @param α   the current learning rate
      */
     def solve (x0: VectorD, α: Double = eta): FuncVec =
-        var x    = x0                                                   // start parameters at initial guess
+        val x    = x0                                                   // start parameters at initial guess
         var f_x  = -0.0                                                 // loss function, value indefined
         var best = (f_x, x)                                             // start with best = initial
 
@@ -68,7 +68,7 @@ end GradientDescent_NoLS
  */
 @main def gradientDescent_NoLSTest (): Unit =
 
-    var x0 = VectorD (0.0, 0.0)                                         // starting point
+    val x0 = VectorD (0.0, 0.0)                                         // starting point
     Minimize.hp("eta") = 0.1                                            // learning rate (problem dependent)
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -76,7 +76,7 @@ end GradientDescent_NoLS
     def gr (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
 
     val optimizer = new GradientDescent_NoLS (f, gr)
-    var opt = optimizer.solve (x0)
+    val opt = optimizer.solve (x0)
     println (s"][ optimal solution f(x), x) = $opt")
 
 end gradientDescent_NoLSTest

@@ -5,7 +5,7 @@
  *  @date    Mon Feb  2 18:18:15 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Trigonometric Regression
+ *  @note    Model: Trigonometric Regression
  */
 
 package scalation
@@ -71,7 +71,6 @@ end TrigRegression
 object TrigRegression:
 
     private val debug = debugf ("TrigRegression", false)                    // debug function
-    private val flaw  = flawf ("TrigRegression")                            // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `TrigRegression` object from a combined data-response matrix.

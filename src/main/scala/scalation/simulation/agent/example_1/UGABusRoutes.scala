@@ -5,7 +5,7 @@
  *  @date    Sun Dec  5 18:21:53 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Agent-Based Simulation for UGA Bus Routes
+ *  @note    Example Model: Agent-Based Simulation for UGA Bus Routes
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Jan 25 19:44:16 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Route for Modeling Multi-Lane Pathway
+ *  @note    Route for Modeling Multi-Lane Pathway
  */
 
 package scalation
@@ -40,19 +40,21 @@ class Route (name: String, k: Int, val from: Component, val to: Component,
 
     initComponent (name, Array ())
 
-    private val MID   = k / 2                       // middle lane                
+//  private val MID   = k / 2                       // middle lane                
     private val GAP   = 10.0                        // gap between lanes 
     private val delta = calcShift                   // amount of shift in x and y directions
 
+    if angle != 0.0 then println (s"Route.init: nonzero angle = $angle not yet supported")   // FIX
+
     val lane = Array.ofDim [Transport] (k)
     for i <- lane.indices do
-        val radius = (i - (k - 1) / 2.0) * GAP
+//      val radius = (i - (k - 1) / 2.0) * GAP
         val shift = VectorD ((i - (k - 1) / 2.0) * delta(0), (i - (k - 1) / 2.0) * delta(1))
         lane(i) = new Transport (s"${name}_$i", from, to, motion, isSpeed, bend, shift, shift)
         subpart += lane(i)
     end for
 
-    private var _selector: Variate = _               // random variate for determining next direction
+//  private var _selector: Variate = null           // random variate for determining next direction
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Get the direction/turn random variate to determine next the direction.

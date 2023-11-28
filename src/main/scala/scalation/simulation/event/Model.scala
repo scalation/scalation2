@@ -5,7 +5,7 @@
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Controls the Event-Oriented Simulation
+ *  @note    Model Controls the Event-Oriented Simulation
  */
 
 package scalation
@@ -57,6 +57,8 @@ class Model (name: String, reps: Int = 1, animating: Boolean = false)
     /** The start time for the simulation
      */
     protected var start = -1.0
+
+    if reps > 1 then flaw ("init", "multiple replications not implemented yet")
 
     addStats (t_y_stat)
 

@@ -5,7 +5,7 @@
  *  @date    Fri Jan  5 16:54:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Bagging of Decision Trees (subsampling only)
+ *  @note    Model: Bagging of Decision Trees (subsampling only)
  */
 
 package scalation
@@ -66,7 +66,7 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     override def train (x_ : MatrixD = x, y_ : VectorI = y): Unit =
         for l <- 0 until nTrees do
             val (sub_x, sub_y, irows) = subSample (x_, y_, sampleSize, l)        // select rows from x_ and elements from y_
-//          debug ("train", s"row indices for tree$l, irows = $irows")
+            debug ("train", s"row indices for tree$l, irows = $irows")
 
             trees(l) = new DecisionTree_C45 (sub_x, sub_y, fname, k, cname, conts, hparam)
             trees(l).train ()
@@ -95,7 +95,7 @@ class BaggingTrees (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
      *  @param z  the vector to be predicted
      */
     override def predictI (z: VectorD): Int =
-        var vote = new VectorI (k)
+        val vote = new VectorI (k)
         for l <- 0 until nTrees do                                               // iterate l-th tree
             val y_l = trees(l).predictI (z)                                      // get vote from l-th tree
             vote(y_l) += 1                                                       // tally the vote
@@ -193,7 +193,7 @@ end baggingTreesTest
 
     val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
-    var (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
+    val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                            // shift the class labels by 3
 
     banner ("baggingTreesTest2:  winequality-white dataset")
@@ -217,7 +217,7 @@ end baggingTreesTest2
 
     val nfile  = "winequality-white.csv"
     val xy     = MatrixD.load (nfile)
-    var (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
+    val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
     y -= 3                                                            // shift the class labels by 3
 
     banner ("baggingTreesTest3:  winequality-white dataset")

@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Multiple Linear Regression (linear terms, no cross-terms)
+ *  @note    Model: Multiple Linear Regression (linear terms, no cross-terms)
  */
 
 package scalation
@@ -264,7 +264,6 @@ end regressionTest
 
     var fac: Factorization = null                             // factorization algorithm
     var mod: Regression = null                                // regression model
-    var yp:  VectorD = null                                   // y-predicted (predicted response)
 
 // Test QR Factorization -------------------------------------------------------
 

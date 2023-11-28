@@ -5,7 +5,7 @@
  *  @date    Sun Jan 10 17:08:32 EST 2010
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Common Tranforms for Rectangular Shapes
+ *  @note    Common Tranforms for Rectangular Shapes
  */
 
 package scalation

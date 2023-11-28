@@ -5,7 +5,8 @@
  *  @date    Sat Dec 21 12:53:44 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network Classifier with 3 Layers (input, hidden and output layers)
+ *  @note    Model: Neural Network Classifier with 3 Layers (input, hidden and output layers)
+ *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
 
@@ -109,7 +110,7 @@ class NeuralNet_Class_3L (x: MatrixD, y: VectorI, fname_ : Array [String] = null
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                          // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                    // diagnose from actual and predicted
-//      debug ("test", s" yp = $yp \n qof = $qof")
+        debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 

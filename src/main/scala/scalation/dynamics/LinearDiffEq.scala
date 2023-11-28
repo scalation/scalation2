@@ -5,7 +5,7 @@
  *  @date    Fri Jan 29 18:36:48 EST 2010
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Linear Differential Equations Solver
+ *  @note    Linear Differential Equations Solver
  */
 
 package scalation

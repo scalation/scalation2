@@ -5,7 +5,7 @@
  *  @date    Mon Aug 20 20:02:06 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Monte Carlo Simulation of the Monty Hall Problem
+ *  @note    Monte Carlo Simulation of the Monty Hall Problem
  */
 
 package scalation

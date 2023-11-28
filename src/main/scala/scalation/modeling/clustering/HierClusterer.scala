@@ -5,7 +5,7 @@
  *  @date    Wed Jan  9 15:38:04 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Hierarchical Clustering
+ *  @note    Model: Hierarchical Clustering
  */
  
 package scalation

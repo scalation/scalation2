@@ -5,7 +5,7 @@
  *  @date    Fri Feb 16 16:14:34 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Continuous Version of Play Tennis
+ *  @note    Example Dataset: Continuous Version of Play Tennis
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Mar  5 22:38:03 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Optimization: ADAptive Moment estimation (Adam) Optimizer
+ *  @note    Optimization: ADAptive Moment estimation (Adam) Optimizer
  */
 
 // U N D E R   D E V E L O P M E N T
@@ -29,7 +29,6 @@ import Optimizer._
 class Optimizer_Adam extends Optimizer:
 
     private val debug = debugf ("Optimizer_Adam", true)                   // debug function
-    private val flaw  = flawf ("Optimizer_Adam")                          // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given training data x and y for a 2-layer, multi-output Neural Network, fit
@@ -119,7 +118,6 @@ class Optimizer_Adam extends Optimizer:
      */
     def optimize3 (x: MatrixD, y: MatrixD,
                    bb: NetParams, eta_ : Double, ff: Array [AFF]): (Double, Int) =
-        val idx       = VectorI.range (0, x.dim)                          // instance index range
         val permGen   = permGenerator (x.dim)                             // permutation vector generator
         val (a, b)    = (bb(0), bb(1))                                    // two sets of net-parameters
         val (f, f1)   = (ff(0), ff(1))                                    // two activation functions
@@ -165,9 +163,9 @@ class Optimizer_Adam extends Optimizer:
          *  @param y  the output matrix for the current batch
          */
         inline def updateWeight (x: MatrixD, y: MatrixD): (NetParam, NetParam) =
-            var z  = f.fM (a * x)                                         // Z  = f(XA)
-            var yp = f1.fM (b * z)                                        // Yp = f(ZB)
-            var ee = yp - y                                               // negative of the error matrix
+            val z  = f.fM (a * x)                                         // Z  = f(XA)
+            val yp = f1.fM (b * z)                                        // Yp = f(ZB)
+            val ee = yp - y                                               // negative of the error matrix
             val d1 = f1.dM (yp) *~ ee                                     // delta matrix for y
             val d0 = f.dM (z) *~ (d1 * b.w.transpose)                     // delta matrix for z
     
@@ -209,7 +207,7 @@ class Optimizer_Adam extends Optimizer:
         val layers = 0 until nl                                           // range for layers
         val z      = Array.ofDim [MatrixD] (nl+1)                         // array to store activations, layer by layer
         val d      = Array.ofDim [MatrixD] (nl)                           // array to store all deltas
-        var mo     = Array.ofDim [MatrixD] (nl)                           // momentum array
+        val mo     = Array.ofDim [MatrixD] (nl)                           // momentum array
         for l <- layers do mo(l) = new MatrixD (b(l).w.dim, b(l).w.dim2)
 
         var sse_best_   = -0.0

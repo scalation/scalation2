@@ -5,7 +5,7 @@
  *  @date    Sat Jan 20 15:41:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Transformed Multiple Linear Regression
+ *  @note    Model: Transformed Multiple Linear Regression
  *
  *  @see data.princeton.edu/wws509/notes/c2s10.html
  */

@@ -5,7 +5,7 @@
  *  @date    Wed May 22 14:17:49 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: ID3 Decision/Classification Tree
+ *  @note    Model: ID3 Decision/Classification Tree
  */
 
 package scalation
@@ -85,7 +85,7 @@ class DecisionTree_ID3 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
      *  @param rindex  the working row index
      */
     private def gain (fea: Variable, xj: VectorI, y_ : VectorI, rindex: VectorI): (Double, VectorI) =
-        var nu  = new VectorI (k)                                             // aggregate frequency vector
+        val nu  = new VectorI (k)                                             // aggregate frequency vector
         var sum = 0.0
         for v <- fea.values do
             val (frac_v, nu_v) = freq (xj, y_, k, v, rindex)                  // frequency for value v

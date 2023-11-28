@@ -5,7 +5,7 @@
  *  @date    Fri Jun 17 11:19:14 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Purchase Order Database
+ *  @note    Example Database: Purchase Order Database
  *
  *  @see     Principles of Database Management
  *           The Practical Guide to Storing, Managing and Analyzing Big and Small Data

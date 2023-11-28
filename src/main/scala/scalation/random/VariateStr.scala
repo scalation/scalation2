@@ -5,7 +5,7 @@
  *  @date    Sun Aug  7 20:40:29 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random String/Word Generators
+ *  @note    Random String/Word Generators
  */
 
 package scalation

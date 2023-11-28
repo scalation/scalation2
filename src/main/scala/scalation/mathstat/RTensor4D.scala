@@ -5,7 +5,7 @@
  *  @date    Thu May 10 15:50:15 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Ragged (R) Tensor (4D) Algebra
+ *  @note    Ragged (R) Tensor (4D) Algebra
  *
  *  @see www.stat.uchicago.edu/~lekheng/work/icm1.pdf
  *  @see www.math.ias.edu/csdm/files/13-14/Gnang_Pa_Fi_2014.pdf
@@ -518,6 +518,7 @@ end RTensor4D
     println ("c * s   = " + c * s)
     println ("a *~ c  = " + a *~ c)
 
+/*
     val x = MatrixD ((2, 2), 1, 2,
                              3, 4)
     val y = MatrixD ((2, 3), 1, 2, 3,
@@ -525,7 +526,8 @@ end RTensor4D
     val z = MatrixD ((2, 2), 5, 6,
                              7, 8)
 
-//  println ("c * (x, y, z) = " + c * (x, y, z))
+    println ("c * (x, y, z) = " + c * (x, y, z))
+*/
 
     banner ("Test slice")
     println ("c = " + c)

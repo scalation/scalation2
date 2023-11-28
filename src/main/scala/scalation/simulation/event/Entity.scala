@@ -5,7 +5,7 @@
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Entity, an Object in an Event-Scheduling Simulation
+ *  @note    Entity, an Object in an Event-Scheduling Simulation
  */
 
 package scalation

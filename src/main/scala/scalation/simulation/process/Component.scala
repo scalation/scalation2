@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for Simulation Components
+ *  @note    Base Trait for Simulation Components
  */
 
 package scalation

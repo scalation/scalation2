@@ -5,7 +5,7 @@
  *  @date    Fri Jan  5 16:54:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Random Forest of Descision Trees (subsampling & sub-features)
+ *  @note    Model: Random Forest of Descision Trees (subsampling & sub-features)
  *
  *  @see https://www.math.mcgill.ca/yyang/resources/doc/randomforest.pdf
  */
@@ -72,7 +72,7 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
     override def train (x_ : MatrixD = x, y_ : VectorI = y): Unit =
         for l <- 0 until nTrees do                                            // iterate l-th tree
             val (sub_x, sub_y, irows) = subSample (x_, y_, sampleSize, l)     // select rows from x_ and elements from y_
-//          debug ("train", s"row indices for tree$l, irows = $irows")
+            debug ("train", s"row indices for tree$l, irows = $irows")
 
             val (xf, columns) = selectSubFeatures (sub_x)                     // select columns of data matrix subsample
             val fname2 = columns.map (fname(_)).toArray                       // extract corresponding feature names       
@@ -91,7 +91,7 @@ class RandomForest (x: MatrixD, y: VectorI, fname_ : Array [String] = null, k: I
      *  @param z  the vector to be classified
      */
     override def predictI (z: VectorD): Int =
-        var vote = new VectorI (k)
+        val vote = new VectorI (k)
         for l <- 0 until nTrees do                                            // iterate l-th tree
             val zp  = z(jcols(l))                                             // project onto columns for l-th tree
             val y_l = trees(l).predictI (zp)                                  // get vote from l-th tree

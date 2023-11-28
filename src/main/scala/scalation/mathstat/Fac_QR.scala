@@ -5,7 +5,7 @@
  *  @date    Thu Jun 17 19:29:23 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   QR Matrix Factorization Using Householder Orthogonalization
+ *  @note    QR Matrix Factorization Using Householder Orthogonalization
  */
 
 package scalation

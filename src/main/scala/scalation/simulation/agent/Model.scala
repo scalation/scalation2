@@ -5,7 +5,7 @@
  *  @date    Tue Oct  3 19:40:51 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Model Class for Agent-Based Simulation
+ *  @note    Base Model Class for Agent-Based Simulation
  */
 
 package scalation

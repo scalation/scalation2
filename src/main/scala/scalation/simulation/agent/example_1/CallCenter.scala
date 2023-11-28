@@ -5,7 +5,7 @@
  *  @date    Sun Oct 31 01:16:38 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Call Center for Agent-Based Simulation
+ *  @note    Example Model: Call Center for Agent-Based Simulation
  */
 
 package scalation

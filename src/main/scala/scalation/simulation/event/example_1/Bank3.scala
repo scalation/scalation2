@@ -5,7 +5,7 @@
  *  @date    Sun Sep 26 15:00:24 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Bank for Event Graph Simualtion
+ *  @note    Example Model: Bank for Event Graph Simualtion
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Wed Jun  7 17:54:59 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Newton-Raphson Method to Find Roots or Minima for Scalar Functions
+ *  @note    Newton-Raphson Method to Find Roots or Minima for Scalar Functions
  *
  *  @see web.stanford.edu/class/cme304/docs/newton-type-methods.pdf
  */

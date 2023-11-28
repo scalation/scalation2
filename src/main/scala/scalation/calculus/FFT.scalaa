@@ -5,7 +5,7 @@
  * @date    Thu Jun  7 21:39:16 EDT 2018
  * @see     LICENSE (MIT style license file).
  *
- * Fast Fourier Transform
+ * @note    Fast Fourier Transform
  *
  * @see www.cs.au.dk/~gerth/advising/thesis/joergen-fogh.pdf
  * @see en.wikipedia.org/wiki/Cooley%E2%80%93Tukey_FFT_algorithm
@@ -21,13 +21,15 @@ import scala.math.Pi
 import scalation.linalgebra.{VectoC, VectorC, VectorD}
 import scalation.math.{Complex, int_exp, log2}
 
+// FIX - requires VectorC which is not yet implemented
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `FFT` object provides a method to transform a signal in the time domain
  *  (e.g., a times series) in its representation in the frequency domain.
  *  The inverse transform is also provided.
  */
-object FFT
-{
+object FFT:
+
     private val DEBUG = true                                     // debug flag
     private val omega = -2.0 * Pi * Complex._i                   // -2πi
 

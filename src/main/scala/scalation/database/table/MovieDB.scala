@@ -5,7 +5,7 @@
  *  @date    Fri Jun 17 11:19:14 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Movie Database
+ *  @note    Example Database: Movie Database
  */
 
 package scalation

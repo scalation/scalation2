@@ -5,7 +5,7 @@
  *  @date    Fri Jul 29 14:33:21 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Chemical Reactions Pathway
+ *  @note    Chemical Reactions Pathway
  */
 
 package scalation

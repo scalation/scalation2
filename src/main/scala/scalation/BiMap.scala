@@ -5,7 +5,7 @@
  *  @date    Fri Aug 24 15:46:03 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   A Bidirectional Map
+ *  @note    A Bidirectional Map:  Key <-> Value
  */
 
 package scalation

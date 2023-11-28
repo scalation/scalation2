@@ -5,7 +5,7 @@
  *  @date    Mon Oct 10 11:42:43 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Common Capabilities for Simulation Models
+ *  @note    Common Capabilities for Simulation Models
  */
 
 package scalation

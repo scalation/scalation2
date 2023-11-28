@@ -5,7 +5,7 @@
  *  @date    Mon Sep 20 15:47:16 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Statistical Trait
+ *  @note    Statistical Trait
  */
 
 package scalation

@@ -5,9 +5,9 @@
  *  @date    Mon Dec 13 22:00:52 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     http://irh.inf.unideb.hu/~jsztrik/education/16/SOR_Main_Angol.pdf
+ *  @note    M/M/c/k Queues
  *
- *  @title   M/M/c/k Queues
+ *  @see     http://irh.inf.unideb.hu/~jsztrik/education/16/SOR_Main_Angol.pdf
  */
 
 package scalation

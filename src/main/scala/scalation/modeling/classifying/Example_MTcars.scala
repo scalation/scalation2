@@ -5,7 +5,7 @@
  *  @date    Sun Oct 28 16:16:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Motor Trend Car Road Tests
+ *  @note    Example Dataset: Motor Trend Car Road Tests
  */
 
 package scalation

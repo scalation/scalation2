@@ -5,7 +5,7 @@
  *  @date    Wed Aug 25 15:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Monte Carlo Integration
+ *  @note    Monte Carlo Integration
  */
 
 package scalation

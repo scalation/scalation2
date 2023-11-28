@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Thu Oct 13 12:03:21 EDT 2011
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Integer Tabu Search
  */
 
 package scalation

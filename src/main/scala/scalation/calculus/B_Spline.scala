@@ -5,6 +5,8 @@
  *  @date    Thu Sep 22 21:45:58 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    B-Spline Basis Functions (e.g., used in Functional Data Analysis)
+ *
  *  @see en.wikipedia.org/wiki/B-spline
  *  @see cran.r-project.org/web/packages/crs/vignettes/spline_primer.pdf
  *  @see http://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/node17.html
@@ -324,7 +326,6 @@ end b_SplineTest
     val bs = new B_Spline (τ, mM)                            // B-Spline generator
     val n  = 100                                             // number of time-points for plotting
     val t  = VectorD.range (0, n)/(n-1)*n                    // time-points for plotting
-    val k  = 0                                               // index for initial B-Spline
 
     for m <- 2 to 4 do
         //---------------------------------------------------------------------

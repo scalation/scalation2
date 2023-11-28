@@ -5,7 +5,7 @@
   * @date    Sun Dec 16 16:09:16 EST 2018
   * @see     LICENSE (MIT style license file).
   *
-  * @title   Model: Regression Tree with Gradient Boosting
+  * @note    Model: Regression Tree with Gradient Boosting
   */
 
 package scalation
@@ -30,7 +30,6 @@ class RegressionTreeGB (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):                    // call resetDF once tree is built
 
-    private val DEBUG   = false                                               // debug flag
     private val depth   = hparam("maxDepth").toInt                            // the max depth for the base regression trees
     private val iter    = hparam("iterations").toInt                          // the iterations for training
     private val forest  = new ArrayBuffer [REG_TREE] ()                       // forest is a list of regression trees

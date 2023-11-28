@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network with 4 Layers (input, hidden(+) and output layers)
+ *  @note    Model: Neural Network with 4 Layers (input, hidden(+) and output layers)
  *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
@@ -55,12 +55,9 @@ class NeuralNet_XL (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2, df = x.dim - x.dim2):                    // under-estimate of degrees of freedom
 
-    private   val debug     = debugf ("NeuralNet_XL", false)              // debug function
     private   val flaw      = flawf ("NeuralNet_XL")                      // flaw function
     private   val eta       = hp("eta").toDouble                          // learning rate
-    private   val bSize     = hp("bSize").toInt                           // batch size
-    private   val maxEpochs = hp("maxEpochs").toInt                       // maximum number of training epochs/iterations
-    private   val lambda    = hp ("lambda").toDouble                      // regularization hyper-parameter
+//  private   val lambda    = hp ("lambda").toDouble                      // regularization hyper-parameter
     private   val nl        = f.length                                    // number of ACTIVE layers (i.e., with activation function)
     private   var flayer    = -1                                          // the layer to freeze (no changes to parameters)
     protected val layers    = 0 until nl                                  // range for active layers
@@ -512,7 +509,6 @@ end neuralNet_XLTest6
     val x  = MatrixD ((10, 1), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     val y  = VectorD (5.56, 5.70, 5.91, 6.40, 6.80, 7.05, 8.90, 8.70, 9.00, 9.05)
     val ox = VectorD.one (x.dim) +^: x
-    val fname = Array ("x")
 
     banner (s"Regression with intercept")
     val reg = new Regression (ox, y)

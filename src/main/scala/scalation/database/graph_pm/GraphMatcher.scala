@@ -5,7 +5,7 @@
  *  @date    Wed May 13 14:58:25 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Graph Pattern Matching Using Mutable Sets
+ *  @note    Graph Pattern Matching Using Mutable Sets
  */
 
 package scalation

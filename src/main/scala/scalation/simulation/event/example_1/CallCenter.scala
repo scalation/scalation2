@@ -5,7 +5,7 @@
  *  @date    Sun Sep 26 15:00:24 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Call Center for Event Scheduling Simulation
+ *  @note    Example Model: Call Center for Event Scheduling Simulation
  */
 
 package scalation

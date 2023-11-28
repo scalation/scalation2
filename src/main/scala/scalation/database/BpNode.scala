@@ -5,7 +5,7 @@
  *  @date    Wed Aug  9 01:25:50 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   B+Trees Node
+ *  @note    B+Trees Node
  */
 
 package scalation

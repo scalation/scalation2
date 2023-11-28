@@ -5,7 +5,7 @@
  *  @date    Fri Oct 27 14:37:32 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Positional Encoding
+ *  @note    Model Framework: Positional Encoding
  *
  *  @see https://towardsdatascience.com/master-positional-encoding-part-i-63c05d90a0c3
  *  @see https://arxiv.org/pdf/2305.16642.pdf

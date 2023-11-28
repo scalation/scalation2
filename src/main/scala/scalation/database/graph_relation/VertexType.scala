@@ -5,7 +5,7 @@
  *  @date    Sat Aug 29 14:14:32 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   VertexType - a collection of vertices of the same type
+ *  @note    VertexType - a collection of vertices of the same type
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Jun 9 14:09:25 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Collection of Simple Imputation Techniques for Missing Values or Outliers
+ *  @note    Collection of Simple Imputation Techniques for Missing Values or Outliers
  */
 
 package scalation

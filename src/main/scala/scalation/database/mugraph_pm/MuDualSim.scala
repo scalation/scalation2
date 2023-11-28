@@ -5,7 +5,7 @@
  *  @date    Sun Nov  6 16:04:08 EST 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multi-Graph `MuGraph` Dual Simulation Using Mutable Sets
+ *  @note    Multi-Graph `MuGraph` Dual Simulation Using Mutable Sets
  */
 
 package scalation

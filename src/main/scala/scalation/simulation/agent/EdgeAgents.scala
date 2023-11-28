@@ -5,7 +5,7 @@
  *  @date    Thu Sep 30 16:46:03 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Collection of Agents on a Edge (e.g., Link, Transport)
+ *  @note    Collection of Agents on a Edge (e.g., Link, Transport)
  */
 
 package scalation

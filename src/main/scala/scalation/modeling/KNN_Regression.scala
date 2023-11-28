@@ -5,7 +5,7 @@
  *  @date    Fri Dec 21 14:38:32 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K Nearest Neighbors for Regression/Prediction
+ *  @note    Model: K Nearest Neighbors for Regression/Prediction
  */
 
 package scalation

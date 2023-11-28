@@ -5,7 +5,7 @@
  *  @date    Tue Feb 27 15:16:23 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Linear Discriminant Analysis (LDA) Classifier
+ *  @note    Model: Simple Linear Discriminant Analysis (LDA) Classifier
  */
 
 package scalation

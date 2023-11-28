@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Thu Jul 25 11:28:31 EDT 2013
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Random Graph Generator
  */
 
 package scalation
@@ -26,9 +28,8 @@ import scalation.random._
  */
 class GraphGen (typeSelector: Char, stream: Int = 0):
 
-    private val debug = debugf ("GraphGen", true)               // debug function
     private val flaw  = flawf ("GraphGen")                      // flaw function
-    private val ran   = Random (stream)                         // random number generator with interval (0, 1)
+//  private val ran   = Random (stream)                         // random number generator with interval (0, 1)
     private val rng   = Randi0 (stream = stream)                // random number/integer generator: 0, 1, ...
     private val rsg   = RandomSet (stream = stream)             // random set generator
     private var rlg: Variate = null                             // random label generator for typeSelector parameter
@@ -105,6 +106,7 @@ class GraphGen (typeSelector: Char, stream: Int = 0):
         var it = 0
         while
             g = genRandomGraph (size, nLabels, eLabels, avDegree, inverse, name)
+            it += 1
             g.isConnected == false
         do ()
         println (s"genRandomConnectedGraph: $it iterations")
@@ -458,7 +460,6 @@ object GraphGen:
             nodes += start
 
             while ! q.isEmpty && nodes.size < size do
-                val chs = SET [Int] ()
                 val newNode = q.dequeue ()
                 val newNodeChildren = g.ch (newNode)
                 if ! newNodeChildren.isEmpty then
@@ -493,7 +494,7 @@ object GraphGen:
     def buildQGraph (nodes: SET [Int], chMap: Map [Int, SET [Int]], gLabel: Array [ValueType],
                      gELabel: Map [(Int, Int), ValueType], inverse: Boolean, name: String): Graph =
         // create a vertex map from old to new ids, e.g., 7 -> 0, 11 -> 1, 15 -> 2
-        var vertexMap = Map [Int, Int] ()
+        val vertexMap = Map [Int, Int] ()
         var c = 0
         for v <- nodes do { vertexMap += (v -> c); c += 1 }
 

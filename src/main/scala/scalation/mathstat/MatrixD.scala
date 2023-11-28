@@ -5,7 +5,7 @@
  *  @date    Thu Jun 17 19:29:23 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Matrix Data Structure of Doubles
+ *  @note    Matrix Data Structure of Doubles
  */
 
 package scalation
@@ -100,7 +100,7 @@ class MatrixD (val dim:  Int,
 
     private val minDim  = math.min (dim, dim2)                 // the minimum dimension
     private val TSZ     = 100                                  // the tile/block size (tunable)
-    private var fString = "%g,\t"                              // output format spec
+    private val fString = "%g,\t"                              // output format spec
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return a deep copy of this matrix (note: clone may not be deep).
@@ -1144,7 +1144,6 @@ class MatrixD (val dim:  Int,
      *  @param y  the other matrix
      */
     def showDiff (y: MatrixD): Unit =
-        val FULL = true
         if dim  != y.dim  then println (s"showDiff: dim = $dim != y.dim = ${y.dim}")
         if dim2 != y.dim2 then println (s"showDiff: dim2 = $dim2 != y.dim2 = ${y.dim2}")
         
@@ -1190,7 +1189,7 @@ class MatrixD (val dim:  Int,
     /** Compute the column sums of this matrix, i.e., the sums for each of its columns.
      */
     def sumV: VectorD =
-        var s = new VectorD (dim2)
+        val s = new VectorD (dim2)
         for i <- indices; j <- indices2 do s(j) += v(i)(j)
         s
     end sumV
@@ -1199,7 +1198,7 @@ class MatrixD (val dim:  Int,
     /** Compute the row sums of this matrix, i.e., the sums for each of its rows.
      */
     def sumVr: VectorD =
-        var s = new VectorD (dim)
+        val s = new VectorD (dim)
         for i <- indices; j <- indices2 do s(i) += v(i)(j)
         s
     end sumVr
@@ -1539,7 +1538,7 @@ object MatrixD:
         x
     end fromVector
 
-    private var DEF_SEP  = ','                                 // default character separating the values
+    private val DEF_SEP  = ','                                 // default character separating the values
     private val PROGRESS = 1000                                // give feedback at progress count
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

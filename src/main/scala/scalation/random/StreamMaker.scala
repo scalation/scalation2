@@ -5,6 +5,8 @@
  *  @date    Mon Mar 24 22:08:32 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Code Generator: 1000 Seeds for MRG31k3p RNG
+ *
  *  Many of the algorithms used are from software overseen by Pierre L'Ecuyer 
  */
 
@@ -54,6 +56,9 @@ object StreamMaker:
                  " *  @version 2.0\n" +
                  " *  @date    " + new Date () + "\n" +
                  " *  @see     LICENSE (MIT style license file).\n" +
+                 " *\n" +
+                 " *  @note    1000 Seeds for MRG31k3p Random Number Generator\n" +
+                 " *           val N_STREAMS = seeds.length\n" +
                  " */\n" +
                  "\n" +
                  "package scalation.random\n" +

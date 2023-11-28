@@ -5,7 +5,8 @@
  *  @date    Tue Apr 18 11:58:39 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Coordinate Descent
+ *  @note    Coordinate Descent for Non-Linear Optimization
+ *
  *  @see     arxiv.org/pdf/1502.04759.pdf
  */
 
@@ -32,7 +33,6 @@ class CoordinateDescent (f: FunctionV2S, exactLS: Boolean = true)
       extends Minimizer:
 
     private val debug  = debugf ("CoordinateDescent", true)     // debug function
-    private val flaw   = flawf ("CoordinateDescent")            // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Perform an exact `GoldenSectionLS` or inexact `WolfeLS` line search.

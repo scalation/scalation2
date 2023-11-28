@@ -5,7 +5,7 @@
  *  @date    Fri Jul 22 00:20:15 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Linkable-Relational Algebra (LRA) for Linkable-Relational DBMS
+ *  @note    Linkable-Relational Algebra (LRA) for Linkable-Relational DBMS
  */
 
 package scalation

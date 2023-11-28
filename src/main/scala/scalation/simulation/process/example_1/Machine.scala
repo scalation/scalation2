@@ -7,7 +7,7 @@
  *
  *  @see     simulation/event/example_1/Machine.scala
  *
- *  @title   Example Model: Machine Shop for Process-Interaction Simulation
+ *  @note    Example Model: Machine Shop for Process-Interaction Simulation
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Fri Sep 17 15:22:44 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Model Class for Process Simulation - Method of Batch Means
+ *  @note    Base Model Class for Process Simulation - Method of Batch Means
  */
 
 package scalation

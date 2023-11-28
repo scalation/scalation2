@@ -5,7 +5,7 @@
  *  @date    Sat Sep  8 13:53:16 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Integer-Based TAN Bayes Classifier
+ *  @note    Model: Integer-Based TAN Bayes Classifier
  *           Tree-Augmented Naive (TAN)
  *
  *  @see eric.univ-lyon2.fr/~ricco/tanagra/fichiers/en_Tanagra_TAN_Bayes_Classifier_Explained.pdf
@@ -66,9 +66,9 @@ class TANBayes (x: MatrixD, y: VectorI, fname_ : Array [String] = null,
     private var nu_Xy: RTensorD = null                                   // Joint Frequency Tables (JFTs)
     private var nu_Xpy_ : RTensor4D = null                               // Joint Frequency Tables (JFTs)
 
-    private var p_Xy: Array [MatrixD] = null                             // Conditional Probability Tables (CPTs) one per feature
+//  private var p_Xy: Array [MatrixD] = null                             // Conditional Probability Tables (CPTs) one per feature
     private var p_Xpy: Array [Array [MatrixD]] = null                    // extended Conditional Probability Tables (CPTs) one per feature
-//  private var p_Xpy_ : RTensor4D = null                    // extended Conditional Probability Tables (CPTs) one per feature
+//  private var p_Xpy_ : RTensor4D = null                                // extended Conditional Probability Tables (CPTs) one per feature
 
     private var parent: VectorI = null                                   // parent of each feature/variable
     private var vc_p: VectorI = null                                     // parent value count

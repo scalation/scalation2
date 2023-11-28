@@ -5,7 +5,7 @@
  *  @date    Fri May 26 14:32:21 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Matrix Inversion
+ *  @note    Matrix Inversion
  */
 
 package scalation
@@ -24,7 +24,6 @@ class Fac_Inverse (a: MatrixD)
       extends Factorization:
 
     private val flaw = flawf ("Fac_Inverse")             // flaw function
-    private val n    = a.dim                             // the a matrix is n-by-n
     private var ai: MatrixD = null                       // the inverse of a (a^-1)
 
     if a.dim != a.dim2 then flaw ("init", "matrix a must be square")

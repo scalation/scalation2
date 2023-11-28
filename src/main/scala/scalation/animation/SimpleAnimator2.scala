@@ -5,7 +5,7 @@
  *  @date    Sun Oct 24 15:42:07 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Animate the Motion of Objects - scala2d version
+ *  @note    Animate the Motion of Objects - scala2d version
  */
 
 package scalation

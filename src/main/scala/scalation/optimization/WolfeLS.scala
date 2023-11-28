@@ -5,7 +5,7 @@
  *  @date    Wed Aug 24 19:53:22 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   1D Approximate Wolfe Line Search Optimizer
+ *  @note    1D Approximate Wolfe Line Search Optimizer
  *
  *  @see pages.cs.wisc.edu/~ferris/cs730/chap3.pdf
  *  @see Limited Memory BFGS for Nonsmooth Optimization
@@ -43,9 +43,7 @@ class WolfeLS (f: FunctionS2S, c1: Double = 0.0001, c2: Double = 0.9)
     private val debug   = debugf ("WolfeLS", false)                 // debug function
     private val POS_INF = Double.PositiveInfinity                   // Positive Infinity
     private val MAX_IT  = 20                                        // maximum number of iterations
-    private val f0      = f(0.0)                                    // functional value at the origin
     private val df0     = Ⅾ (f)(0.0)                                // derivative at the origin f'(0)
-    private val c1_df0  = c1 * df0                                  // pre-multiplication for Wolfe condition 1
     private val c2_df0  = c2 * df0                                  // pre-multiplication for Wolfe condition 2
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -74,8 +72,8 @@ class WolfeLS (f: FunctionS2S, c1: Double = 0.0001, c2: Double = 0.9)
     def lsearch_ (x0: Double = 1.0, lo0: Double = 0.0, weak: Boolean = true): Double =
         var (lo, hi) = (lo0, POS_INF)                               // starting lower and upper bound for x
         var x    = x0                                               // starting point
-        var f0   = f(0.0)                                           // function at 0, f(0)
-        var dfx0 = Ⅾ (f)(0.0)                                       // derivative at 0, f'(0)
+        val f0   = f(0.0)                                           // function at 0, f(0)
+        val dfx0 = Ⅾ (f)(0.0)                                       // derivative at 0, f'(0)
 
         var (go, it) = (true, 0)
         cfor (go && it < MAX_IT, it += 1) {

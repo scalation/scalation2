@@ -5,7 +5,7 @@
  *  @date    Wed Nov  7 17:08:17 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Regression Tree
+ *  @note    Model: Regression Tree
  */
 
 package scalation
@@ -206,12 +206,10 @@ class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):              // call resetDF once tree is built
 
     private val debug     = debugf ("RegressionTree", true)             // debug function
-    private val flaw      = flawf ("RegressionTree")                    // flaw function
-    private val (m, n)    = (x.dim, x.dim2)                             // matrix dimensions
     private val depth     = hparam ("maxDepth").toInt                   // the depth limit for tree
     private val thres     = hparam ("threshold").toDouble               // the threshold for the tree's parent node, @see buildTree
-    private val threshold = new VectorD (n)                             // store best splitting threshold for each feature
-    private val score     = new VectorD (n)                             // store best splitting score for each feature
+    private val threshold = new VectorD (x.dim2)                        // store best splitting threshold for each feature
+    private val score     = new VectorD (x.dim2)                        // store best splitting score for each feature
 
     private var root: Node = null                                       // root node   
 

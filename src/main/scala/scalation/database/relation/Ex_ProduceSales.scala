@@ -5,7 +5,7 @@
  *  @date    Sat Dec 11 18:35:14 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Product Sales
+ *  @note    Example Database: Product Sales
  */
 
 package scalation

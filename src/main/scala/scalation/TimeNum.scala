@@ -5,7 +5,7 @@
  *  @date    Wed May 27 14:36:12 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   `TimeNum` for Handling Dates and Times
+ *  @note    `TimeNum` for Handling Dates and Times
  */
 
 package scalation
@@ -86,10 +86,6 @@ object TimeNum:
     /** Ordering for date-time values
      */
     val ord = new Ordering [TimeNum] { def compare (s: TimeNum, t: TimeNum) = s compare t }
-
-    /** Default element separator (e.g., in a CSV file)
-     */
-    private val SP = ","
 
     /** Nano-seconds must be strictly than this limit (billion nanoseconds = 1 second)
      */
@@ -325,7 +321,7 @@ class TimeNum (val inst: Instant)
         val (ss, sn) = (s.inst.getEpochSecond, s.inst.getNano)
         val (ts, tn) = (t.inst.getEpochSecond, t.inst.getNano)
         var (rs, rn) = (ss + ts, sn + tn)
-        if rn >= nanoLimit then { rs += 1; rn - nanoLimit }
+        if rn >= nanoLimit then { rs += 1; rn -= nanoLimit }
         TimeNum (rs, rn)
     end plus
 
@@ -340,7 +336,7 @@ class TimeNum (val inst: Instant)
         val (ss, sn) = (s.inst.getEpochSecond, s.inst.getNano)
         val (ts, tn) = (t.inst.getEpochSecond, t.inst.getNano)
         var (rs, rn) = (ss - ts, sn - tn)
-        if rn < 0L then { rs -= 1; rn + nanoLimit }
+        if rn < 0L then { rs -= 1; rn += nanoLimit }
         TimeNum (rs, rn)
     end minus
 
@@ -604,7 +600,7 @@ end TimeNum
  */
 @main def timeNumTest (): Unit =
 
-    val tztest    = ZonedDateTime.now (ZoneId.of("GMT-05:00"))
+//  val tztest    = ZonedDateTime.now (ZoneId.of("GMT-05:00"))
     val date1     = new TimeNum (ZonedDateTime.now (ZoneId.of ("GMT-05:00")))
     Thread.sleep (2000)                                                   // to create a different TimeNum object
     val date2     = new TimeNum (ZonedDateTime.now (ZoneId.of ("GMT-05:00")))

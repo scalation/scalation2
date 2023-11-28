@@ -5,8 +5,8 @@
  *  @date    Thu Jul  9 14:47:27 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  Depth First Search (DFS)
- *  Breadth First Search (BFS)
+ *  @note    Supports Depth First Search (DFS) and
+ *                    Breadth First Search (BFS)
  */
 
 package scalation
@@ -31,7 +31,7 @@ class GraphDFS (g: Graph, bfs: Boolean = false):
 
     private val debug = debugf ("GraphDFS", false)                // debug function
     private val go    = Array.ofDim [Boolean] (g.size)            // go (unvisited) flags
-    private var qu    = if bfs then new STACK ()                  // vertex FIFO queue for BFS
+    private val qu    = if bfs then new STACK ()                  // vertex FIFO queue for BFS
                         else new QUEUE ()                         // or stack (LIFO queue) for DFS
     private var lab: ValueType = null                             // label to find
     private var dest  = -1                                        // destination vertex to reach

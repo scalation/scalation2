@@ -5,7 +5,7 @@
  *  @date    Fri Dec 27 15:41:58 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Bank - Tableau Simulation 
+ *  @note    Example Model: Bank - Tableau Simulation 
  */
 
 package scalation

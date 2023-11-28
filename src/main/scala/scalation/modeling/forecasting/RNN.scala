@@ -5,7 +5,7 @@
  *  @date    Tue Aug 29 13:54:14 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Recurrent Neural Network (RNN) for Multivariate Time Series
+ *  @note    Model: Recurrent Neural Network (RNN) for Multivariate Time Series
  */
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -49,7 +49,7 @@ class RNN (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
                                                                        // since we will only use one sentence for training,
                                                                        // this is also the total steps during training.
 
-    private val _1 = VectorD.one (n_mem)                               // vector of all ones for e.g., 1 - z
+//  private val _1 = VectorD.one (n_mem)                               // vector of all ones for e.g., 1 - z
 
     // initialize parameters (weights and biases)
     private val rmg1 = NormalMat (n_mem, n_var, 0.0, 0.01)             // random (Normal) matrix generators
@@ -60,15 +60,15 @@ class RNN (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
 
     private var U    = rmg1.gen                                        // parameters for computing the hidden state
     private var W    = rmg2.gen
-    private var b_h  = rvg1.gen
+    private val b_h  = rvg1.gen
 
     private val hg = Gate (n_seq, n_mem, n_var)                        // hidden state gate-like structure
 
     // decoder for generating output
     private var V    = rmg3.gen                                        // decoder weight matrix
-    private var b_y  = rvg3.gen                                        // decoder bias vector
+    private val b_y  = rvg3.gen                                        // decoder bias vector
 
-    private var h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
+    private val h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
     private val h    = new MatrixD (n_seq, n_mem)                      // hidden state h
     private val yp   = new MatrixD (n_seq, n_var)                      // predicted output
     private val L    = new VectorD (n_seq)                             // store loss function values
@@ -77,6 +77,8 @@ class RNN (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
     private var dh_m1 = new VectorD (h_m1.dim)
     private var db_y: VectorD = null
     private var dV    = new MatrixD (V.dim, V.dim2)
+
+    if fname != null then println (s"RNN: fname = $fname")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the RNN using simple gradient descent.

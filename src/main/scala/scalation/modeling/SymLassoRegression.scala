@@ -5,7 +5,7 @@
  *  @date    Thu Dec 23 13:54:30 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Symbolic Lasso Regression, including Quadratic and Cubic Lasso Regression
+ *  @note    Model: Symbolic Lasso Regression, including Quadratic and Cubic Lasso Regression
  */
 
 package scalation

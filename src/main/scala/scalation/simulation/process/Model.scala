@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Model Class for Process Simulation - Method of Independent Replications
+ *  @note    Base Model Class for Process Simulation - Method of Independent Replications
  */
 
 package scalation
@@ -35,10 +35,9 @@ import scalation.scala2d.Shape
  *  @param full       generate a full report with both sample and time-persistent statistics
  *  @param width      the width of the animation panel
  *  @param height     the height of the animation panel
- *  @param labels     the labels of the animation panel
  */
 class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRatio: Double = 1.0,
-             val full: Boolean = true, weight: Int = 1200, height: Int = 800, labels: Boolean = true)
+             val full: Boolean = true, weight: Int = 1200, height: Int = 800)
       extends Coroutine (name) with Completion with Modelable with Component:
 
     initComponent (name, Array ())
@@ -81,7 +80,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
     /** The animation engine
      */
     private val dgAni = if animating then new DgAnimator ("Process Animator", black, white,
-                                                          aniRatio, weight, height, labels)
+                                                          aniRatio, weight, height)
                         else null
 
     /** The animation engine's command queue
@@ -316,7 +315,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
     /** Compare the order of actors based on their 'actTime's.
      *  @param actor1  the first actor in comparison
      */
-    private def orderedActor (actor1: SimActor): Ordered [SimActor] =
+    def orderedActor (actor1: SimActor): Ordered [SimActor] =
         new Ordered [SimActor]
             { def compare (actor2: SimActor) = actor1.actTime compare actor2.actTime }
     end orderedActor

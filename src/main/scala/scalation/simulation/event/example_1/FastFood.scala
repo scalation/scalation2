@@ -5,7 +5,7 @@
  *  @date    Sun Sep 26 15:00:24 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Fast Food for Event-Scheduling Simulation
+ *  @note    Example Model: Fast Food for Event-Scheduling Simulation
  */
 
 package scalation
@@ -14,8 +14,9 @@ package event
 package example_1
 
 import scalation.mathstat.Statistic
-import scalation.random.Known
-//import scalation.random.RandomSeeds.N_STREAMS
+import scalation.random.Exponential
+//import scalation.random.Known
+import scalation.random.RandomSeeds.N_STREAMS
 
 import queueingnet.MMck_Queue
 
@@ -49,10 +50,10 @@ class FastFoodModel (name: String = "FastFood", reps: Int = 1, nStop: Int = 100,
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-//  import scalation.random.Exponential
-//  val iArrivalRV = Exponential (HOUR / lambda, stream)
-//  val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
+    val iArrivalRV = Exponential (HOUR / lambda, stream)
+    val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
 
+/*
     val iArrivalRV = Known (Array(0.089051585232241,
                             0.237565690240952,
                             0.484150846121557,
@@ -93,6 +94,7 @@ class FastFoodModel (name: String = "FastFood", reps: Int = 1, nStop: Int = 100,
                             0.0640026731810368,
                             3.75377193652216,
                             10.4008888496292))
+*/
 
     //--------------------------------------------------
     // Create State Variables

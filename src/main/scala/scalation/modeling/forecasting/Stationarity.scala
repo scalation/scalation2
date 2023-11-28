@@ -5,7 +5,7 @@
  *  @date    Thu May 26 13:00:49 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Statistical Test for Time Series Stationarity
+ *  @note    Model Support: Statistical Test for Time Series Stationarity
  *
  *  Unit Root Tests for Time Series Stationarity
  *  (1 is a root of the process characteristic equation)
@@ -53,7 +53,7 @@ trait UnitRoot (protected val testName: String, protected val nobs: Int,
     private var prevTrend: String    = null                             // previous regression trend
     private var trendType: String    = null                             // regression trend for outputting test results
     private var prevLags             = 0                                // previous number of lags
-    private var optim                = false                            // control if lag length is optimized
+    private val optim                = false                            // control if lag length is optimized
     private var newTest              = false                            // control if new test is run (true) or all parameters remain same (false)
 
     private val probas       = Array (0.001, 0.005, 0.01, 0.025, 0.05,
@@ -360,7 +360,7 @@ end stationaryTest2
         banner (s"Test Stationary on simulated stationary time-series with rate = ${rates(i)(j)}")
         val stats = Stats4TS (y, MAX_LAGS)
         println (stats)
-        val zero = new VectorD (stats.acr.dim)
+//      val zero = new VectorD (stats.acr.dim)
 //      new Plot (null, stats.acr, zero, s"ACF vs. k for rate = ${rates(i)(j)}", true)
         new Plot (null, y, null, s"simulated time series with rate = ${rates(i)(j)}", lines = true)
     end for

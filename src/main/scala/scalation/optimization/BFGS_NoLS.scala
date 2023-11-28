@@ -5,7 +5,7 @@
  *  @date    Wed Jun  7 17:54:59 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   BFGS, Quasi Method Method to Find Minima for Functions of Vectors
+ *  @note    BFGS, Quasi Method Method to Find Minima for Functions of Vectors
  *
  *  @see web.stanford.edu/class/cme304/docs/newton-type-methods.pdf
  *  @see `BFGS` for similar code that uses line-search
@@ -38,7 +38,7 @@ object QNewton:
      *  @param y    the difference in the gradients (next - current)
      */
     def aHi_inc (aHi: MatrixD, s: VectorD, y: VectorD): MatrixD =
-        var sy = maxmag (s dot y, EPS)
+        val sy = maxmag (s dot y, EPS)
         val ay = aHi * y
         (⊗ (s, s) * (sy + (y dot ay))) / sy~^2 - (⊗ (ay, s) + ⊗ (s, ay)) / sy
     end aHi_inc
@@ -73,7 +73,7 @@ class BFGS_NoLS (f: FunctionV2S, useLS: Boolean = false)
      */
     def solve (x0: VectorD, α: Double = eta): FuncVec =
         val wls   = new WolfeLS2 (f, null)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = ∇ (f)(x)                                      // compute gradient, numerically
         var aHi   = MatrixD.eye (x.dim, x.dim)                    // approximate Hessian inverse
@@ -108,7 +108,7 @@ class BFGS_NoLS (f: FunctionV2S, useLS: Boolean = false)
      */
     def solve2 (x0: VectorD, grad: FunctionV2V, α: Double = eta): FuncVec =
         val wls   = new WolfeLS2 (f, grad)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = grad (x)                                      // compute gradient by function evaluation
         var aHi   = MatrixD.eye (x.dim, x.dim)                    // approximate Hessian inverse
@@ -154,7 +154,7 @@ end BFGS_NoLS
 
     val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
 //  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
-    val opt = optimizer.solve (x0)
+    val opt = optimizer.solve (x0, eta)
     println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGS_NoLSTest
@@ -179,7 +179,7 @@ end bFGS_NoLSTest
 
     val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
 //  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
-    val opt = optimizer.solve2 (x0, grad)
+    val opt = optimizer.solve2 (x0, grad, eta)
     println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGS_NoLSTest2
@@ -220,7 +220,6 @@ end bFGS_NoLSTest3
 @main def bFGS_NoLSTest4 (): Unit =
 
     val eta = 0.5                                           // learning rate (may need adjustment)
-    val n   = 2                                             // dimension of the search space
     val x0  = VectorD (0.1, 0.0)                            // starting point (.1, 0)
 
     banner ("Minimize: 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -230,8 +229,8 @@ end bFGS_NoLSTest3
 
 //  val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
     val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
-//  var opt = optimizer.solve (x0, eta)                     // use numerical partials
-    var opt = optimizer.solve2 (x0, grad, eta)              // use functions for partials
+//  val opt = optimizer.solve (x0, eta)                     // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)              // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points

@@ -5,7 +5,7 @@
  *  @date    Sun Jan 11 19:05:20 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Exponential Regression
+ *  @note    Model: Simple Exponential Regression
  */
 
 package scalation
@@ -35,9 +35,9 @@ class SimpleExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
     private val debug     = debugf ("SimpleExpRegression", true)         // debug function
     private val flaw      = flawf ("SimpleExpRegression")                // flaw function
     private val cutoff    = 1E-4                                         // cutoff threshold
-    private var eta       = 0.00001                                      // the learning/convergence rate (requires adjustment)
+    private val eta       = 0.00001                                      // the learning/convergence rate (requires adjustment)
     private val maxEpochs = 100                                          // the maximum number of training epcochs/iterations
-//  private var eta       = hparam ("eta")                               // the learning/convergence rate (requires adjustment)
+//  private val eta       = hparam ("eta")                               // the learning/convergence rate (requires adjustment)
 //  private val maxEpochs = hparam ("maxEpochs").toInt                   // the maximum number of training epcochs/iterations
 
     modelName = "SimpleExpRegression"

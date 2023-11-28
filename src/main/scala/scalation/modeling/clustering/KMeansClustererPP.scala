@@ -5,7 +5,7 @@
  *  @date    Mon Apr 22 14:53:24 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Means ++ Clustering (smart initialization of centroids)
+ *  @note    Model: K-Means ++ Clustering (smart initialization of centroids)
  */
 
 package scalation

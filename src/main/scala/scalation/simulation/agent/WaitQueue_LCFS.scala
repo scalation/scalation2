@@ -5,7 +5,7 @@
  *  @date    Fri Oct  1 00:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   WaitQueue_LCFS Provides a Place for Entities/SimAgents to Wait
+ *  @note    WaitQueue_LCFS Provides a Place for Entities/SimAgents to Wait
  */
 
 package scalation

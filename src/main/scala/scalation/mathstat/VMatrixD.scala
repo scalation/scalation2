@@ -5,7 +5,7 @@
  *  @date    Sat Sep 17 17:37:56 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Virtual Matrix Data Structure of Doubles
+ *  @note    Virtual Matrix Data Structure of Doubles (saves space)
  */
 
 package scalation
@@ -31,8 +31,7 @@ class VMatrixD (dim_ :     Int,
                 private [mathstat] v_ : Array [Array [Double]] = null)
       extends MatrixD (dim_, dim2_, v_):
 
-    private val debug = debugf ("VMatrixD", true)               // partial invocation of debug function
-    private val flaw  = flawf ("VMatrixD")                      // partial invocation of flaw function
+    private val flaw = flawf ("VMatrixD")                       // partial invocation of flaw function
 
     if formulas.size != dim2v then flaw ("init", "# formulas != # virtual columns")
 

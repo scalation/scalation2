@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Wed Aug 24 19:53:22 EDT 2011
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Gradient Descent for Non-Linear Optimization
  */
 
 package scalation
@@ -32,8 +34,6 @@ class GradientDescent (f: FunctionV2S, exactLS: Boolean = true)
       extends Minimizer:
 
     private val debug  = debugf ("GradientDescent", true)     // debug function
-    private val flaw   = flawf ("GradientDescent")            // flaw function
-    private val WEIGHT = 1000.0                               // weight on penalty for constraint violation
 
     private var gr: FunctionV2V = null                        // gradient (vector of partial derivatives)
 
@@ -103,7 +103,7 @@ end GradientDescent
  */
 @main def gradientDescentTest (): Unit =
 
-    var x0 = VectorD (0.0, 0.0)                               // starting point
+    val x0 = VectorD (0.0, 0.0)                               // starting point
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1") 
     def f (x: VectorD): Double = (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1

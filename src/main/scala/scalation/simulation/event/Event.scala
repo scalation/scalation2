@@ -5,7 +5,7 @@
  *  @date    Sun Jan 19 20:30:33 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Event Contains Logic for Event Occurrences
+ *  @note    Event Contains Logic for Event Occurrences
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Fri Oct  1 00:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   QueueOps Specifies Operations To Be Supported by Wait Queues
+ *  @note    QueueOps Specifies Operations To Be Supported by Wait Queues
  */
 
 package scalation

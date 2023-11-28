@@ -5,7 +5,7 @@
  *  @date    Wed Jan  2 15:20:24 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model/Optimization Support: Hyper-Parameters
+ *  @note    Model/Optimization Support: Hyper-Parameters
  */
 
 package scalation

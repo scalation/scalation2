@@ -5,7 +5,7 @@
  *  @date    Wed Aug  27 14:16:12 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gnerate index.html for traversing Source Code
+ *  @note    Utility to Generate index.html Files for Traversing ScalaTion Source Code
  */
 
 package scalation

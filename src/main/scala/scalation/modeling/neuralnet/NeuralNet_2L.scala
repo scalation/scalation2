@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network with 2 Layers (input and output layers)
+ *  @note    Model: Neural Network with 2 Layers (input and output layers)
  *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
@@ -45,10 +45,7 @@ class NeuralNet_2L (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
 
-    private val debug     = debugf ("NeuralNet_2L", false)                // debug function
     private val eta       = hp("eta").toDouble                            // learning rate
-    private val bSize     = hp("bSize").toInt                             // batch size
-    private val maxEpochs = hp("maxEpochs").toInt                         // maximum number of training epochs/iterations
 //          val opti      = new Optimizer_SGD ()                          // parameter optimizer SGD
             val opti      = new Optimizer_SGDM ()                         // parameter optimizer SGDM
 
@@ -466,7 +463,6 @@ end neuralNet_2LTest6
     val x  = MatrixD ((10, 1), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     val y  = VectorD (5.56, 5.70, 5.91, 6.40, 6.80, 7.05, 8.90, 8.70, 9.00, 9.05)
     val ox = VectorD.one (x.dim) +^: x
-    val fname = Array ("x")
 
     banner (s"Regression with intercept")
     val reg = new Regression (ox, y)
@@ -505,8 +501,6 @@ end neuralNet_2LTest7
     val x  = MatrixD ((6, 1), 1, 2, 3, 4, 5, 6)
     val y  = VectorD (1, 3, 3, 5, 4, 4) / 6.0
     val yt = logit_ (y)
-    val _1 = VectorD.one (x.dim)
-//  val ox = MatrixD (_1, x).transpose
     val ox = MatrixD.one (x.dim) ++^ x
 
     println (s"ox = $ox")

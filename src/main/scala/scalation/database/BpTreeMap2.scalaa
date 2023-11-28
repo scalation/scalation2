@@ -5,7 +5,7 @@
  *  @date    Mon Jul  4 12:55:00 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Map Implemented Using B+Trees
+ *  @node    Map Implemented Using B+Trees
  *
  *  Split Nodes on Overflow
  *  Merge Nodes on Underflow (not yet implemented)

@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Orthogonal Polynomial Regression (for one variable)
+ *  @note    Model: Orthogonal Polynomial Regression (for one variable)
  *
  *  @see https://en.wikipedia.org/wiki/Legendre_polynomials
  */

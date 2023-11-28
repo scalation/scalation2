@@ -5,7 +5,7 @@
  *  @date    Sun Jan 11 19:05:20 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Poisson Regression
+ *  @note    Model: Poisson Regression
  *
  *  ncss-wpengine.netdna-ssl.com/wp-content/themes/ncss/pdf/Procedures/NCSS/Poisson_Regression.pdf
  */
@@ -40,7 +40,6 @@ class PoissonRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
 
-    private val DEBUG      = false                    // debug flag
 /*
     private val k          = x.dim2 - 1               // number of variables 
     private val n          = x.dim.toDouble           // number of data points (rows)

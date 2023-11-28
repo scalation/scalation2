@@ -4,12 +4,16 @@
  *  @version 2.0
  *  @date    Fri Oct 7 12:27:00 EDT 2017
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Limited memory BFGS with Bounds (L-BFGS-B)
+ *
  *------------------------------------------------------------------------------
  *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in 1995.
+ *  optimization (L-BFGS-B) algorithm.  Originally proposed by Byrd et. al in 1995.
  *  See the first two links for the original paper and authors' software (written
- *  in Fortran) distribution site, respectively. This implementation is translated
+ *  in Fortran) distribution site, respectively.  This implementation is translated
  *  from a C++ implementation found in the last link.
+ *
  *  @see www.ece.northwestern.edu/~nocedal/PSfiles/limited.ps.gz
  *  @see users.iems.northwestern.edu/~nocedal/lbfgsb.html
  *  @see github.com/PatWie/CppNumericalSolvers/blob/master/include/cppoptlib/solver/lbfgsbsolver.h

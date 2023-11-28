@@ -5,7 +5,7 @@
  *  @date    Sat Aug  4 15:06:28 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Fixed Size Circular Queue
+ *  @note    Fixed Size Circular Queue
  *
  *  @see courses.cs.vt.edu/cs3114/Spring09/book.pdf
  */

@@ -5,7 +5,7 @@
  *  @date    Thu Jun 17 19:29:23 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Experimental Implementation for Testing Efficiency of Methods
+ *  @note    Experimental Implementation for Testing Efficiency of Methods
  */
 
 package scalation
@@ -25,7 +25,7 @@ class MatrixD2 (val dim:  Int,
 
     private val flaw = flawf ("MatrixD2")                          // partial invocation of flaw function
 
-    private var fString = "%g,\t"
+    private val fString = "%g,\t"
 
     val indices  = 0 until dim
     val indices2 = 0 until dim2

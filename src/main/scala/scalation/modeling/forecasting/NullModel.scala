@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Null Model (guess the mean)
+ *  @note    Model: Null Model (guess the mean)
  *           Also known as the Mean Model
  */
 

@@ -5,7 +5,7 @@
  *  @date    Wed Feb  5 17:41:18 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Locatable Objects Have a Location
+ *  @note    Locatable Objects Have a Location
  */
 
 package scalation

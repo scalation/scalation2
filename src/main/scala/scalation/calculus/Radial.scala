@@ -5,6 +5,8 @@
  *  @date    Wed Nov 15 12:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Radial Basis Functions
+ *
  *  @see en.wikipedia.org/wiki/Radial_basis_function
  */
 
@@ -28,7 +30,7 @@ end RadialType
 import RadialType._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Radial` class provides Radial basis functions. Such basis functions
+/** The `Radial` class provides Radial basis functions.  Such basis functions
  *  are useful are useful in Neural Networks and Support Vector Classification.
  *-----------------------------------------------------------------------------
  *  @param centers      a list of centers
@@ -40,7 +42,6 @@ class Radial (centers: VectorD = VectorD (0.0), protected var radialType: Radial
               protected var γ: Double = 1.0, protected var k: Int = 2)
       extends BasisFunction:
 
-    private val debug = debugf ("Radial", true)                    // debug function
     private val flaw  = flawf ("Radial")                           // flaw function
     private val m     = centers.size                               // the order of the radial basis functions
 
@@ -104,7 +105,7 @@ class Radial (centers: VectorD = VectorD (0.0), protected var radialType: Radial
     /** The value of the Thin Plate Spline Radial Basis Function with radius 'r'
      *  @param r  the radius
      */
-    protected def thinPlateSpline (r: Double) = polyHarmonicSpline(r, 2)
+    protected def thinPlateSpline (r: Double) = polyHarmonicSpline (r, 2)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Obtain the value of the m-th order 'j'-th basis function at time 't'.

@@ -5,7 +5,7 @@
  *  @date    Wed Dec  8 22:56:57 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Monte Carlo Estimation of the Volume of a Unit Sphere
+ *  @note    Monte Carlo Estimation of the Volume of a Unit Sphere
  */
 
 package scalation

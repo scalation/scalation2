@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Sat Oct  8 12:37:32 EDT 2016
  *  @see     LICENSE (MIT style license file).
+
+ *  @note    Basic Integration Methods
  *
  *  @see en.wikipedia.org/wiki/Romberg%27s_method
  *  @see www.math.usm.edu/lambers/mat460/fall09/lecture29.pdf

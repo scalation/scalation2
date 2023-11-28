@@ -6,7 +6,7 @@
  *  @date    Sun Sep 11 22:43:04 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Integer Linear Programming (ILP) and Mixed Integer Linear Programming (MILP)
+ *  @note    Integer Linear Programming (ILP) and Mixed Integer Linear Programming (MILP)
  */
 
 package scalation
@@ -49,7 +49,7 @@ class IntegerLP (a: MatrixD, b: VectorD, c: VectorD, excl: Set [Int] = Set ()):
     type Constraints = (MatrixD, VectorD)                         // a x <= b (-b_i for >=)
 
     private val EPSILON = 1E-9                                    // number close to zero
-    private val M       = a.dim                                   // # rows in the original constraint matrix
+//  private val M       = a.dim                                   // # rows in the original constraint matrix
     private val N       = a.dim2                                  // # columns in the original constraint matrix
                                                                   // N = # decision variables
 

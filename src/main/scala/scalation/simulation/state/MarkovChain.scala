@@ -5,7 +5,7 @@
  *  @date    Sat Dec 12 13:11:30 EST 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Discrete-time Markov Chain
+ *  @note    Discrete-time Markov Chain
  */
 
 package scalation
@@ -46,7 +46,7 @@ class MarkovChain (a: MatrixD):
     private val aniQ    = dgAni.getCommandQueue                                   // animation engine's command queue
     private val bend    = .25                                                     // amount of bend in the `QArrow`
 
-    private var animating = true                                                  // animation flag (set to false to turn off animation)
+    private val animating = true                                                  // animation flag (set to false to turn off animation)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the next probabilistic state π * a.
@@ -84,11 +84,11 @@ class MarkovChain (a: MatrixD):
      *  @param endTime  the end time for the simulation
      */
     def simulate (i0: Int, endTime: Int): Unit =
-        var clock      = 0                                  // current discrete time
-        var i          = i0                                 // current state = start state
-        var absorbed   = false                              // whether it has entered an absorbing state
-        val tk_id      = a.dim                             // the identifier for the token
-        val ms_per_sec = 1000.0                             // 1000 milliseconds per second (animate using seconds)
+        var clock      = 0                                          // current discrete time
+        var i          = i0                                         // current state = start state
+        var absorbed   = false                                      // whether it has entered an absorbing state
+        val tk_id      = a.dim                                      // the identifier for the token
+        val ms_per_sec = 1000.0                                     // 1000 milliseconds per second (animate using seconds)
 
         animate ()
         aniQ.add (AnimateCommand (CreateToken, tk_id, Ellipse (), "tk" + tk_id, false, black, null, 0.0, i0))
@@ -105,7 +105,7 @@ class MarkovChain (a: MatrixD):
                 val rowi  = a(i)
                 println ("rowi = " + rowi)
                 val disRV = Discrete (rowi)
-                i         = disRV.igen                      // advance to the next state
+                i         = disRV.igen                              // advance to the next state
             end if
             aniQ.add (AnimateCommand (MoveToken2Node, tk_id, null, null, false, null, null, ms_per_sec * clock, i))
             debug ("simulate", s"at time $clock the state is $i")
@@ -122,9 +122,9 @@ class MarkovChain (a: MatrixD):
      */
     def animate (): Unit =
         if animating then
-            val n = a.dim                                  // number of nodes to create
-            val ncolor = lightblue                          // color for nodes
-            val ecolor = red                                // color for edges
+            val n = a.dim                                           // number of nodes to create
+            val ncolor = lightblue                                  // color for nodes
+            val ecolor = red                                        // color for edges
 
             //:: Display the nodes for the Markov Chain
 
@@ -222,10 +222,10 @@ end markovChainTest
  */
 @main def markovChainTest2 (): Unit =
 
-    val endTime = 50                     // number of epochs/time-steps
-    val p       = 0.5                    // probability of a head
+    val endTime = 50                                                // number of epochs/time-steps
+    val p       = 0.5                                               // probability of a head
     val q       = 1 - p
-    val k       = 3                      // enter game with k dollars
+    val k       = 3                                                 // enter game with k dollars
 
     val mc = new MarkovChain (MatrixD ((6, 6), 1, 0, 0, 0, 0, 0,    // 6-by-6 matrix
                                                q, 0, p, 0, 0, 0,
@@ -259,14 +259,14 @@ end markovChainTest2
 
     import scalation.random.Bernoulli
 
-    val p    = 0.5                       // probability of a head
-    val coin = Bernoulli (p)             // RVG for Bernoulli distribution, coin flip
-    var lose = 0                         // number of games lost
-    var win  = 0                         // number of games won
+    val p    = 0.5                                                  // probability of a head
+    val coin = Bernoulli (p)                                        // RVG for Bernoulli distribution, coin flip
+    var lose = 0                                                    // number of games lost
+    var win  = 0                                                    // number of games won
 
-    for it <- 1 to 10000 do              // iterate playing the game
-        var j  = 3                       // enter game with j dollars
-        var go = true                    // continue with the game
+    for it <- 1 to 10000 do                                         // iterate playing the game
+        var j  = 3                                                  // enter game with j dollars
+        var go = true                                               // continue with the game
         while go do
             j += (if coin.gen < 0.5 then -1 else 1)
             if j == 0 then { println ("lose"); lose += 1; go = false }
@@ -286,7 +286,7 @@ end markovChainTest3
  */
 @main def markovChainTest4 (): Unit =
 
-    val a  = MatrixD ((3, 3), .5, .4, .1,         // 3-by-3 matrix
+    val a  = MatrixD ((3, 3), .5, .4, .1,                           // 3-by-3 matrix
                               .3, .4, .3,
                               .2, .3, .5)
 

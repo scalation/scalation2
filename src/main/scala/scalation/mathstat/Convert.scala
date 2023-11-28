@@ -5,7 +5,7 @@
  *  @date    Fri Aug 27 22:55:37 EDT 2021
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Conversion Untilities
+ *  @note    Conversion Untilities
  */
 
 package scalation

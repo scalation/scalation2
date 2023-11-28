@@ -5,7 +5,7 @@
  *  @date    Sun Jan 11 19:05:20 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Exponential Regression
+ *  @note    Model: Exponential Regression
  */
 
 // FIX: needs improved optimization: try IRWLS
@@ -40,8 +40,8 @@ class ExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val debug      = debugf ("ExpRegression", true)              // debug function
     private val flaw       = flawf ("ExpRegression")                     // flaw function
     private var n_dev      = -1.0                                        // null dev: -LL, for null model (intercept only)
-    private var r_dev      = -1.0                                        // residual dev: -LL, for full model
-    private var pseudo_rSq = -1.0                                        // McFaffen's pseudo R-squared
+//  private var r_dev      = -1.0                                        // residual dev: -LL, for full model
+//  private var pseudo_rSq = -1.0                                        // McFaffen's pseudo R-squared
 
     modelName = "ExpRegression"
 

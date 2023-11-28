@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Tue Jan  5 16:14:38 EST 2010
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Quad Curve with an Arrowhead
  */
 
 package scalation

@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Wed Nov  9 14:58:54 EST 2016
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Answers for Graph Matching Problem
  */
 
 package scalation

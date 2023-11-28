@@ -5,7 +5,7 @@
  *  @date    Wed Jul 28 13:32:52 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Grid Search Optimizer
+ *  @note    Grid Search Optimizer
  */
 
 package scalation
@@ -43,6 +43,8 @@ class GridSearch (f: FunctionV2S, n: Int, g: FunctionV2S = null, nSteps: Int = 2
     private val axes  = Array.ofDim [VectorD] (n)                 // n axes of the search space
     private val x     = new VectorD (n)                           // point in search space, initially zero
     private var best  = (f(x), x)                                 // location zero solution
+
+    if g != null then println ("constraint function g is passed in")
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create the n axes for the grid.  Must be called before the solve method.

@@ -5,7 +5,7 @@
  *  @date    Thu Mar 22 22:31:32 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Quality of Fit (QoF) suitable for all models
+ *  @note    Model Support: Quality of Fit (QoF) suitable for all models
  *
  *  @see facweb.cs.depaul.edu/sjost/csc423/documents/f-test-reg.htm
  *  @see avesbiodiv.mncn.csic.es/estadistica/ejemploaic.pdf
@@ -158,7 +158,6 @@ object FitM:
      */
     def showQofStatTable (stats: Array [Statistic]): Unit =
         banner ("showQofStatTable: Statistical Table for QoF")
-        val slabels = Statistic.labels
         println (Statistic.labels)
         for i <- stats.indices do
             if i == 0 then println ("-" * 88)

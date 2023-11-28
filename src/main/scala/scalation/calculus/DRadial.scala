@@ -5,6 +5,8 @@
  *  @date    Sun Nov 12 12:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Derivatives for Radial Basis Functions   
+ *
  *  @see en.wikipedia.org/wiki/Radial_series
  */
 
@@ -29,7 +31,8 @@ import RadialType._
  */
 class DRadial (centers: VectorD = VectorD (0.0), radialType_ : RadialType = GAUSSIAN,
                γ_ : Double = 1.0, k_ : Int = 2)
-        extends Radial (centers, radialType_, γ_, k_) with DBasisFunction:
+        extends Radial (centers, radialType_, γ_, k_)
+           with DBasisFunction:
 
     private val flaw = flawf ("DRadial")                             // flaw function
 

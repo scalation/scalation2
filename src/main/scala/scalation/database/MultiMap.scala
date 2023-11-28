@@ -5,7 +5,7 @@
  *  @date    Tue Aug  9 19:29:27 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multi-Map (K, Set [V]) Index Structures for Non-Unique Indices
+ *  @note    Multi-Map (K, Set [V]) Index Structures for Non-Unique Indices
  *
  *  val index = new LinHashMultiMap [Int, Int] ()           // using ScalaTion's Linear Hash Map
  *  val index = new HashMultiMap [Int, Int] ()              // using Scala's Hash Map
@@ -289,7 +289,7 @@ end JTreeMultiMap
 
     banner ("Insert Keys into Index")
     if RANDOMLY then
-        var rng = Randi0 (2 * totalKeys)
+        val rng = Randi0 (2 * totalKeys)
         for i <- 1 to totalKeys by 2 do index.put (rng.igen, Set (i~^2, i~^3))
     else
         for i <- 1 to totalKeys by 2 do index.put (i, Set (i~^2, i~^3))

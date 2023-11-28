@@ -5,7 +5,7 @@
  *  @date    Tue Oct  9 17:40:30 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Rounded Multiple Linear Regression
+ *  @note    Model: Rounded Multiple Linear Regression
  */
 
 package scalation

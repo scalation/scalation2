@@ -5,7 +5,7 @@
  *  @date    Sat Dec 21 12:53:44 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network with 4+ Layers Supporting Transfer Learning
+ *  @note    Model: Neural Network with 4+ Layers Supporting Transfer Learning
  */
 
 package scalation

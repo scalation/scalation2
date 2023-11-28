@@ -5,7 +5,7 @@
  *  @date    Tue Aug  9 19:29:27 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Map (K, V) Index Structures for Java Maps
+ *  @note    Map (K, V) Index Structures for Java Maps
  *
  *  val index = new JHashMap [Int, Int] ()                  // using Java's Hash Map
  *  val index = new JTreeMap [Int, Int] ()                  // using Java's Tree Map
@@ -123,7 +123,7 @@ end JTreeMap
 
     banner ("Insert Keys into Index")
     if RANDOMLY then
-        var rng = Randi0 (2 * totalKeys)
+        val rng = Randi0 (2 * totalKeys)
         for i <- 1 to totalKeys by 2 do index.put (rng.igen, i~^2)
     else
         for i <- 1 to totalKeys by 2 do index.put (i, i~^2)
