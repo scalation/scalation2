@@ -16,6 +16,10 @@ import scala.math.{ceil, floor, round}
 import scalation.scala2d._
 import scalation.scala2d.Colors._
 
+import java.awt.image.BufferedImage
+import java.io.File
+import javax.imageio.ImageIO
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PlotC` class takes a function f and displays color-coded values for
  *  z = f(x, y) over a two dimensional grid defined the lower lb and upper ub bounds.
@@ -99,7 +103,7 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
                     else if frac > _1_3 then ( 0, ((frac-_1_3) * 765).toInt, ((_2_3-frac) * 765).toInt )
                     else ( ((_1_3-frac) * 400).toInt, 0, ((frac) * 765).toInt )
 
-                    println (s"(x, y) = $vec, lbF = $lbF, frac = $frac, rgb = $rgb")
+//                    println (s"(x, y) = $vec, lbF = $lbF, frac = $frac, rgb = $rgb")
                     val color = new Color (rgb._1, rgb._2, rgb._3)
     
                     val xx    = round ((x - lb(0)) * (frameW - 2 * offset))
@@ -163,6 +167,7 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
     getContentPane ().add (new Canvas ())
     setVisible (true)
 
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reset the bounds on the functional values of f.  If the caller fails to
      *  provide an estimate for deltaF, this method should be called.
@@ -192,6 +197,35 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
     /** Convert basic Contour information to a string.
      */
     override def toString: String = s"PlotC (lb = $lb, f(lb) = ${f(lb)}, ub = $ub, f(ub) = ${f(ub)})"
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+    /** Save the plot as an image.
+     *
+     * @param filePath the path to save the image
+     * @param canvas   the Canvas object to use for drawing (optional)
+     */
+    def saveAsImage(plot: PlotC, filePath: String): Unit = {
+        val image = new BufferedImage(plot.getWidth()*2, plot.getHeight()*2, BufferedImage.TYPE_INT_ARGB)
+        val g2d = image.createGraphics()
+
+        // Create an instance of the Canvas class
+        val canvas = new plot.Canvas()
+
+        // Set the size of the canvas before calling paintComponent
+        canvas.setSize(plot.getWidth() * 2, plot.getHeight() * 2)
+
+        // Call the paintComponent method of the Canvas class
+        canvas.paintComponent(g2d)
+
+        try {
+            ImageIO.write(image, "png", new File(filePath))
+        } catch {
+            case e: Exception => e.printStackTrace()
+        } finally {
+            g2d.dispose()
+        }
+    }
 
 end PlotC
 
