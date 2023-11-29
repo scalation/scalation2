@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Sun Nov  5 12:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Derivatives of Basis Functions
  */
 
 package scalation

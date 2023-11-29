@@ -5,7 +5,7 @@
  *  @date    Thu May 10 15:50:15 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Ragged (R) Tensor (3D) Algebra
+ *  @note    Ragged (R) Tensor (3D) Algebra
  *
  *  @see www.stat.uchicago.edu/~lekheng/work/icm1.pdf
  *  @see www.math.ias.edu/csdm/files/13-14/Gnang_Pa_Fi_2014.pdf

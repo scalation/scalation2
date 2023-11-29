@@ -5,7 +5,7 @@
  *  @date    Tue Nov  1 19:12:16 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multi-Graph Data Structure Using Mutable Sets Supporting Pattern Matching
+ *  @note    Multi-Graph Data Structure Using Mutable Sets Supporting Pattern Matching
  */
 
 package scalation

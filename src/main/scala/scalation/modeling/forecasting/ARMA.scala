@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Auto-Regressive, Moving-Average (ARMA)
+ *  @note    Model: Auto-Regressive, Moving-Average (ARMA)
  *
  *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
  *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
@@ -84,9 +84,11 @@ class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
             ssef (z, predictAll (z))                                     // compute loss function
         end csse
 
+/*
         def nll (b: VectorD): Double =                                   // objective function - negative log-likelihood (MLE)
             0.0                                                          // FIX - implement
         end nll
+*/
 
         val optimizer = new BFGS (csse)                                  // apply Quasi-Newton BFGS optimizer
 //      val optimizer = new ConjugateGradient (csse)                     // apply Conjugate Gradient optimizer - fails
@@ -385,7 +387,7 @@ end aRMATest5
     println (s"is = $is is first day with at least 2 deaths")
     val y    = yy(is until yy.dim)                                     // slice out days before is
 
-    val h = 1                                                          // forecasting horizon
+//  val h = 1                                                          // forecasting horizon
     for p <- 1 to 4; q <- 0 to 2 do                                    // ARMA hyper-parameter settings
         hp("p") = p; hp("q") = q
         val mod = new ARMA (y)                                         // create an ARMA model

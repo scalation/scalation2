@@ -5,7 +5,7 @@
  *  @date    Sat Aug 27 18:19:54 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   `TimeInterval` implementing Allen's Interval Algebra
+ *  @note    `TimeInterval` implementing Allen's Interval Algebra
  *
  *  @see https://cse.unl.edu/~choueiry/Documents/Allen-CACM1983.pdf
  *  @see https://www.sciencedirect.com/topics/computer-science/interval-algebra
@@ -270,7 +270,7 @@ end timeIntervalTest
     val d = TimeInterval (t(6), t(9))                                     // [6, 9]
     val e = TimeInterval (t(7), t(8))                                     // [7, 8]
     val f = TimeInterval (t(7), t(9))                                     // [7, 9]
-    val g = TimeInterval (t(0), t(3))                                     // [0, 3]
+//  val g = TimeInterval (t(0), t(3))                                     // [0, 3]
 
     banner ("Test Converse Operators:")
 

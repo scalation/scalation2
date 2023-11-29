@@ -5,7 +5,7 @@
  *  @date    Mon Nov 2 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Histogram from Vector of Data
+ *  @note    Histogram from Vector of Data
  */
 
 package scalation
@@ -50,10 +50,8 @@ end Histogram
  *  @param frameH        the height
  *  @param value         the vector of values (want several per interval)
  *  @param numIntervals  the number of intervals (typically 5 to 100)
- *  @param _title        title of the histogram
  */
-class FramelessHistogram (frameW: Int, frameH: Int, value: VectorD, numIntervals: Int,
-                          _title: String = "Histogram"):
+class FramelessHistogram (frameW: Int, frameH: Int, value: VectorD, numIntervals: Int):
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Dynamically create and return a drawing canvas.

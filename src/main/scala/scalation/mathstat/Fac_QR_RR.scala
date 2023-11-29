@@ -5,7 +5,7 @@
  *  @date    Sat Jul 30 22:53:47 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Rank Revealing QR Matrix Factorization
+ *  @note    Rank Revealing QR Matrix Factorization
  */
 
 package scalation

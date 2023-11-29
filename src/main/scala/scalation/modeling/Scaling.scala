@@ -5,7 +5,7 @@
  *  @date    Sun Jun  9 16:42:16 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Scaling of Data Values
+ *  @note    Model Framework: Scaling of Data Values
  */
 
 package scalation

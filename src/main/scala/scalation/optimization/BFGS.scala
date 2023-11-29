@@ -5,7 +5,7 @@
  *  @date    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @ttile   Broyden–Fletcher–Goldfarb–Shanno (BFGS) Quasi-Newton Optimizer
+ *  @note    Broyden–Fletcher–Goldfarb–Shanno (BFGS) Quasi-Newton Optimizer
  *
  *  @see The Superlinear Convergence of a Modified BFGS-Type Method for Unconstrained Optimization 
  *  @see On the Robustness of Conjugate-Gradient Methods and Quasi-Newton Methods
@@ -367,7 +367,6 @@ end bFGSTest3
 @main def bFGSTest4 (): Unit =  
 
     val step = 1.0                                          // step size (may need adjustment)
-    val n    = 2                                            // dimension of the search space
     val x0   = VectorD (0.1, 0.0)                           // starting location
 
     banner ("Minimize: 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -376,8 +375,8 @@ end bFGSTest3
     def grad (x: VectorD): VectorD = VectorD (-(x(0)~^(-2)) + 4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
 
     val optimizer = new BFGS (f)
-//  var opt = optimizer.solve (x0, step)                    // use numerical partials
-    var opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+//  val opt = optimizer.solve (x0, step)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points

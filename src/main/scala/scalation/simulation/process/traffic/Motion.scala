@@ -88,7 +88,7 @@ object Motion:
     end iDM
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return ...
+    /** Return the displacement difference.
      *  @param cn  the current vehicle
      *  @param cp  the predecessor of the current vehicle
      */
@@ -97,7 +97,7 @@ object Motion:
             1.0 - (cn.velocity / cn.vmax)
         else 
             val dx = cp.t_disp - cn.t_disp
-            val dv = cp.velocity - cn.velocity
+//          val dv = cp.velocity - cn.velocity
             if dx > FREERANGE then 1.0 - (cn.velocity / cn.vmax) else 0.0
         end if
     end basic

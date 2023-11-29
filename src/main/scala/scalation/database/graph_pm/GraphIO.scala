@@ -5,7 +5,7 @@
  *  @date    Fri Jul 10 12:39:33 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Methods for Reading from and Wrting to Files
+ *  @note    Methods for Reading from and Wrting to Files
  */
 
 package scalation
@@ -144,7 +144,7 @@ object GraphIO:
     def apply (name: String, base: String = BASE_DIR, ext: String = EXT, sep: Char = ','): Graph =
         val gFile  = base + name + ext                             // relative path-name for file
         val l      = fromFile (gFile).getLines ().toArray          // get the lines from gFile
-        var l0     = l(0).split ('(')(1).split (sep).map (_.trim)  // array for line 0
+        val l0     = l(0).split ('(')(1).split (sep).map (_.trim)  // array for line 0
         val n      = l0(2).toInt                                   // number of vertices
         val ch     = Array.ofDim [SET [Int]] (n)                   // adjacency: array of children (ch)
         val label  = Array.ofDim [ValueType] (n)                   // array of vertex labels

@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   WaitQueue_LCFS Provides a Place for Entities/SimActors to Wait
+ *  @note    WaitQueue_LCFS Provides a Place for Entities/SimActors to Wait
  */
 
 package scalation

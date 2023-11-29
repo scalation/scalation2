@@ -5,7 +5,7 @@
  *  @date    Sat Aug 28 18:17:12 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Functions to Write an Image into a Files in ScalaTion's "data" Directory
+ *  @note    Functions to Write an Image into a Files in ScalaTion's "data" Directory
  */
 
 package scalation
@@ -33,11 +33,12 @@ end writeImage
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `writeImageTest` main function is used to test the writing an image file.
+ *  @see scalation.mathstat.PlotM
  *  > runMain scalation.scala2d.writeImageTest
  */
 @main def writeImageTest (): Unit =
 
-    println (s"writeImageTest: see `Plot` and `PlotM` classes for examples")
+    println (s"writeImageTest: see `Plot`, PlotC, and `PlotM` classes for examples")
 
 end writeImageTest
 

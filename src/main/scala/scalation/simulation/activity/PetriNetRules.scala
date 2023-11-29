@@ -5,7 +5,7 @@
  *  @date    Mon Oct 12 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Firing Rules for Petri Nets
+ *  @note    Firing Rules for Petri Nets
  */
 
 package scalation

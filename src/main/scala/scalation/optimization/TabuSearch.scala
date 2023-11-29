@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Thu Feb  3 22:40:23 EST 2022
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Tabu Search
  */
 
 package scalation
@@ -26,12 +28,8 @@ import scalation.mathstat.VectorD
  *  @param f        the objective function to be minimize (f maps an double vector to a double)
  *  @param g        the constraint function to be satisfied, if any
  *  @param maxStep  the maximum/starting step size (make larger for larger domains)
- *  @param tol      the tolerance for considering two points to be the same
  */
-class TabuSearch (f: VectorD => Double,
-                  g: VectorD => Double = null,
-                  maxStep: Double = 10.0,
-                  tol: Double = 1e-2):
+class TabuSearch (f: VectorD => Double, g: VectorD => Double = null, maxStep: Double = 10.0):
 
     type Vec_Func = (VectorD, Double)                           // pair: (double vector, its functional value)
 

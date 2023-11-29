@@ -6,7 +6,7 @@
  *  @date    Wed Sep  9 13:07:48 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Facilitates of the Use of Unicode
+ *  @note    Facilitates of the Use of Unicode Symbols
  */
 
 package scalation

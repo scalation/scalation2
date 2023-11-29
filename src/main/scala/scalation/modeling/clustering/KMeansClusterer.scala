@@ -5,7 +5,7 @@
  *  @date    Tue May 29 14:45:32 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Means Clustering (randomly assign points to clusters)
+ *  @note    Model: K-Means Clustering (randomly assign points to clusters)
  */
 
 package scalation

@@ -1,276 +1,163 @@
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller
+/** @author  Ashwinkumar Ajithkumar Pillai, John Miller
  *  @version 2.0
- *  @date    Thu Jul 14 11:51:50 EDT 2011
+ *  @date    Sat Nov 11 16:28:52 EST 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Hungarian Algorithm for Assignment Problem (AP)
+ *  @note    Hungarian Algorithm for Assignment Problem (AP) J x W
  *
- *  Translated from C code from Assignment Problem and Hungarian Algorithm 
- *  @see www.topcoder.com/tc?module=Static&d1=tutorials&d2=hungarianAlgorithm
+ *  Translated from C++ code from Assignment Problem and Hungarian Algorithm
+ *  @see https://en.wikipedia.org/wiki/Hungarian_algorithm
  */
 
 package scalation
 package optimization
 
-import java.util.ArrayDeque     // use Java since `ArrayDeque` is faster than Scala's `Queue`
-
-import scala.Double.PositiveInfinity
-import scala.math.{max, min}
-import scala.runtime.ScalaRunTime.stringOf
-import scala.util.control.Breaks.{breakable, break}
-
-import scalation.mathstat.MatrixD
-
+import scala.collection.mutable.Set
+import scalation.mathstat.{MatrixD, VectorD, VectorI}
+  
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Hungarian` is an O(n^3) implementation of the Hungarian algorithm
- *  (or Kuhn-Munkres algorithm).  Find the maximum cost set of pairings between
- *  m x-nodes (workers) and n y-nodes (jobs) such that each worker is assigned
- *  to one job and each job has at most one worker assigned.
- *  It solves the maximum-weighted bipartite graph matching problem.
+/** The `hungarian` method is an O(n^3) [ O(J^2W) ] implementation of the Hungarian
+ *  algorithm (or Kuhn-Munkres algorithm) for assigning jobs to workers.
+ *  Given J jobs and W workers, find a minimal cost assignment of JOBS to WORKERS such
+ *  that each worker is assigned to at most one job and each job has one worker assigned.
+ *  It solves the minimum-weighted bipartite graph matching problem.
  *
- *  maximize sum i = 0 .. m-1 { cost(x_i, y_i) }
+ *      minimize sum_j { cost(j, w) }
  *
- *  Caveat: only works if m <= n (i.e., there is at least one job for every worker).
- *  @param cost  the cost matrix: cost(x, y) = cost of assigning worker x to job y
+ *  @param cost  the cost matrix: cost(j, w) = cost of assigning job j to worker w
  */
-class Hungarian (cost: MatrixD):
+def hungarian (cost: MatrixD): (VectorI, VectorD) = 
 
-    private val debug    = debugf ("Hungarian", true)      // debug function
-    private val NA       = -1                              // Not Assigned
-    private val NO       = -2                              // None Possible
-    private val m        = cost.dim                        // m workers (x-nodes)
-    private val n        = cost.dim2                       // n jobs (y-nodes)
+    val MAX = Double.MaxValue                                 // largest `Double`
+    val J   = cost.dim                                        // number of jobs (rows)
+    val W   = cost.dim2                                       // number of workers (columns)
+    assert (J <= W)                                           // assumes there are enough workers to cover jobs
 
-    private val r_m      = 0 until m                       // range for workers
-    private val r_n      = 0 until n                       // range for jobs
-    private val lx       = Array.ofDim [Double] (m)        // labels of x-nodes (workers)
-    private val ly       = Array.ofDim [Double] (n)        // labels of y-nodes (jobs)
-    private val slack    = Array.ofDim [Double] (n)        // slack(y) = lx(x) + lx(y) - cost(x, y)
-    private val slackX   = Array.ofDim [Int] (n)           // slackX(y) = x-node for computing slack(y)
-    private val xy       = Array.fill (m)(NA)              // xy(x) = y-node matched with x
-    private val yx       = Array.fill (n)(NA)              // yx(y) = x-node matched with y
-    private val qu       = new ArrayDeque [Int] (m)        // queue for Breadth First Search (BFS)
-    private val maxMatch = min (n, m)                      // maximum number of matches needed
-    private var nMatch   = 0                               // number of nodes in current matching
+    val job = VectorI.fill (W + 1)(-1)                        // job(w) is job assigned to worker w
+                                                              // extra slot (+ 1) added for storing delta sums
+    val ys    = new VectorD (J)                               // source potentials
+    val yt    = new VectorD (W + 1)                           // target potentials (with extra slot)
+    val acost = new VectorD (J)                               // accumulating costs of assigning the first j+1 jobs
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Initialize cost labels for x-nodes by setting them to the largest cost
-     *  on any incident edge (largest value in row). If feasible, this is the
-     *  optimal solution, otherwise it is an upper bound.
-     */
-    private def initLabels (): Unit =
-        debug ("initLabels", s"lx = ${stringOf (lx)} \ncost = $cost")
-        for (x <- r_m; y <- r_n) lx(x) = max (lx(x), cost(x, y))
-    end initLabels
+    val min_to = VectorD.fill (W + 1)(MAX)                    // for computing min cost to worker w
+    val prv    = VectorI.fill (W + 1)(-1)                     // previous worker
+    val in_Z   = Set [Int] ()                                 // set of workers in Z
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update the cost labels for both x-nodes and y-nodes.
-     */
-    private def updateLabels (xSet: Array [Boolean], ySet: Array [Boolean]): Unit =
-        var delta: Double = PositiveInfinity
-        for y <- r_n if ! ySet(y) do delta = min (delta, slack(y))
-        for x <- r_m if xSet(x) do   lx(x) -= delta
-        for y <- r_n if ySet(y) do   ly(y) += delta
-        for y <- r_n if ! ySet(y) do slack(y) -= delta
-    end updateLabels
+    for j_cur <- 0 until J do                                 // loop through all jobs (current job)
+        var w_cur  = W                                        // current worker
+        job(w_cur) = j_cur                                    // temp. assign current job
+        min_to.set (MAX); prv.set (-1); in_Z.clear ()         // reset
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Add new edges to the tree and update slack.
-     *  @param x      current x-node
-     *  @param prevX  previous x-node before x in the alternating path,
-     *                so we add edges (prevX, xy(x)), (xy(x), x)
-     */
-    private def addToTree (x: Int, prevX: Int, prev: Array [Int], xSet: Array [Boolean]): Unit =
-        xSet(x) = true                                     // add x to xSet
-        prev(x) = prevX                                    // we need this when augmenting
-        for y <- r_n if lx(x) + ly(y) - cost(x, y) < slack(y) do
-            slack(y)  = lx(x) + ly(y) - cost(x, y)
-            slackX(y) = x
-        end for
-    end addToTree
+        while job(w_cur) != -1 do
+            in_Z      += w_cur                                // put the current worker in Z
+            val j      = job(w_cur)                           // j is the job assigned to the current worker
+            var delta  = MAX
+            var w_next = 0                                    // worker giving min delta
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Find a root (an unpaired x-node) and compute slack values for y-nodes. 
-     */
-    private def findRootSetSlack (prev: Array [Int], xSet: Array [Boolean]): Unit =
-        var root = NA
-        breakable {
-            for x <- r_m if xy(x) == NA do
-                root = x
-                qu.add (x)
-                prev(x) = NO                               // root is first => no previous x-node
-                xSet(x) = true
-                break ()
+            for w <- 0 until W do                             // loop through all workers
+                if ! (in_Z contains w) then
+                    val del_jw = cost(j, w) - ys(j) - yt(w)   // delta for (j, w) case
+                    if del_jw < min_to(w) then
+                        min_to(w) = del_jw                    // smaller than min_to => update min_to
+                        prv(w) = w_cur                        // record previous as current worker
+                    if min_to(w) < delta then
+                        delta = min_to(w)                     // smaller than delta => update delta
+                        w_next = w                            // record worker giving lower delta
             end for
-        } // breakable
-
-        for y <- r_n do                                    // initialize the slack array
-            slack(y)  = lx(root) + ly(y) - cost(root, y)
-            slackX(y) = root
-            println (s"findRootSetSlack: slack($y) = ${slack(y)}, slackX($y) = ${slackX(y)}")
-        end for
-    end findRootSetSlack
-
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Reverse the edges along the augmenting path starting with the given edge.
-     *  @param  edge  the given edge
-     */
-    private def reverseEdges (edge: Tuple2 [Int, Int], prev: Array [Int]): Unit =
-        var e  = edge
-        var ty = NA
-        while e._1 != NO do
-            ty       = xy(e._1)
-            yx(e._2) = e._1
-            xy(e._1) = e._2
-            e        = (prev(e._1), ty)
+        
+            for w <- 0 to W do
+                if in_Z contains w then { ys(job(w)) += delta; yt(w) -= delta }  // update potentials
+                else min_to(w) -= delta
+            end for
+        
+            w_cur = w_next                                     // update current worker 
         end while
-    end reverseEdges
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** A recursive procedure to find augmenting paths to improve the assignments.
-     *  Terminate when 'nMatch == maxMatch'.
-     */
-    private def augment (): Unit =
-        println (s"augment: nMatch = $nMatch need $maxMatch")
-        val xSet = Array.fill (m)(false)                   // initialize xSet to empty
-        val ySet = Array.fill (n)(false)                   // initialize ySet to empty
-        val prev = Array.fill (m)(NA)                      // initialize prev to NA (for alternating tree)
-        var edge = (NA, NA)                                // edge for augmenting path
-        var x    = NA                                      // current x-node
+        while w_cur != -1 do                                   // update assignments using prv to give path
+            val w_ = prv(w_cur)
+            job(w_cur) = if w_ == -1 then 0 else job(w_)       // update job for current worker
+            w_cur = w_                                         // current worker becomes previous
+        end while
 
-        findRootSetSlack (prev, xSet)
-    
-        breakable {
-            while true do                                  // main loop
-                while ! qu.isEmpty () do                   // building tree with BFS cycle
-                    x = qu.poll ()                         // get current x-node from queue
+        acost(j_cur) = -yt(W)                                  // record accumulated cost so far
+    end for
 
-                    for y <- r_n if cost(x, y) == lx(x) + ly(y) && ! ySet(y) do
-                        if yx(y) == NA then { edge = (x, y); break () }  // exposed x-node => augmenting path exists
-                        ySet(y) = true                     // else just add y to ySet
-                        qu.add (yx(y))                     // add x-node yx(y) matched with y to the queue
-                        addToTree (yx(y), x, prev, xSet)   // add edges (x, y) and (y, yx(y)) to the tree
-                    end for
-                end while
+    (job, acost)                                               // return assignments and accumulated costs
 
-                updateLabels (xSet, ySet)                  // augmenting path not found, so improve labeling
-                qu.clear ()                                // empty the queue
-
-                for y <- r_n if ! ySet(y) && slack(y) == 0 do
-                    if yx(y) == NA then                    // exposed x-node => augmenting path exists
-                        x = slackX(y)
-                        edge = (x, y); break ()
-                    else
-                        ySet(y) = true                     // else just add y to ySet,
-                        if ! xSet(yx(y)) then
-                            qu.add (yx(y))                 // add node yx(y) matched with y to the queue
-                            addToTree (yx(y), slackX(y), prev, xSet)  // add edges (x, y) and (y, yx(y)) to the tree
-                    end if
-                end for
-            end while
-        } // breakable
-
-        reverseEdges (edge, prev)                          // reverse edges along augmenting path
-        nMatch += 1                                        // increment number of nodes in matching
-        if nMatch < maxMatch then augment ()               // try to find another augmenting path
-    end augment
-
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** The main procedure to solve an assignment problem by finding initial pairings
-     *  and then finding augmenting paths to improve the pairings/assignments.
-     */
-    def solve (): Double =
-        if m > n then { println (s"Hungarian: error - m = $m > n = $n"); return -1.0 }
-        initLabels ()                                      // initial the cost labels for x-nodes
-        augment ()                                         // recursive method the find augmenting paths
-
-        println ("-" * 60)
-        var total = 0.0                                    // cost/weight of the optimal matching
-        for x <- r_m do                                    // form answer -
-            total += cost(x, xy(x))                        // using values from x-side
-            println ("cost (" + x + ", " + xy(x) + ") = " + cost(x, xy(x)))
-        end for
-        println ("-" * 60)
-        total
-    end solve
-
-end Hungarian
+end hungarian
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Hungarian` companion object supplies factory methods to create a cost
- *  matrix and build a `Hungarian` object suitable to solving an assignment problem.
+/** Show the assignments of jobs to workers and the accumulating costs.
+ *  @param job_acost  the (job, acost) tuple
+ *  @param cost       the cost matrix: cost(j, w) = cost of assigning job j to worker w
  */
-object Hungarian:
+def showAssignments (job_cost: (VectorI, VectorD), cost: MatrixD): Unit =
 
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Build build a `Hungarian` object suitable to solving an assignment problem.
-     *  Any edges not in the map will be assigned zero cost (least value since
-     *  maximizing).
-     *  @param m   the size of the set of x-nodes
-     *  @param n   the size of the set of y-nodes
-     *  @param xy  the map of positive edge costs connecting x_i to y_j 
-     */
-    def apply (m: Int, n: Int, xy: Map [(Int, Int), Double]): Hungarian =
-        val c = new MatrixD (m, n)
-        for ((k, v) <- xy) c(k._1, k._2) = v
-        new Hungarian (c)
-    end apply
+    val (job, acost) = job_cost
 
-end Hungarian
+    for w <- 0 until job.dim-1 do
+        val j = job(w)
+        val costStr = if job(w) != -1 then cost(j, w).toString else "NA"
+        println (s"job $j assigned to worker $w with cost (j = $j, w = $w) = $costStr") 
+    end for
+
+    println (s"accumulating costs: $acost")
+
+end showAssignments
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `HungarianTest` main function is used to test the `Hungarian` class.
+/** The `hungarianTest` main function test the `hungarianTest` method.
+ *  @see http://people.whitman.edu/~hundledr/courses/M339S20/M339/Ch07_5.pdf
+ *  Minimal total cost = 51
  *  > runMain scalation.optimization.hungarianTest
  */
 @main def hungarianTest (): Unit =
 
-    banner ("AP: m = 3 workers, n = 3 jobs")
-    val cost1 = MatrixD ((3, 3), 1, 4, 5,
-                                 5, 7, 6,
-                                 5, 8, 8)
-    println ("optimal cost1 = " + (new Hungarian (cost1).solve ()))
+    banner ("Hungarian Algorithm Problem 1")
 
-    banner ("AP: m = 5 workers, n = 5 jobs")
-    val cost2 = MatrixD ((5, 5), 10, 19,  8, 15, 19,
-                                 10, 18,  7, 17, 19,
-                                 13, 16,  9, 14, 19,
-                                 12, 19,  8, 18, 19,
-                                 14, 17, 10, 19, 19)
-    println ("optimal cost2 = " + (new Hungarian (cost2).solve ()))
+    val cost = MatrixD ((5, 5), 11,  7, 10, 17, 10,     // workers (5) x jobs (5) => transpose
+                                13, 21,  7, 11, 13,
+                                13, 13, 15, 13, 14,
+                                18, 10, 13, 16, 14,
+                                12,  8, 16, 19, 10).transpose
 
-    banner ("AP: m = 3 workers, n = 4 jobs")
-    val cost3 = MatrixD ((3, 4), 1, 4, 5, 2,
-                                 5, 7, 6, 2,
-                                 5, 8, 8, 9)
-    println ("optimal cost3 = " + (new Hungarian (cost3).solve ()))
-
-    banner ("AP: m = 4 workers, n = 3 jobs => error, not enough jobs for workers")
-    val cost4 = MatrixD ((4, 3), 1, 4, 5,
-                                 5, 7, 6,
-                                 2, 2, 9,
-                                 5, 8, 8)
-    println ("optimal cost4 = " + (new Hungarian (cost4).solve ()))
-
+    showAssignments (hungarian (cost), cost)
+      
 end hungarianTest
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `hungarianTest2` main function is used to test the `Hungarian` class.
- *  Allows edges to be specified rather than a matrix
+/** The `hungarianTest2` main function test the `hungarianTest` method.
+ *  @see https://d13mk4zmvuctmz.cloudfront.net/assets/main/study-material/notes/
+ *  electrical-engineering_engineering_operations-research_assignment-problems_notes.pdf
+ *
+ *  Solution:
+ *  job 4 assigned to worker 0 with cost (j = 4, w = 0) = 1.0
+ *  job 1 assigned to worker 1 with cost (j = 1, w = 1) = 5.0
+ *  job 0 assigned to worker 2 with cost (j = 0, w = 2) = 3.0
+ *  job 2 assigned to worker 3 with cost (j = 2, w = 3) = 2.0
+ *  job 3 assigned to worker 4 with cost (j = 3, w = 4) = 9.0
+ *  job -1 assigned to worker 5 with cost (j = -1, w = 5) = NA (worker 5 is unassigned)
+ *  Minimal total cost = 20
+ *
  *  > runMain scalation.optimization.hungarianTest2
  */
 @main def hungarianTest2 (): Unit =
 
-    banner ("AP: m = 3 workers, n = 3 jobs")
-    val xy = Map ((0, 0) -> 1.0, (0, 1) -> 4.0, (0, 2) -> 5.0, (0, 3) -> 2.0,
-                  (1, 0) -> 5.0, (1, 1) -> 7.0, (1, 2) -> 6.0, (1, 3) -> 2.0,
-                  (2, 0) -> 5.0, (2, 1) -> 8.0, (2, 2) -> 8.0, (2, 3) -> 9.0)
-    val ap = Hungarian (3, 4, xy)
-    println ("optimal cost = " + ap.solve ())
+    banner ("Hungarian Algorithm Problem 2")
 
+//                               W0    W1    W2    W3    W4     W5      // jobs (5) x workers (6)
+    val cost = MatrixD ((5, 6),  2.5,  2.0, +3.0,  3.5,  4.0,   6.0,    // J0
+                                 5.0, +5.0,  6.5,  7.0,  7.0,   9.0,    // J1
+                                 1.0,  1.5,  2.0, +2.0,  3.0,   5.0,    // J2
+                                 6.0,  7.0,  9.0,  9.0, +9.0,  10.0,    // J3
+                                +1.0,  3.0,  4.5,  4.5,  6.0,   6.0)    // J4
+
+    showAssignments (hungarian (cost), cost)
+      
 end hungarianTest2
 

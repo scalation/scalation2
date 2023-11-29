@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Predictor for Matrix Input, Vector Output
+ *  @note    Model Framework: Predictor for Matrix Input, Vector Output
  */
 
 package scalation
@@ -264,9 +264,8 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Evalaute the model with only one column, e.g., intercept only model.
-     *  @param idx_q  index of Quality of Fit (QoF) to use for comparing quality
      */
-    private def select0 (idx_q: Int = QoF.rSqBar.ordinal): BestStep =
+    private def select0 (): BestStep =
         val x_cols = x(?, LinkedHashSet (0))                                 // x projected onto columns {0}
         val mod_0  = buildModel (x_cols)                                     // regress with x_0 added
         mod_0.train ()                                                       // train model
@@ -286,7 +285,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
         resetBest ()
         val rSq  = new MatrixD (x.dim2, Fit.qofVectorSize)                   // QoF: R^2, R^2 Bar, sMAPE, R^2 cv
         val cols = LinkedHashSet (0)                                         // start with x_0 in model (e.g., intercept)
-        updateQoF (rSq, 0, cross, select0 (idx_q))                           // update Qof results for 0-th variable
+        updateQoF (rSq, 0, cross, select0 ())                                // update Qof results for 0-th variable
 
         banner (s"forwardSelAll: (l = 0) INITIAL variable (0, ${fname(0)}) => cols = $cols")
 
@@ -393,7 +392,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
             end for
         } // breakable
 
-        updateQoF (rSq, x.dim2-1, cross, select0 (idx_q))                    // update Qof results for 0-th variable
+        updateQoF (rSq, x.dim2-1, cross, select0 ())                         // update Qof results for 0-th variable
         rem += cols.max                                                      // remove last non-zero column
         rem += 0                                                             // remove column 0
 

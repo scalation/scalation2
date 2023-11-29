@@ -5,7 +5,7 @@
  *  @date    Sun Aug 23 15:42:06 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Implementation of Relational Algebra Operators
+ *  @note   Implementation of (Columnar) Relational Algebra Operators
  *
  *  An implementation supporting columnar relational databases facilitating easy
  *  and rapid analytics.  The columns in a relation are vectors from the
@@ -55,7 +55,7 @@ end uniq_union
 object Relation:
 
     private val flaw   = flawf ("Relation")                                // flaw function
-    private var ucount = Counter ()                                        // counter for making unique table names
+    private val ucount = Counter ()                                        // counter for making unique table names
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an unpopulated relation.
@@ -142,7 +142,6 @@ object Relation:
         var first = true
         var colBuffer: Array [VEC [String]] = null
         var colName:   VEC [String] = null
-        var newCol:    Vector [Vectr] = null
 
         if cPos == null then                                            // select all columns
             for ln <- lines do
@@ -260,13 +259,13 @@ object Relation:
      *  @param key       the column number for the primary key (< 0 => no primary key)
      */
     def load (fileName: String, domain: Domain, key: Schema): Relation =
-        val eSep = "[, ]"
+        val eSep  = "[, ]"
         val lines = getFromURL_File (fileName)
         var name: String = null
         var colBuffer: Array [VEC [String]] = null
-        var colName = VEC [String]()
-        var newCol: Vector [Vectr] = null
+        val colName   = VEC [String] ()
         var foundData = false
+
         for ln <- lines do
             if ln.indexOf ("%") != 0 then                          // skip comment
                 if ln.indexOf ("@relation") == 0 then
@@ -1163,9 +1162,8 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
             val cp2 = r2.on (p_i._2)
             if domain(cp1) != r2.domain(cp2) then flaw ("join", "differing domain strings")
 
-            val psingle = p_i._3                                                  // single predicate
             result = null                                                         // FIX the next line & remove this line
-            //result = col(cp1).filterPos2 (r2.col (cp2), psingle)
+//          result = col(cp1).filterPos2 (r2.col (cp2), p_i._3)                   // single predicate
 
             debug ("join", s"after predicate $i: result = $result")
             resultlist = if i == 0 then result else resultlist intersect result
@@ -1291,9 +1289,9 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      */
     def leftJoinApx (cp1: Int, cp2: Int, r2: Relation): Relation =
         val r3 = Relation (name + "_leftJoinApx_" + r2.name, schema ++ r2.schema, domain ++ r2.domain, key)
+/*******  FIX
         val absentTuple = nullTuple (r2.domain)
         var j = 0
-/*******
         for i <- 0 until rows do
             val t = row(i)
             val t_cp1 = t(cp1)
@@ -1452,7 +1450,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
         val newCol = Vector.fill [Vectr] (cols)(null)
         val r2 = new Relation (name + "_o_" + ucount.inc (), schema, domain, key, newCol)
 
-        val perm = orderByHelper (VEC (cName.map (on (_)) :_*), rows)
+        val perm = orderByHelper (VEC (cName.map (on (_)) :_*))
         for i <- perm do r2.add (row(i))
         r2.materialize ()
     end orderBy
@@ -1471,7 +1469,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
         val newCol = Vector.fill [Vectr] (cols) (null)
         val r2 = new Relation (name + "_r_" + ucount.inc (), schema, domain, key, newCol)
 
-        val perm = orderByHelper (VEC (cName.map (on (_)) :_*), rows)
+        val perm = orderByHelper (VEC (cName.map (on (_)) :_*))
         for i <- perm.reverse do r2.add (row(i))
         r2.materialize ()
     end orderByDesc
@@ -1479,13 +1477,13 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Helper method for orderBy and orderByDesc.  Performs indirect merge-sort.
      *  @param cPos  sequence of column positions to sort
-     *  @param n     total number of rows in this Relation
      */
-    private def orderByHelper (cPos: VEC [Int], n: Int = rows): Array [Int] =
-        var perm: Array [Int] = null
+    private def orderByHelper (cPos: VEC [Int]): Array [Int] =
+        val perm: Array [Int] = null                            // FIX - change to var
 
         for i <- cPos.indices do
             val col_i = col (cPos(i)).toArray
+            println (col_i)                                     // FIX - remove
 /* FIX - add MergeSortIndirect to scalation package
             perm = if i == 0 then (new MergeSortIndirect (col_i)()).isort ()
                    else           (new MergeSortIndirect (col_i)(perm)).isort ()
@@ -1821,7 +1819,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     /** Convert this relation into a string column by column.
      */
     override def toString: String =
-        var sb = new StringBuilder (s"Relation(name = $name, key = $key, domain = $domain,\nschema = $schema,\n")
+        val sb = new StringBuilder (s"Relation(name = $name, key = $key, domain = $domain,\nschema = $schema,\n")
         for i <- col.indices do sb.append (s"${col(i)} \n")
         sb.replace (sb.length-1, sb.length, ")").mkString
     end toString

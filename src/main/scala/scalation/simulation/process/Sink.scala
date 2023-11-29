@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Sink Terminates Entities/SimActors
+ *  @note    Sink Terminates Entities/SimActors
  */
 
 package scalation

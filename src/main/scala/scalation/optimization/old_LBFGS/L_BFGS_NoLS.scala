@@ -5,7 +5,7 @@
  *  @date    Wed Jun  7 17:54:59 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Limited Memory BFGS Method to Find Minima for Functions of Vectors
+ *  @note    Limited memory BFGS Method to Find Minima for Functions of Vectors (with no Line Search)
  *
  *  @see web.stanford.edu/class/cme304/docs/newton-type-methods.pdf
  *  @see `L_BFGS` for similar code that uses line-search
@@ -53,12 +53,12 @@ class L_BFGS_NoLS (f: FunctionV2S, m: Int, n: Int, useLS: Boolean = false)
      */
     def findDir (g: VectorD, k: Int): VectorD =
         println (s"k = $k, \t s = $s, \n\t\t y = $y")
-        var q = g                                                 // start with current gradient 
+        val q = g                                                 // start with current gradient 
         for i <- k-1 until max (-1, k-m) by -1 do
             a(i) = (s(i) dot q) * p(i)
             q -= y(i) * a(i)
         val ga = (s(k-1) dot y(k-1)) / y(k-1).normSq              // gamma
-        var z = q * ga
+        val z = q * ga
         for i <- max (0, k-m) until k do
             val b = (y(i) dot z) * p(i)
             z += s(i) * (a(i) - b)
@@ -73,7 +73,7 @@ class L_BFGS_NoLS (f: FunctionV2S, m: Int, n: Int, useLS: Boolean = false)
      */
     def solve (x0: VectorD, α: Double = eta): FuncVec =
         val wls   = new WolfeLS2 (f, null)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = ∇ (f)(x)                                      // compute gradient, numerically
 
@@ -108,7 +108,7 @@ class L_BFGS_NoLS (f: FunctionV2S, m: Int, n: Int, useLS: Boolean = false)
      */
     def solve2 (x0: VectorD, grad: FunctionV2V, α: Double = eta): FuncVec =
         val wls   = new WolfeLS2 (f, grad)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = grad (x)                                      // compute gradient by function evaluation
 

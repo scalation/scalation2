@@ -5,7 +5,7 @@
  *  @date    Sat Dec  8 14:32:12 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Time-Series Data: Lake Levels
+ *  @note    Example Time-Series Data: Lake Levels
  */
 
 package scalation

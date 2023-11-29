@@ -5,7 +5,7 @@
  *  @date    Sun Feb 13 16:22:21 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Utilities for Time Series Forecasting
+ *  @note    Model Framework: Utilities for Time Series Forecasting
  */
 
 package scalation
@@ -20,7 +20,7 @@ import scalation.mathstat._
 /** Given a response vector y, build and return
  *  (1) an input/predictor MATRIX xx and
  *  (2) an output/multi-horizon output/response MATRIX yy.
- *  Used by Multi-Variate (MV) forecast models such as `RegressionMV4TS`.
+ *  Used by Multi-Variate (MV) forecast models such as `ARX_MV`.
  *  that use DIRECT multi-horizon forecasting.
  *  The first lag responses can't be predicted due to missing past values.
  *  The last h-1 responses can't be predicted due to missing future values.

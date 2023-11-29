@@ -5,7 +5,7 @@
  *  @date    Tue May 13 16:18:42 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Classes/types and objects intended to Make Switching GUI's Easier
+ *  @note    Classes/types and objects intended to Make Switching GUI's Easier
  */
 
 package scalation

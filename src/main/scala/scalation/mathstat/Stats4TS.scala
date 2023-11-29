@@ -5,7 +5,7 @@
  *  @date    Thu May 26 13:00:49 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Basic Statistics for Time-Series
+ *  @note    Model Framework: Basic Statistics for Time-Series
  */
 
 package scalation

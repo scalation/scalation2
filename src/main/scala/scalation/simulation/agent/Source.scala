@@ -5,7 +5,7 @@
  *  @date    Thu Sep 30 16:46:03 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Source Creates Entities/SimAgents
+ *  @note    Source Creates Entities/SimAgents
  */
 
 package scalation
@@ -71,10 +71,10 @@ class Source (name: String, director: Model, _time: Double, iArrivalRV: Variate,
             agent.time    = director.clock                           // set the agent's time to now
 //          agent.setPos (pos(0), pos(1))                            // FIX - put at boundary, not center
             agent.setPos (pos(0)+pos(2)/2, pos(1)+pos(3)/2)          // pos at boundary
-            agent.fore    = prevAgent                                // place it in doubly-linked list
 
-//          prevAgent.aft = agent                                    // FIX - linking agents
-//          prevAgent     = agent
+            agent.fore    = prevAgent                                // place this agent in doubly-linked list
+            if prevAgent != null then prevAgent.aft = agent
+            prevAgent     = agent
 
             director.log.trace (this, "generates", agent, director.clock)
             director.animate (agent, CreateToken, randomColor (agent.id), Ellipse ())

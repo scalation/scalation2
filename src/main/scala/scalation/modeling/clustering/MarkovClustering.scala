@@ -5,7 +5,7 @@
  *  @date    Tue May 29 14:45:32 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Markov Clustering Algorithm (MCL) for Graphs
+ *  @note    Markov Clustering Algorithm (MCL) for Graphs
  *
  *  @see     www.cs.ucsb.edu/~xyan/classes/CS595D-2009winter/MCL_Presentation2.pdf
  *  @see     www.ebi.ac.uk/enright/docs/stijnmcl.pdf

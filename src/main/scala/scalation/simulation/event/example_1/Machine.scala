@@ -5,9 +5,9 @@
  *  @date    Sun Sep 26 15:00:24 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     simulation/process/example_1/Machine.scala
+ *  @note    Example Model: Machine Shop for Event-Scheduling Simulation
  *
- *  @title   Example Model: Machine Shop for Event-Scheduling Simulation
+ *  @see     simulation/process/example_1/Machine.scala
  */
 
 // Partial Implementation

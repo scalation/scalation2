@@ -5,6 +5,8 @@
  *  @date    Sat Nov 16 14:32:49 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Hidden Markov Models (HMM)
+ *
  *  Code adapted from pseudocode in
  *  @see www.cs.sjsu.edu/faculty/stamp/RUA/HMM.pdf
  *

@@ -5,6 +5,8 @@
  *  @date    Thu Sep 22 21:45:58 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Derivatives for B-Splines   
+ *
  *  @see en.wikipedia.org/wiki/B-spline
  *  @see cran.r-project.org/web/packages/crs/vignettes/spline_primer.pdf
  *  @see http://web.mit.edu/hyperbook/Patrikalakis-Maekawa-Cho/node17.html
@@ -32,7 +34,8 @@ import DBasisFunction._
  *  @param clamp whether or not to clamp the ends of the knot vector using `B_Spline.clamp`
  */
 class DB_Spline (ττ: VectorD, mMax: Int = 4, clamp: Boolean = true)
-        extends B_Spline (ττ, mMax, clamp) with DBasisFunction:
+        extends B_Spline (ττ, mMax, clamp)
+           with DBasisFunction:
 
     private val flaw = flawf ("DB_Spline")                              // flaw function
 
@@ -270,6 +273,7 @@ end DB_Spline
     val Σ   = penalty (dbs, mM)(t)                      // penalty matrix
     val λ   = 0.01                                      // regularization parameter
 
+    println (s"ns = $ns")
     println (s" λ = $λ")
     println (s" Σ = $Σ")
     println (s"λΣ = ${Σ * λ}")

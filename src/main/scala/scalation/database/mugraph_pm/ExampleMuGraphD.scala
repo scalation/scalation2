@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Tue Nov  1 19:12:16 EDT 2016
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Example Data and Query for `MuGraph` (with `Double` labels)
  */
 
 package scalation
@@ -15,7 +17,7 @@ import scala.collection.mutable.{Set => SET}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ExampleMuGraphD` object contains example query and data multi-digraphs
- *  in which  the vertex label type is `Double`.
+ *  in which the vertex label type is `Double`.
  */
 object ExampleMuGraphD:
 

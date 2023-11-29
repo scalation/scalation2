@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Sat Jan  9 14:06:47 EST 2010
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Base Trait for Curvilinear Shapes (Lines and Curves)
  */
 
 package scalation
@@ -12,12 +14,12 @@ package scala2d
 import scalation.mathstat.VectorD
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `CurvilinearShape` trait provides a general type for line and curves.
+/** The `CurvilinearShape` trait provides a general type for lines and curves.
  *  It is analogous to `RectangularShape`.
  */
 trait CurvilinearShape extends Shape:
 
-    private var flaw = flawf ("CurvilinearShape")                 // flaw function
+    private val flaw = flawf ("CurvilinearShape")                 // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Get the x-coordinate of the center of a line/curve.  This method must

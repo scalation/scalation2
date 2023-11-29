@@ -5,7 +5,7 @@
  *  @date    Thu Nov  9 22:58:29 EST 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Support Functions for Database Normalization Based on Functional Dependencies
+ *  @note    Support Functions for Database Normalization Based on Functional Dependencies
  */
 
 package scalation

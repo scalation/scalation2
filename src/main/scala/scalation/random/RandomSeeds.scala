@@ -5,6 +5,9 @@
  *  @date    Thu Mar 27 14:21:03 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    1000 Seeds for MRG31k3p Random Number Generator   
+ *           val N_STREAMS = seeds.length
+ *
  *  scala -cp <classpath> scalation.random.StreamMakerGen
  */
 

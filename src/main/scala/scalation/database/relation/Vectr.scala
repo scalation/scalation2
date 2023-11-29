@@ -5,7 +5,7 @@
  *  @date    Tue Aug 24 20:13:53 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Vectr Union Type for Vectors Used in Databases
+ *  @note    `Vectr` Union Type for Vectors Used in Databases
  */
 
 package scalation

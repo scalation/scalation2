@@ -5,7 +5,7 @@
  *  @date    Tue Feb 22 23:14:31 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: AutoRegressive with eXogenous Variables (Time Series Regression)
+ *  @note    Model: AutoRegressive with eXogenous Variables (Time Series Regression)
  */
 
 package scalation
@@ -18,6 +18,7 @@ import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARX` class supports regression for Time Series data.
+ *  Multi-horizon forecasting supported via the RECURSIVE method.
  *  Given a response vector y, a predictor matrix x is built that consists of
  *  lagged y vectors,
  *
@@ -34,11 +35,10 @@ import scalation.mathstat._
 class ARX (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
            hparam: HyperParameter = Regression.hp)
       extends Regression (x, yy, fname, hparam)
-         with ForecasterX (x, yy, lags):
+         with ForecasterX (lags):
 
     private val debug   = debugf ("ARX", true)                           // debug function
     private val flaw    = flawf ("ARX")                                  // flaw function
-    private val MISSING = -0.0                                           // missing value
 
     modelName = s"ARX_$lags"
 
@@ -105,7 +105,6 @@ end ARX
 object ARX:
 
     private val debug = debugf ("ARX", true)                             // debug function
-    private val flaw  = flawf ("ARX")                                    // flaw function
 
     private val TREND = false                                            // include quadratic trend
     private val DAY   = false                                            // include day of the week effect
@@ -118,8 +117,8 @@ object ARX:
      *  @param hparam  the hyper-parameters (use Regression.hp for default)
      */
     def apply (y: VectorD, lags: Int, hparam: HyperParameter = Regression.hp): ARX =
-        var (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
-        x = VectorD.one (yy.dim) +^: x                                   // add first column of all ones
+        val (x_, yy) = buildMatrix4TS (y, lags)                          // column for each lag
+        var x = VectorD.one (yy.dim) +^: x_                              // add first column of all ones
 
         if TREND then
             x = VectorD.range (0, yy.dim) +^: x                          // add trend/time
@@ -151,8 +150,8 @@ object ARX:
      */
     def exo (y: VectorD, lags: Int, ex: MatrixD, hparam: HyperParameter = Regression.hp)
             (elag1: Int = max (1, lags / 5), elag2: Int = max (1, lags)): ARX =
-        var (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
-        x = VectorD.one (yy.dim) +^: x                                   // add first column of all ones
+        val (x_, yy) = buildMatrix4TS (y, lags)                          // column for each lag
+        var x = VectorD.one (yy.dim) +^: x_                              // add first column of all ones
         val endoCols = x.dim2
         println (s"endogenous: columns = $endoCols")
 
@@ -269,7 +268,6 @@ end aRXTest
 @main def aRXTest2 (): Unit =
 
     import Example_LakeLevels.y
-    val m = y.dim
     val h = 2                                                            // the forecasting horizon
 
     for p <- 1 to 8 do                                                   // autoregressive hyper-parameter p
@@ -359,7 +357,7 @@ end aRXTest2
 
     banner ("Feature Importance")
     println (s"Stepwise: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
 end aRXTest3
@@ -400,7 +398,7 @@ end aRXTest3
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
 end aRXTest4
@@ -442,7 +440,7 @@ end aRXTest4
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
     banner ("Run TnT on Best model")
@@ -493,7 +491,7 @@ end aRXTest5
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
     banner ("Run Rolling Validation on ARX Best model")

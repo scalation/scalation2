@@ -5,7 +5,7 @@
  *  @date    Fri Jun 17 11:19:14 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for Row-Oriented and Column-Oriented Relational DBMSs
+ *  @note    Base Trait for Row-Oriented and Column-Oriented Relational DBMSs
  *
  *  RA Operators: rename, project, selproject, select, union, minus, intersect, product,
  *                join, leftJoin, rightJoin, divide, groupBy, aggregate, orderBy

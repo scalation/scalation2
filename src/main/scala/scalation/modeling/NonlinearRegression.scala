@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: NonLinear Regression (nonlinear in the parameters)
+ *  @note    Model: NonLinear Regression (nonlinear in the parameters)
  */
 
 package scalation
@@ -73,6 +73,7 @@ class NonlinearRegression (x: MatrixD, y: VectorD, f: FunctionP2S,
         val bfgs   = new BFGS (sseF)                                     // minimize sseF using nonlinear optimizer
         val result = bfgs.solve (b_init)                                 // result from optimizer
         val sse    = result._1                                           // optimal function value
+        debug ("train", s"sse = $sse")
         b          = result._2                                           // optimal parameter vector
     end train
 
@@ -120,7 +121,7 @@ object NonlinearRegression:
     def apply (xy: MatrixD, f: FunctionP2S, b_init: VectorD,
                fname: Array [String] = null, hparam: HyperParameter = null)
               (col: Int = xy.dim2 - 1): NonlinearRegression =
-        var itran: FunctionV2V = null                                    // inverse transform -> original scale
+//      var itran: FunctionV2V = null                                    // inverse transform -> original scale
         val (x, y) = (xy.not(?, col), xy(?, col))                        // assumes the last column is the response
 
 /*                                                                       // FIX - function needs bounds
@@ -147,7 +148,7 @@ object NonlinearRegression:
     def rescale (x: MatrixD, y: VectorD, f: FunctionP2S, b_init: VectorD,
                  fname: Array [String] = null,
                  hparam: HyperParameter = null): NonlinearRegression =
-        var itran: FunctionV2V = null                                    // inverse transform -> original scale
+//      var itran: FunctionV2V = null                                    // inverse transform -> original scale
 
 /*                                                                       // FIX - function needs bounds
         val x_s = if rescale then rescaleX (x, f0)

@@ -5,7 +5,7 @@
  *  @date    Sat Nov 21 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Junction/Connector between Transports/Routes
+ *  @note    Junction/Connector between Transports/Routes
  */
 
 package scalation

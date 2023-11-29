@@ -5,7 +5,7 @@
  *  @date    Tue Feb 22 23:14:31 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Quadratic AutoRegressive with eXogenous Variables (Quadratic Time Series Regression)
+ *  @note    Model: Quadratic AutoRegressive with eXogenous Variables (Quadratic Time Series Regression)
  */
 
 package scalation
@@ -33,11 +33,10 @@ import scalation.mathstat._
 class ARX_Quad (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
                 hparam: HyperParameter = Regression.hp)
       extends Regression (x, yy, fname, hparam)
-         with ForecasterX (x, yy, lags):
+         with ForecasterX (lags):
 
     private val debug   = debugf ("ARX_Quad", true)                      // debug function
     private val flaw    = flawf ("ARX_Quad")                             // flaw function
-    private val MISSING = -0.0                                           // missing value
 
     modelName = s"ARX_Quad$lags"
 
@@ -164,8 +163,6 @@ end ARX_Quad
  */
 object ARX_Quad:
 
-    private val flaw = flawf ("ARX_Quad")                                // flaw function
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `ARX_Quad` object to fit a quadratic surface from a response vector.
      *  The input/data matrix x is formed from the lagged y vectors as columns in matrix x.
@@ -176,7 +173,7 @@ object ARX_Quad:
      */
     def apply (y: VectorD, lags: Int, 
                hparam: HyperParameter = Regression.hp): ARX_Quad =
-        var (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
+        val (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
         val xx = new MatrixD (x.dim, 2*x.dim2+1) 
         xx(?, 0) = VectorD.one (yy.dim)                                  // add first column of all ones
         for j <- x.indices2 do                                           // add terms in an interleaved fashion
@@ -257,7 +254,6 @@ end ARX_QuadTest
 @main def ARX_QuadTest2 (): Unit =
 
     import Example_LakeLevels.y
-    val m = y.dim
     val h = 2                                                            // the forecasting horizon
 
     for p <- 1 to 8 do                                                   // autoregressive hyper-parameter p
@@ -346,7 +342,7 @@ end ARX_QuadTest2
 
     banner ("Feature Importance")
     println (s"Stepwise: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${ox_fname(c)}, \t importance = $r")
 
 end ARX_QuadTest3
@@ -389,7 +385,7 @@ end ARX_QuadTest3
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${Example_Covid.header(c)}, \t importance = $r")
 
 end ARX_QuadTest4
@@ -433,7 +429,7 @@ end ARX_QuadTest4
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${Example_Covid.header(c)}, \t importance = $r")
 
     banner ("Run TnT on Best model")
@@ -484,7 +480,7 @@ end ARX_QuadTest5
 
     banner ("Feature Importance")
     println (s"$tech: rSq = $rSq")
-    val imp = mod.importance (cols.toArray, rSq)
+//  val imp = mod.importance (cols.toArray, rSq)
 //  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
 
     banner ("Run Rolling Validation on ARX_Quad Best model")

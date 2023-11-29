@@ -5,7 +5,7 @@
  *  @date    Mon Sep 24 19:00:23 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Linear Regression (one variable, two parameters)
+ *  @note    Model: Simple Linear Regression (one variable, two parameters)
  */
 
 package scalation
@@ -55,7 +55,7 @@ class SimpleRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null)
         val sx  = x1.sum                                           // sum of x values
         val sy  = y_.sum                                           // sum of y values
         val ssx = x1 dot x1                                        // sum of squares x
-        val ssy = y_ dot y_                                        // sum of squares y
+//      val ssy = y_ dot y_                                        // sum of squares y
         val sxy = x1 dot y_                                        // sum of cross products
 
         b = new VectorD (2)                                        // parameter vector [b0, b1]
@@ -355,8 +355,8 @@ end simpleRegressionTest4
 
     val ITER = 10                                                  // number of iterations
     val eta  = 0.02                                                // try different values for the learning rate
-    val mod  = new SimpleRegression (x, y)                         // create a simple regression model, don't train
-    var b    = new VectorD (x.dim2)                                // starting point [0, 0] for parameter vector b
+//  val mod  = new SimpleRegression (x, y)                         // create a simple regression model, don't train
+    val b    = new VectorD (x.dim2)                                // starting point [0, 0] for parameter vector b
 
     banner (s"Test5: Simple Regression Model: gradient descent: eta = $eta")
     for it <- 1 to ITER do

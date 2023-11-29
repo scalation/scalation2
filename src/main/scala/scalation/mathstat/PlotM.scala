@@ -5,7 +5,7 @@
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Plot Rows in Matrix y versus x
+ *  @note    Plot Rows in Matrix y versus x
  */
 
 package scalation
@@ -176,7 +176,7 @@ object PlotM:
      */
     def apply (x: VectorD, y: VectorD*): PlotM =
         val yy = new MatrixD (y.length, x.dim)
-        for i <- y.indices do yy(i) = y(i)
+        for i <- 0 until y.length do yy(i) = y(i)
         new PlotM (x, yy)
     end apply
 
@@ -209,6 +209,7 @@ end plotMTest
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `plotMTest2` main function is used to test the `PlotM` class.  This
  *  version also plots lines connecting the points.
+ ^  @see scalation.scala2d.writeImage
  *  > runMain scalation.mathstat.plotMTest2
  */
 @main def plotMTest2 (): Unit =

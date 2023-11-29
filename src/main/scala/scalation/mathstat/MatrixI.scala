@@ -5,7 +5,7 @@
  *  @date    Tue Dec 21 15:51:08 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Matrix Data Structure of Integers (no class, only object)
+ *  @note    Matrix Data Structure of Integers (no class, only object)
  */
 
 package scalation

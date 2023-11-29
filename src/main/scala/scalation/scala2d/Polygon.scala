@@ -5,7 +5,7 @@
  *  @date    Sun Nov 28 01:47:06 EST 2021
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Defines Several Common Types of Polygons
+ *  @note    Defines Several Common Types of Polygons
  */
 
 package scalation

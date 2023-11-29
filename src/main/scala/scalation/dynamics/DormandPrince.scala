@@ -5,7 +5,7 @@
  *  @date    Mon Mar 29 14:59:50 EDT 2010
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   (4,5)-Order Dormand-Prince ODE Integrator (DOPRI) or ode45
+ *  @note    (4,5)-Order Dormand-Prince ODE Integrator (DOPRI) or ode45
  */
 
 package scalation
@@ -28,8 +28,6 @@ import scalation.mathstat._
  */
 object DormandPrince
        extends Integrator:
-
-    private val flaw = flawf ("DormandPrince")                    // flaw function
 
     /** Butcher tableau @see http://en.wikipedia.org/wiki/Dormand–Prince_method
      */
@@ -161,7 +159,7 @@ object DormandPrince
         val tol      = 1E-5
 
         var ti    = t0
-        var y     = y0
+        val y     = y0.copy
         var h     = hmax
         var delta = 0.0
 
@@ -234,10 +232,10 @@ import DormandPrince._
     def dz_dt (t: Double, p: VectorD) = -.51 * p(0) * p(1)
     val odes = Array [DerivativeV] (dx_dt, dy_dt, dz_dt)
 
-    var ti  = .2
+    val ti  = 0.2
     var p   = VectorD (0.0, 1.0, 1.0)
     val p_r = new MatrixD (61, 3); for (k <- 0 until p.dim) p_r(0, k) = p(k)
-    var tt  = new VectorD (61); tt(0) = 0.0
+    val tt  = new VectorD (61); tt(0) = 0.0
     for i <- 1 to 60 do
         tt(i) = ti * i
         p = integrateVV (odes, p, ti)

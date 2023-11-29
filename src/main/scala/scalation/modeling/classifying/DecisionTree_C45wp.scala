@@ -5,7 +5,7 @@
  *  @date    Wed May 22 14:17:49 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: C45 Decision/Classification Tree with Pruning
+ *  @note    Model: C45 Decision/Classification Tree with Pruning
  */
 
 package scalation

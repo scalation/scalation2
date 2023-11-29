@@ -5,6 +5,8 @@
  *  @date    Sat Mar 15 15:28:44 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Poisson Process Arrival Time Generator
+ *
  *  Many of the algorithms used are from:
  *    Averill M. Law and W. David Kelton
  *    Simulation Modeling and Analysis, 2nd Edition
@@ -80,7 +82,7 @@ end TimeVariate
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** This class generates arrival times according to a `PoissonProcess`.
+/** The `PoissonProcess` class generates arrival times according to a Poisson Process.
  *  Given the current arrival time 't', generate the next arrival time.
  *  @see  http://en.wikipedia.org/wiki/Poisson_process
  *  @param lambda  the arrival rate (arrivals per unit time)
@@ -308,7 +310,6 @@ end NHPoissonProcess
     def meansTest (rv: TimeVariate, tt: Double): Unit =
         println ("\nTest the " + rv.getClass.getSimpleName () + " random variate generator at " + tt)
 
-        var ran = 0.0
         var sum = 0.0
         val rep = 10000
         for i <- 1 to rep do
@@ -371,7 +372,8 @@ end NHPoissonProcess
     val pp   = PoissonProcess (lambda.sum / lambda.dim.toDouble)
     val nhpp = NHPoissonProcess (lambda, 1.0, 1)
 
-//  distrTest (pp, 0.0, 12.0)
+    meansTest (pp, 12.0)
+    distrTest (pp, 0.0, 12.0)
 //  distrTest (nhpp, args(0).toDouble, args(1).toDouble)
 
 //  println ("nhpp.pf (17, " + args(0) + ", " + args(1) + ") = " + nhpp.pf (17, args (0).toDouble, args(1).toDouble))

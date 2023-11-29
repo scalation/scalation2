@@ -5,7 +5,7 @@
  *  @date    Sun Oct 25 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   4th-Order Runge-Kutta Integrator (RK4) or ode44
+ *  @note    4th-Order Runge-Kutta Integrator (RK4) or ode44
  */
 
 package scalation
@@ -140,10 +140,10 @@ import RungeKutta._
     def dz_dt (t: Double, p: VectorD) = -.51 * p(0) * p(1)
     val odes = Array [DerivativeV] (dx_dt, dy_dt, dz_dt)
 
-    var ti  = .2
+    val ti  = 0.2
     var p   = VectorD (0.0, 1.0, 1.0)
     val p_r = new MatrixD (61, 3); for (k <- 0 until p.dim) p_r(0, k) = p(k)
-    var tt  = VectorD (61); tt(0) = 0.0
+    val tt  = VectorD (61); tt(0) = 0.0
     for i <- 1 to 60 do
         tt(i) = ti * i
         p = integrateVV (odes, p, ti)

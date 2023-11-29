@@ -5,7 +5,7 @@
  *  @date    Wed Feb 26 18:20:39 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  title    Basic UI Table for Displaying Statistics
+ *  @note    Basic UI Table for Displaying Statistics
  */
 
 package scalation

@@ -5,6 +5,8 @@
  *  @date    Thurs Jun  29 13:13:42 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Nelder-Mead Simplex Algorithm for Non-Linear Optimization
+ *
  *  @see     DOI 10.1002/anac.200410015  by Singer and Singer 2004
  *  @see     The Dr. Thomas Harvey Rowan PhD dissertation 1990
  */

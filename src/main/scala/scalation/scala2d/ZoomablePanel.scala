@@ -5,7 +5,7 @@
  *  @date    Mon Jun 19 01:30:58 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   General Trait to Make Zoomable Panels
+ *  @note    General Trait to Make Zoomable Panels
  */
 
 package scalation
@@ -55,7 +55,7 @@ trait ZoomablePanel
     override def mouseWheelMoved (e: MouseWheelEvent): Unit =
         var x = e.getX ().toDouble
         var y = e.getY ().toDouble
-        var p = new Point2D.Double ()
+        val p = new Point2D.Double ()
         try
             at.inverseTransform (new Point2D.Double (x, y), p)
         catch

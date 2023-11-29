@@ -5,7 +5,7 @@
  *  @date    Mon Jul  4 12:55:00 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Map Implemented Using Linear Hashing
+ *  @note    Map Implemented Using Linear Hashing
  *
  *  Split Home Buckets when load factor is too high
  *  Merge Home Buckets when load factor is too low (not yet implemented)
@@ -240,7 +240,7 @@ class LinHashMap [K: ClassTag, V: ClassTag] (order: Int = 4, loadFac: (Double, D
 
         val bnew = new Bucket ()                              // create a new home bucket          
         hTable  += bnew                                       // add to end of hash table
-        var b    = hTable(isplit)                             // b is the bucket chain to be split
+        val b    = hTable(isplit)                             // b is the bucket chain to be split
         val isp  = isplit                                     // original value of isplit
         isplit  += 1                                          // increment to split pointer
         if isplit == mod1 then                                // has it reached end in current phase?
@@ -369,7 +369,7 @@ end LinHashMap
 
     banner ("Insert Keys")
     if RANDOMLY then
-        var rng = Randi0 (2 * totalKeys)
+        val rng = Randi0 (2 * totalKeys)
         for i <- 1 to totalKeys by 2 do ht.put (rng.igen, i * i)
     else 
         for i <- 1 to totalKeys by 2 do ht.put (i, i * i)

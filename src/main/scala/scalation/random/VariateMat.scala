@@ -5,7 +5,7 @@
  *  @date    Sat Mar  9 19:19:53 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate Matrix (RVM) Generators
+ *  @note    Random Variate Matrix (RVM) Generators
  */
 
 package scalation

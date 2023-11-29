@@ -5,13 +5,12 @@
  *  @date    Sun Jul  2 19:49:36 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Bank Database
+ *  @note    Example Database: Bank Database
  */
 
 package scalation
 package database
 package table
-
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bankDB` main function uses the `Table` class for simple database application.

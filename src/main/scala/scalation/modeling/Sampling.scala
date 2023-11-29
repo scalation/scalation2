@@ -5,7 +5,7 @@
  *  @date    Wed Nov  7 17:08:17 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Sampling
+ *  @note    Model: Sampling
  */
 
 package scalation

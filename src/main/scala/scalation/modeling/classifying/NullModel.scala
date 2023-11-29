@@ -5,7 +5,7 @@
  *  @date    Fri Feb 16 16:14:34 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Null Model Classifier
+ *  @note    Model: Null Model Classifier
  */
 
 package scalation
@@ -43,7 +43,7 @@ class NullModel (y: VectorI, k: Int = 2, cname_ : Array [String] = Array ("No", 
     def test (x_ : MatrixD = null, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = VectorI.fill (y_.dim)(p_y.argmax ())                  // prediction does not change
         val qof = diagnose (y_, yp)
-//      debug ("test", s" yp = $yp \n qof = $qof")
+        debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 

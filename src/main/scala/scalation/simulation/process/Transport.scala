@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Transport is a Pathway between Components
+ *  @note    Transport is a Pathway between Components
  */
 
 package scalation
@@ -84,12 +84,12 @@ class Transport (name: String, val from: Component, val to: Component,
     private def calcEndPoints: (VectorD, VectorD) =
         val w1 = from.at(2)
         val h1 = from.at(3)
-        var x1 = from.at(0) + 0.5 * w1 + shift1(0)
+        val x1 = from.at(0) + 0.5 * w1 + shift1(0)
         val y1 = from.at(1) + 0.5 * h1 + shift1(1)
 
         val w2 = to.at(2)
         val h2 = to.at(3)
-        var x2 = to.at(0) + 0.5 * w2 + shift2(0)
+        val x2 = to.at(0) + 0.5 * w2 + shift2(0)
         val y2 = to.at(1) + 0.5 * h2 + shift2(1)
 
 //      if x1 < x2 then x1 += w1 else x2 += w2

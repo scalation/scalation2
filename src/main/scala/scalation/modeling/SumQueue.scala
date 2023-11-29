@@ -5,7 +5,7 @@
  *  @date    Sat Aug 31 15:18:54 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Queue for Moving Averages
+ *  @note    Model Support: Queue for Moving Averages
  */
 
 package scalation

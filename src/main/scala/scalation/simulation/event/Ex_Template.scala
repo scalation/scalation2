@@ -5,7 +5,7 @@
  *  @date    Sun Sep 26 14:15:24 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: SOME for Event-Scheduling Simulation (A Template)
+ *  @note    Example Model: SOME for Event-Scheduling Simulation (A Template)
  */
 
 package scalation

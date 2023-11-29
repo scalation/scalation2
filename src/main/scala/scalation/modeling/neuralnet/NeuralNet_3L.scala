@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Neural Network with 3 Layers (input, hidden and output layers)
+ *  @note    Model: Neural Network with 3 Layers (input, hidden and output layers)
  *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
@@ -50,10 +50,7 @@ class NeuralNet_3L (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2, df = x.dim - x.dim2):                    // under-estimate of degrees of freedom
 
-    private val debug     = debugf ("NeuralNet_3L", false)                // debug function
     private val eta       = hp("eta").toDouble                            // learning rate
-    private val bSize     = hp("bSize").toInt                             // batch size
-    private val maxEpochs = hp("maxEpochs").toInt                         // maximum number of training epochs/iterations
 //          val opti      = new Optimizer_SGD ()                          // parameter optimizer SGD
             val opti      = new Optimizer_SGDM ()                         // parameter optimizer SGDM
 
@@ -468,7 +465,7 @@ end neuralNet_3LTest6
     import Example_AutoMPG.{x46, y, yy, x46_fname}                   // don't include intercept, uses biases instead
 
     val xs = rescaleX (x46, f_sigmoid)                               // ActivationFun rescale the X matrix to active range of sigmoid
-    val (mn, mx) = (x46.min, x46.max)
+//  val (mn, mx) = (x46.min, x46.max)
 //  val xs = scale ((mn, mx), (-2, 2))(x46)                          // MatrixTranform scale the X matrix to (-2, 2)
 
 /*
@@ -486,7 +483,7 @@ end neuralNet_3LTest6
     Optimizer.hp ("eta") = 0.01                                      // some activation functions need smaller eta
     val nz = 2                                                       // number of hidden nodes
     banner (s"AutoMPG NeuralNet_3L")
-    val mod = new NeuralNet_3L (xs, yy, x46_fname, 2)                // create model without intercept
+    val mod = new NeuralNet_3L (xs, yy, x46_fname, nz)               // create model without intercept
     val (yp, qof) = mod.trainNtest2 ()()                             // train and test the model - with auto-tuning
 
     banner ("AutoMPG Validation Test")
@@ -557,7 +554,6 @@ end neuralNet_3LTest7
     val x  = MatrixD ((10, 1), 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
     val y  = VectorD (5.56, 5.70, 5.91, 6.40, 6.80, 7.05, 8.90, 8.70, 9.00, 9.05)
     val ox = VectorD.one (x.dim) +^: x
-    val fname = Array ("x")
 
     banner (s"Regression with intercept")
     val reg = new Regression (ox, y)
@@ -766,9 +762,9 @@ end neuralNet_3LTest10
     banner ("initialize")
 
     var aa = MatrixD.fill (2, 2, 0.1)                               // input to hidden layer 2x2 weight matrix
-    var a_ = MatrixD.fill (1, 2, 0.1)                               // hidden layer 1x2 bias matrix
+    val a_ = MatrixD.fill (1, 2, 0.1)                               // hidden layer 1x2 bias matrix
     var bb = MatrixD.fill (2, 1, 0.1)                               // hidden to output layer weight matrix
-    var b_ = MatrixD.fill (1, 1, 0.1)                               // output layer 1x1 bias matrix
+    val b_ = MatrixD.fill (1, 1, 0.1)                               // output layer 1x1 bias matrix
 
     println (s"hidden layer aa = $aa, a_ = $a_")                    // weight and bias matrices
     println (s"output layer bb = $bb, b_ = $b_")                    // weight and bias matrices

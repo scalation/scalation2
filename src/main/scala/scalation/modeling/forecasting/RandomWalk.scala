@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Random Walk (guess previous value)
+ *  @note    Model: Random Walk (guess previous value)
  *           Also known as the Naive Model
  */
 

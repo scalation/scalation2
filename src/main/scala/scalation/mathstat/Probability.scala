@@ -5,7 +5,7 @@
  *  @date    Thu Oct 24 11:59:36 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Probability and Entropy
+ *  @note    Model Support: Probability and Entropy
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Aug 29 14:14:32 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   EdgeType - a collection of edges of the same type
+ *  @note    EdgeType - a collection of edges of the same type
  */
 
 package scalation

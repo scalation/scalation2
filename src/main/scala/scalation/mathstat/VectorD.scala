@@ -5,7 +5,7 @@
  *  @date    Thu Jun 17 19:29:23 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Vector Data Structure of Doubles
+ *  @note    Vector Data Structure of Doubles
  */
 
 package scalation
@@ -49,7 +49,7 @@ class VectorD (val dim: Int,
     
     private val EPSILON = 1E-9                                    // number close to zero
     private val flaw    = flawf ("VectorD")                       // partial invocation of flaw function
-    private var fString = "%g,\t"                                 // output format spec
+    private val fString = "%g,\t"                                 // output format spec
 
     if v == null then
         v = Array.ofDim [Double] (dim)
@@ -698,6 +698,7 @@ class VectorD (val dim: Int,
         rk
     end iqsort
 
+/*
     private def iqsort_ (rk: Array [Int], p: Int, r: Int): Array [Int] =
         if r - p > 5 then
             iswap (rk, r, med3 (p, (p+r)/2, r))            // use median-of-3, comment out for simple pivot
@@ -709,6 +710,7 @@ class VectorD (val dim: Int,
         end if
         rk
     end iqsort_
+*/
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort this vector using QuickSort, returning the rank order.
@@ -987,19 +989,15 @@ class VectorD (val dim: Int,
     def standardize2: VectorD = (this - mean) / (stdev + EPSILON)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Copies the contents of the `VectorD` to the `destination`
-     *  [[MemorySegment]]. Assumes `destination` was allocated with the memory
-     *  layout of a sequence layout of JAVA_DOUBLE with size bigger or equal to
-     *  `dim`.
-     *
-     *  @param destination  [[MemorySegment]] where the `VectorD` contents are
-     *                      copied to. Should have been allocated with a memory
-     *                      layout of a sequence layout of JAVA_DOUBLE with size
-     *                      bigger or equal to `dim`.
+    /** Copy the contents of this `VectorD` to the `destination` `MemorySegment`.
+     *  Assumes `destination` was allocated with the memory layout of a sequence
+     *  layout of JAVA_DOUBLE with size bigger or equal to `dim`.
+     *  @param destination  `MemorySegment` where `VectorD` contents are copied to.
      */
-    def copyToMemorySegment(destination: MemorySegment): Unit =
+    def copyToMemorySegment (destination: MemorySegment): Unit =
         for i <- 0 until dim do
-            destination.setAtIndex(JAVA_DOUBLE, i, v(i))
+            destination.setAtIndex (JAVA_DOUBLE, i, v(i))
+    end copyToMemorySegment
 
 end VectorD
 
@@ -1043,24 +1041,6 @@ object VectorD:
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Creates a `VectorD` from the `source` [[MemorySegment]] by copying the
-     *  contents of the latter. Assumes `source` was allocated with the memory
-     *  layout of a sequence layout of JAVA_DOUBLE.
-     *
-     *  @param source   [[MemorySegment]] whose content is copied to initialize
-     *                  a new `VectorD`. Should have been allocated with a
-     *                  memory layout of a sequence layout of JAVA_DOUBLE.
-     *  @param n        The number of JAVA_DOUBLE elements in `source`.
-     */
-    def fromMemorySegment(source: MemorySegment, n: Int): VectorD =
-        val result = new VectorD(n)
-
-        for i <- 0 until n do
-            result(i) = source.getAtIndex(JAVA_DOUBLE, i)
-
-        result
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `VectorD` from a mutable indexed sequence of `String`.
      *  @param xs  the sequence/array of the `String` numbers
      */
@@ -1072,6 +1052,20 @@ object VectorD:
      *  @param xs  the sequence/array of the `TimeNum` numbers
      */
     def fromTimeNums (xs: IndexedSeq [TimeNum]): VectorD = VectorD (xs.map (_.toDouble))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a `VectorD` from the `source` `MemorySegment` by copying the contents
+     *  of the latter.  Assumes `source` was allocated with the memory layout of a
+     *  sequence layout of JAVA_DOUBLE.
+     *  @param source  `MemorySegment` whose content is copied to initialize a new `VectorD`
+     *  @param n       the number of JAVA_DOUBLE elements in `source`.
+     */
+    def fromMemorySegment (source: MemorySegment, n: Int): VectorD =
+        val result = new VectorD (n)
+        for i <- 0 until n do
+            result(i) = source.getAtIndex (JAVA_DOUBLE, i)
+        result
+    end fromMemorySegment
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return a `VectorD` consisting of a sequence of integers in a range.

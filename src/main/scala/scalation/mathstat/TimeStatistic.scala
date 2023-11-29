@@ -5,7 +5,7 @@
  *  @date    Wed Aug 26 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Time-Persistent Statistics Collection
+ *  @note    Time-Persistent Statistics Collection
  */
 
 package scalation
@@ -25,7 +25,7 @@ import scala.math.abs
  */
 class TimeStatistic (override val name: String = "p-stat",
                       private var _lastTime:  Double = 0.0,
-                      private var _startTime: Double = 0.0)
+                      private val _startTime: Double = 0.0)
       extends Statistic (name):
 
     private val flaw = flawf ("TimeStatistic")                     // flaw function

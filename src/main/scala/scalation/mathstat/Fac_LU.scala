@@ -5,7 +5,7 @@
  *  @date    Fri May 26 14:32:21 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Lower-Upper (LU) Matrix Factorization
+ *  @note    Lower-Upper (LU) Matrix Factorization
  *
  *  LU Factorization for square (n-by-n) and rectangular (m-by-n, m > n) matrices.
  *  Uses partial (row) pivoting that uses largest possible pivot for each column.

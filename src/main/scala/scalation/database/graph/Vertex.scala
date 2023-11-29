@@ -5,7 +5,7 @@
  *  @date    Sat Oct  2 18:36:01 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Vertex in a Property Graph
+ *  @note    Vertex in a Property Graph
  */
 
 package scalation

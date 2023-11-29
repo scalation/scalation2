@@ -5,7 +5,7 @@
  *  @date    Fri Dec 27 15:41:58 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   M/M/1 Queue Simulation Model using tableau Package  
+ *  @note    M/M/1 Queue Simulation Model using tableau Package  
  */
 
 package scalation

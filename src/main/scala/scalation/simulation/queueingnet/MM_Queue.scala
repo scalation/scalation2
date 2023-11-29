@@ -5,11 +5,11 @@
  *  @date    Mon Dec 13 22:00:52 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    M/M Queues:  M/M/1, M/M/2, M/M/c
+ *
  *  @see     http://aix1.uottawa.ca/~glamothe/mat4371/Queues.pdf
  *  @see     http://irh.inf.unideb.hu/~jsztrik/education/16/SOR_Main_Angol.pdf
  *  @see     https://hkumath.hku.hk/~wkc/queue/qpart2.pdf
- *
- *  @title   M/M Queues:  M/M/1, M/M/2, M/M/c
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Jan 31 20:59:02 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Matrix (and Vector) Transformations
+ *  @note    Model Support: Matrix (and Vector) Transformations
  */
 
 package scalation

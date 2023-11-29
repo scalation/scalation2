@@ -5,7 +5,7 @@
  *  @date    Sat Dec 11 18:35:14 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Teaching and TA Assignment
+ *  @note    Example Database: Teaching and TA Assignment
  */
 
 package scalation

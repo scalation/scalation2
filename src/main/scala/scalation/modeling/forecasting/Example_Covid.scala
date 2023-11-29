@@ -5,7 +5,7 @@
  *  @date    Sat Jul 29 11:30:42 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Time Series Data: Covid-19 Weekly Data
+ *  @note    Example Time Series Data: Covid-19 Weekly Data
  */
 
 package scalation

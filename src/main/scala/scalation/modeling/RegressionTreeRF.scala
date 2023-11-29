@@ -5,7 +5,7 @@
  *  @date    Fri Jan  5 16:54:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Regression Tree Random Forest (RF)
+ *  @note    Model: Regression Tree Random Forest (RF)
  */
 
 // FIX - implement for case where use_fb = true
@@ -50,7 +50,7 @@ class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null, 
     if bRatio <= 0  || bRatio >= 1  then flaw ("init", "RF bagging ratio restricted to (0, 1)")
     if fbRatio <= 0 || fbRatio >= 1 then flaw ("init", "RF feature bagging ratio restricted to (0, 1)")
 
-    modelName = s"RegressionTreeRF ($depth, $nTrees)"
+    modelName = s"RegressionTreeRF ($depth, $nTrees, $use_fb)"
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the regression tree RF by selecting thresholds for the features/variables

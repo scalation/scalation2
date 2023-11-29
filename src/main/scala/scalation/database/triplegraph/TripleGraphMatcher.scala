@@ -5,7 +5,7 @@
  *  @date    Sun Oct  9 15:40:47 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   TripleGraph Pattern Matching Using Mutable Sets
+ *  @note    TripleGraph Pattern Matching Using Mutable Sets
  */
 
 package scalation

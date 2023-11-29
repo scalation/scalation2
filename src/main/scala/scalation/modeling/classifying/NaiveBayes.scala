@@ -5,7 +5,7 @@
  *  @date    Sat Sep  8 13:53:16 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Integer-Based Naive Bayes Classifier
+ *  @note    Model: Integer-Based Naive Bayes Classifier
  *
  *  @see eric.univ-lyon2.fr/~ricco/tanagra/fichiers/en_Tanagra_Naive_Bayes_Classifier_Explained.pdf
  */

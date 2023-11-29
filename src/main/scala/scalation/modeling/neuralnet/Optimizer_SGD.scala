@@ -5,7 +5,7 @@
  *  @date    Sun Feb  6 00:08:23 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Optimization: Stochastic Gradient Descent Optimizer
+ *  @note    Optimization: Stochastic Gradient Descent Optimizer
  */
 
 package scalation
@@ -26,7 +26,6 @@ import Optimizer._
 class Optimizer_SGD extends Optimizer:
 
     private val debug = debugf ("Optimizer_SGD", true)                    // debug function
-    private val flaw  = flawf ("Optimizer_SGD")                           // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given training data x and y for a 2-layer, multi-output Neural Network, fit

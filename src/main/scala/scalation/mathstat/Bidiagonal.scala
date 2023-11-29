@@ -5,7 +5,7 @@
  *  @date    Sun Jan 22 15:18:51 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Matrix Bidiagonalization
+ *  @note    Matrix Bidiagonalization
  *
  *  @see Matrix Computations:  Algorithm 5.4.2 Householder Bidiagonalization
  *
@@ -81,7 +81,7 @@ class Bidiagonal (a: MatrixD):
         var h    = 0.0                                  //           [ 0  h ]
         for i <- 0 until n do
 
-            var l = i + 1                               // set control index l
+            val l = i + 1                               // set control index l
             e(i)  = g                                   // assign ith super-diagonal element
             var s = sdot (u(?, i), u(?, i), i)          // u(i:m,i) dot u(i:m,i)
 

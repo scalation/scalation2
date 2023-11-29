@@ -5,7 +5,7 @@
  *  @date    Wed May 22 14:17:49 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: C45 Decision/Classification Tree
+ *  @note    Model: C45 Decision/Classification Tree
  */
 
 package scalation
@@ -115,7 +115,7 @@ class DecisionTree_C45 (x: MatrixD, y: VectorI, fname_ : Array [String] = null, 
                           rindex: VectorI, cindex: VectorI): (Int, Double, VectorI) =
         var best = (-1, 0.0, null.asInstanceOf [VectorI])                     // best (feature, gain, frequency)
         for j <- cindex do
-            val xj = x(?, j)                                                  // column j of matrix x
+            val xj = x_(?, j)                                                 // column j of matrix x
             if feas(j).kind != Categorical then
                 threshold(j) = DecisionTree_C45.findSplit (xj, y_, rindex, k)   // => calculate split threshold
             end if

@@ -5,7 +5,7 @@
  *  @date    Tue Oct 6 12:27:00 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Helper Methods for Making Database Schema
+ *  @note    Helper Methods for Making Database Schema
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Wed Nov 4 12:27:00 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Top-level Function to Compute Distance between Points
+ *  @note    Top-level Function to Compute Distance between Points
  */
 
 package scalation

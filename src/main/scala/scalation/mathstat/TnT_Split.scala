@@ -5,7 +5,7 @@
  *  @date    Fri Feb 10 23:33:57 EST 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Test-n-Train (TnT) Split for Datasets
+ *  @note    Test-n-Train (TnT) Split for Datasets
  */
 
 package scalation

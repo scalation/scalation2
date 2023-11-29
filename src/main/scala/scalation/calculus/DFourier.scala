@@ -5,16 +5,18 @@
  *  @date    Sun Nov 12 12:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Derivatives for Fourier Basis Functions
+ *
  *  @see https://en.wikipedia.org/wiki/Fourier_series
  */
 
-package scalation.calculus
+package scalation
+package calculus
 
 import scala.Double.NaN
 import scala.math.{Pi, cos, sin}
-import scalation.linalgebra.VectorD
-import scalation.math.double_exp
-import scalation.plot.Plot
+
+import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `DFourier` class provides Fourier basis functions with derivatives.
@@ -25,8 +27,9 @@ import scalation.plot.Plot
  *  @param mMax  the number of sin/cos pairs to be used in the basis function
  */
 class DFourier (w: Double = 2.0 * Pi, mMax: Int = 4)
-      extends Fourier (w, mMax) with DBasisFunction
-{
+      extends Fourier (w, mMax)
+         with DBasisFunction:
+
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Obtain the value of nth derivative of the m-th order 'j'-th basis function at time 't'.
      *  Or alternatively, obtain the nth derivative basis function by calling dnbf(n)(m)(j) only.
@@ -38,27 +41,27 @@ class DFourier (w: Double = 2.0 * Pi, mMax: Int = 4)
      *  @param t  the time parameter
      */
     def dnbf (n: Int)(m: Int)(j: Int)(t: Double): Double =
-    {
-        val c  = (j+1)/2 * w                            // constant for the inner parts of the sin/cos functions
-        val cn = c~^n                                   // c^n
-        val cSin = if (n/2 % 2 == 0)     cn else -cn    // multiplicative constant for derivatives of Sines
-        val cCos = if ((n+1)/2 % 2 == 0) cn else -cn    // multiplicative constant for derivatives of Cosines
+        val c  = (j+1)/2 * w                               // constant for the inner parts of the sin/cos functions
+        val cn = c~^n                                      // c^n
+        val cSin = if n/2 % 2 == 0 then     cn else -cn    // multiplicative constant for derivatives of Sines
+        val cCos = if (n+1)/2 % 2 == 0 then cn else -cn    // multiplicative constant for derivatives of Cosines
 
-        if      (j > 2*m)    NaN                        // invalid input, j must be <= 2m
-        else if (j == 0)     if (n > 0) 0.0 else 1.0
-        else if (j % 2 == 0) if (n % 2 == 0) cSin * sin (c * t) else cSin * cos (c * t)
-        else                 if (n % 2 == 0) cCos * cos (c * t) else cCos * sin (c * t)
-    } // dnbf
+        if j > 2*m then NaN                                // invalid input, j must be <= 2m
+        else if j == 0 then if n > 0 then 0.0 else 1.0
+        else if j % 2 == 0 then if n % 2 == 0 then cSin * sin (c * t) else cSin * cos (c * t)
+        else if n % 2 == 0 then cCos * cos (c * t)
+        else cCos * sin (c * t)
+    end dnbf
 
-} // DFourier Class
+end DFourier
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `DFourierTest` object is used to test the `DFourier` class.
- *  > runMain scalation.calculus.DFourierTest
+/** The `dFourierTest` object is used to test the `DFourier` class.
+ *  > runMain scalation.calculus.dFourierTest
  */
-object DFourierTest extends App
-{
+@main def dFourierTest (): Unit =
+
     val m = 1
     val dfour = new DFourier ()
 //  val t = VectorD (0.0 to 5 by 0.01)
@@ -73,5 +76,5 @@ object DFourierTest extends App
     new Plot (t, dy, y, "dy vs y")
     new Plot (t, d2y, dy, "d2y vs dy")
 
-} // FourierTest object
+end dFourierTest
 

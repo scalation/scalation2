@@ -5,7 +5,7 @@
  *  @date    Mon Oct 11 19:46:20 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gates Can Open (Green) and Close (Red)
+ *  @note    Gates Can Open (Green) and Close (Red)
  */
 
 // Warning: For long run simulations, increase the number of cycles MAX_FLIPS.
@@ -49,7 +49,7 @@ class Gate (name: String, director: Model, time: Double, line: WaitQueue,
     private val MAX_FLIPS   = 5000                                   // maximum number of flips before forced shut down
 
     private val debug = debugf ("Gate", false)                       // debug function 
-    private val flaw  = flawf ("Gate")                               // flaw function
+
     private var _open = open0                                        // initial value for _open
             val vert  = new Vertex (name, prop, pos)                 // internal vertex
     private var flips = 0                                            // the number of gate flips/cycles

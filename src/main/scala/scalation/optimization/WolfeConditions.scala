@@ -5,11 +5,11 @@
  *  @date    Thu Jun 29 20:43:44 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Wolfe Conditions for Line Search Algorithms
+ *  @note    Wolfe Conditions for Line Search Algorithms
  *
  *  @see reference.wolfram.com/language/tutorial/UnconstrainedOptimizationStepControl.html
  *  @see pages.cs.wisc.edu/~ferris/cs730/chap3.pdf
- *  @see Limited Memory BFGS for Nonsmooth Optimization
+ *  @see Limited memory BFGS for Nonsmooth Optimization
  */
 
 package scalation
@@ -40,9 +40,6 @@ import scalation.mathstat._
  *  @param c2  constant for curvature/slope constraint (Wolfe condition 2: .9 to .8)
  */
 class WolfeConditions (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Double = 0.9):
-
-    private val POS_INF = Double.PositiveInfinity                   // Positive Infinity
-    private val MAX_IT  = 30                                        // maximum number of iterations
 
     if g == null then g = (x: VectorD) => ∇ (f)(x)                  // no function for gradient => use numerical
 

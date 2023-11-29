@@ -5,7 +5,7 @@
  *  @date    Sun Nov 19 12:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Statistical Test for Time Series Stationarity
+ *  @note    Model Support: Statistical Test for Time Series Stationarity
  *
  *  Kwiatkowski–Phillips–Schmidt–Shin (KPSS) Test
  *  Time Series Stationarity around a deterministic trend

@@ -5,7 +5,7 @@
  *  @date    Sat Sep 11 15:17:56 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: SOME for Process-Interaction Simulation (A Template)
+ *  @note    Example Model: SOME for Process-Interaction Simulation (A Template)
  */
 
 package scalation

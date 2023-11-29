@@ -5,7 +5,7 @@
  *  @date    Thu Nov 10 14:14:46 EST 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   `Graph` Dual Isomorphism Using Mutable Sets
+ *  @note    `Graph` Dual Isomorphism Using Mutable Sets
  */
 
 package scalation
@@ -27,7 +27,6 @@ class DualIso (g: Graph, q: Graph)
       extends GraphMatcher (g, q):
 
     private val duals        = new DualSim (g, q)                  // object for Dual Simulation algorithm
-    private var t0           = 0.0                                 // start time for timer
     private var matches      = SET [Array [SET [Int]]] ()          // initialize matches to empty
     private var noBijections = true                                // no results yet
     private var limit        = 1000000                             // limit on number of matches
@@ -121,7 +120,8 @@ class DualIso (g: Graph, q: Graph)
      */
     private def merge (psi: SET [Array [Int]]): Array [SET [Int]] =
         val matches = Array.ofDim [SET [Int]] (q.size).map (_ => SET [Int] ())
-        for b <- bijections (); i <- b.indices do matches(i) += b(i)
+        val bijects = if psi != null then psi else bijections ()
+        for b <- bijects; i <- b.indices do matches(i) += b(i)
         matches
     end merge
 

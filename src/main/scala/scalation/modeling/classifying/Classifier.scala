@@ -5,7 +5,7 @@
  *  @date    Sun Mar 20 13:33:19 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Classifier for Matrix Input, Vector Output
+ *  @note    Model Framework: Classifier for Matrix Input, Vector Output
  */
 
 package scalation

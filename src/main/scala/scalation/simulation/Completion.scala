@@ -5,7 +5,7 @@
  *  @date    Fri Sep 17 23:52:26 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Signalling between Threads/Coroutines 
+ *  @note    Signalling between Threads/Coroutines 
  */
 
 package scalation

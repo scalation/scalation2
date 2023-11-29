@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Thu May 15 15:18:39 EDT 2014
  *  @see     LICENSE (MIT style license file). 
+ *
+ *  @note    Visualization/Drawing Frame
  */
 
 package scalation

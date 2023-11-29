@@ -5,7 +5,7 @@
  *  @date    Mon Sep  9 13:30:41 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Perceptron (single output 2-layer Neural-Network)
+ *  @note    Model: Perceptron (single output 2-layer Neural-Network)
  *
  *  @see     hebb.mit.edu/courses/9.641/2002/lectures/lecture03.pdf
  */
@@ -46,9 +46,8 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val debug     = debugf ("Perceptron", false)                // debug function
     private val flaw      = flawf ("Perceptron")                        // flaw function
     private val (m, n)    = x.dims                                      // input data matrix dimensions
-    private var η         = hparam ("eta").toDouble                     // the learning/convergence rate (requires adjustment)
+    private val η         = hparam ("eta").toDouble                     // the learning/convergence rate (requires adjustment)
     private val maxEpochs = hparam ("maxEpochs").toInt                  // the maximum number of training epcochs/iterations
-    private val _1        = VectorD.one (m)                             // vector of all ones
 
     modelName = "Perceptron_" + f.name
 
@@ -271,7 +270,7 @@ import Perceptron.hp
     val sst = (y - y.mean).normSq                                   // sum of squares total
     println (s"sst = $sst")
 
-    var eta   = 0.5 
+    val eta   = 0.5 
     hp("eta") = eta                                                 // try several values for eta
     val nn = new Perceptron (x, y, null, hp, f_reLU)                // create a perceptron, user control
 //  val nn = new Perceptron (x, y, null, hp)                        // create a perceptron, user control

@@ -5,7 +5,7 @@
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Plot Vectors y and z vs. x
+ *  @note    Plot Vectors y and z vs. x
  */
 
 package scalation
@@ -159,13 +159,13 @@ class Canvas (x: VectorD, y: VectorD, z: VectorD, width: Int, height: Int, lines
     private val baseX    = offset                           // base for x-axis
     private val baseY    = frameH - offset                  // base for y-axis
 
-    private var minX     = floor (SCALE * x.min) / SCALE.toDouble
-    private var maxX     = ceil (x.max + EPSILON)
-    private var minY     = floor (SCALE * y.min) / SCALE.toDouble
-    private var maxY     = ceil (y.max)
-//  private var maxY     = ceil (y.max + EPSILON)
-    private var deltaX   = maxX - minX
-    private var deltaY   = maxY - minY
+    private val minX     = floor (SCALE * x.min) / SCALE.toDouble
+    private val maxX     = ceil (x.max + EPSILON)
+    private val minY     = floor (SCALE * y.min) / SCALE.toDouble
+    private val maxY     = ceil (y.max)
+//  private val maxY     = ceil (y.max + EPSILON)
+    private val deltaX   = maxX - minX
+    private val deltaY   = maxY - minY
 
     private val diameter = 4
     private val dot      = Ellipse ()
@@ -241,6 +241,7 @@ end Canvas
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `plotTest` main function is used to test the `Plot` class.
+ *  @see scalation.scala2d.writeImage
  *  > runMain scalation.mathstat.plotTest
  */
 @main def plotTest (): Unit =
@@ -249,8 +250,9 @@ end Canvas
     val y = new VectorD (100)
     for i <- 0 until 100 do { x(i) = i / 10.0; y(i) = pow (x(i) - 5, 2) }
     new Plot (x, y, null, "plot1", lines = true)
-    val plot = new Plot (null, y, null, "plot2", lines = true)
+    new Plot (null, y, null, "plot2", lines = true)
 
+//  val plot = new Plot (null, y, null, "plot2", lines = true)
 //  writeImage (DATA_DIR + "plot.png", plot)
 
 end plotTest

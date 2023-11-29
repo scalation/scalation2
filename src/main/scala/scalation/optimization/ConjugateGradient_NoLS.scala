@@ -5,6 +5,8 @@
  *  @date    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Polak-Ribiere Conjugate Gradient (PR-CG) with No Line Search
+ *
  *  @see http://www.neos-guide.org/NEOS/index.php/Nonlinear_Conjugate_Gradient_Method
  */
 
@@ -35,7 +37,6 @@ class ConjugateGradient_NoLS (f: FunctionV2S)
       extends Minimize:
 
     private val debug  = debugf ("ConjugateGradient_NoLS", true)   // debug function
-    private val flaw   = flawf ("ConjugateGradient_NoLS")          // flaw function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the beta function using the Polak-Ribiere (PR) technique.  The
@@ -56,7 +57,7 @@ class ConjugateGradient_NoLS (f: FunctionV2S)
     def solve (x0: VectorD, α: Double = eta): FuncVec =
         var x    = x0                                         // current point
         var f_x  = f(x)                                       // objective function at current point
-        var x_   = new VectorD (x.dim)                        // next point
+        val x_   = new VectorD (x.dim)                        // next point
         var f_x_ = 0.0                                        // objective function at next point
         var dir  = - ∇ (f)(x)                                 // initial direction is -gradient
         var dir0 = VectorD.nullv                              // keep the previous direction
@@ -147,7 +148,6 @@ end conjugateGradient_NoLSTest2
  */
 @main def conjugateGradient_NoLSTest3 (): Unit =
 
-    val n  = 2
     val x0 = VectorD (0.1, 0)
 
     banner ("Minimize: 1/x_0 + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -155,7 +155,7 @@ end conjugateGradient_NoLSTest2
     def f (x: VectorD): Double = 1/x(0) + x(0)~^4 + (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1.0
 
     val optimizer = new ConjugateGradient_NoLS (f)
-    var opt = optimizer.solve (x0)
+    val opt = optimizer.solve (x0)
     println (s"][ solve: optimal solution (f(x), x) = $opt")
 
 end conjugateGradient_NoLSTest3

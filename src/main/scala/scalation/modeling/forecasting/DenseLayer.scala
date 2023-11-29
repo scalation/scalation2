@@ -5,7 +5,7 @@
  *  @date    Fri Oct 13 22:21:37 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: (Optionally Activated) Linear Transformation Layer
+ *  @note    Model Framework: (Optionally Activated) Linear Transformation Layer
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Jan  1 13:54:44 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Function Type FunctionS2S and Common Functions of that Type
+ *  @note    Function Type FunctionS2S and Common Functions of that Type
  *
  *  @see https://dotty.epfl.ch/api/scala/math.html
  *  @see https://en.wikipedia.org/wiki/Trigonometric_functions

@@ -5,7 +5,7 @@
  *  @date    Sun May  5 13:13:42 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Nelder-Mead Simplex Derivative-Free Optimization
+ *  @note    Nelder-Mead Simplex Derivative-Free Optimization
  *
  *  @see     http://www.scholarpedia.org/article/Nelder-Mead_algorithm
  *  @see     http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2097904
@@ -124,9 +124,8 @@ class NelderMeadSimplex2 (f: FunctionV2S, n: Int, checkCon: Boolean = false,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Contract: compute the inner contraction point between x_h and x_c.
      *  @param x_c  the best-side centroid of the simplex
-     *  @param x_r  the reflection point
      */
-    private def contractIn (x_c: VectorD, x_r: VectorD): FuncVec =
+    private def contractIn (x_c: VectorD): FuncVec =
         val x_ci = x_c + (simplex(0)._2 - x_c) * beta
         (f(x_ci), x_ci)
     end contractIn
@@ -199,7 +198,7 @@ class NelderMeadSimplex2 (f: FunctionV2S, n: Int, checkCon: Boolean = false,
                         val (f_co, x_co) = contractOut (x_c, x_r)
                         if f_co <= f_r then { replace (x_co); break () }   // replace worst x_h with x_co
                     else                                                   // f_r at least as large as worst
-                        val (f_ci, x_ci) = contractIn (x_c, x_r)
+                        val (f_ci, x_ci) = contractIn (x_c)
                         if f_ci <= f_h then { replace (x_ci); break () }   // replace worst x_h with x_ci
                     end if
                 end if
@@ -223,10 +222,8 @@ class NelderMeadSimplex2 (f: FunctionV2S, n: Int, checkCon: Boolean = false,
      *  @param toler  the tolerance used for termination
      */
     def solve (x0: VectorD, step: Double = STEP, toler: Double = EPSILON): FuncVec =
-        var dist = Double.PositiveInfinity                          // distance between worst and best vertices
-        var diff = Double.PositiveInfinity                          // difference between their functional values
         initSimplex (x0, step)
-        debug ("solve", s"0:\tdist = $dist, diff = $diff, \n\tsimplex = ${stringOf (simplex)}")
+        debug ("solve", s"0:\tdist = MAX, diff = MAX, \n\tsimplex = ${stringOf (simplex)}")
 
         breakable {
             for k <- 1 to MAX_IT do
@@ -251,7 +248,7 @@ end NelderMeadSimplex2
  */
 @main def nelderMeadSimplex2Test (): Unit =
 
-    var x0 = VectorD (1.0, 1.0)                                     // starting point
+    val x0 = VectorD (1.0, 1.0)                                     // starting point
 
     println ("\nProblem 1: (x_0 - 2)^2 + (x_1 - 3)^2 + 1") 
     def f (x: VectorD): Double = (x(0) - 2.0) * (x(0) - 2.0) + (x(1) - 3.0) * (x(1) - 3.0) + 1.0

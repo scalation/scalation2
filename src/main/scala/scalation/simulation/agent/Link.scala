@@ -5,7 +5,7 @@
  *  @date    Thu Sep 30 16:46:03 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Link is a Pathway between Vertices
+ *  @note    Link is a Pathway between Vertices
  */
 
 package scalation

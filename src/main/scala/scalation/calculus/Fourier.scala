@@ -5,6 +5,8 @@
  *  @date    Tue May 2 21:45:58 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Fourier Basis Functions (sin and cos)
+ *
  *  @see https://en.wikipedia.org/wiki/Fourier_series
  */
 
@@ -26,10 +28,8 @@ import scalation.mathstat._
 class Fourier (w: Double = 2.0 * Pi, mMax: Int = 4)
       extends BasisFunction:
 
-    private val debug = debugf ("Fourier", true)              // debug function
-
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Obtain the value of the m-th order 'j'-th basis function at time 't'.
+    /** Obtain the value of the m-th order j-th basis function at time t.
      *  Or alternatively, obtain the basis function by calling bf(m)(j) only.
      *  @param m  the order of the basis function
      *  @param j  indicates which basis function

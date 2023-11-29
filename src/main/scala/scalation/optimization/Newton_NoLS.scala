@@ -5,7 +5,7 @@
  *  @date    Wed Jun  7 17:54:59 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Newton Method to Find Minima for Functions of Vectors
+ *  @note    Newton Method to Find Minima for Functions of Vectors (with no Linear Search)
  *
  *  @see web.stanford.edu/class/cme304/docs/newton-type-methods.pdf
  */
@@ -42,7 +42,7 @@ class Newton_NoLS (f: FunctionV2S, useLS: Boolean = false)
      */
     def solve (x0: VectorD, α: Double = eta): FuncVec =
         val wls   = new WolfeLS2 (f, null)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = VectorD.one (x.dim)                           // initial dummy value for gradient
 
@@ -77,7 +77,7 @@ class Newton_NoLS (f: FunctionV2S, useLS: Boolean = false)
     def solve2 (x0: VectorD, grd: Array [FunctionV2S], α: Double = eta): FuncVec = 
         val grad  = array2f (grd)                                 // make function V2V
         val wls   = new WolfeLS2 (f, grad)                        // Wolfe Line Search
-        var x     = x0                                            // current point
+        val x     = x0                                            // current point
         var f_x   = f(x)                                          // function value at x
         var df_x  = VectorD.one (x.dim)                           // initial dummy value for gradient
 

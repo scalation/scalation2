@@ -5,7 +5,7 @@
  *  @date    Thu Sep 30 16:46:03 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Sink Terminates Entities/SimAgents
+ *  @note    Sink Terminates Entities/SimAgents
  */
 
 package scalation

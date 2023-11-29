@@ -5,7 +5,7 @@
  *  @date    Thu May 10 15:50:15 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Tensor (3D) Algebra
+ *  @note    Tensor (3D) Algebra
  *
  *  @see www.stat.uchicago.edu/~lekheng/work/icm1.pdf
  *  @see www.math.ias.edu/csdm/files/13-14/Gnang_Pa_Fi_2014.pdf
@@ -463,7 +463,7 @@ end TensorD
  */
 object TensorD:
 
-    private val flaw = flawf ("TensorD")                               // flaw function
+//  private val flaw = flawf ("TensorD")                               // flaw function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Build a tensor from the argument list x.

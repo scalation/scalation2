@@ -5,7 +5,7 @@
  *  @date    Tue Sep 13 22:53:44 EDT 2022 
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   `TNode` TNode in Tree
+ *  @note    `TNode` TNode in Tree
  */
 
 package scalation.database

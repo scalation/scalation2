@@ -5,7 +5,7 @@
  *  @date    Sun Feb 13 16:22:21 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: NeuralNet_3L for Time Series
+ *  @note    Model: NeuralNet_3L for Time Series
  */
 
 package scalation
@@ -26,10 +26,6 @@ import neuralnet.{NeuralNet_3L, Optimizer}
  */
 object NeuralNet_3L4TS:
 
-    private val debug   = debugf ("NeuralNet_3L4TS", true)                // debug function
-    private val flaw    = flawf ("NeuralNet_3L4TS")                       // flaw function
-    private val MISSING = -0.0                                            // missing value
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `NeuralNet_3L` object from a response vector.  The input/data matrix
      *  x is formed from the lagged y vectors as columns in matrix x.
@@ -44,7 +40,7 @@ object NeuralNet_3L4TS:
     def apply (y: VectorD, lags: Int, h: Int, nz: Int = -1,
                hparam: HyperParameter = Optimizer.hp,
                f: AFF = f_eLU, f1: AFF = f_tanh): NeuralNet_3L =
-        var (x, yy) = buildMatrix4TS (y, lags, h)                         // column for each lag
+        val (x, yy) = buildMatrix4TS (y, lags, h)                         // column for each lag
 
         val mod = NeuralNet_3L.rescale (x, yy, null, nz, hparam, f, f1)
         mod.modelName = s"NeuralNet_3L4TS_$lags${f.name}_${f1.name}"
@@ -91,7 +87,6 @@ end neuralNet_3L4TSTest
 @main def neuralNet_3L4TSTest2 (): Unit =
 
     import Example_LakeLevels.y
-    val m = y.dim
     val h = 2                                                          // the forecasting horizon
 
     for p <- 1 to 7 do                                                 // autoregressive hyper-parameter p

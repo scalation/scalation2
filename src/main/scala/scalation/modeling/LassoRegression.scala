@@ -5,7 +5,7 @@
  *  @date    Tue Apr 18 14:24:14 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Lasso Regression (L1 Shrinkage/Regularization)
+ *  @note    Model: Lasso Regression (L1 Shrinkage/Regularization)
  */
 
 package scalation
@@ -33,7 +33,7 @@ class LassoRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
 
     private val flaw   = flawf ("LassoRegression")                       // flaw function
     private val debug  = debugf ("LassoRegression", true)                // debug function
-    private var lambda = hparam ("lambda").toDouble                      // weight to put on regularization
+    private val lambda = hparam ("lambda").toDouble                      // weight to put on regularization
 
     modelName = "LassoRegression"
 

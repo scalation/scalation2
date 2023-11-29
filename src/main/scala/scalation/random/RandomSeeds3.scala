@@ -5,6 +5,8 @@
  *  @date    Fri Mar 28 14:14:24 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    1000 Seeds for LCG Random Number Generator
+ *
  *  scala -cp <classpath> scalation.random.SeedFinder
  */
 

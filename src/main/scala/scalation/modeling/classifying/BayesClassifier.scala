@@ -5,7 +5,7 @@
  *  @date    Sat Aug  8 20:26:34 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework:  Trait for Bayesian Classifiers
+ *  @note    Model Framework:  Trait for Bayesian Classifiers
  */
 
 package scalation

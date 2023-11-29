@@ -5,7 +5,7 @@
  *  @date    Sat Sep  8 13:53:16 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Gaussian Naive Bayes Classifier
+ *  @note    Model: Gaussian Naive Bayes Classifier
  */
 
 package scalation

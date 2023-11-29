@@ -5,7 +5,7 @@
  *  @date    Wed Jun  6 14:30:32 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Graph Generator
+ *  @note    Random Graph Generator (generates adjacency matrices)
  */
 
 package scalation

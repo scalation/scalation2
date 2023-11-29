@@ -5,7 +5,7 @@
  *  @date    Mon Oct 17 16:01:39 EDT 2011
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Contour Plots for z = f(x, y) using color-coding for z
+ *  @note    Contour Plots for z = f(x, y) using color-coding for z
  */
 
 package scalation
@@ -40,7 +40,6 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
              _title: String = "Contour Plot of f(x, y)")
       extends VizFrame (_title, null):
 
-    private val EPSILON  = 1E-9                                 // number close to zero
     private val _1_3     = 1.0 / 3.0                            // one third
     private val _2_3     = 2.0 / 3.0                            // two thirds
     private val offset   = 50                                   // offset frame to axis
@@ -199,18 +198,20 @@ end PlotC
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `plotCTest` main function is used to test the `PlotC` class.
+ *  @see scalation.scala2d.writeImage
  *  > runMain scalation.mathstat.plotCTest
  */
 @main def plotCTest (): Unit =
 
     def f(x: VectorD): Double = (x(0)/2 - 3)~^2 + (x(1)/3 - 2)~^2
 
-    val lb     = VectorD (0, 0)
-    val ub     = VectorD (10, 10)
-    val deltaF = 18.0
-    val path   = ArrayBuffer (VectorD (0, 0), VectorD (3, 2), VectorD (6, 6))
-    val plot   = new PlotC (f, lb, ub, path)
+    val lb   = VectorD (0, 0)
+    val ub   = VectorD (10, 10)
+    val path = ArrayBuffer (VectorD (0, 0), VectorD (3, 2), VectorD (6, 6))
+    val plot = new PlotC (f, lb, ub, path)
     println (s"plot = $plot")
+
+    writeImage (DATA_DIR + "plotc.png", plot)
 
 end plotCTest
 

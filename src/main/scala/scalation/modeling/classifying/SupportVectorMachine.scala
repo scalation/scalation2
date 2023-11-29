@@ -5,7 +5,7 @@
  *  @date    Mon Mar  3 14:39:17 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Support Vector Machine
+ *  @note    Model: Support Vector Machine
  *
  *  @see fbim.fh-regensburg.de/~saj39122/Diplomarbeiten/Miklos/Papers/Keerthi%20improvement%20on%20SMO.pdf
  *  @see www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-98-14.pdf
@@ -51,11 +51,11 @@ class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = nu
     private var fCache: VectorD = null                           // errors for all non-bound examples
     private var w: VectorD      = null                           // weights
     
-    private var I_0     = Set [Int] ()                           // {i: 0 < alp(i) < C}
-    private var I_1     = Set [Int] ()                           // {i: y(i) =  1, alp(i) = 0}
-    private var I_2     = Set [Int] ()                           // {i: y(i) = -1, alp(i) = C}
-    private var I_3     = Set [Int] ()                           // {i: y(i) =  1, alp(i) = C}
-    private var I_4     = Set [Int] ()                           // {i: y(i) = -1, alp(i) = 0}
+    private val I_0     = Set [Int] ()                           // {i: 0 < alp(i) < C}
+    private val I_1     = Set [Int] ()                           // {i: y(i) =  1, alp(i) = 0}
+    private val I_2     = Set [Int] ()                           // {i: y(i) = -1, alp(i) = C}
+    private val I_3     = Set [Int] ()                           // {i: y(i) =  1, alp(i) = C}
+    private val I_4     = Set [Int] ()                           // {i: y(i) = -1, alp(i) = 0}
     
     private var b       =  0.0                                   // threshold/offset
     private var b_Low   =  1.0                                   // lower threshold
@@ -198,9 +198,9 @@ class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = nu
         if i1 == i2 then { debug ("takeStep", s"skip if i1 == i2"); return false }
         
         al1 = alp(i1); al2 = alp(i2)
-        var y1 = y(i1); var y2 = y(i2)
-        var F1 = fCache(i1); var F2 = fCache(i2) 
-        var s  = y1 * y2
+        val y1 = y(i1); val y2 = y(i2)
+        val F1 = fCache(i1); val F2 = fCache(i2) 
+        val s  = y1 * y2
         
         val (l, h) = computeLH (y1, y2)
         if l == h then { debug ("takeStep", s"skip if l == h"); return false }
@@ -256,7 +256,7 @@ class SupportVectorMachine (x: MatrixD, y: VectorI, fname_ : Array [String] = nu
         if y(i2) == -1 && a2 == 0 then I_4 += i2 else I_4 -= i2
         
         // Compute (i_Low, b_Low) and (i_Up, b_Up), using i1, i2 and indices in I_0
-        var I = I_0
+        val I = I_0
         I ++= Set (i1, i2)
         for i <- I do
             if fCache (i) < b_Up then
@@ -411,6 +411,7 @@ end SupportVectorMachine
     val mod = new SupportVectorMachine (x, y)                // create optimizer
     mod.trainNtest ()()
     println (mod.summary ())
+    println (mod.predict (z))
 
 end supportVectorMachineTest
 

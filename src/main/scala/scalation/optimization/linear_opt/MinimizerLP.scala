@@ -5,7 +5,7 @@
  *  @date    Sun May 26 15:07:54 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for Linear Optimizers
+ *  @note    Base Trait for Linear Optimizers
  */
 
 package scalation

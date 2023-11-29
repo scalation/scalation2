@@ -2,10 +2,10 @@
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
  *  @version 2.0
- *  #date    Sun Aug 27 14:03:25 EDT 2023
+ *  @date    Sun Aug 27 14:03:25 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  #title   Model: Vector AutoRegressive (VAR)
+ *  @note    Model: Vector AutoRegressive (VAR)
  */
 
 package scalation
@@ -26,10 +26,6 @@ import scalation.modeling.neuralnet.RegressionMV
  *  where x = [y_{t-1}, y_{t-2}, ... y_{t-lag}].
  */
 object VAR:
-
-    private val debug   = debugf ("VAR", true)                            // debug function
-    private val flaw    = flawf ("VAR")                                   // flaw function
-    private val MISSING = -0.0                                            // missing value
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionMV` object from a response matrix.  The input/data matrix

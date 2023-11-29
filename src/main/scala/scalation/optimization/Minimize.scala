@@ -5,7 +5,7 @@
  *  @date    Wed Oct 24 16:25:29 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for Minimize
+ *  @note    Base Trait for Minimize
  */
 
 package scalation

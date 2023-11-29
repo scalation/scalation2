@@ -5,7 +5,7 @@
  *  @date    Wed Jun 21 22:39:42 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multiple ArrayDeques
+ *  @note    Data Structure: Multiple ArrayDeques
  */
 
 package scalation
@@ -24,7 +24,7 @@ import scala.reflect.ClassTag
  */
 class MultiArrayDeques [A: ClassTag] (nLanes: Int):
 
-    private val lane = Array.fill (2)(ArrayDeque [A] ()) 
+    private val lane = Array.fill (nLanes)(ArrayDeque [A] ())              // allocated n lanes
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the l-th lane.
@@ -86,18 +86,18 @@ end MultiArrayDeques
     var id = 0
     for l <- 0 until 2 do
         for i <- 0 until ncars(l) do
-           id += 1
-           road.add (l, Car (id, l, (l+1).toDouble * (ncars(l) - i)))
+            id += 1
+            road.add (l, Car (id, l, (l+1).toDouble * (ncars(l) - i)))
 
     for l <- 0 until 2 do
         println (s"lane $l = ${road(l)}")
 
     // Car in lane 0, find car in lane 1 at similar distance
-    var car1  = road(0, 15)
+    val car1  = road (0, 15)
     println (s"car1 = $car1")
     val guess = round (15 * ratio).toInt
     println (s"guess for car = $guess")
-    val car2  = road(1, guess)
+    val car2  = road (1, guess)
     println (s"car2 = $car2")
 
     // Car in lane 0, find car in front in the same lane

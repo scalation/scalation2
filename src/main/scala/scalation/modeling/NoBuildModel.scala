@@ -5,7 +5,7 @@
  *  @date    Thu May 19 14:31:51 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Turn Off Building Sub-Models and Feature Selection
+ *  @note    Turn Off Building Sub-Models and Feature Selection
  */
 
 package scalation

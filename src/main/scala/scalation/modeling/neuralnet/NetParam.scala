@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Neural Network Parameters (weights and biases)
+ *  @note    Model Support: Neural Network Parameters (weights and biases)
  */
 
 package scalation

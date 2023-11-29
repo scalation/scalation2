@@ -5,7 +5,7 @@
  *  @date    Tue May 29 14:45:32 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base trait for Clustering Models/Algorithms
+ *  @note    Base Trait for Clustering Models/Algorithms
  */
 
 package scalation

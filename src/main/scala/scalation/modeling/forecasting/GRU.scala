@@ -5,7 +5,7 @@
  *  @date    Thu May 11 15:38:07 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Gated Recurrent Unit (GRU) for Multivariate Time Series
+ *  @note    Model: Gated Recurrent Unit (GRU) for Multivariate Time Series
  *
  *  @see https://www.frontiersin.org/articles/10.3389/fncom.2021.678158/full
  * 
@@ -120,33 +120,35 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8)
 
     private var Uz   = rmg1.gen                                        // parameters for update gate z
     private var Wz   = rmg2.gen
-    private var b_z  = rvg1.gen
+    private val b_z  = rvg1.gen
 
     private var Ur   = rmg1.gen                                        // parameters for reset gate r
     private var Wr   = rmg2.gen
-    private var b_r  = rvg1.gen
+    private val b_r  = rvg1.gen
 
     private var Uc   = rmg1.gen                                        // parameters for candidate state mixin c
     private var Wc   = rmg2.gen
-    private var b_c  = rvg1.gen
+    private val b_c  = rvg1.gen
 
     // decoder for generating output
     private var V    = rmg3.gen                                        // decoder weight matrix
-    private var b_V  = rvg3.gen                                        // decoder bias vector
+    private val b_V  = rvg3.gen                                        // decoder bias vector
 
     private val z = Gate (n_seq, n_mem, n_var)                         // update gate z
     private val r = Gate (n_seq, n_mem, n_var)                         // reset gate r
     private val c = Gate (n_seq, n_mem, n_var)                         // candidate state mixin c
 
-    private var h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
+    private val h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
     private val h    = new MatrixD (n_seq, n_mem)                      // hidden state h
     private val yp   = new MatrixD (n_seq, n_var)                      // predicted output
     private val L    = new VectorD (n_seq)                             // store loss function values
 
     // the partial derivative of weights and biases (outside gates)
-    private var dh_m1 = new VectorD (h_m1.dim)
+    private val dh_m1 = new VectorD (h_m1.dim)
     private var db_V: VectorD = null
     private var dV    = new MatrixD (V.dim, V.dim2)
+
+    if fname != null then println (s"GRU: fname = $fname")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the GRU using simple gradient descent.

@@ -5,7 +5,7 @@
  *  @date    Mon Sep 14 14:15:51 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Animate the Motion of Objects in a Directed Graph
+ *  @note    Animate the Motion of Objects in a Directed Graph
  */
 
 package scalation
@@ -51,9 +51,9 @@ class Animator (graph: Dgraph)
      */
     private var _timeDilationFactor = 1.0
 
-    /** Number of lost entities/tokens.
+    /*  Number of lost entities/tokens.
      */
-    private var numLost = 0
+//  private var numLost = 0
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Get the time dilation factor.

@@ -5,7 +5,7 @@
  *  @date    Sun Jan 27 15:34:08 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Optimization: Stochastic Gradient Descent Optimizer
+ *  @note    Optimization: Stochastic Gradient Descent Optimizer
  */
 
 package scalation
@@ -74,7 +74,7 @@ trait Optimizer extends MonitorLoss with StoppingRule:
     def permGenerator (m: Int, rando: Boolean = true): PermutedVecI =
         val idx    = VectorI.range (0, m)                                 // data instance index range
         val stream = if rando then ranStream else 0                       // use rando, unless testing
-        PermutedVecI (idx, ranStream)                                     // permutation vector generator
+        PermutedVecI (idx, stream)                                        // permutation vector generator
     end permGenerator
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

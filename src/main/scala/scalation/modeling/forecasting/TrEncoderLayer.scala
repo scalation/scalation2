@@ -5,7 +5,7 @@
  *  @date    Fri Oct 13 22:21:37 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Transformer Encoder Layer
+ *  @note    Model Framework: Transformer Encoder Layer
  *
  *  @see sebastianraschka.com/blog/2023/self-attention-from-scratch.html
  *  @see arxiv.org/pdf/1706.03762.pdf (main paper)

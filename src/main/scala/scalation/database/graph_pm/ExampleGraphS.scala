@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Tue Aug  9 16:39:41 EDT 2016
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Example Data and Query Graphs (with `String` labels)
  */
 
 package scalation

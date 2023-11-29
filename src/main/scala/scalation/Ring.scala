@@ -5,7 +5,7 @@
  *  @date    Sun Jun 11 13:25:46 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Fixed Size Circular Array (Ring)
+ *  @note    Fixed Size Circular Array (Ring)
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Apr 27 12:55:24 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Means Clustering (to minimize SSE)
+ *  @note    Model: K-Means Clustering (to minimize SSE)
  */
 
 package scalation.analytics.clusterer

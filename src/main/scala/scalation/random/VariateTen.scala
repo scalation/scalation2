@@ -5,7 +5,7 @@
  *  @date    Wed Sep  6 16:52:21 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate Tensor (RVT) Generators
+ *  @note    Random Variate Tensor (RVT) Generators
  */
 
 package scalation

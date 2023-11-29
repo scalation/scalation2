@@ -5,7 +5,7 @@
  *  @date    Sat Mar  9 19:19:53 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate Vector (RVV) Generators
+ *  @note    Random Variate Vector (RVV) Generators
  */
 
 package scalation
@@ -159,7 +159,7 @@ case class NormalVec_ (mu: VectorD, sig: VectorD, stream: Int = 0)
     def pf (z: VectorD): Double =
         var d = 1.0                                          // density f(z)
         for i <- 0 until z.dim do
-            var v = (z(i) - mu(i)) / sig(i)                  // normalize
+            val v = (z(i) - mu(i)) / sig(i)                  // normalize
             d *= sqrt_2Pi * sig(i) * exp (-.5 * v*v)
         end for
         d

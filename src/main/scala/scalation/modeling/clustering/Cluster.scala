@@ -1,11 +1,11 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
- *  @version 1.0
+ *  @version 2.0
  *  @date    Sat Apr 27 12:55:24 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Cluster Record
+ *  @note   Cluster Record (holds information about clusters)
  */
 
 package scalation

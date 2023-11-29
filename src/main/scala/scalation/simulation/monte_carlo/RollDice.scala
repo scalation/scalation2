@@ -5,7 +5,7 @@
  *  @date    Thu Aug 25 13:58:23 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Roll Dice - Monte Carlo Simulation
+ *  @note    Roll Dice - Monte Carlo Simulation
  *
  *  @see ocw.mit.edu/high-school/mathematics/combinatorics-the-fine-art-of-counting/assignments/MITHFH_solutions_6.pdf
  *  @see mathworld.wolfram.com/Dice.html

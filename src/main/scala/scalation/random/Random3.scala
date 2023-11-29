@@ -5,7 +5,7 @@
  *  @date    Wed Sep 30 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *  
- *  @title   LCG (Linear Congruential Generator) using 64-bit Long's
+ *  @note    LCG (Linear Congruential Generator) using 64-bit Long's
  */
 
 package scalation
@@ -16,9 +16,9 @@ package random
  *  It implements, using 64-bit integers (Int's), the 'MINSTD' generator, which
  *  is a multiplicative Linear Congruential Generator (LCG).
  *  These generators were commonly used in the last century.
- *  <br>
+ *
  *      x_i = a x_i-1 % m
- *  <br>
+ * 
  *  @see http://random.mat.sbg.ac.at/results/karl/server/node4.html#SECTION00042000000000000000
  *  In case a better generator is needed, a Multiple Recursive Generator (MRG)
  *  or Composite Multiple Recursive Generator (CMRG) should be used.

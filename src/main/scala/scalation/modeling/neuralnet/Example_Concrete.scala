@@ -5,7 +5,7 @@
  *  @date    Fri Mar 16 15:13:38 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Concrete Production
+ *  @note    Example Dataset: Concrete Production
  *
  *  @see archive.ics.uci.edu/ml/datasets/Concrete+Slump+Test
  *  @see pdfs.semanticscholar.org/2aba/047471e3e1eef6fa0319b4a63d3dfceafb0b.pdf

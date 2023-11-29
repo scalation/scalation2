@@ -5,7 +5,7 @@
  *  @date    Sat Apr 12 13:45:50 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Common Combinatorics Functions
+ *  @note    Common Combinatorics Functions
  */
 
 package scalation
@@ -19,17 +19,14 @@ import scala.math.{abs, asin, E, exp, log, Pi, sin, sqrt}
  */
 object Combinatorics:
 
-    private val flaw = flawf ("Combinatorics")      // flaw function
+//  private val flaw = flawf ("Combinatorics")      // flaw function
 
-    private val _1_3      = 1.0 / 3.0               // one third
-    private val _1_6      = 1.0 / 6.0               // one sixth
-    private val _1_30     = 1.0 / 30.0              // one thirtieth
-    private val _5_90     = 5.0 / 90.0              // five over ninety
-    private val _2PI      = 2.0 * Pi                // two Pi
-    private val SQRT_PI   = sqrt (Pi)               // square root of Pi
-    private val SQRT_2PI  = sqrt (_2PI)             // square root of two Pi
-    private val LOG_2PI   = log (_2PI)              // natural log of two Pi
-    private val LOG_R_PI  = log (SQRT_PI)           // natural log of square root of Pi
+    private val _1_3     = 1.0 / 3.0                // one third
+    private val _1_6     = 1.0 / 6.0                // one sixth
+    private val _1_30    = 1.0 / 30.0               // one thirtieth
+    private val _5_90    = 5.0 / 90.0               // five over ninety
+    private val SQRT_PI  = sqrt (Pi)                // square root of Pi
+    private val LOG_R_PI = log (SQRT_PI)            // natural log of square root of Pi
 
     /** Table of all factorial numbers that can be represented as a long (64-bit) integer
      */
@@ -157,7 +154,7 @@ object Combinatorics:
     def stirling (k: Int): Double =
         if k < 2 then return 1.0
         val n = k.toDouble
-        sqrt (_2PI * n) * (n/E)~^n * (1.0 + 1.0/(12.0*n))
+        sqrt (_2Pi * n) * (n/E)~^n * (1.0 + 1.0/(12.0*n))
     end stirling
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -169,7 +166,7 @@ object Combinatorics:
     def mortici (k: Int): Double =
         if k < 2 then return 1.0
         val n = k.toDouble
-        SQRT_2PI * (n/E)~^n * n / ((n - _1_3) * n + _5_90)~^0.25
+        sqrt_2Pi * (n/E)~^n * n / ((n - _1_3) * n + _5_90)~^0.25
     end mortici
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -265,7 +262,7 @@ object Combinatorics:
                 var x = p(0)
                 for (i <- 1 until g + 2) x += p(i) / (z + i)
                 val t = z + g + 0.5
-                SQRT_2PI * t ~^ (z + 0.5) * exp (-t) * x
+                sqrt_2Pi * t ~^ (z + 0.5) * exp (-t) * x
             end if
         end gamma
 

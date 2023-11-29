@@ -5,7 +5,7 @@
  *  @date    Fri Aug  5 12:57:28 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Pivoting of Matrix Rows and Columns
+ *  @note    Pivoting of Matrix Rows and Columns
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Fri Jul 29 14:33:21 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Golf Ball Flight Dynamics
+ *  @note    Golf Ball Flight Dynamics
  */
 
 package scalation
@@ -34,7 +34,7 @@ import scalation.mathstat._
     val n  = 200                                          // maximum number of time points
     val tm =   5.0                                        // simulate for a maximum of tm seconds
     val g  =   9.80665                                    // gravitational force (meters/second^2)
-    val m  =  45.93                                       // mass of a golf ball in grams
+//  val m  =  45.93                                       // mass of a golf ball in grams
     val aa =  15.00                                       // launch angle in degrees
     val ss = 100.00                                       // swing speed in miles/hour
     val sf =   1.49                                       // smash factor
