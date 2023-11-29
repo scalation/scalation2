@@ -39,7 +39,7 @@ object LBFGSBacktrackingOrthantWise extends LBFGSLineSearch:
        params: LBFGSParameters
     ): LBFGSLineSearchReturn =
         var count = 0
-        var width = 0.5
+        val width = 0.5
         var norm = 0.0
         var dgtest = 0.0
         val wp = new VectorD(n)

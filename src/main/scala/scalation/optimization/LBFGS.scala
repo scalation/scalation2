@@ -54,7 +54,7 @@ object LBFGS extends PathMonitor:
 
         var k = 1
         var end = 0
-        var i, j, ls, bound = 0
+        var j, ls, bound = 0
         var step = 0.0
 
         /* Constant parameters and their default values. */

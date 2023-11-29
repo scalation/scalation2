@@ -40,11 +40,9 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
     ): LBFGSLineSearchReturn =
         var count = 0
         var width = 0.0
-        var dg = 0.0
         var dginit = 0.0
         var dgtest = 0.0
         val dec = 0.5
-        val inc = 2.1
 
         var xNew = x
         var gNew = g
