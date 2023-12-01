@@ -147,8 +147,10 @@ object LBFGS extends PathMonitor:
 
                 lineSearchResults match
                     case lineSearchStep: LBFGSLineSearchStep =>
-                        xNew = lineSearchStep.x
-                        g = lineSearchStep.g
+                        xNew = xp * params.momentum + lineSearchStep.x * (1 - params.momentum)
+                        g = gp * params.momentum + lineSearchStep.g * (1 - params.momentum)
+                        // xNew = lineSearchStep.x
+                        // g = lineSearchStep.g
                         fx = lineSearchStep.fx
                         step = lineSearchStep.step
                         ls = lineSearchStep.numberOfIterations
@@ -351,6 +353,9 @@ object LBFGS extends PathMonitor:
             end if
         else if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingOrthantWise then
             return Some(LBFGSReturnCode.InvalidLineSearch)
+        end if
+        if params.momentum < 0 || params.momentum > 1 then
+            return Some(LBFGSReturnCode.InvalidMomentum)
         end if
 
         None
