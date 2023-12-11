@@ -34,12 +34,12 @@ import scalation.mathstat.VectorD
  *                  iterations of the algorithm. For the ''k''-th iteration of
  *                  the algorithm, the resulting y,,k,, will be:
  *                  y,,k,, = g,,k+1,, - g,,k,,.
- *  @param rho      Inverse of the dot product between `y` and `s`. This value
- *                  is used in multiple steps when determining the search
- *                  direction to take when minimizing the function value, hence
- *                  it is calculated for each iteration. For the ''k''-th
- *                  iteration of the algorithm, the resulting ρ,,k,, will be:
- *                  ρ,,k,, = 1 / (`y`,,k,,^t^ &bull; `s`,,k,,).
+ *  @param ys       Dot product between `y` and `s`. This value is used in
+ *                  multiple steps when determining the search direction to take
+ *                  when minimizing the function value, hence it is calculated
+ *                  once for each iteration. For the ''k''-th iteration of the
+ *                  algorithm, the resulting ys,,k,, will be:
+ *                  `y`,,k,,^t^ &bull; `s`,,k,,.
  *  @param alpha    Product between `rho` and the dot product between `s` and
  *                  `q` of this iteration and next iteration, respectively. This
  *                  value is used to recalculate the `q` values for past
@@ -50,6 +50,6 @@ import scalation.mathstat.VectorD
 case class LBFGSIterationData(
     s: VectorD,
     y: VectorD,
-    rho: Double,
+    ys: Double,
     var alpha: Double
 )

@@ -234,7 +234,7 @@ object LBFGS extends PathMonitor:
                 ys = y dot s
                 yy = y dot y
 
-                lm(end) = LBFGSIterationData(s, y, 1 / ys, 0)
+                lm(end) = LBFGSIterationData(s, y, ys, 0)
 
                 /*
                 Recursive formula to compute dir = -(H \cdot g).
@@ -263,7 +263,7 @@ object LBFGS extends PathMonitor:
                     val it = lm(j)
                     /* \alpha_{j} = \rho_{j} s^{t}_{j} \cdot q_{k+1}. */
                     it.alpha = it.s dot d
-                    it.alpha = it.alpha * it.rho
+                    it.alpha = it.alpha / it.ys
                     /* q_{i} = q_{i+1} - \alpha_{i} y_{i}. */
                     d += (it.y * (-it.alpha))
                 end for
@@ -274,7 +274,7 @@ object LBFGS extends PathMonitor:
                     val it = lm(j)
                     /* \beta_{j} = \rho_{j} y^t_{j} \cdot \gamma_{i}. */
                     beta = it.y dot d
-                    beta *= it.rho
+                    beta /= it.ys
                     /* \gamma_{i+1} = \gamma_{i} + (\alpha_{j} - \beta_{j}) s_{j}. */
                     d += it.s * (it.alpha - beta)
                     j = (j + 1) % m
