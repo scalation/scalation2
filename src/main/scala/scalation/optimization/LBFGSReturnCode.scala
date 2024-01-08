@@ -130,7 +130,7 @@ enum LBFGSReturnCode(val code: Int = -1024):
     /** The current search direction increases the objective function value. */
     case IncreaseGradient extends LBFGSReturnCode(-994)
     
-    /** Invalid parameter [[LBFGSParameters.momentum]] specified. */
+    /** Invalid parameter `momentum` specified for [[dmLBFGS]]. */
     case InvalidMomentum extends LBFGSReturnCode(-993)
 end LBFGSReturnCode
 
