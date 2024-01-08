@@ -117,9 +117,6 @@ import scala.annotation.static
  *                          will occur when the `lineSearch` parameter is set to
  *                          [[LBFGSLineSearchAlgorithm.BacktrackingOrthantWise]]
  *                          and this parameter is set to `None`.
- *  @param momentum         Momentum coefficient to apply when calculating the
- *                          values of the variables and gradient vector for each
- *                          iteration.
  */
 case class LBFGSParameters(
     m: Int = 6,
@@ -136,8 +133,7 @@ case class LBFGSParameters(
     wolfe: Double = 0.9,
     gtol: Double = 0.9,
     xtol: Double = 1.0e-16,
-    orthantWise: Option[OrthantWiseParameters] = None,
-    momentum: Double = 0
+    orthantWise: Option[OrthantWiseParameters] = None
 ):
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

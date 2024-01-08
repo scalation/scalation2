@@ -1,19 +1,13 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  André Filipe Caldas Laranjeira, Shivam Anant Rathi
+/** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Tue Aug 22 15:39:53 EDT 2023
+ *  @note    Mon Jan 8 10:23:10 EST 2024
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Native Scala implementation of the Limited memory
+ *  Native Scala implementation of the direction momentum Limited memory
  *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in 1995. See the
- *  first two links for the original paper and authors' software (written in
- *  Fortran) distribution site, respectively. This Scala implementation was made
- *  based on the C implementation of the same algorithm found in the last link.
- *  @see www.ece.northwestern.edu/~nocedal/PSfiles/limited.ps.gz
- *  @see users.iems.northwestern.edu/~nocedal/lbfgsb.html
- *  @see github.com/chokkan/liblbfgs
+ *  (dmL-BFGS-B) algorithm.
  */
 
 // Package definition.
@@ -28,22 +22,25 @@ import scalation.mathstat.PlotC
 import scalation.mathstat.VectorD
 
 // Object.
-object LBFGS extends PathMonitor:
+object dmLBFGS extends PathMonitor:
+
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Performs the L-BFGS optimization that optimizes variables to minimize a
-     *  function value.
+    /** Performs the dmL-BFGS optimization that optimizes variables to minimize
+     *  a function value using momentum on the variables and the line search
+     *  direction.
      */
-    def lbfgsMain(
+    def dmlbfgsMain(
         n: Int,
         x: VectorD,
         functionLogic: EvaluationLogic | OptimizationLogic,
         params: LBFGSParameters = LBFGSParameters(),
+        momentum: Double,
         instance: Any = None
     ): LBFGSResults =
         clearPath()
 
-        checkLBFGSArgumentsForErrors(n, params) match
+        checkdmLBFGSArgumentsForErrors(n, params, momentum) match
             case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
             case _ =>
 
@@ -61,7 +58,7 @@ object LBFGS extends PathMonitor:
         val m = params.m
 
         try
-            var xp, g, gp, d = new VectorD(n)
+            var xp, g, gp, d, dp = new VectorD(n)
             var pg, pf, s, y = VectorD.nullv
             val lm = Array.ofDim[LBFGSIterationData](m)
 
@@ -74,7 +71,7 @@ object LBFGS extends PathMonitor:
 
             /* Allocate working space. */
             if params.orthantWise.nonEmpty then
-            /* Allocate working space for OW-LQN. */
+                /* Allocate working space for OW-LQN. */
                 pg = new VectorD(n)
             end if
 
@@ -134,9 +131,10 @@ object LBFGS extends PathMonitor:
             step = 1.0 / d.norm
 
             while true do
-                /* Store the current position and gradient vectors. */
+                /* Store the current position, gradient and direction vectors. */
                 xp = xNew
                 gp = g
+                dp = d
 
                 /* Search for an optimal step. */
                 if params.orthantWise.isEmpty then
@@ -147,7 +145,7 @@ object LBFGS extends PathMonitor:
 
                 lineSearchResults match
                     case lineSearchStep: LBFGSLineSearchStep =>
-                        xNew = lineSearchStep.x
+                        xNew = xp * momentum + lineSearchStep.x * (1 - momentum)
                         g = lineSearchStep.g
                         fx = lineSearchStep.fx
                         step = lineSearchStep.step
@@ -248,7 +246,7 @@ object LBFGS extends PathMonitor:
 
                 /* Compute the steepest direction. */
                 if params.orthantWise.isEmpty then
-                /* Compute the negative of gradients. */
+                    /* Compute the negative of gradients. */
                     d = -g
                 else
                     d = -pg
@@ -291,6 +289,8 @@ object LBFGS extends PathMonitor:
                     end for
                 end if
 
+                d = dp * momentum + d * (1 - momentum)
+
                 /*
                     Now the search direction d is ready. We try the default step first.
                  */
@@ -304,22 +304,29 @@ object LBFGS extends PathMonitor:
 
     // Private methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Checks if the L-BFGS optimization arguments have an error and returns an
-     *  [[Option]] with the [[LBFGSReturnCode]] that represents the first error
-     *  found.
+    /** Checks if the dmL-BFGS optimization arguments have an error and returns
+     *  an [[Option]] with the [[LBFGSReturnCode]] that represents the first
+     *  error found.
      *
      *  @param n                        The number of variables.
      *  @param params                   [[LBFGSParameters]] class representing
      *                                  the parameters chosen to control the
      *                                  L-BFGS optimization.
+     *  @param momentum                 The momentum to be applied in the
+     *                                  variable and line search direction
+     *                                  vectors.
      *  @return Option[LBFGSReturnCode] [[Option]] value with a
      *                                  [[LBFGSReturnCode]] return code that
      *                                  represents the first error found in the
-     *                                  `params` argument. If there are no
-     *                                  errors in the `params` argument,
-     *                                  [[None]] is returned.
+     *                                  `params` or `momentum` arguments. If
+     *                                  there are no errors in either, [[None]]
+     *                                  is returned.
      */
-    private def checkLBFGSArgumentsForErrors(n: Int, params: LBFGSParameters): Option[LBFGSReturnCode] =
+    private def checkdmLBFGSArgumentsForErrors(
+        n: Int,
+        params: LBFGSParameters,
+        momentum: Double
+    ): Option[LBFGSReturnCode] =
         if n <= 0 then return Some(LBFGSReturnCode.InvalidN)
         if params.epsilon < 0.0 then return Some(LBFGSReturnCode.InvalidEpsilon)
         if params.past < 0 then return Some(LBFGSReturnCode.InvalidTestPeriod)
@@ -352,19 +359,20 @@ object LBFGS extends PathMonitor:
         else if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingOrthantWise then
             return Some(LBFGSReturnCode.InvalidLineSearch)
         end if
+        if momentum < 0 || momentum >= 1 then return Some(LBFGSReturnCode.InvalidMomentum)
 
         None
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Determines what [[LBFGSLineSearch]] implementation to use in the L-BFGS
-     *  optimization.
+    /** Determines what [[LBFGSLineSearch]] implementation to use in the
+     *  dmL-BFGS optimization.
      *
      *  @param selection        [[LBFGSLineSearchAlgorithm]] that describes the
      *                          user selection for the line search algorithm to
-     *                          be used in the L-BFGS optimization.
+     *                          be used in the dmL-BFGS optimization.
      *  @return LBFGSLineSearch [[LBFGSLineSearch]] implementation of the line
      *                          search algorithm selected by the user to be
-     *                          used in the L-BFGS optimization.
+     *                          used in the dmL-BFGS optimization.
      */
     private def determineLineSearchImplementation(selection: LBFGSLineSearchAlgorithm): LBFGSLineSearch =
         selection match
@@ -375,203 +383,34 @@ object LBFGS extends PathMonitor:
             case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
             case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
             case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
-end LBFGS
+end dmLBFGS
 
-// Test functions.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `boothFunctionLBFGSTest` main function uses the Booth Function to test
- *  the `lbfgsMain` method provided by the [[LBFGS]] object. Multiple tests are
- *  performed with different values for the variables.
- *
- *  The Booth Function can be described as follows:
- *
- *  - Input dimension: 2;
- *
- *  - Function domain: -10 &le; x,,i,, &le; 10;
- *
- *  - Function definition: f(x) = (x,,0,, + 2 * x,,1,, - 7)^2^ + (2 * x,,0,, +
- *  x,,1,, - 5)^2^;
- *
- *  - Global minimum: x* = (1, 3); f(x*) = 0;
+/** The `mccormickFunctionDMLBFGSTest` main function uses the McCormick Function
+ *  to test the `dmlbfgsMain` method provided by the [[dmLBFGS]] object.
+ *  Multiple tests are performed with different values for the variables.
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
- *  > runMain scalation.optimization.L_BFGS_C.boothFunctionLBFGSTest
+ *  > runMain scalation.optimization.mccormickFunctionDMLBFGSTest
  *  }}}
  */
-@main def boothFunctionLBFGSTest(): Unit =
+@main def mccormickFunctionDMLBFGSTest(): Unit =
     // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
-    def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
+    def objectiveFunction(x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^2 - 1.5*x(0) + 2.5*x(1) + 1
+    def gradientFunction(x: VectorD): VectorD = VectorD(-1.5 + 2*x(0) - 2* x(1) + math.cos(x(0) + x(1)), 2.5 - 2 * x(0) + 2 * x(1) + math.cos(x(0) + x(1)))
 
     // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(1, 3)
+    val functionDomainLowerBound = VectorD(-4, -4)
+    val functionDomainUpperBound = VectorD(4, 4)
+    val functionMinimum = VectorD(-0.54719, -1.54719)
     val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
 
     // Testing.
-//    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
-//    println(LBFGS.lbfgsMain(2, VectorD(2, 3.5), functionOptimizationLogic))
-//    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
+    //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
+    //    println(LBFGS.lbfgsMain(2, VectorD(0, -0.5), functionOptimizationLogic))
+    println(dmLBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))
+    //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_boothFunction_plot.png")
-end boothFunctionLBFGSTest
-
-@main def bealeFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (1.5 - x(0) + x(0) * x(1)) * (-1 + x(1)) +
-      2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (-1 + (x(1)~^2)) +
-      2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (-1 + (x(1)~^3)),
-        2 * (1.5 - x(0) + x(0) * x(1)) * x(0) +
-          2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (2 * x(0) * x(1)) +
-          2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (3 * x(0) * (x(1)~^2)))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(3, 0.5)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-4.5, -4.5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-2, 2), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(0, 1), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(2, -2), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bealeFunction_plot.png")
-end bealeFunctionLBFGSTest
-
-@main def bohachevsky1FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) - 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)),
-        4 * x(1) - 0.4 * 4 * math.Pi * math.sin(4 * math.Pi * x(1)))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky1Function_plot.png")
-end bohachevsky1FunctionLBFGSTest
-
-@main def bohachevsky2FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
-        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky2Function_plot.png")
-end bohachevsky2FunctionLBFGSTest
-
-@main def bohachevsky3FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)),
-        4 * x(1) + 0.3 * 4 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky3Function_plot.png")
-end bohachevsky3FunctionLBFGSTest
-
-@main def camel3FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(4 * x(0) - 4.2 * x(0)~^3 + x(0)~^5 + x(1), x(0) + 2 * x(1))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_camel3Function_plot.png")
-end camel3FunctionLBFGSTest
-
-@main def cubeFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(-200 * (x(1) - x(0)~^3) * (3 * x(0)~^2) - 2 * (1 - x(0)), 200 * (x(1) - x(0)~^3))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(-1, 1)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_cubeFunction_plot.png")
-end cubeFunctionLBFGSTest
-
-@main def freudensteinRothFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) + 2 * (x(0) - 29 + x(1) * ((x(1) + 1) * x(1) - 14)),
-        2 * x(1) * ((5 - x(1)) * x(1) - 2) + 2 * (x(1) * ((x(1) + 1) * x(1) - 14) + (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) * ((5 - x(1)) * x(1) - 2)))
-
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(5, 4)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
-
-    // Testing.
-    //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic))
-    println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
-    //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
-
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png")
-end freudensteinRothFunctionLBFGSTest
+    new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, dmLBFGS.getPath, functionMinimum)
+end mccormickFunctionDMLBFGSTest
