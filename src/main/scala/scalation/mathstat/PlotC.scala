@@ -101,7 +101,7 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
                     val rgb =
                     if frac > _2_3 then ( ((frac-_2_3) * 765).toInt, ((1-frac) * 765).toInt, 0 )
                     else if frac > _1_3 then ( 0, ((frac-_1_3) * 765).toInt, ((_2_3-frac) * 765).toInt )
-                    else ( ((_1_3-frac) * 400).toInt, 0, ((frac) * 765).toInt )
+                    else ( ((_1_3-frac) * 400).toInt, 0, (frac * 765).toInt )
 
 //                    println (s"(x, y) = $vec, lbF = $lbF, frac = $frac, rgb = $rgb")
                     val color = new Color (rgb._1, rgb._2, rgb._3)
@@ -164,9 +164,8 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
     end Canvas
 
     if deltaF < 0.0 then resetBounds ()
-    getContentPane ().add (new Canvas ())
+    getContentPane.add (new Canvas ())
     setVisible (true)
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reset the bounds on the functional values of f.  If the caller fails to
@@ -206,14 +205,14 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
      * @param canvas   the Canvas object to use for drawing (optional)
      */
     def saveAsImage(plot: PlotC, filePath: String): Unit = {
-        val image = new BufferedImage(plot.getWidth()*2, plot.getHeight()*2, BufferedImage.TYPE_INT_ARGB)
+        val image = new BufferedImage(plot.getWidth*2, plot.getHeight*2, BufferedImage.TYPE_INT_ARGB)
         val g2d = image.createGraphics()
 
         // Create an instance of the Canvas class
         val canvas = new plot.Canvas()
 
         // Set the size of the canvas before calling paintComponent
-        canvas.setSize(plot.getWidth() * 2, plot.getHeight() * 2)
+        canvas.setSize(plot.getWidth * 2, plot.getHeight * 2)
 
         // Call the paintComponent method of the Canvas class
         canvas.paintComponent(g2d)
