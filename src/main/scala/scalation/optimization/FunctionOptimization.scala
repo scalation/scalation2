@@ -12,7 +12,8 @@
  */
 
 // Package definition.
-package scalation.optimization
+package scalation
+package optimization
 
 // Project imports.
 import scalation.calculus.Differential

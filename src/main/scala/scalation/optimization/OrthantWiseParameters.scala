@@ -12,7 +12,8 @@
  */
 
 // Package definition.
-package scalation.optimization
+package scalation
+package optimization
 
 // General imports.
 import scala.math.abs

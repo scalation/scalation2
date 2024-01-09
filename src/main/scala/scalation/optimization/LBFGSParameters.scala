@@ -11,7 +11,8 @@
  */
 
 // Package definition.
-package scalation.optimization
+package scalation
+package optimization
 
 // General imports.
 import java.lang.foreign.{MemoryLayout, MemorySegment, StructLayout}
