@@ -42,8 +42,8 @@ trait ZoomablePanel
     addMouseMotionListener (this)
     addMouseListener (this)
 
-    at.scale (2, 2)                                              // scale up for initial size
-    val mat = Array.ofDim [Double] (6)
+    at.scale (1, 1)                                              // scale up for initial size
+    val mat = Array.ofDim [Double] (10)
     at.getMatrix (mat)                                           // get the first two rows of transform matrix
 //  println (s"zoomablePanel: mat = ${stringOf (mat)}")
 

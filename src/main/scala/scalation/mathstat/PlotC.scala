@@ -205,17 +205,18 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
      * @param canvas   the Canvas object to use for drawing (optional)
      */
     def saveAsImage(plot: PlotC, filePath: String): Unit = {
-        val image = new BufferedImage(plot.getWidth*2, plot.getHeight*2, BufferedImage.TYPE_INT_ARGB)
+        val image = new BufferedImage(plot.getWidth, plot.getHeight, BufferedImage.TYPE_INT_ARGB)
         val g2d = image.createGraphics()
 
         // Create an instance of the Canvas class
-        val canvas = new plot.Canvas()
+//        val canvas = new plot.Canvas()
 
         // Set the size of the canvas before calling paintComponent
-        canvas.setSize(plot.getWidth * 2, plot.getHeight * 2)
+//        canvas.setSize(plot.getWidth(), plot.getHeight())
 
         // Call the paintComponent method of the Canvas class
-        canvas.paintComponent(g2d)
+//        canvas.paintComponent(g2d)
+        paintComponents(g2d)
 
         try {
             ImageIO.write(image, "png", new File(filePath))
