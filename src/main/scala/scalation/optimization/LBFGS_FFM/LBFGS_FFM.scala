@@ -189,8 +189,27 @@ end LBFGS_FFM
     )
 
     // Testing.
-    println(LBFGS_FFM.lbfgsMain(2, VectorD(1, 3), optimizationMethodHandles))
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(1, 3), optimizationMethodHandles))
     println(LBFGS_FFM.lbfgsMain(2, VectorD(2, 3.5), optimizationMethodHandles))
-    println(LBFGS_FFM.lbfgsMain(2, VectorD(0, 0), optimizationMethodHandles))
-    println(LBFGS_FFM.lbfgsMain(2, VectorD(-4, 7), optimizationMethodHandles))
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(0, 0), optimizationMethodHandles))
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(-4, 7), optimizationMethodHandles))
 end boothFunctionLBFGS_FFMTest
+
+@main def bohachevsky2FunctionLBFGS_FFMTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = x(0) ~^ 2 + 2 * x(1) ~^ 2 - 0.3 * math.cos(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)) + 0.3
+    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
+        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
+
+    // Variable declaration.
+    val functionOptimizationLogic = FunctionOptimizationFFM(objectiveFunction, gradientFunction)
+    val optimizationMethodHandles = OptimizationMethodHandlesFFM.bindFromFunctionOptimizationFFM(
+        functionOptimizationLogic
+    )
+
+    // Testing.
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(1, 3), optimizationMethodHandles))
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(2, 3.5), optimizationMethodHandles))
+//    println(LBFGS_FFM.lbfgsMain(2, VectorD(0, 0), optimizationMethodHandles))
+    println(LBFGS_FFM.lbfgsMain(2, VectorD(10, -10), optimizationMethodHandles, params = LBFGSParameters(maxLineSearch = 2)))
+end bohachevsky2FunctionLBFGS_FFMTest

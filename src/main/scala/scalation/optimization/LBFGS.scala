@@ -575,3 +575,33 @@ end cubeFunctionLBFGSTest
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
     plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png")
 end freudensteinRothFunctionLBFGSTest
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `mccormickFunctionLBFGSTest` main function uses the McCormick Function to test
+ *  the `lbfgsMain` method provided by the [[LBFGS]] object. Multiple tests are
+ *  performed with different values for the variables.
+ *
+ *  This test function can be run on the sbt shell with the following command:
+ *  {{{
+ *  > runMain scalation.optimization.L_BFGS_C.mccormickFunctionLBFGSTest
+ *  }}}
+ */
+@main def mccormickFunctionLBFGSTest(): Unit =
+    // Function definitions.
+    def objectiveFunction(x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1))~^2 - 1.5*x(0) + 2.5*x(1) + 1
+    def gradientFunction(x: VectorD): VectorD = VectorD(-1.5 + 2*x(0) - 2*x(1) + math.cos(x(0) + x(1)), 2.5 - 2*x(0) + 2*x(1) + math.cos(x(0) + x(1)))
+
+    // Variable declaration.
+    val functionDomainLowerBound = VectorD(-4, -4)
+    val functionDomainUpperBound = VectorD(4, 4)
+    val functionMinimum = VectorD(-0.54719, -1.54719)
+    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+
+    // Testing.
+    //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
+    //    println(LBFGS.lbfgsMain(2, VectorD(0, -0.5), functionOptimizationLogic))
+    println(LBFGS.lbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
+    //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
+
+    new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+end mccormickFunctionLBFGSTest
