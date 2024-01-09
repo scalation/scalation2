@@ -197,12 +197,10 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
      */
     override def toString: String = s"PlotC (lb = $lb, f(lb) = ${f(lb)}, ub = $ub, f(ub) = ${f(ub)})"
 
+    @deprecated
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-
     /** Save the plot as an image.
-     *
-     * @param filePath the path to save the image
-     * @param canvas   the Canvas object to use for drawing (optional)
+     *  DEPRECTED! Use ImageWriter.writeImage instead.
      */
     def saveAsImage(plot: PlotC, filePath: String): Unit = {
         val image = new BufferedImage(plot.getWidth, plot.getHeight, BufferedImage.TYPE_INT_ARGB)

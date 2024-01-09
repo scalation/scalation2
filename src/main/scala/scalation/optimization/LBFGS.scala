@@ -26,6 +26,7 @@ import scala.math.abs
 // Project imports.
 import scalation.mathstat.PlotC
 import scalation.mathstat.VectorD
+import scalation.scala2d.writeImage
 
 // Object.
 object LBFGS extends PathMonitor:
@@ -417,7 +418,7 @@ end LBFGS
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_boothFunction_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_boothFunction_plot.png", plot)
 end boothFunctionLBFGSTest
 
 @main def bealeFunctionLBFGSTest(): Unit =
@@ -443,7 +444,7 @@ end boothFunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(2, -2), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bealeFunction_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_bealeFunction_plot.png", plot)
 end bealeFunctionLBFGSTest
 
 @main def bohachevsky1FunctionLBFGSTest(): Unit =
@@ -465,7 +466,7 @@ end bealeFunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky1Function_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_bohachevsky1Function_plot.png", plot)
 end bohachevsky1FunctionLBFGSTest
 
 @main def bohachevsky2FunctionLBFGSTest(): Unit =
@@ -487,7 +488,7 @@ end bohachevsky1FunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky2Function_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_bohachevsky2Function_plot.png", plot)
 end bohachevsky2FunctionLBFGSTest
 
 @main def bohachevsky3FunctionLBFGSTest(): Unit =
@@ -509,7 +510,7 @@ end bohachevsky2FunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_bohachevsky3Function_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_bohachevsky3Function_plot.png", plot)
 end bohachevsky3FunctionLBFGSTest
 
 @main def camel3FunctionLBFGSTest(): Unit =
@@ -530,7 +531,7 @@ end bohachevsky3FunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_camel3Function_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_camel3Function_plot.png", plot)
 end camel3FunctionLBFGSTest
 
 @main def cubeFunctionLBFGSTest(): Unit =
@@ -551,7 +552,7 @@ end camel3FunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_cubeFunction_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_cubeFunction_plot.png", plot)
 end cubeFunctionLBFGSTest
 
 @main def freudensteinRothFunctionLBFGSTest(): Unit =
@@ -573,7 +574,7 @@ end cubeFunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
     val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
-    plot.saveAsImage(plot, "./Plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png")
+    writeImage("./Plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png", plot)
 end freudensteinRothFunctionLBFGSTest
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -603,5 +604,6 @@ end freudensteinRothFunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
     //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
 
-    new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    writeImage("./Plots/LBFGS/LBFGS_mccormickFunction_plot.png", plot)
 end mccormickFunctionLBFGSTest
