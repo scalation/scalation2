@@ -16,10 +16,6 @@ import scala.math.{ceil, floor, round}
 import scalation.scala2d._
 import scalation.scala2d.Colors._
 
-import java.awt.image.BufferedImage
-import java.io.File
-import javax.imageio.ImageIO
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PlotC` class takes a function f and displays color-coded values for
  *  z = f(x, y) over a two dimensional grid defined the lower lb and upper ub bounds.
@@ -196,34 +192,6 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
     /** Convert basic Contour information to a string.
      */
     override def toString: String = s"PlotC (lb = $lb, f(lb) = ${f(lb)}, ub = $ub, f(ub) = ${f(ub)})"
-
-    @deprecated
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Save the plot as an image.
-     *  DEPRECTED! Use ImageWriter.writeImage instead.
-     */
-    def saveAsImage(plot: PlotC, filePath: String): Unit = {
-        val image = new BufferedImage(plot.getWidth, plot.getHeight, BufferedImage.TYPE_INT_ARGB)
-        val g2d = image.createGraphics()
-
-        // Create an instance of the Canvas class
-//        val canvas = new plot.Canvas()
-
-        // Set the size of the canvas before calling paintComponent
-//        canvas.setSize(plot.getWidth(), plot.getHeight())
-
-        // Call the paintComponent method of the Canvas class
-//        canvas.paintComponent(g2d)
-        paintComponents(g2d)
-
-        try {
-            ImageIO.write(image, "png", new File(filePath))
-        } catch {
-            case e: Exception => e.printStackTrace()
-        } finally {
-            g2d.dispose()
-        }
-    }
 
 end PlotC
 
