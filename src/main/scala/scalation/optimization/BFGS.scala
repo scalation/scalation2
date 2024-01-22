@@ -47,7 +47,7 @@ import QNewton.aHi_inc
  */
 class BFGS (f: FunctionV2S, g: FunctionV2S = null,
             ineq: Boolean = true, exactLS: Boolean = false)
-      extends Minimizer:
+      extends Minimizer, PathMonitor:
 
     private val debug  = debugf ("BFGS", true)              // debug function
     private val flaw   = flawf ("BFGS")                     // flaw function
@@ -195,6 +195,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
      */
     def solve2 (x0: VectorD, grad: FunctionV2V, step_ : Double = STEP, toler: Double = TOL): FuncVec =
         debug ("solve2", s"x0 = $x0, step_ = $step_, toler = $toler")
+        clearPath()
 
         var step = step_                                          // set the current step size
         var x    = (x0, grad (x0))                                // current (point, gradient)
@@ -204,6 +205,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
 
         var aHi = eye (x0.dim, x0.dim)                            // approximate Hessian inverse (aHi) matrix
                                                                   // start with identity matrix
+        add2Path(x._1)
 
         debug ("solve2", s"||gradient||^2 = ${x._2.normSq}")
 
@@ -248,6 +250,8 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
                     debug ("solve2", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
                     x = xx                                        // make the next point the current point
                 end if
+
+                add2Path(x._1)
             end for
         } // breakable
         (fg(x._1), x._1)                                          // return functional value and current point
@@ -607,3 +611,35 @@ end bFGSCubeFunction
 //  println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGSFreudensteinRothFunction
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGSFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *  > runMain scalation.optimization.bFGSFreudensteinRothFunction
+ */
+@main def bFGSMcCormickFunction (): Unit =
+
+    // Variable declaration.
+    val functionDomainLowerBound = VectorD(-4, -4)
+    val functionDomainUpperBound = VectorD(4, 4)
+    val functionMinimum = VectorD(-0.54719, -1.54719)
+
+    val step = 1.0                                       // step size (may need adjustment)
+    val x0   = VectorD (2.5, 3.5)                        // starting location
+
+    banner ("Minimize:  math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^ 2 - 1.5 * x(0) + 2.5 * x(1) + 1")
+    def f (x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^ 2 - 1.5 * x(0) + 2.5 * x(1) + 1
+
+    def grad (x: VectorD): VectorD = VectorD(-1.5 + 2 * x(0) - 2 * x(1) + math.cos(x(0) + x(1)), 2.5 - 2 * x(0) + 2 * x(1) + math.cos(x(0) + x(1)))
+
+    val optimizer = new BFGS (f)
+    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+    new PlotC(f, functionDomainLowerBound, functionDomainUpperBound, optimizer.getPath, functionMinimum)
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGSMcCormickFunction
