@@ -51,7 +51,7 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
 
         /* Check the input parameters for errors. */
         if stp <= 0.0 then
-            return LBFGSReturnCode.InvalidParameters
+            return LBFGSLineSearchFailure(LBFGSReturnCode.InvalidParameters, LBFGSLineSearchIncompleteResults(xNew, fNew))
         end if
     
         /* Compute the initial gradient in the search direction. */
@@ -59,7 +59,7 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
     
         /* Make sure that s points to a descent direction. */
         if 0 < dginit then
-            return LBFGSReturnCode.IncreaseGradient
+            return LBFGSLineSearchFailure(LBFGSReturnCode.IncreaseGradient, LBFGSLineSearchIncompleteResults(xNew, fNew))
         end if
     
         /* The initial value of the objective function. */
@@ -90,19 +90,19 @@ object LBFGSBacktrackingArmijo extends LBFGSLineSearch:
     
             if stpNew < params.minStep then
                 /* The step is the minimum value. */
-                return LBFGSReturnCode.MinimumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MinimumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if stpNew > params.maxStep then
                 /* The step is the maximum value. */
-                return LBFGSReturnCode.MaximumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if params.maxLineSearch <= count then
                 /* Maximum number of iteration. */
-                return LBFGSReturnCode.MaximumLineSearch
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumLineSearch, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
     
             stpNew *= width
         end while
 
-        LBFGSReturnCode.LogicError
+        LBFGSLineSearchFailure(LBFGSReturnCode.LogicError, LBFGSLineSearchIncompleteResults(xNew, fNew))
 end LBFGSBacktrackingArmijo

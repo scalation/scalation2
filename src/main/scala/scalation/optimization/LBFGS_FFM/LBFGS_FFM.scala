@@ -97,7 +97,13 @@ object LBFGS_FFM:
      *                                      evaluated due to errors in the
      *                                      arguments from the method call, the
      *                                      `finalFunctionValue` returned will
-     *                                      be `Some(0)`.
+     *                                      be `Some(0)`. Also, this
+     *                                      implementation is currently not
+     *                                      capable of determining the
+     *                                      `lineSearchIncompleteResults` value,
+     *                                      which will always be set to [[None]]
+     *                                      regardless of how the L-BFGS
+     *                                      optimization terminates.
      */
     def lbfgsMain(
         n: Int,
@@ -147,7 +153,7 @@ object LBFGS_FFM:
             val xFinalValues: VectorD = VectorD.fromMemorySegment(xMemorySegment, n)
             val fx = fxMemorySegment.getAtIndex(JAVA_DOUBLE, 0)
 
-            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx))
+            LBFGSResults(LBFGSReturnCode.fromCode(optimizationReturnCode), xFinalValues, Some(fx), None)
         }
 
         result match

@@ -69,13 +69,17 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         var stpNew = stp
 
         /* Check the input parameters for errors. */
-        if stp <= 0 then return LBFGSReturnCode.InvalidParameters
-
+        if stp <= 0 then
+            return LBFGSLineSearchFailure(LBFGSReturnCode.InvalidParameters, LBFGSLineSearchIncompleteResults(xNew, fNew))
+        end if
+        
         /* Compute the initial gradient in the search direction. */
         val dginit = g dot s
 
         /* Make sure that s points to a descent direction. */
-        if 0 < dginit then return LBFGSReturnCode.IncreaseGradient
+        if 0 < dginit then
+            return LBFGSLineSearchFailure(LBFGSReturnCode.IncreaseGradient, LBFGSLineSearchIncompleteResults(xNew, fNew))
+        end if
         
         /* Initialize local variables. */
         var brackt = false
@@ -141,23 +145,23 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
             /* Test for errors and convergence. */
             if brackt && ((stpNew <= stmin || stmax <= stpNew) || errorCode.nonEmpty) then
                 /* Rounding errors prevent further progress. */
-                return LBFGSReturnCode.RoundingError
+                return LBFGSLineSearchFailure(LBFGSReturnCode.RoundingError, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if stpNew == params.maxStep && fNew <= ftest1 && dg <= dgtest then
                 /* The step is the maximum value. */
-                return LBFGSReturnCode.MaximumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if stpNew == params.minStep && (ftest1 < fNew || dgtest <= dg) then
                 /* The step is the minimum value. */
-                return LBFGSReturnCode.MinimumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MinimumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if brackt && (stmax - stmin) <= params.xtol * stmax then
                 /* Relative width of the interval of uncertainty is at most xtol. */
-                return LBFGSReturnCode.WidthTooSmall
+                return LBFGSLineSearchFailure(LBFGSReturnCode.WidthTooSmall, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if params.maxLineSearch <= count then
                 /* Maximum number of iteration. */
-                return LBFGSReturnCode.MaximumLineSearch
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumLineSearch, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if fNew <= ftest1 && abs(dg) <= params.gtol * (-dginit) then
                 /* The sufficient decrease condition and the directional derivative condition hold. */
@@ -256,7 +260,7 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
             end if
         end while
 
-        LBFGSReturnCode.LogicError
+        LBFGSLineSearchFailure(LBFGSReturnCode.LogicError, LBFGSLineSearchIncompleteResults(xNew, fNew))
 
     // Private methods.
     private def update_trial_interval(

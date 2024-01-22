@@ -41,7 +41,7 @@ object dmLBFGS extends PathMonitor:
         clearPath()
 
         checkdmLBFGSArgumentsForErrors(n, params, momentum) match
-            case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None)
+            case Some(errorReturnCode) => return LBFGSResults(errorReturnCode, x, None, None)
             case _ =>
 
         var xNew: VectorD = x
@@ -122,7 +122,7 @@ object dmLBFGS extends PathMonitor:
             if xnorm < 1.0 then xnorm = 1.0
 
             if gnorm / xnorm <= params.epsilon then
-                return LBFGSResults(LBFGSReturnCode.AlreadyMinimized, xNew, Some(fx))
+                return LBFGSResults(LBFGSReturnCode.AlreadyMinimized, xNew, Some(fx), None)
             end if
 
             /* Compute the initial step:
@@ -151,9 +151,12 @@ object dmLBFGS extends PathMonitor:
                         step = lineSearchStep.step
                         ls = lineSearchStep.numberOfIterations
                         add2Path(xNew)
-                    case returnCode: LBFGSReturnCode =>
+                    case lineSearchFailure: LBFGSLineSearchFailure =>
+                        val failureReturnCode =
+                            if lineSearchFailure.returnCode.isErrorCode then lineSearchFailure.returnCode
+                            else LBFGSReturnCode.UnknownError
                         /* Return with the value of the previous point. */
-                        return LBFGSResults(returnCode, xp, Some(fx))
+                        return LBFGSResults(failureReturnCode, xp, Some(fx), Some(lineSearchFailure.bestIncompleteResults))
 
                 if params.orthantWise.isDefined then
                     val orthantWiseParams = params.orthantWise.get
@@ -173,7 +176,7 @@ object dmLBFGS extends PathMonitor:
                 functionLogic match
                     case o: OptimizationLogic =>
                         val ret = o.progress(cd.instance, xNew, g, fx, xnorm, gnorm, step, cd.n, k, ls)
-                        if ret != LBFGSReturnCode.Success then return LBFGSResults(ret, xNew, Some(fx))
+                        if ret != LBFGSReturnCode.Success then return LBFGSResults(ret, xNew, Some(fx), None)
                     case _ =>
 
                 /*
@@ -184,7 +187,7 @@ object dmLBFGS extends PathMonitor:
                 if xnorm < 1.0 then xnorm = 1.0
 
                 if gnorm / xnorm <= params.epsilon then
-                    return LBFGSResults(LBFGSReturnCode.Success, xNew, Some(fx))
+                    return LBFGSResults(LBFGSReturnCode.Success, xNew, Some(fx), None)
                 end if
 
                 /*
@@ -200,7 +203,7 @@ object dmLBFGS extends PathMonitor:
 
                         /* The stopping criterion. */
                         if abs(rate) < params.delta then
-                            return LBFGSResults(LBFGSReturnCode.Stop, xNew, Some(fx))
+                            return LBFGSResults(LBFGSReturnCode.Stop, xNew, Some(fx), None)
                         end if
                     end if
 
@@ -209,7 +212,7 @@ object dmLBFGS extends PathMonitor:
                 end if
 
                 if params.maxIterations != 0 && params.maxIterations < k + 1 then
-                    return LBFGSResults(LBFGSReturnCode.MaximumIteration, xNew, Some(fx))
+                    return LBFGSResults(LBFGSReturnCode.MaximumIteration, xNew, Some(fx), None)
                 end if
 
                 /*
@@ -298,9 +301,9 @@ object dmLBFGS extends PathMonitor:
                 step = params.defaultStep
             end while
 
-            LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx))
+            LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx), None)
         catch
-            case e: OutOfMemoryError => LBFGSResults(LBFGSReturnCode.OutOfMemory, x, None)
+            case e: OutOfMemoryError => LBFGSResults(LBFGSReturnCode.OutOfMemory, x, None, None)
 
     // Private methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

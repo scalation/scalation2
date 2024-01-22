@@ -133,6 +133,20 @@ enum LBFGSReturnCode(val code: Int = -1024):
     
     /** Invalid parameter `momentum` specified for [[dmLBFGS]]. */
     case InvalidMomentum extends LBFGSReturnCode(-993)
+
+    // Public methods.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Returns a boolean indicating whether this return code is an error code.
+     *
+     *  @return Boolean Indicates whether this return code is an error code.
+     */
+    def isErrorCode: Boolean =
+        this match
+            case LBFGSReturnCode.Success |
+                 LBFGSReturnCode.Convergence |
+                 LBFGSReturnCode.Stop |
+                 LBFGSReturnCode.AlreadyMinimized => false
+            case _ => true
 end LBFGSReturnCode
 
 // Companion object.
@@ -140,7 +154,7 @@ end LBFGSReturnCode
 /** See the documentation for the accompanying companion enum.
  */
 object LBFGSReturnCode:
-    // Public method definitions.
+    // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Returns the `LBFGSReturnCode` corresponding to a numerical code.
      *

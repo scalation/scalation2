@@ -45,21 +45,21 @@ object LBFGSBacktrackingOrthantWise extends LBFGSLineSearch:
         var dgtest = 0.0
         val wp = new VectorD(n)
 
-        /* Input parameters should have an orthantWise. */
-        if params.orthantWise.isEmpty then
-            return LBFGSReturnCode.InvalidParameters
-        end if
-
-        val orthantwiseParams = params.orthantWise.get
-
         var xNew = x
         var gNew = g
         var fNew = f
         var stpNew = stp
 
+        /* Input parameters should have an orthantWise. */
+        if params.orthantWise.isEmpty then
+            return LBFGSLineSearchFailure(LBFGSReturnCode.InvalidParameters, LBFGSLineSearchIncompleteResults(xNew, fNew))
+        end if
+
+        val orthantwiseParams = params.orthantWise.get
+        
         /* Check the input parameters for errors. */
         if stp <= 0.0 then
-            return LBFGSReturnCode.InvalidParameters
+            return LBFGSLineSearchFailure(LBFGSReturnCode.InvalidParameters, LBFGSLineSearchIncompleteResults(xNew, fNew))
         end if
 
         /* Choose the orthant for the new point. */
@@ -102,19 +102,19 @@ object LBFGSBacktrackingOrthantWise extends LBFGSLineSearch:
 
             if stpNew < params.minStep then
             /* The step is the minimum value. */
-                return LBFGSReturnCode.MinimumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MinimumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if stpNew > params.maxStep then
             /* The step is the maximum value. */
-                return LBFGSReturnCode.MaximumStep
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumStep, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
             if params.maxLineSearch <= count then
             /* Maximum number of iteration. */
-                return LBFGSReturnCode.MaximumLineSearch
+                return LBFGSLineSearchFailure(LBFGSReturnCode.MaximumLineSearch, LBFGSLineSearchIncompleteResults(xNew, fNew))
             end if
 
             stpNew *= width
         end while
 
-        LBFGSReturnCode.LogicError
+        LBFGSLineSearchFailure(LBFGSReturnCode.LogicError, LBFGSLineSearchIncompleteResults(xNew, fNew))
 end LBFGSBacktrackingOrthantWise

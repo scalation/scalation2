@@ -1,5 +1,5 @@
 
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
  *  @note    Fri Sep 8 10:20:06 EDT 2023
@@ -21,15 +21,16 @@ import scalation.mathstat.VectorD
 // Type declarations.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `LBFGSLineSearchReturn` type is a union type representing the return
- * value for the [[lineSearch]] method of line search algorithms used by
- * the native implementation of the L-BFGS algorithm.
+ *  value for the [[lineSearch]] method of line search algorithms used by
+ *  the native implementation of the L-BFGS algorithm.
  *
- * A successful execution should return [[LBFGSLineSearchStep]], while an
- * execution with errors should return a [[LBFGSReturnCode]] error code.
- * Returning a [[LBFGSReturnCode]] success code triggers undefined
- * behavior.
+ *  A successful execution should return [[LBFGSLineSearchStep]], while an
+ *  execution with errors should return a [[LBFGSLineSearchFailure]] with the
+ *  appropriate [[LBFGSReturnCode]] error code. Returning a [[LBFGSReturnCode]]
+ *  success code inside of a [[LBFGSLineSearchFailure]] triggers undefined
+ *  behavior.
  */
-type LBFGSLineSearchReturn = LBFGSLineSearchStep | LBFGSReturnCode
+type LBFGSLineSearchReturn = LBFGSLineSearchStep | LBFGSLineSearchFailure
 
 // Trait.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -72,7 +73,7 @@ trait LBFGSLineSearch:
      *                                  successful execution returns a
      *                                  [[LBFGSLineSearchStep]], while an
      *                                  execution with errors returns a
-     *                                  [[LBFGSReturnCode]] error code.
+     *                                  [[LBFGSLineSearchFailure]].
      *
      */
     def lineSearch(
