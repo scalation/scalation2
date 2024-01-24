@@ -17,7 +17,7 @@ package optimization
 // Project imports.
 import scalation.mathstat.VectorD
 
-// Trait
+// Trait.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `EvaluationLogicNative` trait specifies the requirements for the logic
  *  to be used for variable evaluation against the objective function in the
