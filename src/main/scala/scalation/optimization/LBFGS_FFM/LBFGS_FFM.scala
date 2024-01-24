@@ -32,6 +32,7 @@ import scala.util.{Failure, Success, Try, Using}
 
 // Project imports.
 import scalation.mathstat.VectorD
+import scalation.optimization.functions.*
 
 // Module imports.
 import FunctionDescriptors.*
@@ -184,12 +185,8 @@ end LBFGS_FFM
  *  }}}
  */
 @main def boothFunctionLBFGS_FFMTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
-    def gradientFunction(x: VectorD): VectorD = VectorD(10 * x(0) + 8 * x(1) - 34, 8 * x(0) + 10 * x(1) - 38)
-
     // Variable declaration.
-    val functionOptimizationLogic = FunctionOptimizationFFM(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = BoothFunction.toFunctionOptimizationFFM
     val optimizationMethodHandles = OptimizationMethodHandlesFFM.bindFromFunctionOptimizationFFM(
         functionOptimizationLogic
     )
@@ -202,13 +199,8 @@ end LBFGS_FFM
 end boothFunctionLBFGS_FFMTest
 
 @main def bohachevsky2FunctionLBFGS_FFMTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0) ~^ 2 + 2 * x(1) ~^ 2 - 0.3 * math.cos(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)) + 0.3
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
-        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
-
     // Variable declaration.
-    val functionOptimizationLogic = FunctionOptimizationFFM(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = Bohachevsky2Function.toFunctionOptimizationFFM
     val optimizationMethodHandles = OptimizationMethodHandlesFFM.bindFromFunctionOptimizationFFM(
         functionOptimizationLogic
     )

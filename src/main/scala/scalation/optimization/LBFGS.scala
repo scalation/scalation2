@@ -24,8 +24,8 @@ package optimization
 import scala.math.abs
 
 // Project imports.
-import scalation.mathstat.PlotC
-import scalation.mathstat.VectorD
+import scalation.mathstat.{PlotC, VectorD}
+import scalation.optimization.functions.*
 import scalation.scala2d.writeImage
 
 // Object.
@@ -404,15 +404,10 @@ end LBFGS
  *  }}}
  */
 @main def boothFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
-    def gradientFunction(x: VectorD): VectorD = VectorD(10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(1, 3)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = BoothFunction.toFunctionOptimization
 
     // Testing.
 //    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
@@ -420,25 +415,15 @@ end LBFGS
 //    println(LBFGS.lbfgsMain(2, VectorD(0, 0), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(-4, 7), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(BoothFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, BoothFunction.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_boothFunction_plot.png", plot)
 end boothFunctionLBFGSTest
 
 @main def bealeFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (1.5 - x(0) + x(0) * x(1)) * (-1 + x(1)) +
-      2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (-1 + (x(1)~^2)) +
-      2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (-1 + (x(1)~^3)),
-        2 * (1.5 - x(0) + x(0) * x(1)) * x(0) +
-          2 * (2.25 - x(0) + x(0) * (x(1)~^2)) * (2 * x(0) * x(1)) +
-          2 * (2.625 - x(0) + x(0) * (x(1)~^3)) * (3 * x(0) * (x(1)~^2)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(3, 0.5)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = BealeFunction.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-4.5, -4.5), functionOptimizationLogic))
@@ -446,21 +431,15 @@ end boothFunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(0, 1), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(2, -2), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(BealeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, BealeFunction.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_bealeFunction_plot.png", plot)
 end bealeFunctionLBFGSTest
 
 @main def bohachevsky1FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) - 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)),
-        4 * x(1) - 0.4 * 4 * math.Pi * math.sin(4 * math.Pi * x(1)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = Bohachevsky1Function.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -468,21 +447,15 @@ end bealeFunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(Bohachevsky1Function.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, Bohachevsky1Function.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_bohachevsky1Function_plot.png", plot)
 end bohachevsky1FunctionLBFGSTest
 
 @main def bohachevsky2FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
-        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = Bohachevsky2Function.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -490,21 +463,15 @@ end bohachevsky1FunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(Bohachevsky2Function.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, Bohachevsky2Function.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_bohachevsky2Function_plot.png", plot)
 end bohachevsky2FunctionLBFGSTest
 
 @main def bohachevsky3FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)),
-        4 * x(1) + 0.3 * 4 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = Bohachevsky3Function.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -512,20 +479,15 @@ end bohachevsky2FunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(Bohachevsky3Function.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, Bohachevsky3Function.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_bohachevsky3Function_plot.png", plot)
 end bohachevsky3FunctionLBFGSTest
 
 @main def camel3FunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(4 * x(0) - 4.2 * x(0)~^3 + x(0)~^5 + x(1), x(0) + 2 * x(1))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(0, 0)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = Camel3Function.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -533,20 +495,15 @@ end bohachevsky3FunctionLBFGSTest
     //println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(Camel3Function.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, Camel3Function.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_camel3Function_plot.png", plot)
 end camel3FunctionLBFGSTest
 
 @main def cubeFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(-200 * (x(1) - x(0)~^3) * (3 * x(0)~^2) - 2 * (1 - x(0)), 200 * (x(1) - x(0)~^3))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(-1, 1)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = CubeFunction.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -554,21 +511,15 @@ end camel3FunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(CubeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, CubeFunction.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_cubeFunction_plot.png", plot)
 end cubeFunctionLBFGSTest
 
 @main def freudensteinRothFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
-    def gradientFunction(x: VectorD): VectorD = VectorD(2 * (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) + 2 * (x(0) - 29 + x(1) * ((x(1) + 1) * x(1) - 14)),
-        2 * x(1) * ((5 - x(1)) * x(1) - 2) + 2 * (x(1) * ((x(1) + 1) * x(1) - 14) + (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) * ((5 - x(1)) * x(1) - 2)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionMinimum = VectorD(5, 4)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = FreudensteinRothFunction.toFunctionOptimization
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -576,7 +527,7 @@ end cubeFunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(5, -5), functionOptimizationLogic))
     //println(LBFGS.lbfgsMain(2, VectorD(10, -10), functionOptimizationLogic))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(FreudensteinRothFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, FreudensteinRothFunction.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png", plot)
 end freudensteinRothFunctionLBFGSTest
 
@@ -591,15 +542,10 @@ end freudensteinRothFunctionLBFGSTest
  *  }}}
  */
 @main def mccormickFunctionLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1))~^2 - 1.5*x(0) + 2.5*x(1) + 1
-    def gradientFunction(x: VectorD): VectorD = VectorD(-1.5 + 2*x(0) - 2*x(1) + math.cos(x(0) + x(1)), 2.5 - 2*x(0) + 2*x(1) + math.cos(x(0) + x(1)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-4, -4)
     val functionDomainUpperBound = VectorD(4, 4)
-    val functionMinimum = VectorD(-0.54719, -1.54719)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = McCormickFunction.toFunctionOptimization
 
     // Testing.
     //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
@@ -607,6 +553,6 @@ end freudensteinRothFunctionLBFGSTest
     println(LBFGS.lbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
     //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
 
-    val plot = new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, functionMinimum)
+    val plot = new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, McCormickFunction.functionMinimum)
     writeImage("./Plots/LBFGS/LBFGS_mccormickFunction_plot.png", plot)
 end mccormickFunctionLBFGSTest

@@ -18,8 +18,8 @@ package optimization
 import scala.math.abs
 
 // Project imports.
-import scalation.mathstat.PlotC
-import scalation.mathstat.VectorD
+import scalation.mathstat.{PlotC, VectorD}
+import scalation.optimization.functions.*
 
 // Object.
 object dmLBFGS extends PathMonitor:
@@ -399,15 +399,10 @@ end dmLBFGS
  *  }}}
  */
 @main def mccormickFunctionDMLBFGSTest(): Unit =
-    // Function definitions.
-    def objectiveFunction(x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^2 - 1.5*x(0) + 2.5*x(1) + 1
-    def gradientFunction(x: VectorD): VectorD = VectorD(-1.5 + 2*x(0) - 2* x(1) + math.cos(x(0) + x(1)), 2.5 - 2 * x(0) + 2 * x(1) + math.cos(x(0) + x(1)))
-
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-4, -4)
     val functionDomainUpperBound = VectorD(4, 4)
-    val functionMinimum = VectorD(-0.54719, -1.54719)
-    val functionOptimizationLogic = FunctionOptimization(objectiveFunction, gradientFunction)
+    val functionOptimizationLogic = McCormickFunction.toFunctionOptimization
 
     // Testing.
     //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
@@ -415,5 +410,5 @@ end dmLBFGS
     println(dmLBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))
     //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
 
-    new PlotC(objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, dmLBFGS.getPath, functionMinimum)
+    new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, dmLBFGS.getPath, McCormickFunction.functionMinimum)
 end mccormickFunctionDMLBFGSTest
