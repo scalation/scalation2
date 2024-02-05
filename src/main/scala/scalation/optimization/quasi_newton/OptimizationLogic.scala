@@ -6,13 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Trait to specify the optimization logic used by the native implementation
- *  of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound
- *  constrained optimization (L-BFGS-B) algorithm.
+ *  of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for
+ *  unconstrained optimization (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD

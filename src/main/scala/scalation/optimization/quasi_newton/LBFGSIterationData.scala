@@ -6,13 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Iteration data used in the native implementation of the Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (L-BFGS-B) algorithm.
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
+ *  (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD

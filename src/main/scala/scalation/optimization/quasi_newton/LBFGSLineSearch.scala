@@ -7,13 +7,14 @@
  *------------------------------------------------------------------------------
  *  Trait that specifies the characteristics required in a line search algorithm
  *  used by the native implementation of the Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (L-BFGS-B) algorithm.
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
+ *  (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD
@@ -84,6 +85,36 @@ trait LBFGSLineSearch:
         s: VectorD,
         stp: Double,
         cd: LBFGSCallbackData,
-        params: LBFGSParameters
+        params: LBFGSLineSearchParameters,
+        orthantWise: Option[OrthantWiseParameters] = None
     ): LBFGSLineSearchReturn
+end LBFGSLineSearch
+
+// Companion object.
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** See the documentation for the accompanying companion trait.
+ */
+object LBFGSLineSearch:
+    // Public methods.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Returns a [[LBFGSLineSearch]] implementation to use in the L-BFGS
+     *  optimization.
+     *
+     *  @param selection        [[LBFGSLineSearchAlgorithm]] that describes the
+     *                          user selection for the line search algorithm to
+     *                          be used in the L-BFGS optimization.
+     *  @return LBFGSLineSearch [[LBFGSLineSearch]] implementation of the line
+     *                          search algorithm selected by the user to be
+     *                          used in the L-BFGS optimization.
+     */
+    def getImplementation(selection: LBFGSLineSearchAlgorithm): LBFGSLineSearch =
+        selection match
+            case LBFGSLineSearchAlgorithm.Default => LBFGSMoreThuente
+            case LBFGSLineSearchAlgorithm.MoreThuente => LBFGSMoreThuente
+            case LBFGSLineSearchAlgorithm.BacktrackingDefault => LBFGSBacktrackingWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingArmijo => LBFGSBacktrackingArmijo
+            case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
+            case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
+            
 end LBFGSLineSearch

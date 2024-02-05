@@ -7,21 +7,17 @@
  *------------------------------------------------------------------------------
  *  Foreign Function and Memory (FFM) wrapper for the C library shared object
  *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm. Originally proposed
- *  by Byrd et. al in 1995. See the first two links for the original paper and
- *  authors' software (written in Fortran) distribution site, respectively. See
- *  the last link for the C library implementation of the algorithm used by this
- *  class.
+ *  for unconstrained optimization (L-BFGS) algorithm. See the following link
+ *  for the C library implementation of the algorithm used by this object.
  *
- *  @see www.ece.northwestern.edu/~nocedal/PSfiles/limited.ps.gz
- *  @see users.iems.northwestern.edu/~nocedal/lbfgsb.html
  *  @see github.com/chokkan/liblbfgs
  */
 
 // Package definition.
 package scalation
 package optimization
-package LBFGS_FFM
+package quasi_newton
+package lbfgs_ffm
 
 // General imports.
 import java.lang.foreign.{Arena, Linker, MemoryLayout, MemorySegment, SegmentScope, SymbolLookup}
@@ -46,7 +42,7 @@ import FunctionDescriptors.*
  */
 object LBFGS_FFM:
     // Library constants.
-    private val LBFGS_LIBRARY_PATH_STRING = "src/main/scala/scalation/optimization/LBFGS_FFM/lib/C/lbfgs/lbfgs.so"
+    private val LBFGS_LIBRARY_PATH_STRING = "src/main/scala/scalation/optimization/quasi_newton/lbfgs_ffm/lib/C/lbfgs/lbfgs.so"
 
     // Linker and library configuration.
     private val linker: Linker = Linker.nativeLinker
@@ -209,5 +205,5 @@ end boothFunctionLBFGS_FFMTest
 //    println(LBFGS_FFM.lbfgsMain(2, VectorD(1, 3), optimizationMethodHandles))
 //    println(LBFGS_FFM.lbfgsMain(2, VectorD(2, 3.5), optimizationMethodHandles))
 //    println(LBFGS_FFM.lbfgsMain(2, VectorD(0, 0), optimizationMethodHandles))
-    println(LBFGS_FFM.lbfgsMain(2, VectorD(10, -10), optimizationMethodHandles, params = LBFGSParameters(maxLineSearch = 2)))
+    println(LBFGS_FFM.lbfgsMain(2, VectorD(10, -10), optimizationMethodHandles, params = LBFGSParameters(lineSearchParams=LBFGSLineSearchParameters(maxLineSearch = 2))))
 end bohachevsky2FunctionLBFGS_FFMTest

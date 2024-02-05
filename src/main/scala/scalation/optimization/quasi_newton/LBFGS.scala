@@ -6,19 +6,17 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Native Scala implementation of the Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (L-BFGS-B) algorithm. Originally proposed by Byrd et. al in 1995. See the
- *  first two links for the original paper and authors' software (written in
- *  Fortran) distribution site, respectively. This Scala implementation was made
- *  based on the C implementation of the same algorithm found in the last link.
- *  @see www.ece.northwestern.edu/~nocedal/PSfiles/limited.ps.gz
- *  @see users.iems.northwestern.edu/~nocedal/lbfgsb.html
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
+ *  (L-BFGS) algorithm. This Scala implementation was made based on the C
+ *  implementation of the same algorithm found in the following link.
+ *
  *  @see github.com/chokkan/liblbfgs
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // General imports.
 import scala.math.abs
@@ -52,6 +50,7 @@ object LBFGS extends PathMonitor:
         add2Path(x)
 
         var lineSearchResults: LBFGSLineSearchReturn = null
+        val useOrthantWiseLogic = params.orthantWise.nonEmpty
 
         var k = 1
         var end = 0
@@ -68,13 +67,13 @@ object LBFGS extends PathMonitor:
 
             var ys, yy, xnorm, gnorm, beta, fx, rate = 0.0
 
-            val linesearch: LBFGSLineSearch = determineLineSearchImplementation(params.lineSearch)
+            val lineSearchImplementation = LBFGSLineSearch.getImplementation(params.lineSearch)
 
             /* Construct a callback data. */
             val cd = LBFGSCallbackData(n, instance, functionLogic)
 
             /* Allocate working space. */
-            if params.orthantWise.nonEmpty then
+            if useOrthantWiseLogic then
             /* Allocate working space for OW-LQN. */
                 pg = new VectorD(n)
             end if
@@ -88,7 +87,7 @@ object LBFGS extends PathMonitor:
             fx = evaluationResults.objectiveFunctionValue
             g = evaluationResults.gradientVector
 
-            if params.orthantWise.nonEmpty then
+            if useOrthantWiseLogic then
                 /* Compute the L1 norm of the variable and add it to the object value.
                  */
                 val orthantWiseParams = params.orthantWise.get
@@ -105,7 +104,7 @@ object LBFGS extends PathMonitor:
                 Compute the direction;
                 we assume the initial hessian matrix H_0 as the identity matrix.
              */
-            if params.orthantWise.isEmpty then
+            if !useOrthantWiseLogic then
                 d = -g
             else
                 d = -pg
@@ -116,7 +115,7 @@ object LBFGS extends PathMonitor:
              */
             xnorm = x.norm
 
-            if params.orthantWise.isEmpty then
+            if !useOrthantWiseLogic then
                 gnorm = g.norm
             else
                 gnorm = pg.norm
@@ -140,10 +139,10 @@ object LBFGS extends PathMonitor:
                 gp = g
 
                 /* Search for an optimal step. */
-                if params.orthantWise.isEmpty then
-                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, g, d, step, cd, params)
+                if !useOrthantWiseLogic then
+                    lineSearchResults = lineSearchImplementation.lineSearch(n, xNew, fx, g, d, step, cd, params.lineSearchParams, params.orthantWise)
                 else
-                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, pg, d, step, cd, params)
+                    lineSearchResults = lineSearchImplementation.lineSearch(n, xNew, fx, pg, d, step, cd, params.lineSearchParams, params.orthantWise)
                 end if
 
                 lineSearchResults match
@@ -161,7 +160,7 @@ object LBFGS extends PathMonitor:
                         /* Return with the value of the previous point. */
                         return LBFGSResults(failureReturnCode, xp, Some(fx), Some(lineSearchFailure.bestIncompleteResults))
 
-                if params.orthantWise.isDefined then
+                if useOrthantWiseLogic then
                     val orthantWiseParams = params.orthantWise.get
                     pg = orthantWiseParams.pseudoGradient(xNew, g)
                 end if
@@ -169,7 +168,7 @@ object LBFGS extends PathMonitor:
                 /* Compute x and g norms. */
                 xnorm = xNew.norm
 
-                if params.orthantWise.isEmpty then
+                if !useOrthantWiseLogic then
                     gnorm = g.norm
                 else
                     gnorm = pg.norm
@@ -251,7 +250,7 @@ object LBFGS extends PathMonitor:
                 end = (end + 1) % m
 
                 /* Compute the steepest direction. */
-                if params.orthantWise.isEmpty then
+                if !useOrthantWiseLogic then
                 /* Compute the negative of gradients. */
                     d = -g
                 else
@@ -286,7 +285,7 @@ object LBFGS extends PathMonitor:
                 /*
                     Constrain the search direction for orthant-wise updates.
                  */
-                if params.orthantWise.nonEmpty then
+                if useOrthantWiseLogic then
                     val orthantWiseParams = params.orthantWise.get
                     for i <- orthantWiseParams.start until orthantWiseParams.end.getOrElse(d.length) do
                         if d(i) * pg(i) >= 0 then
@@ -328,16 +327,16 @@ object LBFGS extends PathMonitor:
         if params.epsilon < 0.0 then return Some(LBFGSReturnCode.InvalidEpsilon)
         if params.past < 0 then return Some(LBFGSReturnCode.InvalidTestPeriod)
         if params.delta < 0.0 then return Some(LBFGSReturnCode.InvalidDelta)
-        if params.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
-        if params.maxStep < params.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
-        if params.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
+        if params.lineSearchParams.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
+        if params.lineSearchParams.maxStep < params.lineSearchParams.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
+        if params.lineSearchParams.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
         if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingWolfe ||
             params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe then
-            if params.wolfe <= params.ftol || 1.0 <= params.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
+            if params.lineSearchParams.wolfe <= params.lineSearchParams.ftol || 1.0 <= params.lineSearchParams.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
         end if
-        if params.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
-        if params.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
-        if params.maxLineSearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
+        if params.lineSearchParams.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
+        if params.lineSearchParams.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
+        if params.lineSearchParams.maxLineSearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
         if params.orthantWise.nonEmpty then
             val orthantWiseParams = params.orthantWise.get
             if orthantWiseParams.c <= 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
@@ -358,27 +357,6 @@ object LBFGS extends PathMonitor:
         end if
 
         None
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Determines what [[LBFGSLineSearch]] implementation to use in the L-BFGS
-     *  optimization.
-     *
-     *  @param selection        [[LBFGSLineSearchAlgorithm]] that describes the
-     *                          user selection for the line search algorithm to
-     *                          be used in the L-BFGS optimization.
-     *  @return LBFGSLineSearch [[LBFGSLineSearch]] implementation of the line
-     *                          search algorithm selected by the user to be
-     *                          used in the L-BFGS optimization.
-     */
-    private def determineLineSearchImplementation(selection: LBFGSLineSearchAlgorithm): LBFGSLineSearch =
-        selection match
-            case LBFGSLineSearchAlgorithm.Default => LBFGSMoreThuente
-            case LBFGSLineSearchAlgorithm.MoreThuente => LBFGSMoreThuente
-            case LBFGSLineSearchAlgorithm.BacktrackingDefault => LBFGSBacktrackingWolfe
-            case LBFGSLineSearchAlgorithm.BacktrackingArmijo => LBFGSBacktrackingArmijo
-            case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
-            case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
-            case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
 end LBFGS
 
 // Test functions.

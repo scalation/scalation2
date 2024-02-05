@@ -2,14 +2,14 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  André Filipe Caldas Laranjeira
  *  @version 2.0
- *  @note    Fri Oct 20 15:27:27 EDT 2023
+ *  @note    Fri Oct 20 14:17:49 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
- *  Backtracking Strong Wolfe line search implementation used by the native
+ *  Backtracking Wolfe line search implementation used by the native
  *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm. This Scala
- *  implementation was made based on the C implementation of the same algorithm
- *  found in the link below.
+ *  for unconstrained optimization (L-BFGS) algorithm. This Scala implementation
+ *  was made based on the C implementation of the same algorithm found in the
+ *  link below.
  *
  *  @see github.com/chokkan/liblbfgs
  */
@@ -17,16 +17,17 @@
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD
 
 // Object.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `LBFGSBacktrackingStrongWolfe` object implements the backtracking Strong
- *  Wolfe line search algorithm for use in the native implementation of L-BFGS.
+/** The `LBFGSBacktrackingWolfe` object implements the backtracking Wolfe line
+ *  search algorithm for use in the native implementation of L-BFGS.
  */
-object LBFGSBacktrackingStrongWolfe extends LBFGSLineSearch:
+object LBFGSBacktrackingWolfe extends LBFGSLineSearch:
     // Public methods.
     override def lineSearch(
        n: Int,
@@ -36,7 +37,8 @@ object LBFGSBacktrackingStrongWolfe extends LBFGSLineSearch:
        s: VectorD,
        stp: Double,
        cd: LBFGSCallbackData,
-       params: LBFGSParameters
+       params: LBFGSLineSearchParameters,
+       orthantWise: Option[OrthantWiseParameters] = None
     ): LBFGSLineSearchReturn =
         var count = 0
         var width = 0.0
@@ -85,19 +87,14 @@ object LBFGSBacktrackingStrongWolfe extends LBFGSLineSearch:
                 if dg < params.wolfe * dginit then
                     width = inc
                 else
-                    /* Check the strong Wolfe condition. */
-                    if dg > -params.wolfe * dginit then
-                        width = dec
-                    else
-                        /* Exit with the strong Wolfe condition. */
-                        return LBFGSLineSearchStep(
-                            xNew,
-                            gNew,
-                            fNew,
-                            stpNew,
-                            count
-                        )
-                    end if
+                    /* Exit with the regular Wolfe condition. */
+                    return LBFGSLineSearchStep(
+                        xNew,
+                        gNew,
+                        fNew,
+                        stpNew,
+                        count
+                    )
                 end if
             end if
 
@@ -118,4 +115,4 @@ object LBFGSBacktrackingStrongWolfe extends LBFGSLineSearch:
         end while
 
         LBFGSLineSearchFailure(LBFGSReturnCode.LogicError, LBFGSLineSearchIncompleteResults(xNew, fNew))
-end LBFGSBacktrackingStrongWolfe
+end LBFGSBacktrackingWolfe

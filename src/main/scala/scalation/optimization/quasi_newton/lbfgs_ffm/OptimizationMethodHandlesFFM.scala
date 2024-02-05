@@ -7,13 +7,14 @@
  *------------------------------------------------------------------------------
  *  Method handles required for providing the optimization logic in the FFM
  *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm.
+ *  for unconstrained optimization (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
-package LBFGS_FFM
+package quasi_newton
+package lbfgs_ffm
 
 // General imports.
 import java.lang.invoke.{MethodHandle, MethodHandles}

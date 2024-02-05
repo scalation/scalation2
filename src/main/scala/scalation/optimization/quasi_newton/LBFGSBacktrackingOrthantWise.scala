@@ -7,9 +7,9 @@
  *------------------------------------------------------------------------------
  *  Backtracking Orthant-Wise line search implementation used by the native
  *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm. This Scala
- *  implementation was made based on the C implementation of the same algorithm
- *  found in the link below.
+ *  for unconstrained optimization (L-BFGS) algorithm. This Scala implementation
+ *  was made based on the C implementation of the same algorithm found in the
+ *  link below.
  *
  *  @see github.com/chokkan/liblbfgs
  */
@@ -17,6 +17,7 @@
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD
@@ -37,7 +38,8 @@ object LBFGSBacktrackingOrthantWise extends LBFGSLineSearch:
        s: VectorD,
        stp: Double,
        cd: LBFGSCallbackData,
-       params: LBFGSParameters
+       params: LBFGSLineSearchParameters,
+       orthantWise: Option[OrthantWiseParameters]
     ): LBFGSLineSearchReturn =
         var count = 0
         val width = 0.5
@@ -51,11 +53,11 @@ object LBFGSBacktrackingOrthantWise extends LBFGSLineSearch:
         var stpNew = stp
 
         /* Input parameters should have an orthantWise. */
-        if params.orthantWise.isEmpty then
+        if orthantWise.isEmpty then
             return LBFGSLineSearchFailure(LBFGSReturnCode.InvalidParameters, LBFGSLineSearchIncompleteResults(xNew, fNew))
         end if
 
-        val orthantwiseParams = params.orthantWise.get
+        val orthantwiseParams = orthantWise.get
         
         /* Check the input parameters for errors. */
         if stp <= 0.0 then

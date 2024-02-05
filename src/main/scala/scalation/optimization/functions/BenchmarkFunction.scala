@@ -17,7 +17,8 @@ package functions
 // Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.VectorD
-import scalation.optimization.LBFGS_FFM.FunctionOptimizationFFM
+import scalation.optimization.quasi_newton.FunctionOptimization
+import scalation.optimization.quasi_newton.lbfgs_ffm.FunctionOptimizationFFM
 
 // Trait.
 /** The `BenchmarkFunction` trait specifies the requirements for the logic

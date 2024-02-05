@@ -7,13 +7,14 @@
  *------------------------------------------------------------------------------
  *  Incomplete optimization results obtained before an error occurred in a call
  *  to a line search algorithm used by the native implementation of the Limited
- *  memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm.
+ *  memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained
+ *  optimization (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.mathstat.VectorD

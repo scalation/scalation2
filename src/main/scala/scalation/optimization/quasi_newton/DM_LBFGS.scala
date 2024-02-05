@@ -6,13 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Native Scala implementation of the direction momentum Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (dmL-BFGS-B) algorithm.
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
+ *  (dmL-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // General imports.
 import scala.math.abs
@@ -22,7 +23,7 @@ import scalation.mathstat.{PlotC, VectorD}
 import scalation.optimization.functions.*
 
 // Object.
-object dmLBFGS extends PathMonitor:
+object DM_LBFGS extends PathMonitor:
 
     // Public methods.
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -48,6 +49,7 @@ object dmLBFGS extends PathMonitor:
         add2Path(x)
 
         var lineSearchResults: LBFGSLineSearchReturn = null
+        val useOrthantWiseLogic = params.orthantWise.nonEmpty
 
         var k = 1
         var end = 0
@@ -64,13 +66,13 @@ object dmLBFGS extends PathMonitor:
 
             var ys, yy, xnorm, gnorm, beta, fx, rate = 0.0
 
-            val linesearch: LBFGSLineSearch = determineLineSearchImplementation(params.lineSearch)
+            val lineSearchImplementation: LBFGSLineSearch = determineLineSearchImplementation(params.lineSearch)
 
             /* Construct a callback data. */
             val cd = LBFGSCallbackData(n, instance, functionLogic)
 
             /* Allocate working space. */
-            if params.orthantWise.nonEmpty then
+            if useOrthantWiseLogic then
                 /* Allocate working space for OW-LQN. */
                 pg = new VectorD(n)
             end if
@@ -84,7 +86,7 @@ object dmLBFGS extends PathMonitor:
             fx = evaluationResults.objectiveFunctionValue
             g = evaluationResults.gradientVector
 
-            if params.orthantWise.nonEmpty then
+            if useOrthantWiseLogic then
                 /* Compute the L1 norm of the variable and add it to the object value.
                  */
                 val orthantWiseParams = params.orthantWise.get
@@ -101,7 +103,7 @@ object dmLBFGS extends PathMonitor:
                 Compute the direction;
                 we assume the initial hessian matrix H_0 as the identity matrix.
              */
-            if params.orthantWise.isEmpty then
+            if !useOrthantWiseLogic then
                 d = -g
             else
                 d = -pg
@@ -112,7 +114,7 @@ object dmLBFGS extends PathMonitor:
              */
             xnorm = x.norm
 
-            if params.orthantWise.isEmpty then
+            if !useOrthantWiseLogic then
                 gnorm = g.norm
             else
                 gnorm = pg.norm
@@ -137,10 +139,10 @@ object dmLBFGS extends PathMonitor:
                 dp = d
 
                 /* Search for an optimal step. */
-                if params.orthantWise.isEmpty then
-                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, g, d, step, cd, params)
+                if !useOrthantWiseLogic then
+                    lineSearchResults = lineSearchImplementation.lineSearch(n, xNew, fx, g, d, step, cd, params.lineSearchParams, params.orthantWise)
                 else
-                    lineSearchResults = linesearch.lineSearch(n, xNew, fx, pg, d, step, cd, params)
+                    lineSearchResults = lineSearchImplementation.lineSearch(n, xNew, fx, pg, d, step, cd, params.lineSearchParams, params.orthantWise)
                 end if
 
                 lineSearchResults match
@@ -158,7 +160,7 @@ object dmLBFGS extends PathMonitor:
                         /* Return with the value of the previous point. */
                         return LBFGSResults(failureReturnCode, xp, Some(fx), Some(lineSearchFailure.bestIncompleteResults))
 
-                if params.orthantWise.isDefined then
+                if useOrthantWiseLogic then
                     val orthantWiseParams = params.orthantWise.get
                     pg = orthantWiseParams.pseudoGradient(xNew, g)
                 end if
@@ -166,7 +168,7 @@ object dmLBFGS extends PathMonitor:
                 /* Compute x and g norms. */
                 xnorm = xNew.norm
 
-                if params.orthantWise.isEmpty then
+                if !useOrthantWiseLogic then
                     gnorm = g.norm
                 else
                     gnorm = pg.norm
@@ -248,7 +250,7 @@ object dmLBFGS extends PathMonitor:
                 end = (end + 1) % m
 
                 /* Compute the steepest direction. */
-                if params.orthantWise.isEmpty then
+                if !useOrthantWiseLogic then
                     /* Compute the negative of gradients. */
                     d = -g
                 else
@@ -283,7 +285,7 @@ object dmLBFGS extends PathMonitor:
                 /*
                     Constrain the search direction for orthant-wise updates.
                  */
-                if params.orthantWise.nonEmpty then
+                if useOrthantWiseLogic then
                     val orthantWiseParams = params.orthantWise.get
                     for i <- orthantWiseParams.start until orthantWiseParams.end.getOrElse(d.length) do
                         if d(i) * pg(i) >= 0 then
@@ -334,16 +336,16 @@ object dmLBFGS extends PathMonitor:
         if params.epsilon < 0.0 then return Some(LBFGSReturnCode.InvalidEpsilon)
         if params.past < 0 then return Some(LBFGSReturnCode.InvalidTestPeriod)
         if params.delta < 0.0 then return Some(LBFGSReturnCode.InvalidDelta)
-        if params.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
-        if params.maxStep < params.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
-        if params.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
+        if params.lineSearchParams.minStep < 0.0 then return Some(LBFGSReturnCode.InvalidMinStep)
+        if params.lineSearchParams.maxStep < params.lineSearchParams.minStep then return Some(LBFGSReturnCode.InvalidMaxStep)
+        if params.lineSearchParams.ftol < 0.0 then return Some(LBFGSReturnCode.InvalidFTOL)
         if params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingWolfe ||
             params.lineSearch == LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe then
-            if params.wolfe <= params.ftol || 1.0 <= params.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
+            if params.lineSearchParams.wolfe <= params.lineSearchParams.ftol || 1.0 <= params.lineSearchParams.wolfe then return Some(LBFGSReturnCode.InvalidWolfe)
         end if
-        if params.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
-        if params.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
-        if params.maxLineSearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
+        if params.lineSearchParams.gtol < 0.0 then return Some(LBFGSReturnCode.InvalidGTOL)
+        if params.lineSearchParams.xtol < 0.0 then return Some(LBFGSReturnCode.InvalidXTOL)
+        if params.lineSearchParams.maxLineSearch <= 0 then return Some(LBFGSReturnCode.InvalidMaxLineSearch)
         if params.orthantWise.nonEmpty then
             val orthantWiseParams = params.orthantWise.get
             if orthantWiseParams.c <= 0.0 then return Some(LBFGSReturnCode.InvalidOrthantwise)
@@ -386,7 +388,7 @@ object dmLBFGS extends PathMonitor:
             case LBFGSLineSearchAlgorithm.BacktrackingWolfe => LBFGSBacktrackingWolfe
             case LBFGSLineSearchAlgorithm.BacktrackingStrongWolfe => LBFGSBacktrackingStrongWolfe
             case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
-end dmLBFGS
+end DM_LBFGS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `mccormickFunctionDMLBFGSTest` main function uses the McCormick Function
@@ -405,10 +407,7 @@ end dmLBFGS
     val functionOptimizationLogic = McCormickFunction.toFunctionOptimization
 
     // Testing.
-    //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
-    //    println(LBFGS.lbfgsMain(2, VectorD(0, -0.5), functionOptimizationLogic))
-    println(dmLBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))
-    //    println(LBFGS.lbfgsMain(2, VectorD(-1.49, -2.99), functionOptimizationLogic, params=LBFGSParameters(defaultStep=10)))
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))
 
-    new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, dmLBFGS.getPath, McCormickFunction.functionMinimum)
+    new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, DM_LBFGS.getPath, McCormickFunction.functionMinimum)
 end mccormickFunctionDMLBFGSTest

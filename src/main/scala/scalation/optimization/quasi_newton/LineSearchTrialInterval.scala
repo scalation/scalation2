@@ -13,6 +13,7 @@
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Case class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

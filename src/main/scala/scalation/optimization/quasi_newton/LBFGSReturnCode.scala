@@ -6,13 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Set of return codes that can be returned in an call to the Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained optimization
- *  (L-BFGS-B) algorithm.
+ *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
+ *  (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Enumeration.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

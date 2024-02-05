@@ -6,13 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  Possible line search algorithms to be used to determine the step size in the
- *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound constrained
- *  optimization (L-BFGS-B) algorithm..
+ *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained
+ *  optimization (L-BFGS) algorithm..
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Enumeration.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

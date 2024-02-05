@@ -6,10 +6,9 @@
  *  @see     LICENSE (MIT style license file).
  *------------------------------------------------------------------------------
  *  MoreThuente line search implementation used by the native implementation of
- *  the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for Bound
- *  constrained optimization (L-BFGS-B) algorithm. This Scala implementation was
- *  made based on the C implementation of the same algorithm found in the link
- *  below.
+ *  the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained
+ *  optimization (L-BFGS) algorithm. This Scala implementation was made based on
+ *  the C implementation of the same algorithm found in the link below.
  *
  *  @see github.com/chokkan/liblbfgs
  */
@@ -17,6 +16,7 @@
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // General imports.
 import scala.math.{abs, max, min, sqrt}
@@ -52,7 +52,8 @@ object LBFGSMoreThuente extends LBFGSLineSearch:
         s: VectorD,
         stp: Double,
         cd: LBFGSCallbackData,
-        params: LBFGSParameters
+        params: LBFGSLineSearchParameters,
+        orthantWise: Option[OrthantWiseParameters] = None
     ): LBFGSLineSearchReturn =
     
         var count = 0

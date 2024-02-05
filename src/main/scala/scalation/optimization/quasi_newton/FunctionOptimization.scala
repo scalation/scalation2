@@ -8,12 +8,13 @@
  *  Case class to store the definition of a function optimization in a format
  *  that adheres to the optimization logic format used by the native
  *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for Bound constrained optimization (L-BFGS-B) algorithm.
+ *  for unconstrained optimization (L-BFGS) algorithm.
  */
 
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // Project imports.
 import scalation.calculus.Differential
