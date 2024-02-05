@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller, Hao Peng
+/** @author  John Miller, Hao Peng, André Laranjeira
  *  @version 2.0
  *  @date    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
@@ -16,15 +16,18 @@
  *  @see http://people.orie.cornell.edu/aslewis/publications/bfgs_exactLS.pdf
  */
 
+// Package definition.
 package scalation
 package optimization
 
+// General imports.
 import scala.math.{abs, max}
-import scala.util.control.Breaks.{breakable, break}
+import scala.util.control.Breaks.{break, breakable}
 
+// Project imports.
 import scalation.calculus.Differential.∇
-import scalation.mathstat._
-
+import scalation.mathstat.*
+import scalation.optimization.functions.*
 import MatrixD.eye
 import QNewton.aHi_inc
 
@@ -291,8 +294,10 @@ end BFGS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSTest` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (x_0 - 3)^2 + (x_1 - 4)^2 + 1
+ *      f(x) = (x_0 - 3)^2^ + (x_1 - 4)^2^ + 1
+ *  {{{
  *  > runMain scalation.optimization.bFGSTest
+ *  }}}
  */
 @main def bFGSTest (): Unit =
 
@@ -301,9 +306,8 @@ end BFGS
     val x0   = new VectorD (n)                              // starting point
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
-    def f (x: VectorD): Double = (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
-
-    def grad (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
+    def f = ParaboloidExampleFunction.objectiveFunction
+    def grad = ParaboloidExampleFunction.gradientFunction
 
     val optimizer = new BFGS (f)
 //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -315,8 +319,10 @@ end bFGSTest
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSTest2` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1
+ *      f(x) = x_0^4^ + (x_0 - 3)^2^ + (x_1 - 4)^2^ + 1
+ *  {{{
  *  > runMain scalation.optimization.bFGSTest2
+ *  }}}
  */
 @main def bFGSTest2 (): Unit =
 
@@ -325,9 +331,8 @@ end bFGSTest
     val x0 = new VectorD (n)                                // starting point
 
     banner ("Minimize: x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
-    def f (x: VectorD): Double = x(0)~^4 + (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
-
-    def grad (x: VectorD): VectorD = VectorD (4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
+    def f = QuarticExampleFunction.objectiveFunction
+    def grad = QuarticExampleFunction.gradientFunction
 
     val optimizer = new BFGS (f)
 //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -340,8 +345,10 @@ end bFGSTest2
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSTest3` main function is used to test the `BFGS_NoLS` class.
  *  This test uses the Rosenbrock function.
-        f(x) = (1 - x_0)^2 + 100 (x_1 - x_0^2)^2")
+        f(x) = (1 - x_0)^2^ + 100 (x_1 - x_0^2^)^2^")
+ *  {{{
  *  > runMain scalation.optimization.bFGSTest3
+ *  }}}
  */
 @main def bFGSTest3 (): Unit =
 
@@ -350,10 +357,8 @@ end bFGSTest2
     val x0   = new VectorD (n)                              // starting point
 
     banner ("Minimize: (1 - x_0)^2 + 100 (x_1 - x_0^2)^2")
-    def f (x: VectorD): Double = (1.0 - x(0))~^2 + 100.0 * (x(1) - x(0)~^2)~^2
-
-    def grad (x: VectorD): VectorD = VectorD (-2.0 * (1 - x(0)) - 400.0 * x(0) * (x(1) - x(0)~^2),
-                                              200.0 * (x(1) - x(0)~^2))
+    def f = RosenbrockFunction.objectiveFunction
+    def grad = RosenbrockFunction.gradientFunction
 
     val optimizer = new BFGS (f)
 //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -365,8 +370,10 @@ end bFGSTest3
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSTest4` main function is used to test the `BFGS` class on f(x):
- *      f(x) = 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1
+ *      f(x) = 1/x(0) + x_0^4^ + (x_0 - 3)^2^ + (x_1 - 4)^2^ + 1
+ *  {{{
  *  > runMain scalation.optimization.bFGSTest4
+ *  }}}
  */
 @main def bFGSTest4 (): Unit =  
 
@@ -374,9 +381,8 @@ end bFGSTest3
     val x0   = VectorD (0.1, 0.0)                           // starting location
 
     banner ("Minimize: 1/x(0) + x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
-    def f (x: VectorD): Double = 1/x(0) + x(0)~^4 + (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
-
-    def grad (x: VectorD): VectorD = VectorD (-(x(0)~^(-2)) + 4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
+    def f = ReciprocalExampleFunction.objectiveFunction
+    def grad = ReciprocalExampleFunction.gradientFunction
 
     val optimizer = new BFGS (f)
 //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -391,8 +397,10 @@ end bFGSTest4
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBoothFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+ *      f(x) = (x(0) + 2 * x(1) - 7)^2^ + (2 * x(0) + x(1) - 5)^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSBoothFunction
+ *  }}}
  */
 @main def bFGSBoothFunction (): Unit =
 
@@ -401,9 +409,8 @@ end bFGSTest4
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize: (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2")
-    def f (x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
-
-    def grad (x: VectorD): VectorD = VectorD (10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
+    def f = BoothFunction.objectiveFunction
+    def grad = BoothFunction.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -418,8 +425,10 @@ end bFGSBoothFunction
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBealeFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+ *      f(x) = (1.5 - x(0) + x(0)*x(1))^2^ + (2.25 - x(0) + x(0)*(x(1)^2^))^2^ + (2.625 - x(0) + x(0)*(x(1)^3^))^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSBealeFunction
+ *  }}}
  */
 @main def bFGSBealeFunction (): Unit =
 
@@ -428,14 +437,8 @@ end bFGSBoothFunction
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
-    def f (x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
-
-    def grad (x: VectorD): VectorD = VectorD (2 * (1.5 - x(0) + x(0) * x(1)) * (-1 + x(1)) +
-      2 * (2.25 - x(0) + x(0) * (x(1) ~^ 2)) * (-1 + (x(1) ~^ 2)) +
-      2 * (2.625 - x(0) + x(0) * (x(1) ~^ 3)) * (-1 + (x(1) ~^ 3)),
-        2 * (1.5 - x(0) + x(0) * x(1)) * x(0) +
-          2 * (2.25 - x(0) + x(0) * (x(1) ~^ 2)) * (2 * x(0) * x(1)) +
-          2 * (2.625 - x(0) + x(0) * (x(1) ~^ 3)) * (3 * x(0) * (x(1) ~^ 2)))
+    def f = BealeFunction.objectiveFunction
+    def grad = BealeFunction.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -450,8 +453,10 @@ end bFGSBealeFunction
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBohachevsky1Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+ *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+ *  {{{
  *  > runMain scalation.optimization.bFGSBohachevsky1Function
+ *  }}}
  */
 @main def bFGSBohachevsky1Function (): Unit =
 
@@ -460,10 +465,8 @@ end bFGSBealeFunction
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7")
-    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
-
-    def grad (x: VectorD): VectorD = VectorD (2 * x(0) - 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)),
-        4 * x(1) - 0.4 * 4 * math.Pi * math.sin(4 * math.Pi * x(1)))
+    def f = Bohachevsky1Function.objectiveFunction
+    def grad = Bohachevsky1Function.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -478,8 +481,10 @@ end bFGSBohachevsky1Function
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBohachevsky2Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+ *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+ *  {{{
  *  > runMain scalation.optimization.bFGSBohachevsky2Function
+ *  }}}
  */
 @main def bFGSBohachevsky2Function (): Unit =
 
@@ -488,10 +493,8 @@ end bFGSBohachevsky1Function
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3")
-    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
-
-    def grad (x: VectorD): VectorD = VectorD (2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
-        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
+    def f = Bohachevsky2Function.objectiveFunction
+    def grad = Bohachevsky2Function.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -506,8 +509,10 @@ end bFGSBohachevsky2Function
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBohachevsky3Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+ *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+ *  {{{
  *  > runMain scalation.optimization.bFGSBohachevsky3Function
+ *  }}}
  */
 @main def bFGSBohachevsky3Function (): Unit =
 
@@ -516,10 +521,8 @@ end bFGSBohachevsky2Function
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3")
-    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
-
-    def grad (x: VectorD): VectorD = VectorD (2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)),
-        4 * x(1) + 0.3 * 4 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)))
+    def f = Bohachevsky3Function.objectiveFunction
+    def grad = Bohachevsky3Function.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -534,8 +537,10 @@ end bFGSBohachevsky3Function
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSCamel3Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+ *      f(x) = 2*x(0)^2^ - 1.05*x(0)^4^ + (1/6.0)*x(0)^6^ + x(0)*x(1) + x(1)^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSCamel3Function
+ *  }}}
  */
 @main def bFGSCamel3Function (): Unit =
 
@@ -544,9 +549,8 @@ end bFGSBohachevsky3Function
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize:  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2")
-    def f (x: VectorD): Double =  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
-
-    def grad (x: VectorD): VectorD = VectorD (4 * x(0) - 4.2 * x(0)~^3 + x(0)~^5 + x(1), x(0) + 2 * x(1))
+    def f = Camel3Function.objectiveFunction
+    def grad = Camel3Function.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -560,8 +564,10 @@ end bFGSCamel3Function
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSCubeFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+ *      f(x) = 100*(x(1) - x(0)^3^)^2^ + (1-x(0))^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSCubeFunction
+ *  }}}
  */
 @main def bFGSCubeFunction (): Unit =
 
@@ -570,9 +576,8 @@ end bFGSCamel3Function
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize:  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2")
-    def f (x: VectorD): Double =  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
-
-    def grad (x: VectorD): VectorD = VectorD (-200 * (x(1) - x(0)~^3) * (3 * x(0)~^2) - 2 * (1 - x(0)), 200 * (x(1) - x(0)~^3))
+    def f = CubeFunction.objectiveFunction
+    def grad = CubeFunction.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -587,8 +592,10 @@ end bFGSCubeFunction
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))^2^ + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSFreudensteinRothFunction
+ *  }}}
  */
 @main def bFGSFreudensteinRothFunction (): Unit =
 
@@ -597,10 +604,8 @@ end bFGSCubeFunction
     val x0   = new VectorD (n)                           // starting location
 
     banner ("Minimize:  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2")
-    def f (x: VectorD): Double =  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
-
-    def grad (x: VectorD): VectorD = VectorD (2 * (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) + 2 * (x(0) - 29 + x(1) * ((x(1) + 1) * x(1) - 14)),
-        2 * x(1) * ((5 - x(1)) * x(1) - 2) + 2 * (x(1) * ((x(1) + 1) * x(1) - 14) + (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) * ((5 - x(1)) * x(1) - 2)))
+    def f =  FreudensteinRothFunction.objectiveFunction
+    def grad = FreudensteinRothFunction.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
@@ -614,23 +619,24 @@ end bFGSFreudensteinRothFunction
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))^2^ + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))^2^
+ *  {{{
  *  > runMain scalation.optimization.bFGSFreudensteinRothFunction
+ *  }}}
  */
 @main def bFGSMcCormickFunction (): Unit =
 
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-4, -4)
     val functionDomainUpperBound = VectorD(4, 4)
-    val functionMinimum = VectorD(-0.54719, -1.54719)
+    val functionMinimum = McCormickFunction.functionMinimum
 
     val step = 1.0                                       // step size (may need adjustment)
     val x0   = VectorD (2.5, 3.5)                        // starting location
 
     banner ("Minimize:  math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^ 2 - 1.5 * x(0) + 2.5 * x(1) + 1")
-    def f (x: VectorD): Double = math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^ 2 - 1.5 * x(0) + 2.5 * x(1) + 1
-
-    def grad (x: VectorD): VectorD = VectorD(-1.5 + 2 * x(0) - 2 * x(1) + math.cos(x(0) + x(1)), 2.5 - 2 * x(0) + 2 * x(1) + math.cos(x(0) + x(1)))
+    def f = McCormickFunction.objectiveFunction
+    def grad = McCormickFunction.gradientFunction
 
     val optimizer = new BFGS (f)
     //  val opt = optimizer.solve (x0, step)                    // use numerical partials
