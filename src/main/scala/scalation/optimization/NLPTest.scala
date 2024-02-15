@@ -16,6 +16,7 @@ package optimization
 import scala.collection.mutable.LinkedHashMap
 
 import scalation.mathstat._
+import scalation.optimization.quasi_newton.BFGS
 
 import Minimizer._
 

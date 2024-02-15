@@ -21,6 +21,7 @@ import scala.math.sqrt
 
 import scalation.mathstat._
 import scalation.optimization._
+import scalation.optimization.quasi_newton.BFGS
 import scalation.random.Normal
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

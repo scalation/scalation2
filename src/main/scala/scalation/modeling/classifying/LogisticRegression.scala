@@ -15,7 +15,7 @@ package classifying
 import scala.math.{exp, log}
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 // FIX: needs improved optimization
 

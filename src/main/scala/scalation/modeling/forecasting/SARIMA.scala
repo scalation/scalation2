@@ -20,7 +20,7 @@ package forecasting
 import scala.math.sqrt
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 import scalation.random.{Normal, Uniform}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

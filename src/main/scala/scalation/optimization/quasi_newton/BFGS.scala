@@ -2,12 +2,12 @@
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller, Hao Peng, André Laranjeira
  *  @version 2.0
- *  @date    Fri Sep 30 13:37:32 EDT 2011
+ *  @note    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
  *  @note    Broyden–Fletcher–Goldfarb–Shanno (BFGS) Quasi-Newton Optimizer
  *
- *  @see The Superlinear Convergence of a Modified BFGS-Type Method for Unconstrained Optimization 
+ *  @see The Superlinear Convergence of a Modified BFGS-Type Method for Unconstrained Optimization
  *  @see On the Robustness of Conjugate-Gradient Methods and Quasi-Newton Methods
  *  @see Limited Memory BFGS for Nonsmooth Optimization
  *  @see http://en.wikipedia.org/wiki/BFGS_method
@@ -19,6 +19,7 @@
 // Package definition.
 package scalation
 package optimization
+package quasi_newton
 
 // General imports.
 import scala.math.{abs, max}
@@ -28,6 +29,8 @@ import scala.util.control.Breaks.{break, breakable}
 import scalation.calculus.Differential.∇
 import scalation.mathstat.*
 import scalation.optimization.functions.*
+
+// Simplifying imports.
 import MatrixD.eye
 import QNewton.aHi_inc
 
@@ -259,6 +262,123 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
         } // breakable
         (fg(x._1), x._1)                                          // return functional value and current point
     end solve2
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Solve for an optima by finding a local optima close to the starting
+     *  point/guess 'x0'.
+     *  This version uses explicit functions for the gradient (partials
+     *  derivatives) and the line search algorithm implementations developed for
+     *  L-BFGS (except for `BacktrackingOrthantWise`, which is currently NOT
+     *  supported). More details can be found in [[LBFGSLineSearchAlgorithm]].
+     *
+     *  @param x0                   The starting point/guess.
+     *  @param grad                 The gradient as explicit functions for
+     *                              partials.
+     *  @param step_                The initial step size.
+     *  @param toler                The tolerance.
+     *  @param lineSearchAlgorithm  [[LBFGSLineSearchAlgorithm]] representing
+     *                              the line search algorithm chosen for the
+     *                              optimization. Cannot be
+     *                              `BacktrackingOrthantWise`, as it is not
+     *                              currently supported.
+     *  @param lineSearchParams     [[LBFGSLineSearchParameters]] representing
+     *                              the parameters that control the line search
+     *                              execution.
+     */
+    def solve3 (
+        x0: VectorD,
+        grad: FunctionV2V,
+        step_ : Double = STEP,
+        toler: Double = TOL,
+        lineSearchAlgorithm: LBFGSLineSearchAlgorithm = LBFGSLineSearchAlgorithm.Default,
+        lineSearchParams: LBFGSLineSearchParameters = LBFGSLineSearchParameters()
+    ): FuncVec =
+        debug ("solve3", s"x0 = $x0, step_ = $step_, toler = $toler")
+        clearPath()
+
+        var step = step_                                          // set the current step size
+        var x    = (x0, grad (x0))                                // current (point, gradient)
+        var xx:  (VectorD, VectorD) = (null, null)                // next (point, gradient)
+        var dir: VectorD = null                                   // initial direction is -gradient
+        var s:   VectorD = null                                   // step vector
+        add2Path(x._1)
+
+        if lineSearchAlgorithm == LBFGSLineSearchAlgorithm.BacktrackingOrthantWise then
+            debug("solve3", "orthantwise is not currently supported by BFGS")
+            return (fg(x._1), x._1)
+        end if
+
+        val lineSearchImplementation = LBFGSLineSearch.getImplementation(lineSearchAlgorithm)
+        var aHi = eye (x0.dim, x0.dim)                            // approximate Hessian inverse (aHi) matrix
+        // start with identity matrix
+
+        debug ("solve3", s"||gradient||^2 = ${x._2.normSq}")
+
+        var mgn         = 0.0                                     // mean gradient normSq
+        var diff        = 0.0                                     // diff between current and next point
+        val diffTol     = toler * toler                           // tolerance for changes in diff
+        var count       = 0                                       // number of times mgn stayed roughly same (< diffTol)
+        val maxCount    = 10                                      // max number of times mgn stayed roughly same => terminate
+        val n           = x0.dim                                  // size of the parameter vector
+        var goodGrad    = true                                    // good gradient value flag (not NaN nor infinity)
+        var xn: VectorD = null                                    // next value for x (point)
+
+        breakable {
+            for it <- 1 to MAX_IT do
+                debug ("solve3", s"start of iteration $it: step = $step, f(x) = ${fg(x._1)}")
+                if goodGrad then
+                    dir = if bfgs then -(aHi * x._2) else -x._2
+                end if
+
+                lineSearchImplementation.lineSearch(
+                    n,
+                    x._1,
+                    f(x._1),
+                    grad(x._1),
+                    dir,
+                    step,
+                    LBFGSCallbackData(n, None, FunctionEvaluation(f, grad)),
+                    lineSearchParams
+                ) match
+                    case lineSearchStep: LBFGSLineSearchStep =>
+                        s = dir * lineSearchStep.step
+                    case lineSearchFailure: LBFGSLineSearchFailure =>
+                        debug("solve3", s"line search failed: $lineSearchFailure")
+                        break()
+
+                xn = x._1 + s                                     // next x point
+
+                if goodGrad then
+                    for xx_i <- xn if xx_i.isNaN || xx_i.isInfinite do break ()
+                    diff = (xn - x._1).normSq / n                 // measure of distance moved
+                end if
+                xx = (xn, grad (xn))                              // compute the next point
+                mgn = xx._2.normSq / n                            // compute mean gradient normSq
+                debug ("solve3", s"current mean gradient normSq = $mgn")
+
+                if mgn.isNaN || mgn.isInfinite then
+                    goodGrad = false                              // gradient blew up
+                    step /= 2.0                                   // halve the step size
+                else if mgn < toler || count > maxCount then { x = xx; break () }  // return when vanished gradient or haven't moved
+                else if goodGrad then
+                    if diff < diffTol then count += 1             // increment no movement counter
+                    if step < step_   then step  *= 1.5           // increase step size by 50%
+                    else
+                        goodGrad = true                               // gradient is currently fine
+                end if
+
+                if goodGrad then
+                    if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
+                    debug ("solve3", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
+                    x = xx                                        // make the next point the current point
+                end if
+
+                add2Path(x._1)
+            end for
+        } // breakable
+
+        (fg(x._1), x._1)                                          // return functional value and current point
+    end solve3
 
 end BFGS
 
