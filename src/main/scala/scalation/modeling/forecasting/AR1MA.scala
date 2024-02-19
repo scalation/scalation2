@@ -20,7 +20,6 @@ package forecasting
 import scalation.mathstat._
 
 import Forecaster.differ
-import ARMA.hp
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the first difference of the time-series y, giving the velocity v_t = y_t+1 - y_t.
@@ -56,7 +55,7 @@ end undel
  *  @param hparam  the hyper-parameters
  *  @param diffr   whether to take a first difference (defaults to true)
  */
-class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
+class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp,
              diffr: Boolean = true)
       extends Forecaster (y, tt, hparam)
          with Correlogram (y)
@@ -271,6 +270,8 @@ import Example_LakeLevels.y
  */
 @main def aR1MATest2 (): Unit =
 
+    import SARIMAX.hp
+
     // d = 0 (no differencing) => should give same results as ARMA (@see `aRMATest4`)
 
     for p <- 1 to 3; q <- 0 to 2 do
@@ -293,6 +294,8 @@ end aR1MATest2
  *  > runMain scalation.modeling.forecasting.aR1MATest3
  */
 @main def aR1MATest3 (): Unit =
+
+    import SARIMAX.hp
 
     // d = 1 (first difference)
 
@@ -319,7 +322,7 @@ end aR1MATest3
  */
 @main def aR1MATest4 (): Unit =
 
-    import ARMA.hp
+    import SARIMAX.hp
 
     val data = MatrixD.load ("covid_19.csv", 1, 1)                     // skip first row (header) and first column
     val yy   = data(?, 4)                                              // column 4 is daily deaths

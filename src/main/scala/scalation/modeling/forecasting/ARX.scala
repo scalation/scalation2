@@ -26,8 +26,8 @@ import scalation.mathstat._
  *      where x = [1, y_{t-1}, y_{t-2}, ... y_{t-lags}]
  *
  *  @param x       the input/predictor matrix built out of lags of y
-                       (and optionally from exogenous variables ex)
- *  @param yy      the output/response vector trimmed to match x.dim
+ *                     (and optionally from exogenous variables ex)
+ *  @param yy      the output/response vector trimmed to match x.dim (@see ARX object)
  *  @param lags    the maximum lag included (inclusive)
  *  @param fname   the feature/variable names
  *  @param hparam  the hyper-parameters (use Regression.hp for default)
@@ -72,9 +72,7 @@ class ARX (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
     def forecastAt (yf: MatrixD, yx: MatrixD, h: Int): VectorD =
         if h < 1 then flaw ("forecastAt", s"horizon h = $h must be at least 1")
         for t <- yx.indices do                                           // make forecasts over all time points for horizon h
-            val t1 = t + h - 1                                           // time point prior to horizon
-            yf(t+h, h) = b dot yx(min (t1, yx.dim-1))                    // forecast down the diagonal ??
-        end for
+            yf(t+h-1, h) = b dot yx(min (t, yx.dim-1))                   // forecast down the diagonal ??
         yf(?, h)                                                         // return the h-step ahead forecast vector
     end forecastAt
 
@@ -117,7 +115,7 @@ object ARX:
      *  @param hparam  the hyper-parameters (use Regression.hp for default)
      */
     def apply (y: VectorD, lags: Int, hparam: HyperParameter = Regression.hp): ARX =
-        val (x_, yy) = buildMatrix4TS (y, lags)                          // column for each lag
+        val (x_, yy) = buildMatrix4TS (y, lags)                          // column for each lag; yy is y trimmed
         var x = VectorD.one (yy.dim) +^: x_                              // add first column of all ones
 
         if TREND then
@@ -185,7 +183,7 @@ object ARX:
         for j <- 1 until ex.dim2 do
             xx = xx ++^ buildMatrix4TS_exo (ex(?, j), lags, elag1, elag2)
         end for
-        println (s"addExoVars: collects lags of ${ex.dim2} exo variables into #xx.dim2 columns")
+        println (s"addExoVars: collects lags of ${ex.dim2} exo variables into ${xx.dim2} columns")
         xx
     end makeExoCols
 
@@ -278,25 +276,27 @@ end aRXTest
 
         banner ("Predictions")
         val yy = mod.getY                                                // trimmed actual response vector
-        val xx = mod.getX
-        val yp = mod.predict (xx)                                        // predicted response vector
+        println (s"y.dim = ${y.dim}, yy.dim = ${yy.dim}")
+        println (s"y = $y")
+        println (s"yy = $yy")
+        val yx = mod.getX
+        val yp = mod.predict (yx)                                        // predicted response vector
         new Plot (null, yy, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
         println (s"yp = $yp")
 
         banner ("Forecasts")
 //      val yf = mod.forecast (yp, h)                                    // forecasted response matrix
-        val yf = mod.forecastAll (yy, xx, h)                             // forecasted response matrix
+        val yf = mod.forecastAll (yy, yx, h)                             // forecasted response matrix
         for k <- yf.indices2 do
             new Plot (null, yy, yf(?, k), s"yy vs. yf_$k for ${mod.modelName} with $p lags", lines = true)
         end for
-        println (s"yf = $yf")
-        println (s"yf.dims = ${yf.dims}")
-        assert (yf(?, 0) == yp)                                          // first forecast = predicted values
-/*
-        banner ("Forecast QoF")
-        println (testForecast (mod, y, yf, p))                           // QoF
+
+        Forecaster.checkForecastMatrix (yf, yy, yp, true)                // make sure columns 0, 1 for yf agree with [yy, yp]
+        mod.testHorizons (h, y, yx)                                      // calls testF for horizons 1 to h
+
+//      banner ("Forecast QoF")
+//      println (testForecast (mod, y, yf, p))                           // QoF
 //      println (Fit.fitMap (mod.testf (k, y)))                          // evaluate k-units ahead forecasts
-*/
     end for
 
 end aRXTest2
@@ -310,7 +310,7 @@ end aRXTest2
 @main def aRXTest3 (): Unit =
 
     val LAGS = 5                                                         // number of lags of y
-    val h    = 2                                                         // forecasting horizon
+    val h    = 4                                                         // forecasting horizon
 
     val exo_vars = Array.ofDim [String] (0)                              // no exogenous variables in this case
     val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
@@ -322,7 +322,7 @@ end aRXTest2
     println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
 
     banner ("Test In-Sample ARX on COVID-19 Weekly Data")
-    val mod = ARX (y, LAGS)                                              // create model for time series data
+    val mod = ARX (y, LAGS)                                              // create ARX  model for time series data
     val (yp, qof) = mod.trainNtest ()()                                  // train the model on full dataset
     new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)
 
@@ -330,22 +330,11 @@ end aRXTest2
     val yx = mod.getX
     val yf = mod.forecastAll (y, yx, h)                                  // forecasted response matrix
     for k <- 0 to h do
-        new Plot (null, y, yf(?, k), s"y vs. yf_$k for ${mod.modelName} with $LAGS lags", lines = true)
+        new Plot (null, y, yf(?, k), s"y vs. yf_$k for ${mod.modelName} with $LAGS lags @ horizon $k", lines = true)
     end for
-    println (s"yf = $yf")
-    println (s"yf.dims = ${yf.dims}, y.dim = ${y.dim}, yp.dim = ${yp.dim}")
-    val yf0 = yf(?, 0)(0 until y.dim)
-    val yf1 = yf(?, 1)(1 until y.dim)
-    Forecaster.differ (yf0, y)
-    Forecaster.differ (yf1, yp)
-    assert (yf0 =~ y)                                                    // zeroth forecast = actual values
-    assert (yf1 =~ yp)                                                   // first forecast = predicted values
 
-    for k <- 1 to h do
-        val (yfh, qof) = mod.testF (k, y, yx)                            // k-steps ahead forecast and its QoF
-        println (s"Evaluate QoF for horizon $k:")
-        println (FitM.fitMap (qof, QoF.values.map (_.toString)))         // evaluate k-steps ahead forecasts
-    end for
+    Forecaster.checkForecastMatrix (yf, y, yp, true)                     // make sure columns 0, 1 for yf agree with [y, yp]
+    mod.testHorizons (h, y, yx)                                          // calls testF for horizons 1 to h
 
     banner (s"Feature Selection Technique: stepRegression")
     val (cols, rSq) = mod.stepRegressionAll (cross = false)              // R^2, R^2 bar, sMAPE, NA

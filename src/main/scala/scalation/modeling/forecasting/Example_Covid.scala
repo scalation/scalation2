@@ -49,7 +49,7 @@ object Example_Covid:
         val col = HashMap [String, Int] ()
         for i <- header.indices do col += header(i) -> i
 
-        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim and first column
+        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim first column
         val x_cols = for s <- x_strs yield col(s)
         (data(?, x_cols), data(?, col(y_str)))
     end loadData
@@ -63,7 +63,7 @@ object Example_Covid:
         val col = HashMap [String, Int] ()
         for i <- header.indices do col += header(i) -> i
 
-        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim and first column
+        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim first column
         data(?, col(y_str))
     end loadData_y
 
@@ -76,7 +76,7 @@ object Example_Covid:
         val col = HashMap [String, Int] ()
         for i <- header.indices do col += header(i) -> i
 
-        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim and first column
+        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim first column
         val y_cols = for s <- y_strs yield col(s)
         data(?, y_cols)
     end loadData_yy

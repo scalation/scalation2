@@ -10,7 +10,8 @@
 
 package scalation
 
-import scala.collection.mutable.HashMap
+import scala.collection.mutable.LinkedHashMap                                // maintains specification order
+import scala.runtime.ScalaRunTime.stringOf
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `HyperParameter` class provides a simple and flexible means for handling
@@ -22,7 +23,7 @@ import scala.collection.mutable.HashMap
  */
 class HyperParameter extends Cloneable:
 
-    private val hparam = HashMap [String, (ValueType, ValueType)] ()       // hyper-parameter map
+    private val hparam = LinkedHashMap [String, (ValueType, ValueType)] ()   // hyper-parameter map
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given the name, return the hyper-parameter value.
@@ -98,18 +99,28 @@ class HyperParameter extends Cloneable:
     def -= (name: String): Unit =
         hparam -= name
     end -=
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Collect all values into an integer array.
+     */
+    def toInt: Array [Int] = (for v <- hparam.values yield v._1.toInt).toArray
+ 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Collect all values into an integer array.
+     */
+    def toDouble: Array [Double] = (for v <- hparam.values yield v._1.toDouble).toArray
  
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert the hyper-parameter map to a string.
      */
-    override def toString: String = "HyperParameter (" + hparam.toString + ")"
+    override def toString: String = hparam.toString.replace ("LinkedHashMap", "HyperParameter")
  
 end HyperParameter
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `hyperParameterTest` main function is used to test the `HyperParameter` class.
- *  > runMain scalation.modeling.hyperParameterTest
+ *  > runMain scalation.hyperParameterTest
  */
 @main def hyperParameterTest (): Unit =
 
@@ -132,4 +143,23 @@ end HyperParameter
     println (s"hp ++ hp2 = ${hp ++ hp2}")
 
 end hyperParameterTest
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `hyperParameterTest2` main function is used to test the `HyperParameter` class.
+ *  > runMain scalation.hyperParameterTest2
+ */
+@main def hyperParameterTest2 (): Unit =
+
+    val hp = new HyperParameter
+    hp += ("p", 3, 3)
+    hp += ("d", 1, 1)
+    hp += ("q", 2, 2)
+
+    banner ("Values for hyper-parameters")
+    println (s"hp          = $hp")
+    println (s"hp.toInt    = ${stringOf (hp.toInt)}")
+    println (s"hp.toDouble = ${stringOf (hp.toDouble)}")
+
+end hyperParameterTest2
 

@@ -195,7 +195,7 @@ import SARIMA._
  *  @param hparam  the hyper-parameters
  */
 class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
-              tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
+              tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp)
       extends ARIMA (y, tt, hparam):
 
     private val flaw  = flawf ("SARIMA")                         // flaw function
@@ -259,8 +259,8 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `SARIMA` model to the times-series data in vector y_.  Must call setPQ first.
-     *  Estimate the coefficient vectors doer a SARIMA(p, d, q, P, D, Q)_s model.
-     *  It uses BFGS, a Quasi-Newton optimizer, to minimize the negative log-likelihood.
+     *  Estimate the coefficient vectors for the SARIMA(p, d, q)x(P, D, Q)_s model.
+     *  It uses a Quasi-Newton optimizer to minimize the negative log-likelihood.
      *  @param x_null  the data/input matrix (ignored, pass null)
      *  @param y_      the training/full response vector
      */
@@ -567,7 +567,7 @@ end sARIMATest4
  */
 @main def sARIMATest5 (): Unit =
 
-    import ARIMA.hp
+    import SARIMAX.hp
 
     val data = MatrixD.load ("covid_19.csv", 1, 1)               // skip first row (header) and first column
     val yy   = data(?, 4)                                        // column 5 is daily deaths

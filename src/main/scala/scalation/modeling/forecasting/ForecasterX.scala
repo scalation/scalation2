@@ -83,7 +83,7 @@ trait ForecasterX (lags: Int):
     end forecastAll
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of a forecasting model y_ = f(lags (y_), x) + e
+    /** Test FORECASTS at horizon h of a forecasting model y_ = f(lags (y_), x) + e
      *  and return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
      *  by the parameters passed in.  Note: must call train and forecastAll before testF.
@@ -92,6 +92,23 @@ trait ForecasterX (lags: Int):
      *  @param yx  the matrix of endogenous y and exogenous x values
      */
     def testF (h: Int, y_ : VectorD, yx: MatrixD): (VectorD, VectorD)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Test FORECASTS over horizons 1 to h of a forecasting model y_ = f(lags (y_), x) + e
+     *  and return its forecasts and QoF vector.  Testing may be in-sample
+     *  (on the training set) or out-of-sample (on the testing set) as determined
+     *  by the parameters passed in.  Note: must call train and forecastAll before testHorizons.
+     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
+     *  @param y_  the testing/full response/output vector
+     *  @param yx  the matrix of endogenous y and exogenous x values
+     */
+    def testHorizons (h: Int, y_ : VectorD, yx: MatrixD): Unit =
+        for k <- 1 to h do
+            val (yfh, qof) = testF (k, y_, yx)                         // k-steps ahead forecast and its QoF
+            println (s"Evaluate QoF for horizon $k:")
+            println (FitM.fitMap (qof, QoF.values.map (_.toString)))   // evaluate k-steps ahead forecasts
+        end for
+    end testHorizons
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set up testing by making h-steps ahead FORECASTS, and then aligning actual
@@ -105,8 +122,8 @@ trait ForecasterX (lags: Int):
     protected def testSetupF (y_ : VectorD, yx: MatrixD, h: Int, doPlot: Boolean = true): (VectorD, VectorD) =
         if yf == null || yf.dim2 < h+2 then yf = forecastAll (y_, yx, h)
         val yh  = yf(?, h)                                             // get column h of yf (y-forecasted)
-        val yy  = y_(h until y_.dim)
-        val yfh = yh(h until y_.dim)                                   // align actual and forecasted vectors
+        val yy  = y_(h-1 until y_.dim)                                 // note: day 0 already cut out by `ForecastUtil`
+        val yfh = yh(h-1 until y_.dim)                                 // align actual and forecasted vectors
         assert (yy.dim == yfh.dim)                                     // make sure the vector sizes agree
         if doPlot then new Plot (null, yy, yfh, s"Plot of yy, yfh for ForecasterX model (h = $h) vs. t", true)
         (yy, yfh)

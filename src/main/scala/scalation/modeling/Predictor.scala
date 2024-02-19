@@ -59,7 +59,7 @@ trait Predictor (x: MatrixD, y: VectorD, protected var fname: Array [String], hp
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the used response vector y.  Mainly for derived classes where y is
-     *  transformed, e.g., `TranRegression`, `Regression4TS`.
+     *  transformed, e.g., `TranRegression`, `ARX`.
      */
     def getY: VectorD = y
 

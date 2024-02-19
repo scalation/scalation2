@@ -1,0 +1,8 @@
+
+Documentation created via scaladoc
+
+Move from target release directory to doc directory
+
+cd ..
+mv target/scala-3.3.2/api doc
+

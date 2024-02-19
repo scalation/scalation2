@@ -264,27 +264,53 @@ end ARX_QuadTest
 
         banner ("Predictions")
         val yy = mod.getY                                                // trimmed actual response vector
-        val xx = mod.getX
-        val yp = mod.predict (xx)                                        // predicted response vector
+        println (s"y.dim = ${y.dim}, yy.dim = ${yy.dim}")
+        println (s"y = $y")
+        println (s"yy = $yy")
+        val yx = mod.getX
+        val yp = mod.predict (yx)                                        // predicted response vector
         new Plot (null, yy, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
         println (s"yp = $yp")
 
         banner ("Forecasts")
 //      val yf = mod.forecast (yp, h)                                    // forecasted response matrix
-        val yf = mod.forecastAll (yy, xx, h)                             // forecasted response matrix
+        val yf = mod.forecastAll (yy, yx, h)                             // forecasted response matrix
         for k <- yf.indices2 do
             new Plot (null, yy, yf(?, k), s"yy vs. yf_$k for ${mod.modelName} with $p lags", lines = true)
         end for
-        println (s"yf = $yf")
-        println (s"yf.dims = ${yf.dims}")
-        assert (yf(?, 0) == yp)                                          // first forecast = predicted values
 
-        banner ("Forecast QoF")
-        println (testForecast (mod, y, yf, p))                           // QoF
+        Forecaster.checkForecastMatrix (yf, yy, yp, true)                // make sure columns 0, 1 for yf agree with [yy, yp]
+        mod.testHorizons (h, y, yx)                                      // calls testF for horizons 1 to h
+
+//      banner ("Forecast QoF")
+//      println (testForecast (mod, y, yf, p))                           // QoF
 //      println (Fit.fitMap (mod.testf (k, y)))                          // evaluate k-units ahead forecasts
     end for
 
 end ARX_QuadTest2
+
+/*
+        val mod = ARX (y, p)                                             // create model for time series data
+        mod.trainNtest ()()                                              // train the model on full dataset
+        println (mod.summary)                                            // parameter/coefficient statistics
+
+        banner ("Predictions")
+        val yy = mod.getY                                                // trimmed actual response vector
+        val yx = mod.getX
+        val yp = mod.predict (yx)                                        // predicted response vector
+        new Plot (null, yy, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
+        println (s"yp = $yp")
+
+        banner ("Forecasts")
+//      val yf = mod.forecast (yp, h)                                    // forecasted response matrix
+        val yf = mod.forecastAll (yy, yx, h)                             // forecasted response matrix
+        for k <- yf.indices2 do
+            new Plot (null, yy, yf(?, k), s"yy vs. yf_$k for ${mod.modelName} with $p lags", lines = true)
+        end for
+
+        Forecaster.checkForecastMatrix (yf, yy, yp, true)                // make sure columns 0, 1 for yf agree with [yy, yp]
+        mod.testHorizons (h, y, yx)                                      // calls testF for horizons 1 to h
+*/
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

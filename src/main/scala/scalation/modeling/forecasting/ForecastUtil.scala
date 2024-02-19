@@ -16,6 +16,8 @@ import scala.math.max
 
 import scalation.mathstat._
 
+// FIX - ForecastUtil make uniform  across DIRECT vs. RECURSIVE
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Given a response vector y, build and return
  *  (1) an input/predictor MATRIX xx and
@@ -52,13 +54,13 @@ end buildMatrix4TS
  *  Used by Single-Variate forecast models such as `ARX`.
  *  that use RECURSIVE multi-horizon forecasting.
  *  The first response can't be predicted due to missing past values.
- *  Therefore the number of rows in xx and yy is reduced to y.dim - 1.
+ *  Therefore the number of rows in xx and yy is reduced to y.dim - 1 (day 0 cut out).
  *  @param y     the given output/response vector
  *  @param lags  the maximum lag included (inclusive)
- */  
+ */
 def buildMatrix4TS (y: VectorD, lags: Int): (MatrixD, VectorD) =
     val xx = new MatrixD (y.dim - 1, lags)
-    val yy = new VectorD (y.dim - 1)
+    val yy = new VectorD (y.dim - 1)                                      // day 0 cut out
     for i <- 1 until y.dim do
         for j <- xx.indices2 do xx(i-1, lags - 1 - j) = y(max(i - 1 - j, 0))
         yy(i-1) = y(i)
@@ -72,12 +74,28 @@ end buildMatrix4TS
 /** Given an exogenous variable vector ex corresponding to an endogenous response
  *  vector y, build and return an input/predictor MATRIX xx.
  *  The first lag responses can't be predicted due to missing past values.
- *  Therefore the number of rows in xx is reduced to ex.dim - lags.
+ *  Therefore the number of rows in xx is reduced to ex.dim - elag1.
  *  @param ex     the exogenous variable vector
  *  @param lags   the maximum lag included (inclusive) for the endogenous variable
  *  @param elag1  the minimum lag included (inclusive) for the exogenous variable
  *  @param elag2  the maximum lag included (inclusive) for the exogenous variable
  */
+def buildMatrix4TS_exo (ex: VectorD, lags: Int, elag1: Int, elag2: Int): MatrixD =
+    val flaw = flawf ("top")
+    val n = elag2 - elag1
+    if n < 1 then flaw ("buildMatrix4TS_exo", "min exo lag must be smaller than max exo lag")
+//  if elag2 > lags then flaw ("buildMatrix4TS_exo", "exo lag cannot exceed endogenous lag")
+
+    val xx = new MatrixD (ex.dim - elag1, n)
+    for i <- elag1 until ex.dim do
+        for j <- xx.indices2 do xx(i-elag1, n - 1 - j) = ex(max(i - elag1 - j, 0))
+    end for
+//  println (s"buildMatrix4TS_exo: xx = $xx")
+    xx
+end buildMatrix4TS_exo
+
+/* commented out
+ *  Therefore the number of rows in xx is reduced to ex.dim - lags.
 def buildMatrix4TS_exo (ex: VectorD, lags: Int, elag1: Int, elag2: Int): MatrixD =
     val flaw = flawf ("top")
     val n = elag2 - elag1
@@ -91,6 +109,7 @@ def buildMatrix4TS_exo (ex: VectorD, lags: Int, elag1: Int, elag2: Int): MatrixD
 //  println (s"buildMatrix4TS_exo: xx = $xx")
     xx
 end buildMatrix4TS_exo
+*/
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -134,13 +153,14 @@ end buildTensor4TS
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Test the actual response vector vs. forecasted matrix, returning the QoF
  *  for all forecasting horizons 1 to h.
+ *  FIX - not agreeing with `ForecasterUtil.testHorizons`
  *  @param mod  the fittable model (one that extends `Fit`)
  *  @param y    the original actual response vector
  *  @param yf   the forecasted response matrix
  *  @param p    the number of variables/lags used in the model
  */
 def testForecast (mod: Fit, y: VectorD, yf: MatrixD, p: Int): MatrixD =
-    MatrixD (for k <- yf.indices2 yield
+    MatrixD (for k <- 1 until yf.dim2 - 1 yield
         val y_  = y(p + k until y.dim)
         val yf_ = yf(?, k)(0 until y.dim - p - k)
         println (s"y_.dim = ${y_.dim}, yf_.dim = ${yf_.dim}")

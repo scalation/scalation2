@@ -1563,7 +1563,7 @@ object MatrixD:
             a(j) = for str <- lines(i).split (sp).drop (skipCol) yield str.mkDouble
             if (j+1) % PROGRESS == 0 then println (s"load: read $j data rows so far ...")
             if n < 0 then n = a(j).length
-            else if a(j).length != n then flaw ("load", s"row $j has the wrong length")
+            else if a(j).length != n then flaw ("load", s"row $j has the wrong length ${a(j).length} != $n")
         end for
         println (s"load: read in an $mm-by-$n matrix from $fileName")
         new MatrixD (mm, n, a)
@@ -1597,7 +1597,7 @@ object MatrixD:
                 if yCol >= 0 then yAb += token (yCol).mkDouble
                 if (k+1) % PROGRESS == 0 then println (s"loadIter: read $k data rows so far ...")
                 if n < 0 then n = xAb(k).length
-                else if xAb(k).length != n then flaw ("loadIter", s"row $k has the wrong length")
+                else if xAb(k).length != n then flaw ("loadIter", s"row $k has the wrong length ${xAb(k).length} != $n")
             end if
             i += 1
         end while

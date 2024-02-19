@@ -206,7 +206,7 @@ end randomWalkTest2
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `randomWalkTest3` main function tests the `RandomWalk` class on real data:
- *  Forecasting runMain scalation.modeling.forecasting.aRTest3lake levels.
+ *  Forecasting lake levels.
  *  Test forecasts (1 to h steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.randomWalkTest3
@@ -234,4 +234,43 @@ end randomWalkTest2
     end for
 
 end randomWalkTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `randomWalkTest4` main function tests the `RandomWalk` class on real data:
+ *  Forecasting COVID-19.  Test forecasts (1 to h steps ahead forecasts).
+ *  > runMain scalation.modeling.forecasting.randomWalkTest4
+ */
+@main def randomWalkTest4 (): Unit =
+
+    val exo_vars = Array.ofDim [String] (0)                            // no exogenous variables in this case
+    val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
+    val iskip    = yy.indexWhere (_ >= 6.0)                            // find day with at least 6 deaths
+    println (s"iskip = $iskip is first week with at least 6 deaths")
+
+    val rat = 0.5                                                      // set train-test ratio
+    val cut = (rat * yy.dim).toInt
+    val y   = yy(cut until yy.dim)                                     // throw away the training part (no training for RW)
+
+    val m  = y.dim                                                     // number of data points
+    val hh = 4                                                         // forecasting horizon (weeks 1 to 4)
+ 
+    banner (s"Test Forecasts: RandomWalk on COVID-19 Dataset")
+    val mod = new RandomWalk (y)                                       // create model for time series data
+    val (yp, qof) = mod.trainNtest ()()                                // train and test on full dataset
+
+    val yf = mod.forecastAll (y, hh)                                   // forecast h-steps ahead (h = 1 to hh) for all y
+    println (s"yf = $yf")
+    println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
+    assert (yf(?, 0)(0 until m) == y)                                  // column 0 must agree with actual values
+    differ (yf(?, 1)(1 until m), yp)
+    assert (yf(?, 1)(1 until m) == yp)                                 // column 1 must agree with one step-ahead predictions
+
+    for h <- 1 to hh do
+        val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
+        println (s"Evaluate QoF for horizon $h:")
+        println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
+    end for
+
+end randomWalkTest4
 

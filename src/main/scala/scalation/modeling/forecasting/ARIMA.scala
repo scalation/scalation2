@@ -30,13 +30,6 @@ import scalation.random.Normal
  */
 object ARIMA:
 
-    /** Base hyper-parameter specification for `ARIMA` class
-     */
-    val hp = new HyperParameter
-    hp += ("p", 1, 1)
-    hp += ("d", 1, 1)
-    hp += ("q", 1, 1)
-
     private val flaw  = flawf ("ARIMA")                          // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -160,7 +153,7 @@ import ARIMA._
  *  @param tt      the time vector, if relevant (time index may suffice)
  *  @param hparam  the hyper-parameters
  */
-class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
+class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp)
       extends ARMA (y, tt, hparam):
 
     private val flaw   = flawf ("ARIMA")                         // flaw function
@@ -413,6 +406,7 @@ end ARIMA
 @main def aRIMATest (): Unit =
 
     import Example_LakeLevels.y
+    import SARIMAX.hp
 
     val d = 0                                                    // apply d-th order differencing - no differencing
 //  val d = 1                                                    // apply d-th order differencing - first differences
@@ -458,6 +452,8 @@ end aRIMATest
  */
 @main def aRIMATest2 (): Unit =
 
+    import SARIMAX.hp
+
     banner ("ARIMA Test2")
     val m = 20
     val noise = Normal (0, 2)
@@ -482,6 +478,8 @@ end aRIMATest2
  *  > runMain scalation.modeling.forecasting.aRIMATest3
  */
 @main def aRIMATest3 (): Unit =
+
+    import SARIMAX.hp
 
     val nfile = "travelTime.csv"
     val data  = MatrixD.load (nfile)
@@ -511,6 +509,8 @@ end aRIMATest3
  *  > runMain scalation.modeling.forecasting.aRIMATest4
  */
 @main def aRIMATest4 (): Unit =
+
+    import SARIMAX.hp
 
     val m     = 50
     val (p, d, q) = (1, 1, 1)                                    // hyper-parameters for the ARIMA model
@@ -560,5 +560,4 @@ end aRIMATest4
 
 end aRIMATest5
  */
-
 

@@ -34,7 +34,7 @@ import Forecaster.differ
  *  @param tt      the time vector, if relevant (time index may suffice)
  *  @param hparam  the hyper-parameters
  */
-class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
+class AR (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp)
       extends Forecaster (y, tt, hparam)
          with Correlogram (y)
          with Fit (dfm = hparam("p").toInt, df = y.dim - hparam("p").toInt):
@@ -170,7 +170,7 @@ end AR
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `AR` companion object provides factory methods for the `AR` class.
- *  Use `ARMA` for hyper-parameters.
+ *  Use `SARIMAX` for hyper-parameters.
  */
 object AR:
 
@@ -180,7 +180,7 @@ object AR:
      *  @param tt      the time vector, if relevant (time index may suffice)
      *  @param hparam  the hyper-parameters
      */
-    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp): AR = 
+    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp): AR = 
         new AR (y, tt, hparam)
     end apply
 
@@ -252,7 +252,7 @@ end aRTest
     mod.trainNtest ()()                                                // train and test on full dataset
 
     banner (s"Test Predictions: AR(2) on hand created time series")
-    ARMA.hp("p") = 2
+    SARIMAX.hp("p") = 2
     mod = new AR (y)                                                   // create model for time series data AR(2)
     mod.trainNtest ()()                                                // train and test on full dataset
 
@@ -334,7 +334,7 @@ end aRTest3
     val m  = y.dim                                                     // number of data points
     val hh = 2                                                         // maximum forecasting horizon
 
-    ARMA.hp("p") = 3
+    SARIMAX.hp("p") = 3
     banner (s"Test Forecasts: AR(1) on LakeLevels Dataset")
     val mod = new AR (y)                                               // create model for time series data AR(1)
     val (yp, qof) = mod.trainNtest ()()                                // train and test on full dataset
@@ -372,7 +372,7 @@ end aRTest4
  
     var mod: AR = null
     for p <- 1 to 7 do                                                 // autoregressive hyper-parameter p
-        ARMA.hp("p") = p                                               // set p hyper-parameter
+        SARIMAX.hp("p") = p                                            // set p hyper-parameter
         banner (s"Test: AR($p) on LakeLevels Dataset")
         mod = new AR (y)                                               // create model for time series data
         val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset
@@ -409,7 +409,7 @@ end aRTest5
 
     var mod: AR = null
     for p <- 1 to 12 do                                                // autoregressive hyper-parameter p
-        ARMA.hp("p") = p                                               // set p hyper-parameter
+        SARIMAX.hp("p") = p                                            // set p hyper-parameter
         banner (s"Test: AR($p) on Covid-19 Weekly Dataset")
         mod = new AR (y)                                               // create model for time series data
         val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset

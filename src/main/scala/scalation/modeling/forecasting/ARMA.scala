@@ -23,7 +23,6 @@ import scalation.mathstat._
 import scalation.optimization._
 
 import Forecaster.differ
-import ARMA.hp
 
 def pq (hpar: HyperParameter): Int = hpar("p").toInt + hpar("q").toInt
 
@@ -41,7 +40,7 @@ def pq (hpar: HyperParameter): Int = hpar("p").toInt + hpar("q").toInt
  *  @param tt      the time vector, if relevant (time index may suffice)
  *  @param hparam  the hyper-parameters
  */
-class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
+class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp)
       extends Forecaster (y, tt, hparam)
          with Correlogram (y)
          with Fit (dfm = pq (hparam), df = y.dim - pq (hparam)):
@@ -218,19 +217,13 @@ end ARMA
  */
 object ARMA:
 
-    /** Base hyper-parameter specification for the `AR` and `ARMA` classes
-     */
-    val hp = new HyperParameter
-    hp += ("p", 1, 1)                                                  // AR order AR(p)
-    hp += ("q", 0, 0)                                                  // MA order MA(q)
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ARMA` object.
      *  @param y       the response vector (time series data)
      *  @param tt      the time vector, if relevant (time index may suffice)
      *  @param hparam  the hyper-parameters
      */
-    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp): ARMA = 
+    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SARIMAX.hp): ARMA = 
         new ARMA (y, tt, hparam)
     end apply
 
@@ -272,7 +265,7 @@ import Example_LakeLevels.y
     mod.trainNtest ()()                                                // train and test the model on full dataset
 
     banner (s"Test Predictions: ARMA(1, 1) on LakeLevels Dataset")
-    hp("q") = 1                                                        // set moving-average hyper-parameter q to 1
+    SARIMAX.hp("q") = 1                                                // set moving-average hyper-parameter q to 1
     mod = new ARMA (y)                                                 // create model for time series data ARMA(1, 1)
     mod.trainNtest ()()                                                // train and test the model on full dataset
 
@@ -320,6 +313,8 @@ end aRMATest3
  */
 @main def aRMATest4 (): Unit =
 
+    import SARIMAX.hp
+
     val m  = y.dim                                                     // number of data points
     val hh = 2                                                         // maximum forecasting horizon
  
@@ -354,6 +349,8 @@ end aRMATest4
  */
 @main def aRMATest5 (): Unit =
 
+    import SARIMAX.hp
+
     val v = Δ (y)                                                      // velocity series (first differences)
 
     var mod: ARMA = null
@@ -378,7 +375,7 @@ end aRMATest5
  */
 @main def aRMATest6 (): Unit =
 
-    import ARMA.hp
+    import SARIMAX.hp
 
     val data = MatrixD.load ("covid_19.csv", 1, 1)                     // skip first row (header) and first column
     val yy   = data(?, 4)                                              // column 4 is daily deaths
@@ -419,7 +416,7 @@ end aRMATest6
 
     var mod: ARMA = null
     for p <- 1 to 12 do                                                // autoregressive hyper-parameter p
-        ARMA.hp("p") = p                                               // set p hyper-parameter
+        SARIMAX.hp("p") = p                                            // set p hyper-parameter
         banner (s"Test: ARMA($p) on Covid-19 Weekly Dataset")
         mod = new ARMA (y)                                             // create model for time series data
         val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset

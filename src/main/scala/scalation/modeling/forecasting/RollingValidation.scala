@@ -175,7 +175,7 @@ end RollingValidation
 
     banner (s"AR($p) full dataset results at forecasting horizon h = $h")
 
-    ARMA.hp("p") = p
+    SARIMAX.hp("p") = p
 //  val mod = new AR (y)                                                  // create an AR(p) model
     val mod = new ARMA (y)                                                // create an ARMA(p, 0) model
     val (yp, qof) = mod.trainNtest ()()                                   // train-test model on full dataset
@@ -206,7 +206,7 @@ end rollingValidationTest
 
     banner (s"AR($p) full dataset results at forecasting horizon h = $h")
 
-    ARMA.hp("p") = p
+    SARIMAX.hp("p") = p
 //  val mod = new AR (y)                                                  // create an AR(p) model
     val mod = new ARMA (y)                                                // create an ARMA(p, 0) model
     val (yp, qof) = mod.trainNtest ()()                                   // train-test model on full dataset

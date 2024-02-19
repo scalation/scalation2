@@ -59,8 +59,8 @@ class TrEncoderLayer (n_var: Int, n_mod: Int = 512, heads: Int = 8,
     private val linear2    = DenseLayer (n_z, n_mod)                      // linear layer (ff_block)
     private val dropout2   = DropoutLayer (p_drop)                        // dropout layer (ff_block)
 
-    private val norm1      = NormLayer (true, norm_eps)                   // normalization layer (apply)
-    private val norm2      = NormLayer (true, norm_eps)                   // normalization layer (apply)
+    private val norm1      = LayerNorm (true, norm_eps)                   // normalization layer (apply)
+    private val norm2      = LayerNorm (true, norm_eps)                   // normalization layer (apply)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forward pass:  Compute this encoder layer's result z by using Multi-Head Self-Attention

@@ -24,7 +24,7 @@ import scalation.modeling.AFF
 import scalation.modeling.ActivationFun._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `Node` case class maintain information about a node in a Computation Graph.
+/** The `Node` case class maintains information about a node in a Computation Graph.
  *  @param v_dim2  the output second dimension
  *  @param b       the parameter matrix (weight => multiply, bias => add)
  *  @param u       the input vector
@@ -35,12 +35,14 @@ case class Node (v_dim2: Int, b: MatrixD, u: MatrixD, f: AFF):
     val v = new MatrixD (u.dim, v_dim2)                           // output value computed in forward pass
     var vb: MatrixD = null                                        // adjoint value computed in backward pass
 
-    def copy (z: MatrixD): Unit =
+    def copy (z: MatrixD): Unit =                                 // FIX - fails if dimensions are not right
         for i <- v.indices; j <- v.indices2 do v(i, j) = z(i, j)
+    end copy
 
     override def toString: String =
         val nm = if f == null then "null" else f.name
         s"Node ($nm <- f $b <- b $u <- u  $v <- v)\n"
+    end toString
 
 end Node
 
@@ -59,25 +61,28 @@ class AutoDiff (y: MatrixD):
     def add (node: Node): Node =
         pipe += node
         node
+    end add
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Make a forward pass through the computation graph, computing output values
-     *  bases on the calculation v = f(u + b(0)) where u is the weighted input,
+     *  based on the calculation v = f(u + b(0)) where u is the weighted input,
      *  b(0) is the bias vector and f is the activation function.
      */
     def forward (): Unit =
         for i <- pipe.indices do
-            val (u, f, b) = (pipe(i).u, pipe(i).f, pipe(i).b)
-            println (s"forward: u = $u")
+            val (b, u, f) = (pipe(i).b, pipe(i).u,  pipe(i).f)
+            println (s"FORWARD (i = $i): input u = $u")
             val vv: MatrixD =                                     // compute node i's output value
-            if f == null then                                     // no activation function
-                println (s"forward: weight b = $b")
+            if b == null && f == null then                        // no parameters and no activation function
+                println (s"forward (i = $i): output y = $y")
+                MatrixD ((1, 1), 0.5 * (u - y).normFSq)           // apply norm on difference
+            else if f == null then                                // no activation function
+                println (s"forward (i = $i): weight b = $b")
                 u * b                                             // multiply by weight matrix
-            else if b == null then
-                f.fM (u - y)                                      // apply activation function on difference
             else
-                println (s"forward: bias b = ${b(0)}")
-                f.fM (u + b(0))                                   // add bias vector and apply activation function
+                println (s"forward (i = $i): activation f = ${f.name}")
+                f.fM (u)                                          // apply activation function
+//              f.fM (u + b(0))                                   // add bias vector and apply activation function
             println (s"forward: assign output for node ($i) = $vv")
             pipe(i).copy (vv)                                     // assign computed value to node i's output
         end for
@@ -121,7 +126,7 @@ end AutoDiff
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `autoDiffTest` main function tests the `AutoDiff` class.
  *  Compare to the step-by-step results for `Perceptron`.
- *  @see `scalation.scalation.modeling.neuralnet.neuralNet_3LTest`
+ *  @see `scalation.modeling.neuralnet.neuralNet_3LTest`
  *  > runMain scalation.calculus.autoDiffTest
  */
 @main def autoDiffTest (): Unit =
@@ -146,25 +151,27 @@ end AutoDiff
 
     println (s"xy = $xy")
     val (x, y) = (xy.not(?, 3), xy(?, 3))                           // input matrix, output/response vector
+    println (s"x = $x")
+    println (s"y = $y")
     val sst = (y - y.mean).normSq                                   // sum of squares total
     println (s"sst = $sst")
 
-    val eta = 1.0 
+    val eta = 1.0                                                   // learning rate
 
-    for epoch <- 1 to 1 do
+    for epoch <- 1 to 2 do
         banner (s"improvement step $epoch")
         val u   = x * b                                             // pre-activation value
         val yp  = sigmoid_ (u)                                      // predicted response from calculation for sigmoid
         val e   = yp - y                                            // negative error
-        val ls  = 0.5 * e.normSq                                    // loss
+        val sse = e.normSq                                          // sum of squared errors
+        val ls  = 0.5 * sse                                         // loss function
         val fp  = yp * (_1 - yp)                                    // derivative (f') for sigmoid
         val d   = e * fp                                            // delta
         val g   = x.transpose * d                                   // gradient
         val bup = g * eta                                           // parameter update
         b      -= bup                                               // new parameter vector
-        val sse = e dot e                                           // sum of squared errors
 
-        println (s"epoch = $epoch, sse = $sse")
+        println (s"epoch = $epoch, loss = $ls, sse = $sse, rSq = ${1 - sse/sst}")
         println (s"forward:  $u <- u \n $yp <- yp \n $e <- e \n $ls <- ls")
         println (s"backward: $fp <- fp \n $d <- d \n $g <- g")
     end for
@@ -173,8 +180,8 @@ end AutoDiff
 
     // Form Computation Graph for 3-by-1 perceptron
 
-    val n0 = ad.add (Node (2, MatrixD.fromVector (b), x, null))     // step 0: u  = Xb
-    val n1 = ad.add (Node (2, null, n0.v, f_sigmoid))               // step 1: yp = f(u)
+    val n0 = ad.add (Node (1, MatrixD.fromVector (b), x, null))     // step 0: u  = Xb
+    val n1 = ad.add (Node (1, null, n0.v, f_sigmoid))               // step 1: yp = f(u)
     val n2 = ad.add (Node (1, null, n1.v, null))                    // step 2: L  = .5 || yp - y ||^2
 
     banner ("AD Forward Pass")
@@ -195,7 +202,7 @@ end autoDiffTest
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `autoDiffTest2` main function tests the `AutoDiff` class.
  *  Compare to the step-by-step results for `NeuralNet_3L`.
- *  @see `scalation.scalation.modeling.neuralnet.neuralNet_3LTest11`
+ *  @see `scalation.modeling.neuralnet.neuralNet_3LTest11`
  *  FIX: values up to delta0 are correct, delta0 has one column in AutoDiff, but 2 in NeuralNet_3L
  *  > runMain scalation.calculus.autoDiffTest2
  */

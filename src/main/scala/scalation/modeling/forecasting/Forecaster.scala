@@ -364,5 +364,25 @@ object Forecaster:
         cnt
     end differ
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Check the first two columns (horizon 0 and 1) of the forecasting matrix yf.
+     *  Assertions will terminate the program when these disagree with [y, yp].
+     *  Note, =~ is approximately equals.
+     *  @param yf       the forecasting matrix (time x horizons)
+     *  @param y        the actual time-series values
+     *  @param yp       the values from the predict method
+     *  @param show_yf  whether to show the whole forecasting matrix yf
+     */
+    def checkForecastMatrix (yf: MatrixD, y: VectorD, yp: VectorD, show_yf: Boolean = false): Unit =
+        if show_yf then println (s"yf = $yf")
+        banner (s"checkForecastMatrix: yf.dims = ${yf.dims}, y.dim = ${y.dim}, yp.dim = ${yp.dim}")
+        val yf0 = yf(?, 0)(0 until y.dim)
+        val yf1 = yf(?, 1)(0 until yp.dim)
+        differ (yf0, y)
+        differ (yf1, yp)
+        assert (yf0 =~ y)                                                 // zeroth forecast = actual values
+        assert (yf1 =~ yp)                                                // first forecast = predicted values
+    end checkForecastMatrix
+
 end Forecaster
 

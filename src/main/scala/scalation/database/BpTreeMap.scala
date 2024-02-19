@@ -5,10 +5,25 @@
  *  @date    Fri Aug 11 00:26:03 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Sorted Map Implemented Using B+Trees
+ *  @note    Sorted Map Implemented Using B+Trees (Indexed and Sequential Access)
  *
  *  Split Nodes on Overflow
- *  Borrow/Merge Nodes on Underflow (not yet implemented)
+ *  Structure for order = 5 (max of 4 keys), upon first split
+ *  [ . k4 . -- . -- . -- . ]
+ *      [ . k1 . k2 . k3 . -- . ]
+ *      [ . k4 . k5 . -- . -- . ]
+ *  Rules: divider key (k4 added to parent in this case) is the smallest key
+               in the right subtree (SMALLEST RIGHT)
+ *         split node n into (n, right_sibling_node) with larger half staying in n
+ *         internal node split promotes middle key to parent as the divider key
+ *
+ *  Borrow/Merge Nodes on Underflow
+ *  Rules: try to borrow one key from an adjacent (left or right) rich sibling node
+ *         otherwise merge with sibling node
+ *
+ *  Optionally supports bidirectional linkage of leaf nodes for Sequential Access
+ *         forward via ref(0)  [ n1 ] -> [ n2 ] -> [ n3 ]
+ *         backward via pre    [ n1 ] <- [ n2 ] <- [ n3 ]   optional DLINK = true
  */
 
 package scalation
@@ -21,7 +36,8 @@ import BpNode._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `BpTreeMap` class provides sorted maps that use the B+Tree Data Structure.
- *  Inserts may cause the splitting of nodes.
+ *  Inserts may cause the splitting of nodes, while deletes may cause borrowing
+ *  if keys or merging of nodes.
  *  @tparam V  the type of the values assigned to keys in this sorted map
  */
 class BpTreeMap [V: ClassTag] ()
@@ -29,13 +45,11 @@ class BpTreeMap [V: ClassTag] ()
          with SortedMap [ValueType, V]
          with Serializable:
 
-    var count = 0                                                        // count # nodes accessed (performance)
-
-    private val debug = debugf ("BpTreeMap", true)                       // debug function
-
-    private var keyCount = 0                                             // counter for total number of keys
-    private var root  = new BpNode ()                                    // root node of this B+Tree
-    private val first = root                                             // first leaf node in this B+Tree
+    private val debug  = debugf ("BpTreeMap", true)                      // debug function
+    private var kCount = 0                                               // counter for total number of keys
+    private [database] var count  = 0                                    // count # nodes accessed (performance)
+    private var root   = new BpNode (0, true)                            // root node of this B+Tree (initially empty)
+    private val first  = root                                            // first leaf node of this B+Tree
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `SortedMap` trait requires `Ordering` with a compare method to be defined.
@@ -45,13 +59,13 @@ class BpTreeMap [V: ClassTag] ()
     def ordering: Ordering [ValueType] = ValueTypeOrd
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the size of this B+Tree. 
+    /** Return the size (number of keys) of this B+Tree.
      */
-    override def size: Int = keyCount
+    inline override def size: Int = kCount
 
-//------------------------------------------------------------------------------
-// Retrieve values or ranges (substrees)
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    // Retrieve values or ranges (subtrees)
+    //------------------------------------------------------------------------------
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `TreeIterator` inner class supports iterating over all the elements
@@ -61,11 +75,11 @@ class BpTreeMap [V: ClassTag] ()
      */
     class TreeIterator (ns: BpNode = first, js: Int = -1) extends Iterator [(ValueType, V)]:
         var (n, j) = (ns, js)
-        def hasNext: Boolean = j < n.nKeys-1 || n.ref(n.nKeys) != null
+        def hasNext: Boolean = j < n.keys-1 || n.ref(0) != null
         def next (): (ValueType, V) =
             debug ("next", s"node n = $n")
-            if j < n.nKeys-1 then j += 1 else { n = n.ref(n.nKeys).asInstanceOf [BpNode]; j = 0 }
-            (n(j), n.ref(j).asInstanceOf [V])
+            if j < n.keys-1 then j += 1 else { n = n.ref(0).asInstanceOf [BpNode]; j = 0 }
+            (n(j), n.ref(j+1).asInstanceOf [V])
         end next
     end TreeIterator
 
@@ -98,7 +112,7 @@ class BpTreeMap [V: ClassTag] ()
     end keysIteratorFrom
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the the submap starting at from and ending before until.
+    /** Return the submap starting at from and ending before until.
      *  @see scala.collection.SortedOps
      *  @param from   the starting key (inclusive)
      *  @param until  the ending key (exclusive)
@@ -108,7 +122,7 @@ class BpTreeMap [V: ClassTag] ()
         val it = if from.isDefined then iteratorFrom (from.get)
                  else iterator
         var cont = true
-        while cont && it.hasNext do 
+        while cont && it.hasNext do
             val (k, v) = it.next ()
             if ! until.isDefined || k < until.get then subtree.addOne ((k, v))
             else cont = false
@@ -128,8 +142,8 @@ class BpTreeMap [V: ClassTag] ()
      *  @param key  the key to find
      */
     inline def find (key: ValueType): V =
-        val (ln, ip) = findp(key, root)                                  // leaf node, index position
-        if ip != -1 then ln.ref(ip).asInstanceOf [V]
+        val (ln, ip) = findp (key, root)                                 // leaf node, index position
+        if ip >= 0 then ln.ref(ip+1).asInstanceOf [V]
         else null.asInstanceOf [V]
     end find
 
@@ -140,17 +154,13 @@ class BpTreeMap [V: ClassTag] ()
      */
     private def findp (key: ValueType, n: BpNode): (BpNode, Int) =
         count += 1
-        val ip = n.find (key)
-        if n.isLeaf then
-            if n.eqAt (key, ip) then (n, ip) else (null, -1)
-        else
-            findp (key, n.ref(ip).asInstanceOf [BpNode])
-        end if
+        if n.isLeaf then (n, n.findEq (key))
+        else findp (key, n.ref(n.find (key)).asInstanceOf [BpNode])
     end findp
 
-//------------------------------------------------------------------------------
-// Add key-value pairs into the B+Tree
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    // Add key-value pairs into the B+Tree
+    //------------------------------------------------------------------------------
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add one key-value pair into this B+Tree and return this.
@@ -160,25 +170,28 @@ class BpTreeMap [V: ClassTag] ()
      */
     def addOne (elem: (ValueType, V)): this.type =
         val (key, value) = elem
-        keyCount += 1                                                    // increment the key count
+        kCount += 1                                                      // increment the key count
         insert (key, value, root)                                        // call the recursive insert
         this
     end addOne
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Recursive helper method for inserting key and ref into this B+tree.
+    /** Recursive helper method for inserting a key and ref into this B+tree.
+     *  Returns the divider key and right sibling upon split, else null.
      *  @param key  the key to insert
      *  @param ref  the value/node to insert
      *  @param n    the current node
      */
     private def insert (key: ValueType, ref: V, n: BpNode): (ValueType, BpNode) =
         var k_r: (ValueType, BpNode) = null
+
         if n.isLeaf then                                                 // handle LEAF node
             k_r = add (n, key, ref)
             if k_r != null then
                 if n != root then return k_r
                 root = new BpNode (root, k_r._1, k_r._2)                 // make a new root
             end if
+
         else                                                             // handle INTERNAL node
             k_r = insert (key, ref, n.ref(n.find (key)).asInstanceOf [BpNode])
             if k_r != null then
@@ -190,46 +203,37 @@ class BpTreeMap [V: ClassTag] ()
     end insert
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Add a new key k and value v into LEAF node n.  If it is already full, a split will
-     *  be triggered, in which case the divider key and new right sibling node are returned.
+    /** Add new key k and value v into LEAF node n.  Upon overflow, split node n,
+     *  in which case the divider key and new right sibling node are returned.
      *  @param n  the current node
      *  @param k  the new key
-     *  @param v  the new left value
+     *  @param v  the new value
      */
     private def add (n: BpNode, k: ValueType, v: V): (ValueType, BpNode) =
         var k_r: (ValueType, BpNode) = null                              // divider key, right sibling
-        val split = n.add (k, v)                                         // try adding into node n unless it is full
-        if split then                                                    // its full, must split
-            k_r = n.split ()                                             // split keys between node and right
-            if k > k_r._1 then k_r._2.add (k, v)                         // try again after split, add into node r
-            else n.add (k, v)                                            // try again after split, add into node n
-        end if
+        n.add (k, v)                                                     // add into node n
+        if n.overflow then k_r = n.split ()                              // its full, must split
         k_r
     end add
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Add a new key k and value v into INTERNAL node n.  If it is already full,
-     *  a split will be triggered, in which case the divider key and new  right
-     *  sibling node are returned.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Add new key k and value v into INTERNAL node n.  Upon overflow, split node n,
+     *  in which case the divider key and new right sibling node are returned.
      *  @param n  the current node
      *  @param k  the new key
      *  @param v  the new left value (ref a node)
      */
     private def addI (n: BpNode, k: ValueType, v: BpNode): (ValueType, BpNode) =
         var k_r: (ValueType, BpNode) = null                              // divider key, right sibling
-        val split = n.addI (k, v)                                        // try adding into node n unless it is full
-        if split then                                                    // its full, must split
-            k_r = n.splitI ()                                            // split keys between node and right
-            n.promote ()
-            if k > k_r._1 then k_r._2.addI (k, v)                        // try again after split, add into node r
-            else n.addI (k, v)                                           // try again after split, add into node n
-        end if
+        n.add (k, v)                                                     // add into node n
+        n.showRef ()
+        if n.overflow then k_r = n.splitI ()                             // its full, must split
         k_r
     end addI
 
-//------------------------------------------------------------------------------
-// Remove key-value pair from the B+Tree
-//------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------
+    // Remove key-value pair from the B+Tree
+    //------------------------------------------------------------------------------
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Subtract/remove the one element (key-value pair) with the given key.
@@ -237,43 +241,56 @@ class BpTreeMap [V: ClassTag] ()
      *  @param key  the key whose element is to be removed
      */
     def subtractOne (key: ValueType): this.type =
-        keyCount -= 1                                                    // decrement the key count
+        kCount -= 1                                                      // decrement the key count
         delete (key, root)                                               // call the recursive delete
+        if ! root.isLeaf && root.keys == 0 then
+            root = root.ref(0).asInstanceOf [BpNode]                     // remove empty root by resetting the root reference
         this
     end subtractOne
 
-    private var par: BpNode = null                                       // save parent node (?)
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Recursive helper method for deleting key with its ref into this B+tree.
+    /** Recursive helper method for deleting a key with its ref from this B+tree.
      *  @param key  the key to delete
      *  @param n    the current node
+     *  @param par  the parent node (null for root)
      */
-    private def delete (key: ValueType, n: BpNode): Unit =
+    private def delete (key: ValueType, n: BpNode, par: BpNode = null): Unit =
 
         if n.isLeaf then                                                 // handle LEAF node
-            val dp = n.find (key)                                        // deletion position in leaf node n
-            val underflow = n.remove (key, dp)
-            if n != root && underflow then                               // check for underflow
-                println (s"delete: needs to handle underflow of node $n")
+            val dp = n.findEq (key)                                      // deletion position in LEAF node n
+            n.remove (dp)                                                // remove key at index position dp
+
+            // upon underflow do a leaf node borrow or merge
+
+            if n != root && n.underflow then                             // unless root, check for underflow
+                println (s"delete: needs to handle underflow of LEAF node $n")
                 val j = par.find (key)                                   // j-th index position in parent
                 val (sib, left) = richestSib (par, j)                    // richest sib and whether it's left
-                println (s"delete: sib = $sib")
+                println (s"delete: leaf sib = $sib")
 
-                if sib.rich then borrow (n, sib, left, par, j)           // borrow a key from rich sib
-                else merge (n, sib, left, par, j)                        // merge nodes n and sib
+                if sib.rich then borrow (n, sib, left, par, j)           // leaf borrow a key from rich sib
+                else merge (n, sib, left, par, j)                        // leaf merge nodes n and sib, may cause parent to underflow
             end if
-        else                                                             // handle INTERNAL node
-            par = n                                                      // save parent node
-            val dp = n.find (key)                                        // deletion position in internal node n
-            delete (key, n.ref(dp).asInstanceOf [BpNode])
 
-            //--------------------------------------------------
-            // implement code for internal node borrow and merge
-            //--------------------------------------------------
+        else                                                             // handle INTERNAL node
+            val dp = n.find (key)                                        // deletion position in INTERNAL node n
+            delete (key, n.ref(dp).asInstanceOf [BpNode], n)             // recursive call to delete
+
+            // upon underflow do an internal node borrow (borrowI) or merge (mergeI)
+
+            if n != root && n.underflow then                             // unless root, check for underflow
+                println (s"delete: needs to handle underflow of INTERNAL node $n")
+                val j = par.find (key)                                   // j-th index position in parent
+                val (sib, left) = richestSib (par, j)                    // richest sib and whether it's left
+                println (s"delete: internal sib = $sib")
+
+                if sib.rich then borrowI (n, sib, left, par, j)          // internal borrow a key from rich sib
+                else mergeI (n, sib, left, par, j)                       // internal merge nodes n and sib, may cause parent to underflow
+            end if
+
         end if
     end delete
- 
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return node n's richest sibling (and whether it is left/true or right/false)
      *  found from parent node.
@@ -281,18 +298,21 @@ class BpTreeMap [V: ClassTag] ()
      *  @param i    the position of node n as a child of node par
      */
     private def richestSib (par: BpNode, i: Int): (BpNode, Boolean) =
-        debug ("richSib", s"return node n's (@ $i) richest sibling (left or right)") 
+        debug ("richSib", s"return node n's (@ $i) richest sibling (left or right)")
         val leftn  = if i-1 >= 0 then par.ref(i-1).asInstanceOf [BpNode] else null
-        val rightn = if i+1 <= par.nKeys then par.ref(i+1).asInstanceOf [BpNode] else null
+        val rightn = if i+1 <= par.keys then par.ref(i+1).asInstanceOf [BpNode] else null
 
         if leftn == null then (rightn, false)
         else if rightn == null then (leftn, true)
-        else if leftn.nKeys >= rightn.nKeys then (leftn, true)
+        else if leftn.keys >= rightn.keys then (leftn, true)
         else (rightn, false)
     end richestSib
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Borrow a key-value pair from a rich sibling, so node n won't underflow.
+    /** Borrow a key-value pair from a rich sibling, so LEAF node n won't underflow.
+     *  For borrow LEFT, last key in left sib k2 moves to n, then k2 replaces k3 in par.
+     *         [ ... k3 ... ]              [ ... k2 ... ]
+     *  [ ... k1 k2 ]  [ k3 ... ]  TO  [ ... k1 ]  [ k2 k3 ... ]
      *  @param n     the current node that has underflowed
      *  @param sib   the rich sibling node
      *  @param left  the whether the sib is left or right
@@ -300,17 +320,39 @@ class BpTreeMap [V: ClassTag] ()
      *  @param j     the index position in the parent node
      */
     private def borrow (n: BpNode, sib: BpNode, left: Boolean, par: BpNode, j: Int): Unit =
-        val i = if left then sib.nKeys-1 else 0
+        val i = if left then sib.keys-1 else 0
         val bkey = sib(i)
-        debug ("borrow", s"key $bkey from rich sib = $sib node for node n = $n having par = $par at j = $j")
+        debug ("borrow", s"key $bkey from rich sib = $sib node for node n = $n having par = $par at j = $j, left=$left")
         val bref = sib.ref(i).asInstanceOf [V]
-        sib.remove (bkey, i)                       
+        sib.remove (i)
         add (n, bkey, bref)
-        par(j-1) = if left then sib(sib.nKeys-1) else bkey                // correct the divider key
+        if left then par(j-1) = bkey else par(j) = sib(0)                // the divider key for parent node
     end borrow
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Merge node n with its sibling return whether the parent node has underflowed.
+    /** Borrow a key-value pair from a rich sibling, so INTERNAL node n won't underflow.
+     *  For borrow LEFT, last key in left sib k2 rotates into par, whose key k3 rotates to n.
+     *         [ ... k3 ... ]              [ ... k2 ... ]
+     *  [ ... k1 k2 ]  [ k4 ... ]  TO  [ ... k1 ]  [ k3 k4 ... ]
+     *  @param n     the current node that has underflowed
+     *  @param sib   the rich sibling node
+     *  @param left  the whether the sib is left or right
+     *  @param par   the parent node
+     *  @param j     the index position in the parent node
+     */
+    private def borrowI (n: BpNode, sib: BpNode, left: Boolean, par: BpNode, j: Int): Unit =
+        val i = if left then sib.keys-1 else 0
+        val bkey = sib(i)
+        debug ("borrowI", s"key $bkey from rich sib = $sib node for node n = $n having par = $par at j = $j")
+        val bref = sib.ref(i+1).asInstanceOf [BpNode]
+        sib.removeI (i)
+        addI (n, bkey, bref)
+        if left then par(j-1) = bkey else par(j) = bkey                  // the divider key for parent node
+    end borrowI
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Merge LEAF node n with its sibling returning whether the parent node
+     *  has underflowed.
      *  @param n     the current node that has underflowed
      *  @param sib   the sibling node
      *  @param left  the whether the sib is left or right
@@ -318,15 +360,30 @@ class BpTreeMap [V: ClassTag] ()
      *  @param j     the index position in the parent node
      */
     private def merge (n: BpNode, sib: BpNode, left: Boolean, par: BpNode, j: Int): Boolean =
-        debug ("merge", s"node n = $n that underflows with sib = $sib having par = $par at j = $j")
-        if left then sib.merge (n)
-        else n.merge (sib)
-        par.removeRight (j-1)
+        debug ("merge", s"LEAF node n = $n that underflows with sib = $sib having par = $par at j = $j ,left=$left")
+        if left then {sib.merge (n); par.remove(j-1)}
+        else { n.merge (sib); par.remove (j) }                           // true means parent underflowed
     end merge
 
-//------------------------------------------------------------------------------
-// Print/show the B+Tree
-//------------------------------------------------------------------------------
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Merge INTERNAL node n with its sibling returning whether the parent node
+     *  has underflowed.
+     *  @param n     the current node that has underflowed
+     *  @param sib   the sibling node
+     *  @param left  the whether the sib is left or right
+     *  @param par   the parent node
+     *  @param j     the index position in the parent node
+     */
+    private def mergeI (n: BpNode, sib: BpNode, left: Boolean, par: BpNode, j: Int): Boolean =
+        debug ("mergeI", s"INTERNAL node n = $n that underflows with sib = $sib having par = $par at j = $j, left =$left")
+        if left then sib.mergeI (par.key(j-1), n)
+        else n.mergeI (par.key(j), sib)
+        par.remove (j)                                                   // true means parent underflowed
+    end mergeI
+
+    //------------------------------------------------------------------------------
+    // Print/show the B+Tree
+    //------------------------------------------------------------------------------
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Show/print this B+Tree.
@@ -338,17 +395,28 @@ class BpTreeMap [V: ClassTag] ()
     end show
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Show/print this B+Tree's leaf node links.
+     */
+    def showLink (): Unit =
+        println ("BpTreeMap Leaf Node Linkage")
+        println("=" * 60)
+        var n = first
+        while n != null do { n.show (); n = n.ref(0).asInstanceOf [BpNode]}
+        println("=" * 60)
+    end showLink
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Print this B+Tree map using a pre-order traversal and indenting each level.
      *  @param n      the current node to print
      *  @param level  the current level in the B+Tree
      */
     private def printT (n: BpNode, level: Int): Unit =
-        println ("\t" * level + n)
-        if ! n.isLeaf then
-            for j <- 0 to n.nKeys do printT (n.asInstanceOf [BpNode].ref(j).asInstanceOf [BpNode], level + 1)
-        end if
+        if n != null then
+            println ("\t" * level + n)
+            if ! n.isLeaf then
+                for j <- 0 to n.keys do printT (n.ref(j).asInstanceOf [BpNode], level + 1)
     end printT
- 
+
 end BpTreeMap
 
 
@@ -360,13 +428,14 @@ end BpTreeMap
 @main def bpTreeMapTest (): Unit =
 
     banner ("Insert Increasing Integer Keys")
-    val totKeys = 36
+    val totKeys = 42
     val tree    = new BpTreeMap [Int] ()
 
     for i <- 1 until totKeys by 2 do
         banner (s"put ($i, ${i * i})")
         tree.put (i, i * i)
         tree.show ()
+        tree.showLink()
     end for
 
     banner ("Find Keys")
@@ -384,11 +453,14 @@ end BpTreeMap
 
     banner ("Delete Keys")
     tree.show ()
-    val toRemove = Array (29, 31, 33, 35, 27)
+    //val toRemove = Array (29, 31, 33, 35, 27, 25)
+    //val toRemove = Array (29, 31, 33, 35, 27, 25, 23, 13, 7, 1, 3, 5, 9, 21, 17, 19, 21, 11, 15 )
+    val toRemove = Array(7, 1, 3, 5, 9, 21, 17, 19, 21, 11, 15, 13, 29, 31, 27, 33, 35, 23, 39, 37, 41, 25)
     for key <- toRemove do
         banner (s"remove ($key)")
         tree.remove (key)
         tree.show ()
+        tree.showLink()
     end for
 
 end bpTreeMapTest
@@ -415,6 +487,7 @@ end bpTreeMapTest
         banner (s"put ($key, ${2 * key})")
         tree.put (key, 2 * key)
         tree.show ()
+        tree.showLink()
     end for
 
     banner ("Print Statistics")
@@ -439,38 +512,38 @@ end bpTreeMapTest2
     val totKeys = 60
     val seed    = 1
     val rng     = new Random (seed)
-    val lane1   = new BpTreeMap [Car] ()          // index for lane1
-    val lane2   = new BpTreeMap [Car] ()          // index for lane2
+    val lane1   = new BpTreeMap [Car] ()               // index for lane1
+    val lane2   = new BpTreeMap [Car] ()               // index for lane2
 
-    var dist = 0.0                                // distance from end of lane
-    var ord  = 0                                  // rank order from end of lane
+    var dist = 0.0                                     // distance from end of lane
+    var ord  = 0                                       // rank order from end of lane
     for i <- 1 to totKeys do
         dist += rng.nextInt (5)
-        val c_i = Car (i, dist)                   // the car being put into lane1's B+Tree
-        ord += 10                                 // rank order of car toward end of lane
+        val c_i = Car (i, dist)                        // the car being put into lane1's B+Tree
+        ord += 10                                      // rank order of car toward end of lane
         banner (s"put ($ord, $c_i)")
         lane1.put (ord, c_i)
         lane1.show ()
     end for
 
-    dist = 0.0                                    // distance from end of lane
+    dist = 0.0                                         // distance from end of lane
     ord  = 0
     for i <- 1 to totKeys do
         dist += rng.nextInt (5)
-        val c_i = Car (totKeys + i, dist)         // the car being put into lane2's B+Tree
-        ord += 10                                 // rank order of car toward end of lane
+        val c_i = Car (totKeys + i, dist)              // the car being put into lane2's B+Tree
+        ord += 10                                      // rank order of car toward end of lane
         banner (s"put ($ord, $c_i)")
         lane2.put (ord, c_i)
         lane2.show ()
     end for
 
-    // find the j-th car in lane1 call it car1
-    // find the corresponding j-th car in lane2 call it car2
-    // check whether car2 is behind car1 in the other lane
-    // may need a doubly linked list of nodes at the leaf-level to search forward and backward
-    // find the closest car in the other lane that is behind you
-    // if its distance is large enough, make the lane change
-    // may need gaps in ord so lane changing car can get an ord without making all care reassign theirs
+// find the j-th car in lane1 call it car1
+// find the corresponding j-th car in lane2 call it car2
+// check whether car2 is behind car1 in the other lane
+// may need a doubly linked list of nodes at the leaf-level to search forward and backward
+// find the closest car in the other lane that is behind you
+// if its distance is large enough, make the lane change
+// may need gaps in ord so lane changing car can get an ord without making all care reassign theirs
 
 end bpTreeMapTest3
 

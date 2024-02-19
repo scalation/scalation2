@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Simple Moving Average
+ *  @note    Model: Simple Moving Average (not the same as MA in ARMA)
  */
 
 package scalation
@@ -20,40 +20,38 @@ import scalation.random.Normal
 //import RollingValidation.trSize
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `MovingAverage` class provides basic time series analysis capabilities.
- *  For a `MovingAverage` model with the time series data stored in vector y, the
- *  next value 'y_t = y(t)' may be predicted based on the mean of prior values
- *  of 'y' and its noise:
- *  <p>
+/** The `SimpleMovingAverage` class provides basic time series analysis capabilities.
+ *  For a `SimpleMovingAverage` model with the time series data stored in vector y, the
+ *  next value y_t = y(t) may be predicted based on the mean of prior values
+ *  of y and its noise:
  *      y_t+1 = mean (y_t, ..., y_t-q') + e_t+1
- *  <p>
  *  where e_t+1 is the noise vector and q' = q-1 the number of prior values used to
  *  compute the mean.
  *  @param y       the response vector (time series data)
  *  @param tt      the time points, if needed
  *  @param hparam  the hyper-parameters
  */
-class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = MovingAverage.hp)
+class SimpleMovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = SimpleMovingAverage.hp)
       extends Forecaster (y, tt, hparam)
          with Correlogram (y)
          with Fit (dfm = 1, df = y.dim - 1):
 
-    private val flaw = flawf ("MovingAverage")                           // flaw function
-    private val q    = hparam("q").toInt                                 // take mean of last q values
+    private val flaw = flawf ("SimpleMovingAverage")                   // flaw function
+    private val q    = hparam("q").toInt                               // take mean of last q values
 
-    modelName = s"MovingAverage($q)"
+    modelName = s"SimpleMovingAverage($q)"
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Train/fit an `MovingAverage` model to the times series data in vector 'y_'.
-     *  Note: for `MovingAverage` there are no parameters to train.
+    /** Train/fit an `SimpleMovingAverage` model to the times series data in vector y_.
+     *  Note: for `SimpleMovingAverage` there are no parameters to train.
      *  @param x_null  the data/input matrix (ignored)
      *  @param y_      the response/output vector (currently only works for y)
      */
     def train (x_null: MatrixD, y_ : VectorD): Unit = {}
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test PREDICTIONS of an AR forecasting model y_ = f(lags (y_)) + e
-     *  and return its predictions and  QoF vector.  Testing may be in-sample
+    /** Test PREDICTIONS of a Simple Moving Average forecasting model and
+     *  return its predictions and  QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
      *  by the parameters passed in.  Note: must call train before test.
      *  @param x_null  the training/testing data/input matrix (ignored, pass null)
@@ -68,8 +66,8 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
     end test
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of an AR forecasting model y_ = f(lags (y_)) + e
-     *  and return its forecasts and QoF vector.  Testing may be in-sample
+    /** Test FORECASTS of a Simple Moving Average forecasting model and
+     *  return its forecasts and QoF vector.  Testing may be in-sample
      *  (on the training set) or out-of-sample (on the testing set) as determined
      *  by the parameters passed in.  Note: must call train and forecastAll before testF.
      *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
@@ -97,8 +95,8 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
      */
     def predict (t: Int, y_ : VectorD): Double =
         val sumq = new SumQueue (q)
-        for i <- max (0, t-q+1) to t do sumq += y(i)                    // y_t-q+1 + ... + y_t
-        sumq.mean                                                       // prediction for y_t+1
+        for i <- max (0, t-q+1) to t do sumq += y(i)                   // y_t-q+1 + ... + y_t
+        sumq.mean                                                      // prediction for y_t+1
     end predict
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -113,16 +111,16 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
      */
     def forecast (t: Int, yf: MatrixD, y_ : VectorD, h: Int): VectorD =
         if h < 1 then flaw ("forecast", s"horizon h = $h must be at least 1")
-        val yd = new VectorD (h)                                        // hold forecasts for each horizon
+        val yd = new VectorD (h)                                       // hold forecasts for each horizon
         val sumq = new SumQueue (q)
-        for i <- max (0, t-q+1) to t do sumq += y(i)                    // y_t-q+1 + ... + y_t
+        for i <- max (0, t-q+1) to t do sumq += y(i)                   // y_t-q+1 + ... + y_t
         for k <- 1 to h do
             val pred = sumq.mean
-            yf(t+k, k) = pred                                           // forecast down the diagonal
-            yd (k-1)   = pred                                           // record diagonal values
-            sumq      += yf(t+k, k-1)                                   // replace oldest value with this value
+            yf(t+k, k) = pred                                          // forecast down the diagonal
+            yd (k-1)   = pred                                          // record diagonal values
+            sumq      += yf(t+k, k-1)                                  // replace oldest value with this value
         end for
-        yd                                                              // return forecasts for each horizon
+        yd                                                             // return forecasts for each horizon
     end forecast
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -146,37 +144,51 @@ class MovingAverage (y: VectorD, tt: VectorD = null, hparam: HyperParameter = Mo
         yf(?, h)                                                       // return the h-step ahead forecast vector
     end forecastAt
 
-end MovingAverage
+end SimpleMovingAverage
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `MovingAverage` companion object provides factory methods for the `MovingAverage` class.
+/** The `SimpleMovingAverage` companion object provides factory methods for the `SimpleMovingAverage` class.
  */
-object MovingAverage:
+object SimpleMovingAverage:
 
-    /** Base hyper-parameter specification for `MovingAverage`
+    /** Base hyper-parameter specification for `SimpleMovingAverage`
      */
     val hp = new HyperParameter
     hp += ("q", 3, 3)                                                  // number of prior values for mean
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `MovingAverage` object.
+    /** Create a `SimpleMovingAverage` object.
      *  @param y       the response vector (time series data)
      *  @param tt      the time points, if needed
      *  @param hparam  the hyper-parameters
      */
-    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null): MovingAverage =
-        new MovingAverage (y, tt, hparam)
+    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = hp): SimpleMovingAverage =
+        new SimpleMovingAverage (y, tt, hparam)
     end apply
 
-end MovingAverage
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Decompose a univariate time series into a moving average and a remainder.
+     *  @see https://arxiv.org/pdf/2106.13008.pdf (Autoformer)
+     *  @param y       the response vector (time series data)
+     *  @param tt      the time points, if needed
+     *  @param hparam  the hyper-parameters
+     */
+    def decompose (y: VectorD, tt: VectorD = null, hparam: HyperParameter = hp): (VectorD, VectorD) =
+        val sma = new SimpleMovingAverage (y, tt, hparam)
+        val s = sma.predictAll (y)
+        s(0)  = s(1)                                                   // pad by copy copying first avg back
+        (s, y - s)
+    end decompose
+
+end SimpleMovingAverage
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `movingAverageTest` main function tests the `MovingAverage` class on simulated data.
- *  > runMain scalation.modeling.forecasting.movingAverageTest
+/** The `simpleMovingAverageTest` main function tests the `SimpleMovingAverage` class on simulated data.
+ *  > runMain scalation.modeling.forecasting.simpleMovingAverageTest
  */
-@main def movingAverageTest (): Unit =
+@main def simpleMovingAverageTest (): Unit =
 
     val y = makeTSeries ()                                             // generate a time-series (see `Stationary`)
 
@@ -184,22 +196,22 @@ end MovingAverage
     val ar = new AR (y)                                                // create model for time series data AR(1)
     ar.trainNtest ()()                                                 // train and test on full dataset
 
-    banner (s"Test Predictions: MovingAverage on simulated time-series")
-    val mod = new MovingAverage (y)                                    // time series model
+    banner (s"Test Predictions: SimpleMovingAverage on simulated time-series")
+    val mod = new SimpleMovingAverage (y)                              // time series model
     mod.trainNtest ()()                                                // train and test on full dataset
 
     banner ("Select model based on ACF and PACF")
     ar.plotFunc (ar.acF, "ACF")                                        // Auto-Correlation Function (ACF)
     ar.plotFunc (ar.pacF, "PACF")                                      // Partial Auto-Correlation Function (PACF)
 
-end movingAverageTest
+end simpleMovingAverageTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `movingAverageTest2` main function is used to test the `MovingAverage` class.
- *  > runMain scalation.modeling.forecasting.movingAverageTest2
+/** The `simpleMovingAverageTest2` main function is used to test the `SimpleMovingAverage` class.
+ *  > runMain scalation.modeling.forecasting.simpleMovingAverageTest2
  */
-@main def movingAverageTest2 (): Unit =
+@main def simpleMovingAverageTest2 (): Unit =
 
     val y = makeTSeries ((t: Double) => t, 30, Normal ())              // generate a time-series (see `Stationary`)
 
@@ -207,29 +219,29 @@ end movingAverageTest
     val ar = new AR (y)                                                // time series model
     ar.trainNtest ()()                                                 // train and test on full dataset
 
-    banner ("Build MovingAverage Model")
-    val mod = new MovingAverage (y)                                    // time series model
+    banner ("Build SimpleMovingAverage Model")
+    val mod = new SimpleMovingAverage (y)                              // time series model
     mod.trainNtest ()()                                                // train and test on full dataset
 
 /*
     banner ("Make Forecasts")
     val steps = 10                                                     // number of steps for the forecasts
     val rw_f = rw.forecast (steps)
-    println (s"$steps-step ahead forecasts using MovingAverage model = $rw_f")
+    println (s"$steps-step ahead forecasts using SimpleMovingAverage model = $rw_f")
     val tf = VectorD.range (n, n + steps)
-    new Plot (tf, rw_f, null, s"Plot MovingAverage forecasts vs. t", true)
+    new Plot (tf, rw_f, null, s"Plot SimpleMovingAverage forecasts vs. t", true)
 */
 
-end movingAverageTest2
+end simpleMovingAverageTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `movingAverageTest3` main function is used to test the `MovingAverage` class.
+/** The `simpleMovingAverageTest3` main function is used to test the `SimpleMovingAverage` class.
  *  Forecasting lake levels.
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.movingAverageTest3
+ *  > runMain scalation.modeling.forecasting.simpleMovingAverageTest3
  */
-@main def movingAverageTest3 (): Unit =
+@main def simpleMovingAverageTest3 (): Unit =
 
     import Example_LakeLevels.y
 
@@ -237,8 +249,8 @@ end movingAverageTest2
     val ar = new AR (y)                                                // time series model
     ar.trainNtest ()()                                                 // train and test on full dataset
 
-    banner ("Build MovingAverage Model")
-    val mod = new MovingAverage (y)                                    // time series model
+    banner ("Build SimpleMovingAverage Model")
+    val mod = new SimpleMovingAverage (y)                              // time series model
     mod.trainNtest ()()                                                // train and test on full dataset
 
 /*
@@ -250,14 +262,34 @@ end movingAverageTest2
     } // for
 */
 
-end movingAverageTest3
+end simpleMovingAverageTest3
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `movingAverageTest4` main function is used to test the `MovingAverage` class.
- *  > runMain scalation.modeling.forecasting.movingAverageTest4
+/** The `simpleMovingAverageTest4` main function is used to test the `SimpleMovingAverage` class.
+ *  Decompose the lake levels dataset.
+ *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+ *  > runMain scalation.modeling.forecasting.simpleMovingAverageTest4
  */
-@main def movingAverageTest4 (): Unit =
+@main def simpleMovingAverageTest4 (): Unit =
+
+    import Example_LakeLevels.y
+
+    SimpleMovingAverage.hp("q") = 5                                        // number of points to average
+    banner ("Use SimpleMovingAverage to Decompose the Lake Level Dataset")
+    val (s, z) = SimpleMovingAverage.decompose (y)                         // time series model
+    new Plot (null, y, null, "original time series", lines = true)
+    new Plot (null, s, null, "moving average", lines = true)
+    new Plot (null, z, null, "remainder", lines = true)
+
+end simpleMovingAverageTest4
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `simpleMovingAverageTest5` main function is used to test the `SimpleMovingAverage` class.
+ *  > runMain scalation.modeling.forecasting.simpleMovingAverageTest5
+ */
+@main def simpleMovingAverageTest5 (): Unit =
 
     val data = MatrixD.load ("travelTime.csv")                         // automatically prepends DATA_DIR
 
@@ -269,9 +301,9 @@ end movingAverageTest3
     val ar = new AR (y)                                                // time series model
     ar.trainNtest ()()                                                 // train and test on full dataset
 
-    banner (s"Build MovingAverage model")
-    val mod = new MovingAverage (y)                                    // time series model
+    banner (s"Build SimpleMovingAverage model")
+    val mod = new SimpleMovingAverage (y)                              // time series model
     mod.trainNtest ()()                                                // train and test on full dataset
 
-end movingAverageTest4
+end simpleMovingAverageTest5
 
