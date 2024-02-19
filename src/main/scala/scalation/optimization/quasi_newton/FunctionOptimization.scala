@@ -19,6 +19,7 @@ package quasi_newton
 // Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.{FunctionV2S, FunctionV2V, VectorD}
+import scalation.optimization.functions.BenchmarkFunction
 
 // Case class.
 case class FunctionOptimization(
@@ -30,6 +31,11 @@ case class FunctionOptimization(
         objectiveFunction,
         // Less accurate than hard-coded definition of gradient function.
         (x: VectorD) => Differential.grad(objectiveFunction, x)
+    )
+
+    def this(benchmarkFunction: BenchmarkFunction) = this(
+        benchmarkFunction.objectiveFunction,
+        benchmarkFunction.gradientFunction
     )
     
     // Public methods.
@@ -47,4 +53,7 @@ case object FunctionOptimization:
     // Public methods.
     def apply(objectiveFunction: FunctionV2S) =
         new FunctionOptimization(objectiveFunction)
+        
+    def apply(benchmarkFunction: BenchmarkFunction) =
+        new FunctionOptimization(benchmarkFunction)
 end FunctionOptimization

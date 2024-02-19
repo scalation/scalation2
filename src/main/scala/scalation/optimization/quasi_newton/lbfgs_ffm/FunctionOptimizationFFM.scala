@@ -23,6 +23,7 @@ import java.lang.foreign.MemorySegment
 // Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.{FunctionV2S, FunctionV2V, VectorD}
+import scalation.optimization.functions.BenchmarkFunction
 
 // Case class.
 case class FunctionOptimizationFFM(
@@ -34,6 +35,11 @@ case class FunctionOptimizationFFM(
         objectiveFunction,
         // Less accurate than hard-coded definition of gradient function.
         (x: VectorD) => Differential.grad(objectiveFunction, x)
+    )
+
+    def this(benchmarkFunction: BenchmarkFunction) = this(
+        benchmarkFunction.objectiveFunction,
+        benchmarkFunction.gradientFunction
     )
     
     // Public methods.
@@ -57,4 +63,7 @@ case object FunctionOptimizationFFM:
     // Public methods.
     def apply(objectiveFunction: FunctionV2S) =
         new FunctionOptimizationFFM(objectiveFunction)
+
+    def apply(benchmarkFunction: BenchmarkFunction) =
+        new FunctionOptimizationFFM(benchmarkFunction)
 end FunctionOptimizationFFM

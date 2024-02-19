@@ -17,8 +17,6 @@ package functions
 // Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.VectorD
-import scalation.optimization.quasi_newton.FunctionOptimization
-import scalation.optimization.quasi_newton.lbfgs_ffm.FunctionOptimizationFFM
 
 // Trait.
 /** The `BenchmarkFunction` trait specifies the requirements for the logic
@@ -75,38 +73,4 @@ trait BenchmarkFunction:
      *
      */
     def gradientFunction(x: VectorD): VectorD = Differential.grad(objectiveFunction, x)
-    
-    // Final public methods.
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Creates a new [[FunctionOptimization]] case class with the objective
-     *  function information represented by `objectiveFunction` and
-     *  `gradientFunction`. Useful for running tests and benchmarks on the
-     *  [[LBFGS]] object.
-     *
-     *  @return FunctionOptimization    [[FunctionOptimization]] case class
-     *                                  created with the objective function
-     *                                  information contained in
-     *                                  `objectiveFunction` and
-     *                                  `gradientFunction`.
-     *
-     */
-    final def toFunctionOptimization: FunctionOptimization =
-        FunctionOptimization(this.objectiveFunction, this.gradientFunction)
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Creates a new [[FunctionOptimizationFFM]] case class with the objective
-     *  function information represented by `objectiveFunction` and
-     *  `gradientFunction`. Useful for running tests and benchmarks on the
-     *  `LBFGS_FFM` object.
-     *
-     *  @return FunctionOptimizationFFM [[FunctionOptimizationFFM]] case class
-     *                                  created with the objective function
-     *                                  information contained in
-     *                                  `objectiveFunction` and
-     *                                  `gradientFunction`.
-     *
-     */
-    final def toFunctionOptimizationFFM: FunctionOptimizationFFM =
-        FunctionOptimizationFFM(this.objectiveFunction, this.gradientFunction)
-
 end BenchmarkFunction

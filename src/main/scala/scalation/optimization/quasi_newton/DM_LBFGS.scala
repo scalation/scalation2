@@ -404,7 +404,7 @@ end DM_LBFGS
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-4, -4)
     val functionDomainUpperBound = VectorD(4, 4)
-    val functionOptimizationLogic = McCormickFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(McCormickFunction)
 
     // Testing.
     println(DM_LBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))

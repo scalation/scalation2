@@ -182,7 +182,7 @@ end LBFGS_FFM
  */
 @main def boothFunctionLBFGS_FFMTest(): Unit =
     // Variable declaration.
-    val functionOptimizationLogic = BoothFunction.toFunctionOptimizationFFM
+    val functionOptimizationLogic = FunctionOptimizationFFM(BoothFunction)
     val optimizationMethodHandles = OptimizationMethodHandlesFFM.bindFromFunctionOptimizationFFM(
         functionOptimizationLogic
     )
@@ -196,7 +196,7 @@ end boothFunctionLBFGS_FFMTest
 
 @main def bohachevsky2FunctionLBFGS_FFMTest(): Unit =
     // Variable declaration.
-    val functionOptimizationLogic = Bohachevsky2Function.toFunctionOptimizationFFM
+    val functionOptimizationLogic = FunctionOptimizationFFM(Bohachevsky2Function)
     val optimizationMethodHandles = OptimizationMethodHandlesFFM.bindFromFunctionOptimizationFFM(
         functionOptimizationLogic
     )

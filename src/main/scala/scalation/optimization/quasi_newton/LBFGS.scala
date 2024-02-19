@@ -385,7 +385,7 @@ end LBFGS
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = BoothFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(BoothFunction)
 
     // Testing.
 //    println(LBFGS.lbfgsMain(2, VectorD(1, 3), functionOptimizationLogic))
@@ -401,7 +401,7 @@ end boothFunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = BealeFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(BealeFunction)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-4.5, -4.5), functionOptimizationLogic))
@@ -417,7 +417,7 @@ end bealeFunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = Bohachevsky1Function.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(Bohachevsky1Function)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -433,7 +433,7 @@ end bohachevsky1FunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = Bohachevsky2Function.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(Bohachevsky2Function)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -449,7 +449,7 @@ end bohachevsky2FunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = Bohachevsky3Function.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(Bohachevsky3Function)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -465,7 +465,7 @@ end bohachevsky3FunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = Camel3Function.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(Camel3Function)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -481,7 +481,7 @@ end camel3FunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = CubeFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(CubeFunction)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -497,7 +497,7 @@ end cubeFunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-10, -10)
     val functionDomainUpperBound = VectorD(10, 10)
-    val functionOptimizationLogic = FreudensteinRothFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(FreudensteinRothFunction)
 
     // Testing.
     //println(LBFGS.lbfgsMain(2, VectorD(-10, 10), functionOptimizationLogic))
@@ -523,7 +523,7 @@ end freudensteinRothFunctionLBFGSTest
     // Variable declaration.
     val functionDomainLowerBound = VectorD(-4, -4)
     val functionDomainUpperBound = VectorD(4, 4)
-    val functionOptimizationLogic = McCormickFunction.toFunctionOptimization
+    val functionOptimizationLogic = FunctionOptimization(McCormickFunction)
 
     // Testing.
     //    println(LBFGS.lbfgsMain(2, VectorD(-0.5, -1.5), functionOptimizationLogic))
