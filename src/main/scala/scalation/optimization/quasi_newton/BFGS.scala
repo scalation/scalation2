@@ -29,6 +29,7 @@ import scala.util.control.Breaks.{break, breakable}
 import scalation.calculus.Differential.∇
 import scalation.mathstat.*
 import scalation.optimization.functions.*
+import scalation.scala2d.writeImage
 
 // Simplifying imports.
 import MatrixD.eye
@@ -320,15 +321,15 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
         var count       = 0                                       // number of times mgn stayed roughly same (< diffTol)
         val maxCount    = 10                                      // max number of times mgn stayed roughly same => terminate
         val n           = x0.dim                                  // size of the parameter vector
-        var goodGrad    = true                                    // good gradient value flag (not NaN nor infinity)
         var xn: VectorD = null                                    // next value for x (point)
+
+        dir = if bfgs then -(aHi * x._2) else -x._2
+        step = 1 / dir.norm
 
         breakable {
             for it <- 1 to MAX_IT do
                 debug ("solve3", s"start of iteration $it: step = $step, f(x) = ${fg(x._1)}")
-                if goodGrad then
-                    dir = if bfgs then -(aHi * x._2) else -x._2
-                end if
+                dir = if bfgs then -(aHi * x._2) else -x._2
 
                 lineSearchImplementation.lineSearch(
                     n,
@@ -348,31 +349,25 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
 
                 xn = x._1 + s                                     // next x point
 
-                if goodGrad then
-                    for xx_i <- xn if xx_i.isNaN || xx_i.isInfinite do break ()
-                    diff = (xn - x._1).normSq / n                 // measure of distance moved
-                end if
+                for xx_i <- xn if xx_i.isNaN || xx_i.isInfinite do break ()
+                diff = s.normSq / n                 // measure of distance moved
+
                 xx = (xn, grad (xn))                              // compute the next point
                 mgn = xx._2.normSq / n                            // compute mean gradient normSq
                 debug ("solve3", s"current mean gradient normSq = $mgn")
 
-                if mgn.isNaN || mgn.isInfinite then
-                    goodGrad = false                              // gradient blew up
-                    step /= 2.0                                   // halve the step size
-                else if mgn < toler || count > maxCount then { x = xx; break () }  // return when vanished gradient or haven't moved
-                else if goodGrad then
-                    if diff < diffTol then count += 1             // increment no movement counter
-                    if step < step_   then step  *= 1.5           // increase step size by 50%
-                    else
-                        goodGrad = true                               // gradient is currently fine
+                if mgn < toler || count > maxCount then
+                    x = xx
+                    break ()    // return when vanished gradient or haven't moved
+                else if diff < diffTol then
+                    count += 1             // increment no movement counter
                 end if
 
-                if goodGrad then
-                    if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
-                    debug ("solve3", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
-                    x = xx                                        // make the next point the current point
-                end if
+                if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
+                debug ("solve3", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
+                x = xx                                        // make the next point the current point
 
+                step = lineSearchParams.defaultStep
                 add2Path(x._1)
             end for
         } // breakable
@@ -553,17 +548,20 @@ end bFGSBoothFunction
 @main def bFGSBealeFunction (): Unit =
 
     val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
+    val x0   = VectorD (2, -2)                           // starting location
+    val functionDomainLowerBound = VectorD(-10, -10)
+    val functionDomainUpperBound = VectorD(10, 10)
 
     banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
     def f = BealeFunction.objectiveFunction
     def grad = BealeFunction.gradientFunction
 
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+    val opt = optimizer.solve3 (x0, grad, step)
     println (s"][ optimal solution (f(x), x) = $opt")
+
+    val plot = new PlotC(BealeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, optimizer.getPath, BealeFunction.functionMinimum)
+    writeImage("./plots/BFGS/BFGS_bealeFunction_plot.png", plot)
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")

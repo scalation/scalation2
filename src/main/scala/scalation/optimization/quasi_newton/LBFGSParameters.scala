@@ -65,8 +65,6 @@ import scalation.mathstat.VectorD
  *  @param lineSearch       [[LBFGSLineSearchAlgorithm]] to specify what line
  *                          search algorithm should be used. The default value
  *                          is [[LBFGSLineSearchAlgorithm.Default]].
- *  @param defaultStep      The default step selected as the initial for the
- *                          line search routine. The default value is 1.0.
  *  @param lineSearchParams [[LBFGSLineSearchParameters]] to specify the
  *                          parameters needed during the execution of the line
  *                          search algorithm routine.
@@ -90,7 +88,6 @@ case class LBFGSParameters(
     delta: Double = 1e-5,
     maxIterations: Int = 0,
     lineSearch: LBFGSLineSearchAlgorithm = LBFGSLineSearchAlgorithm.Default,
-    defaultStep: Double = 1.0,
     lineSearchParams: LBFGSLineSearchParameters = LBFGSLineSearchParameters(),
     orthantWise: Option[OrthantWiseParameters] = None
 ):
@@ -120,7 +117,7 @@ case class LBFGSParameters(
         destination.set(JAVA_INT, 32, maxIterations)
         destination.set(JAVA_INT, 36, lineSearch.number)
         destination.set(JAVA_INT, 40, lineSearchParams.maxLineSearch)
-        destination.set(JAVA_DOUBLE, 48, defaultStep)
+        destination.set(JAVA_DOUBLE, 48, lineSearchParams.defaultStep)
         destination.set(JAVA_DOUBLE, 56, lineSearchParams.minStep)
         destination.set(JAVA_DOUBLE, 64, lineSearchParams.maxStep)
         destination.set(JAVA_DOUBLE, 72, lineSearchParams.ftol)
@@ -175,6 +172,8 @@ end LBFGSParameters
  *                          Controls the number of function and gradient
  *                          evaluations per iteration for the line search
  *                          routine. The default value is 40.
+ *  @param defaultStep      The default step selected as the initial for the
+ *                          line search routine. The default value is 1.0.
  *  @param minStep          Minimum step of the line search routine. Does not
  *                          need to be modified unless the exponents are too
  *                          large for the machine being used, or unless the
@@ -218,6 +217,7 @@ end LBFGSParameters
  */
 case class LBFGSLineSearchParameters(
     maxLineSearch: Int = 40,
+    defaultStep: Double = 1.0,
     minStep: Double = 1e-20,
     maxStep: Double = 1e20,
     ftol: Double = 1e-4,

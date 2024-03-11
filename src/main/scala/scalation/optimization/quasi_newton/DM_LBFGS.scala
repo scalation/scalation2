@@ -300,7 +300,7 @@ object DM_LBFGS extends PathMonitor:
                     Now the search direction d is ready. We try the default step first.
                  */
                 // Previously, the default step was hardcoded to 1.
-                step = params.defaultStep
+                step = params.lineSearchParams.defaultStep
             end while
 
             LBFGSResults(LBFGSReturnCode.UnknownError, xNew, Some(fx), None)
@@ -407,7 +407,7 @@ end DM_LBFGS
     val functionOptimizationLogic = FunctionOptimization(McCormickFunction)
 
     // Testing.
-    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(defaultStep = 10.5), momentum = 0.5))
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep = 10.5)), momentum = 0.5))
 
     new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, DM_LBFGS.getPath, McCormickFunction.functionMinimum)
 end mccormickFunctionDMLBFGSTest
