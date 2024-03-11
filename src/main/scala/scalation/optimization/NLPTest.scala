@@ -17,6 +17,7 @@ import scala.collection.mutable.LinkedHashMap
 
 import scalation.mathstat._
 import scalation.optimization.quasi_newton.BFGS
+import scalation.optimization.old_LBFGS.L_BFGS_B
 
 import Minimizer._
 
