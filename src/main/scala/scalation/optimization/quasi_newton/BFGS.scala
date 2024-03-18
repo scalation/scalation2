@@ -322,6 +322,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
         val maxCount    = 10                                      // max number of times mgn stayed roughly same => terminate
         val n           = x0.dim                                  // size of the parameter vector
         var xn: VectorD = null                                    // next value for x (point)
+        val dampeningCoefficient = 0.99                           // how much the increase to aHi should be dampened
 
         dir = if bfgs then -(aHi * x._2) else -x._2
         step = 1 / dir.norm
@@ -363,7 +364,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
                     count += 1             // increment no movement counter
                 end if
 
-                if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2)     // update the deflection matrix aHi
+                if bfgs then aHi += aHi_inc (aHi, s, xx._2 - x._2) * dampeningCoefficient    // update the deflection matrix aHi
                 debug ("solve3", s"(it = $it) move from ${x._1} to ${xx._1} where fg(xx._1) = ${fg(xx._1)}")
                 x = xx                                        // make the next point the current point
 

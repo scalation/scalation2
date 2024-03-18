@@ -37,7 +37,8 @@ object QNewton:
      *  @see https://mdav.ece.gatech.edu/ece-6270-spring2021/notes/09-bfgs.pdf
      */
     def aHi_inc(aHi: MatrixD, s: VectorD, y: VectorD): MatrixD =
-        val sy = maxmag(s dot y, EPS)
+        // val sy = maxmag(s dot y, EPS)
+        val sy = math.max(s dot y, EPS)
         val ay = aHi * y
         (⊗(s, s) * (sy + (y dot ay))) / sy ~^ 2 - (⊗(ay, s) + ⊗(s, ay)) / sy
     end aHi_inc
