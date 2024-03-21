@@ -15,7 +15,7 @@ package modeling
 package forecasting
 
 import scalation.mathstat._
-import scalation.optimization.L_BFGS_B
+import scalation.optimization.old_LBFGS.L_BFGS_B
 import scalation.random._
 
 import Fit._

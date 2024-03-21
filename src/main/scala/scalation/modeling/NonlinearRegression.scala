@@ -12,7 +12,7 @@ package scalation
 package modeling
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 /** Function type for f(x, b) that maps a pair of vectors to a double
  */

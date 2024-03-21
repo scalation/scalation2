@@ -16,7 +16,7 @@ package modeling
 import scala.math.exp
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ExpRegression` class supports exponential regression.  In this case,

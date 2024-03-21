@@ -14,38 +14,9 @@
 package scalation
 package optimization
 
-import scala.math.abs
-
 import scalation.calculus.Differential.∇
 import scalation.mathstat._
-
-import MatrixD.{outer, ⊗}
-
-//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `QNewton` object provides methods useful for Quasi Newton optimizers.
- */
-object QNewton:
-
-    private val EPS = Minimize.hp("eps").toDouble
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the change to the approximate Hessian inverse (aHi) matrix using the
-     *  Sherman–Morrison formula.
-     *  @see https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
-     *  @see https://mdav.ece.gatech.edu/ece-6270-spring2021/notes/09-bfgs.pdf
-     *  @param aHi  the current value of the approximate Hessian inverse (aHi)
-     *  @param s    the step vector (next point - current point)
-     *  @param y    the difference in the gradients (next - current)
-     */
-    def aHi_inc (aHi: MatrixD, s: VectorD, y: VectorD): MatrixD =
-        val sy = maxmag (s dot y, EPS)
-        val ay = aHi * y
-        (⊗ (s, s) * (sy + (y dot ay))) / sy~^2 - (⊗ (ay, s) + ⊗ (s, ay)) / sy
-    end aHi_inc
-
-end QNewton
-
-import QNewton.aHi_inc
+import scalation.optimization.quasi_newton.QNewton.aHi_inc
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `BFGS_NoLS` class is used to find optima for functions of vectors.
@@ -153,7 +124,7 @@ end BFGS_NoLS
     def f (x: VectorD): Double = (x(0) - 3.0)~^2 + (x(1) - 4.0)~^2 + 1.0
 
     val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
-//  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
+    //  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
     val opt = optimizer.solve (x0, eta)
     println (s"][ optimal solution (f(x), x) = $opt")
 
@@ -178,7 +149,7 @@ end bFGS_NoLSTest
     def grad (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
 
     val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
-//  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
+    //  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
     val opt = optimizer.solve2 (x0, grad, eta)
     println (s"][ optimal solution (f(x), x) = $opt")
 
@@ -201,11 +172,11 @@ end bFGS_NoLSTest2
     def f (x: VectorD): Double = (1.0 - x(0))~^2 + 100.0 * (x(1) - x(0)~^2)~^2
 
     def grad (x: VectorD): VectorD = VectorD (-2.0 * (1 - x(0)) - 400.0 * x(0) * (x(1) - x(0)~^2),
-                                              200.0 * (x(1) - x(0)~^2))
+        200.0 * (x(1) - x(0)~^2))
 
     val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
-//  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
-//  val opt = optimizer.solve (x0, eta)                     // use numerical partials
+    //  val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
+    //  val opt = optimizer.solve (x0, eta)                     // use numerical partials
     val opt = optimizer.solve2 (x0, grad, eta)              // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
@@ -227,9 +198,9 @@ end bFGS_NoLSTest3
 
     def grad (x: VectorD): VectorD = VectorD (-(x(0)~^(-2)) + 4.0 * x(0)~^3 + 2 * x(0) - 6, 2 * x(1) - 8)
 
-//  val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
+    //  val optimizer = new BFGS_NoLS (f)                       // use learning rate - needs a good eta
     val optimizer = new BFGS_NoLS (f, true)                 // use Line Search
-//  val opt = optimizer.solve (x0, eta)                     // use numerical partials
+    //  val opt = optimizer.solve (x0, eta)                     // use numerical partials
     val opt = optimizer.solve2 (x0, grad, eta)              // use functions for partials
     println (s"][ optimal solution (f(x), x) = $opt")
 
@@ -238,3 +209,226 @@ end bFGS_NoLSTest3
 
 end bFGS_NoLSTest4
 
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSBoothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+ *  > runMain scalation.optimization.bFGS_NoLSBoothFunction
+ */
+@main def bFGS_NoLSBoothFunction (): Unit =
+
+    val eta = 0.5                                       // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2")
+    def f (x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+
+    def grad (x: VectorD): VectorD = VectorD (10*x(0) + 8*x(1) - 34, 8*x(0) + 10*x(1) - 38)
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSBoothFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSBealeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+ *  > runMain scalation.optimization.bFGS_NoLSBealeFunction
+ */
+@main def bFGS_NoLSBealeFunction (): Unit =
+
+    val eta = 0.5                                      // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
+    def f (x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+
+    def grad (x: VectorD): VectorD = VectorD (2 * (1.5 - x(0) + x(0) * x(1)) * (-1 + x(1)) +
+      2 * (2.25 - x(0) + x(0) * (x(1) ~^ 2)) * (-1 + (x(1) ~^ 2)) +
+      2 * (2.625 - x(0) + x(0) * (x(1) ~^ 3)) * (-1 + (x(1) ~^ 3)),
+        2 * (1.5 - x(0) + x(0) * x(1)) * x(0) +
+          2 * (2.25 - x(0) + x(0) * (x(1) ~^ 2)) * (2 * x(0) * x(1)) +
+          2 * (2.625 - x(0) + x(0) * (x(1) ~^ 3)) * (3 * x(0) * (x(1) ~^ 2)))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSBealeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSBohachevsky1Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+ *  > runMain scalation.optimization.bFGS_NoLSBohachevsky1Function
+ */
+@main def bFGS_NoLSBohachevsky1Function (): Unit =
+
+    val eta = 0.5                                       // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+
+    def grad (x: VectorD): VectorD = VectorD (2 * x(0) - 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)),
+        4 * x(1) - 0.4 * 4 * math.Pi * math.sin(4 * math.Pi * x(1)))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSBohachevsky1Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSBohachevsky2Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization.bFGS_NoLSBohachevsky2Function
+ */
+@main def bFGS_NoLSBohachevsky2Function (): Unit =
+
+    val eta = 0.5                                        // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+
+    def grad (x: VectorD): VectorD = VectorD (2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0)) * math.cos(4 * math.Pi * x(1)),
+        4 * x(1) - 0.3 * 4 * math.Pi * math.cos(3 * math.Pi * x(0)) * math.sin(4 * math.Pi * x(1)))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSBohachevsky2Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSBohachevsky3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization.bFGS_NoLSBohachevsky3Function
+ */
+@main def bFGS_NoLSBohachevsky3Function (): Unit =
+
+    val eta = 0.5                                       // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+
+    def grad (x: VectorD): VectorD = VectorD (2 * x(0) + 0.3 * 3 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)),
+        4 * x(1) + 0.3 * 4 * math.Pi * math.sin(3 * math.Pi * x(0) + 4 * math.Pi * x(1)))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSBohachevsky3Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSCamel3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+ *  > runMain scalation.optimization.bFGS_NoLSCamel3Function
+ */
+@main def bFGS_NoLSCamel3Function (): Unit =
+
+    val eta = 0.5                                        // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2")
+    def f (x: VectorD): Double =  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+
+    def grad (x: VectorD): VectorD = VectorD (4 * x(0) - 4.2 * x(0)~^3 + x(0)~^5 + x(1), x(0) + 2 * x(1))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSCamel3Function
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSCubeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+ *  > runMain scalation.optimization.bFGS_NoLSCubeFunction
+ */
+@main def bFGS_NoLSCubeFunction (): Unit =
+
+    val eta = 0.5                                       // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2")
+    def f (x: VectorD): Double =  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+
+    def grad (x: VectorD): VectorD = VectorD (-200 * (x(1) - x(0)~^3) * (3 * x(0)~^2) - 2 * (1 - x(0)), 200 * (x(1) - x(0)~^3))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSCubeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGS_NoLSFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *  > runMain scalation.optimization.bFGS_NoLSFreudensteinRothFunction
+ */
+@main def bFGS_NoLSFreudensteinRothFunction (): Unit =
+
+    val eta = 0.5                                        // step size (may need adjustment)
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2")
+    def f (x: VectorD): Double =  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+
+    def grad (x: VectorD): VectorD = VectorD (2 * (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) + 2 * (x(0) - 29 + x(1) * ((x(1) + 1) * x(1) - 14)),
+        2 * x(1) * ((5 - x(1)) * x(1) - 2) + 2 * (x(1) * ((x(1) + 1) * x(1) - 14) + (x(0) - 13 + x(1) * ((5 - x(1)) * x(1) - 2)) * ((5 - x(1)) * x(1) - 2)))
+
+    val optimizer = new BFGS_NoLS (f)
+    //  val opt = optimizer.solve (x0, eta)                    // use numerical partials
+    val opt = optimizer.solve2 (x0, grad, eta)             // use functions for partials
+    println (s"][ optimal solution (f(x), x) = $opt")
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGS_NoLSFreudensteinRothFunction

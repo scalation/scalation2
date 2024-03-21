@@ -20,7 +20,7 @@ package modeling
 import scala.math.{exp, round}
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PoissonRegression` class supports Poisson regression.  In this case, 
