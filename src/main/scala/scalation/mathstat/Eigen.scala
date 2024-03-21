@@ -5,6 +5,8 @@
  *  @date    Sun Sep 16 14:09:25 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Eigenvalues and Eigenvectors
+ *
  *  This file contains classes for Hessenburg reductions, finding Eigenvalues
  *  and computing Eigenvectors.
  */
@@ -211,8 +213,8 @@ object SymmetricQRstep:
         var phi = 0.0
 
         for k <- p until n do
-            var f   = s * (t.sd(k))
-            var b   = c * (t.sd(k))
+            val f   = s * (t.sd(k))
+            val b   = c * (t.sd(k))
             var r   = sqrt (g * g + f * f)
             c       = g / r
             s       = f / r
@@ -280,8 +282,8 @@ end EigenvalueSym
  */
 class Eigenvector (a: MatrixD, _e: VectorD = null):
 
-    private val ITERATIONS = 12                            // max iterations
-    private val debug = debugf ("Eigenvector", true)       // debug function
+//  private val ITERATIONS = 12                            // max iterations
+    private val debug = debugf ("Eigenvector", false)      // debug function
     private val flaw  = flawf ("Eigenvector")              // flaw function
     private val m     = a.dim                              // number of rows
     private val v     = new MatrixD (m, m)                 // eigenvectors matrix (each row)
@@ -305,7 +307,7 @@ class Eigenvector (a: MatrixD, _e: VectorD = null):
         val mat = a_Ie(1 until m)
         v(?, i) = eVec
 
-//      debug ("init", s"mat = $mat")
+        debug ("init", s"mat = $mat")
 //      val eVec2 = mat.nullspace
 //      println (s"--- eigenvector for eigenvalue ${e(i)} = $eVec2")
 //      v(?, i) = eVec2

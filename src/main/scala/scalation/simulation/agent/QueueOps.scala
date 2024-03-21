@@ -5,7 +5,7 @@
  *  @date    Fri Oct  1 00:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   QueueOps Specifies Operations To Be Supported by Wait Queues
+ *  @note    QueueOps Specifies Operations To Be Supported by Wait Queues
  */
 
 package scalation
@@ -35,6 +35,11 @@ trait QueueOps:
     /** Return the number entities barred because of this wait-queue being full.
      */
     def barred: Int
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Clear (remove all elements from) the wait queue.
+     */
+    def clear (): Unit
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Wait in the queue, recording the waiting time.  Return whether the entity

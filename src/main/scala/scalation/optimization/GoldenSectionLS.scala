@@ -5,7 +5,7 @@
  *  @date    Wed Aug 24 19:53:22 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Line Search Optimizer
+ *  @note    Line Search Optimizer
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Fri Sep 30 12:27:14 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Indirect Merge Sort 
+ *  @note    Indirect Merge Sort 
  *
  *  An efficient stable sorting algorithm - useful for sorting on multiple fields/columns.
  *

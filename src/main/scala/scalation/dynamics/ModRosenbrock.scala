@@ -5,7 +5,7 @@
  *  @date    Sat Nov  6 15:54:34 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   (2,3)-Order Modified Rosenbrock Stiff ODE Integrator or ode23s
+ *  @note    (2,3)-Order Modified Rosenbrock Stiff ODE Integrator or ode23s
  */
 
 package scalation
@@ -26,8 +26,6 @@ import scalation.mathstat._
  */
 object ModRosenbrock
        extends Integrator:
-
-    private val flaw = flawf ("ModRosenbrock")                    // flaw function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute y(t) governed by a differential equation using numerical integration
@@ -70,27 +68,29 @@ import ModRosenbrock._
  */
 @main def modRosenbrockTest (): Unit =
 
+/*
     def derv1 (t: Double, y: Double) = t + y
     val y0   = 1.24
     val t    = 1.0
     val hmin = 0.01
     val hmax = 1.0
 
-    //def integrate (f: Derivative, y0: Double, t: Double, hmin: Double, hmax: Double,
-    //               t0: Double = 0., tol: Double = 1E-5, maxSteps: Int = 1000): Double =
-    //println ("\n==> at t = " + t + " y = " + integrate2 (derv1, y0, t, hmin, hmax))
+    def integrate (f: Derivative, y0: Double, t: Double, hmin: Double, hmax: Double,
+                   t0: Double = 0., tol: Double = 1E-5, maxSteps: Int = 1000): Double =
+    println ("\n==> at t = " + t + " y = " + integrate2 (derv1, y0, t, hmin, hmax))
+*/
 
     // @see http://www.mathworks.com/help/techdoc/ref/ode23.html (Example 1)
 
     def dx_dt (t: Double, p: VectorD) =  p(1) * p(2)
     def dy_dt (t: Double, p: VectorD) = -p(0) * p(2)
-    def dz_dt (t: Double, p: VectorD) = -.51 * p(0) * p(1)
+    def dz_dt (t: Double, p: VectorD) = -0.51 * p(0) * p(1)
     val odes = Array [DerivativeV] (dx_dt, dy_dt, dz_dt)
 
-    var ti  = .2
+    val ti  = 0.2
     var p   = VectorD (0.0, 1.0, 1.0)
     val p_r = new MatrixD (61, 3); for (k <- 0 until p.dim) p_r(0, k) = p(k)
-    var tt  = new VectorD (61); tt(0) = 0.0
+    val tt  = new VectorD (61); tt(0) = 0.0
     for i <- 1 to 60 do
         tt(i) = ti * i
         p = integrateVV (odes, p, ti)

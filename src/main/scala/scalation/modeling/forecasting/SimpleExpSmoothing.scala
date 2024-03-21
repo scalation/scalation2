@@ -5,7 +5,7 @@
  *  @date    Thu Jun 13 13:13:26 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Exponential Smoothing (SES)
+ *  @note    Model: Simple Exponential Smoothing (SES)
  *
  *  @see https://otexts.com/fpp2/ses.html
  */
@@ -15,7 +15,7 @@ package modeling
 package forecasting
 
 import scalation.mathstat._
-import scalation.optimization.L_BFGS_B
+import scalation.optimization.old_LBFGS.L_BFGS_B
 import scalation.random._
 
 import Fit._
@@ -48,7 +48,7 @@ class SimpleExpSmoothing (y: VectorD, tt: VectorD = null, hparam: HyperParameter
 
     private var α     = hparam ("α").toDouble                          // default value for the smoothing parameter
     private var s     = VectorD.nullv                                  // vector of smoothed/leveled values (state)
-    private var sf    = VectorD.nullv                                  // to hold smooth values for a forecast horizon
+    private val sf    = new VectorD (y.dim)                            // to hold smooth values for a forecast horizon
     private var opt   = true                                           // whehther to optimize the smoothing parameter
 
     modelName = "SimpleExpSmoothing"
@@ -312,7 +312,7 @@ end simpleExpSmoothingTest
     for h <- 1 to hh do
         banner (s"Forecasts for horizon $h")
         val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
-        val yy = y(h until m)                                          // actual response aligned with yfh
+//      val yy = y(h until m)                                          // actual response aligned with yfh
         println (s"Evaluate QoF for horizon $h:")
         println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
         println (s"Fit.mae (y, yfh, h)  = ${Fit.mae (y, yfh, h)}")     // evaluate h-steps ahead forecasts with MAE

@@ -5,7 +5,7 @@
  *  @date    Thu May 11 15:38:07 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gated Recurrent Unit (GRU) for Multivariate Time Series
+ *  @note    Model: Gated Recurrent Unit (GRU) for Multivariate Time Series
  *
  *  @see https://www.frontiersin.org/articles/10.3389/fncom.2021.678158/full
  * 
@@ -56,7 +56,7 @@ package forecasting
 
 import scala.math.log
 
-import scalation.mathstat.{MatrixD, VectorD}
+import scalation.mathstat.{MatrixD, Plot, VectorD}
 import scalation.random.{NormalMat, NormalVec_c}
 
 import ActivationFun.{sigmoid_, softmax_, tanh_}
@@ -98,11 +98,11 @@ end Gate
  *  @param fname   the feature/variable names
  *  @param n_mem   the size for hidden state (h) (dimensionality of memory)
  */
-class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4):
+class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 8):   // 4
 
     private val CLASSIF    = false                                     // whether to apply classification (e.g., guess next word) or forecast a value 
-    private val max_epochs = 20                                        // maximum number of iterations
-    private val eta        = 0.02                                      // the learning rate (0.25 for gRUTest)
+    private val max_epochs = 31                                        // maximum number of iterations
+    private val eta        = 0.001                                     // the learning rate (use 0.25 for gRUTest)
 
     private val n_seq = x.dim                                          // e.g., 20, number of words in a sentence (including start and end symbol)
     private val n_var = x.dim2                                         // e.g., 64, number of variables or distinct words (vocabulary size)
@@ -120,33 +120,35 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4)
 
     private var Uz   = rmg1.gen                                        // parameters for update gate z
     private var Wz   = rmg2.gen
-    private var b_z  = rvg1.gen
+    private val b_z  = rvg1.gen
 
     private var Ur   = rmg1.gen                                        // parameters for reset gate r
     private var Wr   = rmg2.gen
-    private var b_r  = rvg1.gen
+    private val b_r  = rvg1.gen
 
     private var Uc   = rmg1.gen                                        // parameters for candidate state mixin c
     private var Wc   = rmg2.gen
-    private var b_c  = rvg1.gen
+    private val b_c  = rvg1.gen
 
     // decoder for generating output
     private var V    = rmg3.gen                                        // decoder weight matrix
-    private var b_V  = rvg3.gen                                        // decoder bias vector
+    private val b_V  = rvg3.gen                                        // decoder bias vector
 
     private val z = Gate (n_seq, n_mem, n_var)                         // update gate z
     private val r = Gate (n_seq, n_mem, n_var)                         // reset gate r
     private val c = Gate (n_seq, n_mem, n_var)                         // candidate state mixin c
 
-    private var h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
+    private val h_m1 = rvg1.gen                                        // hidden state @ t = -1 (m1 means minus 1)
     private val h    = new MatrixD (n_seq, n_mem)                      // hidden state h
     private val yp   = new MatrixD (n_seq, n_var)                      // predicted output
     private val L    = new VectorD (n_seq)                             // store loss function values
 
     // the partial derivative of weights and biases (outside gates)
-    private var dh_m1 = new VectorD (h_m1.dim)
+    private val dh_m1 = new VectorD (h_m1.dim)
     private var db_V: VectorD = null
     private var dV    = new MatrixD (V.dim, V.dim2)
+
+    if fname != null then println (s"GRU: fname = $fname")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the GRU using simple gradient descent.
@@ -156,13 +158,20 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4)
             forward ()            // forward propagate: get intermediate and output results
 
             println (s"train: for epoch $it: loss function L = $L")
-            println (s"train: for epoch $it: total loss function L.sum = ${L.sum}")
+            banner (s"train: for epoch $it: total loss function L.sum = ${L.sum}")
 
             backward ()           // back propagate: calculate gradients (partial derivatives)
 
             update_params ()      // update parameters (weights and biases)
         end for
     end train
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Test the RNN predictions.
+     */
+    def test (): Unit =
+        new Plot (null, y(?, 0), yp(?, 0), "Plot of y vs yp for RNN", lines = true)
+    end test
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forward propagate calculates yp, loss and intermediate variables for each step.
@@ -173,7 +182,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4)
             z(t) = sigmoid_ (Uz * x(t) + Wz * h_pre + b_z)             // update gate
             r(t) = sigmoid_ (Ur * x(t) + Wr * h_pre + b_r)             // reset gate
             c(t) = tanh_ (Uc * x(t) + Wc * (h_pre * r(t)) + b_c)       // candidate state
-            h(t) = z(t) * h_pre + (_1 - z(t)) * c(t)                   // hidden state
+            h(t) = (_1 - z(t)) * h_pre + z(t) * c(t)                   // hidden state
             if CLASSIF then
                 yp(t) = softmax_ (V * h(t) + b_V)                      // activation: softmax for classification
                 L(t)  = (-y(t) * log_ (yp(t))).sum                     // cross-entropy loss function
@@ -216,7 +225,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4)
             r  += (dIn, x(t), h(t-1))                                  // update partials for r gate
             dh += Wr.Ƭ * dIn + dh_bk * z(t)
 
-            dIn = dh_bk * (h(t-1) - c(t)) * sigmoidD (z(t))            // input to sigmoid update gate z
+            dIn = dh_bk * (c(t) - h(t-1)) * sigmoidD (z(t))            // input to sigmoid update gate z
             z  += (dIn, x(t), h(t-1))                                  // update partials for z gate
             dh += Wz.Ƭ * dIn
         end for
@@ -234,7 +243,7 @@ class GRU (x: MatrixD, y: MatrixD, fname: Array [String] = null, n_mem: Int = 4)
         r  += (dIn, x(0), h_m1)                                        // update partials for r gate @ t = 0
         dh_m1 += Wr.Ƭ * dIn + dh * z(0)
 
-        dIn = dh * (h_m1 - c(0)) * sigmoidD (z(0))
+        dIn = dh * (c(0) - h_m1) * sigmoidD (z(0))
         z  += (dIn, x(0), h_m1)                                        // update partials for z gate @ t = 0
         dh_m1 += Wz.Ƭ * dIn
     end backward
@@ -348,7 +357,7 @@ end genSequenceData
     banner ("Create a Gated Recurrent Unit (GRU)")
     val mod = new GRU (x_t, y_t)
     mod.train ()
-//  mod.test ()
+    mod.test ()
 
 end gRUTest
 
@@ -375,19 +384,19 @@ end gRUTest2
 @main def gRUTest3 (): Unit =
 
     import Example_LakeLevels.y
-    val lag = 2                                                       // number of lags to include
-    val hh  = 2                                                       // forecasting horizon - FIX - currently lags == hh
+    val lags = 2                                                      // number of lags to include
+    val hh   = 2                                                      // forecasting horizon - FIX - currently lags == hh
 
     val y_s = scaleV (extreme (y), (-2.0, 2.0))(y)                    // rescale y to active domain of sigmoid, tanh
 
-    val (x, yy) = buildMatrix4TS (y_s, lag, hh)                       // column for each lag
+    val (x, yy) = buildMatrix4TS (y_s, lags, hh)                      // column for each lag
 
     println (s"x.dims = ${x.dims}, yy.dims = ${yy.dims}")
 
     banner ("Create a Gated Recurrent Unit (GRU)")
     val mod = new GRU (x, yy)                                         // call constructor
     mod.train ()
-//  mod.test ()
+    mod.test ()
 
 end gRUTest3
 

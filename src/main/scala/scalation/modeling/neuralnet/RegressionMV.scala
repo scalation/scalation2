@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Multiple Linear Regression with Multiple Response Variables
+ *  @note    Model: Multiple Linear Regression with Multiple Response Variables
  *                  Multi-variate Multiple Linear Regression
  */
 

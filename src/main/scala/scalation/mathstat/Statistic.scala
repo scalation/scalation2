@@ -5,7 +5,7 @@
  *  @date    Wed Aug 26 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Sample Statistics Collection, Confidence Intervals and Significance Tests
+ *  @note    Sample Statistics Collection, Confidence Intervals and Significance Tests
  */
 
 package scalation
@@ -132,8 +132,6 @@ class Statistic (val name: String = "stat", unbiased: Boolean = true):
     /** The maximum sample value
      */
     protected var maxX = -MAX_VALUE
-
-    private val flaw = flawf ("Statistic")                           // flaw function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set accumulators.

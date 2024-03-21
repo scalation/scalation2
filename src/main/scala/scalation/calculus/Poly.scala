@@ -5,9 +5,11 @@
  *  @date    Sat Apr 29 13:22:47 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Univariate Polynomials
+ *  @note    Univariate Polynomials
+ *
  *  @see     introcs.cs.princeton.edu/java/92symbolic/Polynomial.java.html
  */
+
 package scalation
 package calculus
 
@@ -15,9 +17,7 @@ import scalation.mathstat._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Poly` class provides operations on univariate polynomials.
- *  <p>
  *      Poly (2, 3) => 3 x + 2
- *  <p>
  *  Note, reverse order of coefficients, i.e., coefficients for smallest terms first.
  *  @see `MPoly' for multivariate polynomials.
  *  @param c  the coefficients of the polynomial

@@ -5,7 +5,7 @@
  *  @date    Mon Jan 28 17:18:16 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Differential Calculus Operations and Functions
+ *  @note    Differential Calculus Operations and Functions
  *
  *  @see gwu.geverstine.com/pdenum.pdf
  */
@@ -288,7 +288,7 @@ end differentialTest
 
     def d (x: Double): Double = cos (x)      // its derivative
 
-    var x = Array (.0, .1, .2, .3, .4, .5, .6, .7, .8, .9)
+    val x = Array (.0, .1, .2, .3, .4, .5, .6, .7, .8, .9)
     for i <- x.indices do
         var hh = 1E-4
         println (" x \t\t h \t\t deriv \t\t 1-sided \t\t error \t\t 2-sided \t\t error")

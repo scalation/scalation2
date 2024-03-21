@@ -5,7 +5,7 @@
  *  @date    Wed Feb 20 17:39:57 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Weighted Least Squares (WLS) Regression
+ *  @note    Model: Weighted Least Squares (WLS) Regression
  */
 
 package scalation

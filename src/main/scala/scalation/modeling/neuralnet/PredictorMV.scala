@@ -5,7 +5,7 @@
  *  @date    Fri Jan 21 19:16:18 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Predictor for Matrix Input, Matrix Output
+ *  @note    Model Framework: Predictor for Matrix Input, Matrix Output
  */
 
 package scalation

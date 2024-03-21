@@ -5,7 +5,7 @@
  *  @date    Mon Sep 14 14:15:51 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Animation Engine for Animating Graphs
+ *  @note    Animation Engine for Animating Graphs
  */
 
 package scalation
@@ -30,20 +30,15 @@ import CommandType._
  *  @param aniRatio  the ratio of simulation speed vs. animation speed
  *  @param width     the width of the animation panel
  *  @param height    the height of the animation panel
- *  @param labels    the labels of the animation panel
  */
 class DgAnimator (_title: String, fgColor: Color = black, bgColor: Color = white,
-                  aniRatio: Double = 1.0,  width: Int = 800, height: Int = 800, labels: Boolean = true)
+                  aniRatio: Double = 1.0,  width: Int = 800, height: Int = 800)
       extends VizFrame (_title, null, width, height)
          with Runnable:
 
     /** The debug function
      */
-    private val debug = debugf ("DgAnimator", true)
-
-    /** The flaw function
-     */
-    private val flaw = flawf ("DgAnimator")
+    private val debug = debugf ("DgAnimator", false)
 
     /** Clock for animation engine
      */
@@ -111,7 +106,7 @@ class DgAnimator (_title: String, fgColor: Color = black, bgColor: Color = white
 
             //:: Display all nodes in graph and tokens bound to these nodes.
 
-            // println ("paintComponent: paint " + graph.nodes.length + " nodes")
+            debug ("paintComponent", s"paint ${graph.nodes.length} nodes")
             val nodes = graph.nodes.toList                                         // avoid ConcurrentModificationException
             for node <- nodes do
                 g2d.setPaint (node.color)
@@ -130,7 +125,7 @@ class DgAnimator (_title: String, fgColor: Color = black, bgColor: Color = white
 
             //:: Display all edges in graph and tokens bound to these edges.
 
-            // println ("paintComponent: paint " + graph.edges.length + " edges")
+            debug ("paintComponent", s"paint ${graph.edges.length} edges")
             val edges = graph.edges.toList
             for edge <- edges do
                 g2d.setPaint (edge.color)
@@ -147,7 +142,7 @@ class DgAnimator (_title: String, fgColor: Color = black, bgColor: Color = white
 
             //:: Display all free tokens in the graph.
 
-            // println ("paintComponent: paint " + graph.freeTokens.length + " free tokens")
+            debug ("paintComponent" , s"paint ${graph.freeTokens.length} free tokens")
             val free_tokens = graph.freeTokens.toList            // copy to avoid Exception
             for token <- free_tokens if token.shape.getWidth () > 0.0 do
                 g2d.setPaint (token.color)

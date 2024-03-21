@@ -5,7 +5,7 @@
  *  @date    Mon Sep 21 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Animation Commands
+ *  @note    Animation Commands
  */
 
 package scalation
@@ -84,9 +84,8 @@ case class AnimateCommand (action: CommandType, eid: Int, shape: Shape, label: S
     /** Convert the command to a string representation useful to printing/debugging.
      */
     override def toString =
-        val __ = " , "
-        s"AnimateCommand ( $action __ $eid __ $shape __ $label __ $primary __ $color __" +
-                         s"${show (pts)} __ $time __ $from_eid __ $to_eid )"
+        s"AnimateCommand ( $action , $eid , $shape , $label , $primary , $color , " +
+                         s"${show (pts)} , $time , $from_eid , $to_eid )"
     end toString
 
 end AnimateCommand

@@ -5,7 +5,7 @@
  *  @date    Mon Apr 22 14:53:24 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: K-Means Clustering (use Hartigan-Wong algorithm for point reassignment)
+ *  @note    Model: K-Means Clustering (use Hartigan-Wong algorithm for point reassignment)
  */
 
 package scalation
@@ -25,8 +25,6 @@ import scalation.mathstat._
  */
 class KMeansClustererHW (x: MatrixD, k: Int, flags: Array [Boolean] = Array (false, false))
       extends KMeansClusterer (x, k, flags):
-
-    private val debug = debugf ("KMeansClustererHW", true)                  // debug function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reassign each vector/point to the cluster with the closest centroid.

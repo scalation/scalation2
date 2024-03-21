@@ -5,7 +5,7 @@
  *  @date    Sun Feb 27 19:46:59 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   
+ *  @note    Monitor the Loss Function per Epoch (major iteration)   
  */
 
 package scalation

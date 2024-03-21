@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Wed Aug 24 19:53:22 EDT 2011
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Gradient Descent for Non-Linear Optimization
  */
 
 package scalation
@@ -32,8 +34,6 @@ class GradientDescent (f: FunctionV2S, exactLS: Boolean = true)
       extends Minimizer:
 
     private val debug  = debugf ("GradientDescent", true)     // debug function
-    private val flaw   = flawf ("GradientDescent")            // flaw function
-    private val WEIGHT = 1000.0                               // weight on penalty for constraint violation
 
     private var gr: FunctionV2V = null                        // gradient (vector of partial derivatives)
 
@@ -103,7 +103,7 @@ end GradientDescent
  */
 @main def gradientDescentTest (): Unit =
 
-    var x0 = VectorD (0.0, 0.0)                               // starting point
+    val x0 = VectorD (0.0, 0.0)                               // starting point
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1") 
     def f (x: VectorD): Double = (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1
@@ -184,3 +184,161 @@ end gradientDescentTest3
 
 end gradientDescentTest4
 
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientBoothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+ *  > runMain scalation.optimization. gradientGradientBoothFunction
+ */
+@main def  gradientGradientBoothFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2")
+    def f (x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientBoothFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientBealeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+ *  > runMain scalation.optimization. gradientGradientBealeFunction
+ */
+@main def  gradientGradientBealeFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
+    def f (x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientBealeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientBohachevsky1Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+ *  > runMain scalation.optimization. gradientGradientBohachevsky1Function
+ */
+@main def  gradientGradientBohachevsky1Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientBohachevsky1Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientBohachevsky2Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization. gradientGradientBohachevsky2Function
+ */
+@main def  gradientGradientBohachevsky2Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientBohachevsky2Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientBohachevsky3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization. gradientGradientBohachevsky3Function
+ */
+@main def  gradientGradientBohachevsky3Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientBohachevsky3Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientCamel3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+ *  > runMain scalation.optimization. gradientGradientCamel3Function
+ */
+@main def  gradientGradientCamel3Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2")
+    def f (x: VectorD): Double =  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientCamel3Function
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientCubeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+ *  > runMain scalation.optimization. gradientGradientCubeFunction
+ */
+@main def  gradientGradientCubeFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2")
+    def f (x: VectorD): Double =  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientCubeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The ` gradientGradientFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *  > runMain scalation.optimization. gradientGradientFreudensteinRothFunction
+ */
+@main def  gradientGradientFreudensteinRothFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2")
+    def f (x: VectorD): Double =  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+
+    val optimizer = new GradientDescent(f)
+    val opt = optimizer.solve(x0)
+    println(s"][ optimal solution f(x), x) = $opt")
+
+end  gradientGradientFreudensteinRothFunction

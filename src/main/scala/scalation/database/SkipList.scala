@@ -5,7 +5,7 @@
  *  @date    Thu Aug 17 19:08:17 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Skip List
+ *  @note    Skip List
  */
 
 package scalation
@@ -22,8 +22,6 @@ import scala.util.Random
  */
 class SkipList [K: ClassTag, V: ClassTag] (using ordering: Ordering [K]):
 
-    private val debug    = debugf ("SkipList", true)               // debug function
-    private val flaw     = flawf ("SkipList")                      // flaw function
     private val maxlevel = 10                                      // maximum number of levels for the skip  list
     private val random   = new Random ()
     private val head     = new SkipNodeType [K, V] (null.asInstanceOf [K], null.asInstanceOf [V], Array.fill (maxlevel)(null))
@@ -76,10 +74,11 @@ class SkipList [K: ClassTag, V: ClassTag] (using ordering: Ordering [K]):
     end insert
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Delete
+    /** Delete the the entry with the given key.
+     *  @param key  the key to delete
      */
-    def delete (key: K, value: V): Unit =
-        val update = new Array [SkipNodeType[K, V]] (maxlevel)
+    def delete (key: K): Unit =
+        val update = new Array [SkipNodeType [K, V]] (maxlevel)
         val toUpdate = new Array [Boolean] (maxlevel)
         var current = head
         for level <- maxlevel - 1 until 0 by -1 do
@@ -105,8 +104,8 @@ class SkipList [K: ClassTag, V: ClassTag] (using ordering: Ordering [K]):
     end randomLevel
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** The `Node` inner class ...
-     */
+    /*  The `Node` inner class ...
+     *
     private class Node [K, V] (var key: K, var value: V, var levels: Int):
 
         private val next = new Array [SkipNodeType [K, V]] (levels)
@@ -114,6 +113,7 @@ class SkipList [K: ClassTag, V: ClassTag] (using ordering: Ordering [K]):
         def setNext (level: Int, node: SkipNodeType [K, V]): Unit = next(level) = node
 
     end Node
+     */
 
 end SkipList
 
@@ -152,7 +152,7 @@ class SkipNodeType [K, V] (var key: K, var value: V, val next: Array [SkipNodeTy
 
     // Delete elements from the Skip List
 
-    skipList.delete (25, "Value 2")
+    skipList.delete (25)
 
     println (skipList.search (25))      // Output: None
 

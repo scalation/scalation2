@@ -5,7 +5,7 @@
  *  @date    Wed Aug 23 22:54:01 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Forecasters with one Endogenous and Multiple Exogenous Variables
+ *  @note    Model Framework: Forecasters with one Endogenous and Multiple Exogenous Variables
  *
  *  @see ruqinren.wordpress.com/2020/02/21/all-the-confusion-about-arima-arimax-transfer-function-dynamic-regression-models/
  *       robjhyndman.com/hyndsight/arimax/
@@ -31,14 +31,11 @@ import scalation.mathstat._
  *  Y_t+h = f(Y_t+1, y_t, ... y_t-p+2, x0_t, x0_t-1, ... x0_t-p+1, x1_t, ...)
  *
  *  @see Forecaster - when there are no exogenous variables
- *  @param x     the input/predictor matrix built out of lags of y
- *  @param yy    the output/response vector trimmed to match x.dim
  *  @param lags  the lags (p) used for endogenous variable (e.g., 10 => use lags 1 to 10)
  */
-trait ForecasterX (x: MatrixD, yy: VectorD, lags: Int):
+trait ForecasterX (lags: Int):
 
     private   val debug = debugf ("ForecasterX", true)                   // debug function
-    private   val flaw  = flawf ("ForecasterX")                          // flaw function
     protected var yf: MatrixD = null                                     // forecasts for all time points t & horizons to h
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

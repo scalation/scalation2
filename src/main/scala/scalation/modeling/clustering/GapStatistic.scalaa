@@ -5,7 +5,7 @@
  *  @date    Thu Mar  9 15:08:30 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gap Statistic (for determining the optimal number of clusters)
+ *  @note    Gap Statistic (for determining the optimal number of clusters)
  */
 
 package scalation

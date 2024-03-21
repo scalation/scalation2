@@ -5,7 +5,7 @@
  *  @date    Sun Sep  4 21:57:30 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Check LP Solutions
+ *  @note   Check Linaer Programming (LP) Solutions
  *
  *  @see Linear Programming and Network Flows, Bazaraa and Jarvis
  *  @see www.wiley.com/WileyCDA/WileyTitle/productCd-0470462728,subjectCd-BA04.html

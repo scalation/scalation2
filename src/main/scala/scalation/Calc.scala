@@ -5,7 +5,7 @@
  *  @date    Sat Jan  1 13:54:44 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   A Simple Function Calculator (Double - double precision floating point numbers)
+ *  @note    A Simple Function Calculator (Double - double precision floating point numbers)
  */
 
 package scalation

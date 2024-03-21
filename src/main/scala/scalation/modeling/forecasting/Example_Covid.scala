@@ -5,7 +5,7 @@
  *  @date    Sat Jul 29 11:30:42 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example: Covid-19 Weekly Data
+ *  @note    Example Time Series Data: Covid-19 Weekly Data
  */
 
 package scalation
@@ -67,6 +67,20 @@ object Example_Covid:
         data(?, col(y_str))
     end loadData_y
 
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Load the Covid-19 weekly data into a matrix for the variables y.
+     *  @param y_str  the column names for the variables y (e.g., used in a VAR model)
+     *  @param trim   the number of initial rows to trim away (e.g., they are all 0)
+     */
+    def loadData_yy (y_strs: Array [String], trim: Int = 0): MatrixD =
+        val col = HashMap [String, Int] ()
+        for i <- header.indices do col += header(i) -> i
+
+        val data = MatrixD.load ("covid_19_weekly.csv", 1+trim, 1)      // skip first row (header) + trim and first column
+        val y_cols = for s <- y_strs yield col(s)
+        data(?, y_cols)
+    end loadData_yy
+
 end Example_Covid
 
 
@@ -101,7 +115,7 @@ end example_CovidTest
     for j <- x.indices2 do
         banner (s"EDA for new_deaths vs. ${header(j)}")
         var xj  = x(?, j)                                               // get column j
-        xj = scaleV (extreme (xj), (0.0, 2.0))(xj)                      // rescale vector xj to [0, 1]
+        xj = scaleV (extreme (xj), (0.0, 2.0))(xj)                      // rescale vector xj to [0, 2]
         val xxj = MatrixD.fromVector (xj)
 //      val mod = SymbolicRegression.quadratic (xxj, y)
 //      val mod = SymbolicRegression.rescale (xxj, y, null, Set (1.0, 2.0, 3.0), cross = false)

@@ -5,7 +5,7 @@
  *  @date    Sun Dec 28 12:00:07 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Activation Functions for Neural Networks
+ *  @note    Model Support: Activation Functions for Neural Networks
  */
 
 package scalation
@@ -102,7 +102,7 @@ object ActivationFun:
     /** Set the lreLU a (alpha) parameter for the Leaky Rectified Linear Unit functions.
      *  @param a  the rleLU alpha parameter (0, 1] indicating how leaky the function is
      */
-    def setA (a_ : Double): Unit = min (a_, 1.0)
+    def setA (a_ : Double): Unit = a = min (a_, 1.0)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the value of the Leaky Rectified Linear Unit lreLU function at scalar t.
@@ -235,13 +235,12 @@ object ActivationFun:
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for geLU function at vector yp where
      *  yp is pre-computed by yp = geLU_ (t).
-     *  @param yp  the derivative function vector argument
      *  @param t   the domain value for the function
      */
     def geLUd (t: Double): Double =
         val t3 = t~^3
         0.5 * tanh (0.0356774 * t3 + 0.797885 * t) + 0.5 +
-        (0.0535161 * t3 + 0.398942 * t) / cosh(0.0356774 * t3 + 0.797885 * t)~^2
+        (0.0535161 * t3 + 0.398942 * t) / cosh (0.0356774 * t3 + 0.797885 * t)~^2
     end geLUd
 
     val geLUD : FunctionV2V = vectorize (geLUd _)
@@ -468,7 +467,7 @@ end activationFunTest2
     val tanhf     = tanh_ (t)
     val sigmoidf  = sigmoid_ (t)
     val gaussianf = gaussian_ (t)
-    val geLUf     = geLU_ (t)
+//  val geLUf     = geLU_ (t)                                    // not need for derivative
     val softmaxf  = softmax_ (t)
 
     // Test the vector version of activation function derivatives
@@ -480,7 +479,7 @@ end activationFunTest2
     val sigmoidDf  = sigmoidD (sigmoidf)
     val gaussianDf = gaussianD (gaussianf, t)
     val geLUDf     = geLUD (t)
-//  val softmaxDf  = softmaxD (softmaxf)
+    val softmaxDf  = softmaxD (softmaxf)
 
     new Plot (t, idDf,       null, "t vs. idD") 
     new Plot (t, reLUDf,     null, "t vs. reLUD") 
@@ -490,7 +489,7 @@ end activationFunTest2
     new Plot (t, sigmoidDf,  null, "t vs. sigmoidD")
     new Plot (t, gaussianDf, null, "t vs. gaussianD")
     new Plot (t, geLUDf,     null, "t vs. geLUD")
-//  new Plot (t, softmaxDf,  null, "t vs. softmaxD")
+    new Plot (t, softmaxDf,  null, "t vs. softmaxD")
 
 end activationFunTest3
 

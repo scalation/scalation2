@@ -5,7 +5,7 @@
  *  @date    Sat Dec  8 14:32:12 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Forecasters with Vector Input
+ *  @note    Model Framework: Forecasters with Vector Input
  *
  *  @see ruqinren.wordpress.com/2020/02/21/all-the-confusion-about-arima-arimax-transfer-function-dynamic-regression-models/
  *       robjhyndman.com/hyndsight/arimax/
@@ -114,6 +114,8 @@ trait Forecaster (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
     protected val e       = new VectorD (y.dim)                          // residual/error vector [e_0, e_1, ... e_m-1]
     protected var yf: MatrixD = null                                     // forecasts for all time points t & horizons to h
 
+    if tt != null then println (s"Forecaster: time parameter vector tt has size $tt.dim")
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the maximum lag used by the model (its capacity to look into the past).
      *  Models that use more than one past value to make predictions/forecasts must
@@ -123,7 +125,7 @@ trait Forecaster (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the used response vector y.  Mainly for derived classes where y is
-     *  transformed, e.g., `Regression4TS`.
+     *  transformed, e.g., `ARX`.
      */
     def getY: VectorD = y
 

@@ -5,7 +5,7 @@
  *  @date    Wed Aug 25 15:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Non-Homogeneous Process Process (NHPP)
+ *  @note    Non-Homogeneous Process Process (NHPP)
  */
 
 package scalation

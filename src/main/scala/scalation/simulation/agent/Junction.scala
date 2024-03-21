@@ -5,7 +5,7 @@
  *  @date    Mon Oct 11 19:46:20 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Junction/Connector between Transports/Routes
+ *  @note    Junction/Connector between Transports/Routes
  */
 
 package scalation
@@ -36,8 +36,9 @@ class Junction (name: String, director: Model, jTimeRV: Variate,
          with Statistical (name):
 
     Junction.add (this)
+    director.statList += this                                        // add to director's variable to keep track of
 
-    private val debug = debugf ("Junction", true)                    // debug function 
+    private val debug = debugf ("Junction", false)                   // debug function 
 
     debug ("init", s"name = $me, director = ${director.me}, jTimeRV = $jTimeRV, " +
                    s"prop = $prop, pos = $pos")
@@ -52,8 +53,8 @@ class Junction (name: String, director: Model, jTimeRV: Variate,
     def jump (agent: SimAgent, duration: Double = jTimeRV.gen): Unit =
         collectStats (duration, onJunction, director.clock)
         onJunction += 1
-        agent.pos(0) = pos(0) + Junction.wh._1
-        agent.pos(1) = pos(1) + Junction.wh._2 / 2
+        agent.pos(0) = pos(0) + Junction.wh._1 / 4                   // was / 1
+        agent.pos(1) = pos(1) + Junction.wh._2 / 4                   // was / 2
         director.log.trace (this, s"jumps for $duration", agent, director.clock)
         director.animate (agent, MoveToken)
 

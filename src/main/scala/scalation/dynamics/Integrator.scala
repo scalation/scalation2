@@ -5,7 +5,7 @@
  *  @date    Sat Jan 30 13:19:22 EST 2010
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for ODE Integrators
+ *  @note    Base Trait for ODE Integrators
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat May 28 23:47:06 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: (Linear) Trend Model
+ *  @note    Model: (Linear) Trend Model
  */
 
 package scalation
@@ -35,7 +35,6 @@ class TrendModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
     private val debug = debugf ("TrendModel", true)                    // debug function
     private val flaw  = flawf ("TrendModel")                           // flaw function
                 m     = y.dim                                          // number of time points (@see `FitM`)
-    private var mu    = NO_DOUBLE                                      // the relevant sample mean of y
     private var b     = VectorD.nullv                                  // parameter values from SimpleRegression
 
     modelName = s"TrendModel"
@@ -187,8 +186,6 @@ import Example_LakeLevels.y
  *  > runMain scalation.modeling.forecasting.trendModelTest2
  */
 @main def trendModelTest2 (): Unit =
-
-    val m = y.dim                                                      // number of data points
 
     banner (s"Test Predictions: TrendModel on LakeLevels Dataset")
     val mod = new TrendModel (y)                                       // create model for time series data

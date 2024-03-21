@@ -5,7 +5,7 @@
  *  @date    Mon Apr 24 21:28:06 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Alternating Direction Method of Multipliers (ADMM) for Lasso Regression
+ *  @note    Alternating Direction Method of Multipliers (ADMM) for Lasso Regression
  *
  *  @see www.simonlucey.com/lasso-using-admm/
  *  @see statweb.stanford.edu/~candes/math301/Lectures/Consensus.pdf

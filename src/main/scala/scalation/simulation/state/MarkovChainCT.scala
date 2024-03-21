@@ -5,7 +5,7 @@
  *  @date    Sat Dec 12 13:11:30 EST 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Continuous-Time Markov Chains
+ *  @note    Continuous-Time Markov Chains
  */
 
 package scalation
@@ -34,15 +34,17 @@ import scalation.scala2d.Colors._
  */
 class MarkovCT (tr: MatrixD):
 
-    private val debug     = debugf ("MarkovCT", true)         // debug function
-    private val flaw      = flawf ("MarkovCT")                // flaw function
-    private val EPSILON   = 1E-7                              // number close to zero
-    private val radius    = 200                               // radius of circle for nodes
-    private val xCenter   = radius + 100                      // x-coordinate of center of circle
-    private val yCenter   = radius + 100                      // y-coordinate of center of circle
-    private val size      = 30                                // size/diameter of a node
-    private var animating = true                              // animation flag (false => turn off)
-    private val bend      = .25                               // amount of bend in `QArrow`
+    private val debug     = debugf ("MarkovCT", true)          // debug function
+    private val flaw      = flawf ("MarkovCT")                 // flaw function
+
+    private val EPSILON   = 1E-7                               // number close to zero
+    private val radius    = 200                                // radius of circle for nodes
+    private val xCenter   = radius + 100                       // x-coordinate of center of circle
+    private val yCenter   = radius + 100                       // y-coordinate of center of circle
+    private val size      = 30                                 // size/diameter of a node
+    private val bend      = .25                                // amount of bend in `QArrow`
+
+    private val animating = true                               // animation flag (false => turn off)
 
     /** The jump matrix derived from the transition rate matrix 'tr'
      */
@@ -50,11 +52,11 @@ class MarkovCT (tr: MatrixD):
    
     if tr.dim != tr.dim2 then flaw ("init", "transition rate matrices must be square")
     for i <- jump.indices do
-        val s = tr(i).sum - tr(i, i)                          // sum the ith row of tr skipping i
+        val s = tr(i).sum - tr(i, i)                           // sum the ith row of tr skipping i
         for j <- jump.indices2 do
-            if i != j then                                    // off-diagonal
+            if i != j then                                     // off-diagonal
                 jump(i, j) = if s =~ 0.0 then 0.0 else tr(i, j) / s
-            else                                              // on-diagonal
+            else                                               // on-diagonal
                 jump(i, i) = if s =~ 0.0 then 1.0 else 0.0
             end if
         end for
@@ -68,13 +70,12 @@ class MarkovCT (tr: MatrixD):
      */
     private val aniQ = dgAni.getCommandQueue
 
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the next probabilistic state at t time units in the future.
      *  @param p  the current state probability vector
      *  @param t  compute for time t
      */
-    def next (p: VectorD, t: Double = 1.0): VectorD = ???  // FIX, not implemented yet
+    def next (p: VectorD, t: Double = 1.0): VectorD = ???      // FIX, not implemented yet
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the limiting probabilistic state as t -> infinity, by finding the
@@ -94,11 +95,11 @@ class MarkovCT (tr: MatrixD):
      *  @param endTime  the end time for the simulation
      */
     def simulate (i0: Int, endTime: Double): Unit =
-        var clock      = 0.0              // current continuous time
-        var i          = i0               // current state = start state
-        var absorbed   = false            // whether it has entered an absorbing state
-        val tk_id      = tr.dim           // the identifier for the token
-        val ms_per_sec = 1000.0           // 1000 milliseconds per second (animate using seconds)
+        var clock      = 0.0                                   // current continuous time
+        var i          = i0                                    // current state = start state
+        var absorbed   = false                                 // whether it has entered an absorbing state
+        val tk_id      = tr.dim                                // the identifier for the token
+        val ms_per_sec = 1000.0                                // 1000 milliseconds per second (animate using seconds)
 
         animate ()
         aniQ.add (AnimateCommand (CreateToken, tk_id, Ellipse (), "tk" + tk_id, false, black, null, 0.0, i0))
@@ -107,20 +108,20 @@ class MarkovCT (tr: MatrixD):
         println ("simulate: at time " + clock + " the state is " + i)
 
         while clock < endTime && ! absorbed do
-            val tr_i = - tr(i, i)                  // holding rate for state i
+            val tr_i = - tr(i, i)                              // holding rate for state i
             if tr_i =~ 0.0 then
                 absorbed = true
-                println ("simulate: entered absorbing state " + i)
+                debug ("simulate", s"entered absorbing state $i")
             else
                 val expRV = Exponential (tr_i)
-                clock    += expRV.gen              // add holding time for state i
+                clock    += expRV.gen                          // add holding time for state i
                 val rowi  = jump(i)
-                println ("rowi = " + rowi)
+                debug ("simulate", s"rowi = $rowi")
                 val disRV = Discrete (rowi)
-                i         = disRV.igen             // advance to the next state
+                i         = disRV.igen                         // advance to the next state
             end if
             aniQ.add (AnimateCommand (MoveToken2Node, tk_id, null, null, false, null, null, ms_per_sec * clock, i))
-            println (s"simulate: at time $clock the state is $i")
+            debug ("simulate", s"at time $clock the state is $i")
         end while
 
         dgAni.animate (0, ms_per_sec * endTime)
@@ -134,7 +135,7 @@ class MarkovCT (tr: MatrixD):
      */
     def animate (): Unit =
         if animating then
-            val n = tr.dim                        // number of nodes to create
+            val n = tr.dim                                     // number of nodes to create
 
             //:: Display the nodes for the continuous-time Markov Chain
 

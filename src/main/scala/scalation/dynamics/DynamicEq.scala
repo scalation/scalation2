@@ -5,7 +5,7 @@
  *  @date    Wed Dec 23 14:12:56 EST 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Simulate a System of Dynamic Equations over Time
+ *  @note    Simulate a System of Dynamic Equations over Time
  */
 
 package scalation

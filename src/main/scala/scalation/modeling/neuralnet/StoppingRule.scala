@@ -5,7 +5,7 @@
  *  @date    Sun Jan 27 15:34:08 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Optimization: Stopping Rule for Iterative Optimizers
+ *  @note    Optimization: Stopping Rule for Iterative Optimizers
  */
 
 package scalation

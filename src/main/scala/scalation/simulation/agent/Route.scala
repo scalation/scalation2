@@ -5,7 +5,7 @@
  *  @date    Sat Oct 23 23:27:09 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Route for Modeling Multi-Lane Pathway
+ *  @note    Route for Modeling Multi-Lane Pathway
  */
 
 package scalation

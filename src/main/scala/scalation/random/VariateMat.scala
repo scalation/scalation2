@@ -5,7 +5,7 @@
  *  @date    Sat Mar  9 19:19:53 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate Matrix (RVM) Generators
+ *  @note    Random Variate Matrix (RVM) Generators
  */
 
 package scalation
@@ -84,26 +84,28 @@ end VariateMat
  *  to the Normal distribution with scalar mean 'mu' and variance 'sig2'.
  *  This continuous RVM models multiple instances of normally distributed multidimensional
  *  data and treats the variables as identical and independent.
+ *  @param dim     the number of rows in the matrix
+ *  @param dim2    the number of columns in the matrix
  *  @param mu      the mean
  *  @param sig2    the variance (stdev^2)
  *  @param stream  the random number stream
  */
-case class NormalMat (m: Int, n: Int, mu: Double, sig2: Double, stream: Int = 0)
+case class NormalMat (dim: Int, dim2: Int, mu: Double, sig2: Double, stream: Int = 0)
      extends VariateMat (stream):
 
     private val normal = Normal (mu, sig2, stream)           // generator for standard normals
 
-    def mean: MatrixD = MatrixD.fill (m, n, mu)              // m rows and n columns
+    def mean: MatrixD = MatrixD.fill (dim, dim2, mu)         // m = dim rows and n = dim2 columns
 
     def pf (z: MatrixD): Double =
         var d = 1.0                                          // density f(z)
-        for i <- 0 until m; j <- 0 until n do d *= normal.pf (z(i, j))
+        for i <- 0 until dim; j <- 0 until dim2 do d *= normal.pf (z(i, j))
         d
     end pf
 
     def gen: MatrixD =
-        val y = new MatrixD (m, n)                            // m rows and n columns
-        for i <- 0 until m; j <- 0 until n do y(i, j) = normal.gen
+        val y = new MatrixD (dim, dim2)                       // m = dim rows and n = dim2 columns
+        for i <- 0 until dim; j <- 0 until dim2 do y(i, j) = normal.gen
         y
     end gen
 
@@ -150,7 +152,7 @@ end RandomMatD
 
      var rvm: VariateMat = null                                // variate matrix
 
-     banner ("Test: NormalMat_ random matrix generation")
+     banner ("Test: NormalMat random matrix generation")
      rvm = NormalMat (4, 5, 0.0, 0.01)                         // random normal matrix generator
      println ("mean = " + rvm.mean)                            // with mean 0 and variance 0.01
      for k <- 0 until 10 do println (rvm.gen)

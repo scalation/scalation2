@@ -5,7 +5,7 @@
  *  @date    Thu Dec 23 13:54:30 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Symbolic Regression, including Quadratic and Cubic Regression
+ *  @note    Model: Symbolic Regression, including Quadratic and Cubic Regression
  */
 
 package scalation
@@ -93,7 +93,7 @@ object SymbolicRegression:
 
         if terms != null then
             debug ("buildMatrix", s"add custom terms = ${stringOf (terms)}")
-            var z = _1.copy
+            val z = _1.copy
             var s = ""
             for t <- terms do
                 for (j, p) <- t do                                        // x_j to the p-th power

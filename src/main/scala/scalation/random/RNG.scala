@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Sat Mar 22 14:39:30 EDT 2014
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Base Trait for Random Number Generators
  */
 
 package scalation
@@ -12,13 +14,13 @@ package random
 import scala.math.floor
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RNG` abstract class is the base class for all ScalaTion Random Number
- *  Generators.  The subclasses must implement a 'gen' method that generates
- *  random real numbers in the range (0, 1).  They must also implement an 'igen'
- *  methods to return stream values.
+/** The `RNG` trait is the base class for all ScalaTion Random Number Generators.
+ *  The extending classes must implement a 'gen' method that generates random
+ *  real numbers in the range (0, 1).  They must also implement an 'igen' methods
+ *  to return stream values.
  *  @param stream  the random number stream index (0 to N_STREAMS - 1 = 999)
  */
-abstract class RNG (stream: Int):
+trait RNG (stream: Int):
 
     private val flaw = flawf ("RNG")                          // flaw function
 
@@ -110,6 +112,7 @@ object RNGTester:
         end for
 
         val hg = new Histogram (means, 50, s"Histogram for means as sums of $name")
+        println (s"meansTest: hg = $hg")
     end meansTest
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -133,6 +136,7 @@ object RNGTester:
         end for
 
         val hg = new Histogram (sum, nints, s"Histogram for distribution of $name", counts = sum)
+        println (s"meansTest: hg = $hg")
 
         var chi2 = 0.0                                         // sum up for Chi-square statistic
         for i <- sum.indices do

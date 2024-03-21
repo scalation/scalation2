@@ -5,6 +5,8 @@
  *  @date    Sun Oct  2 22:43:44 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Tests Several Non-Linear Optimization Algorithms
+ *
  *  @see     http://www.ai7.uni-bayreuth.de/test_problem_coll.pdf
  */
 
@@ -14,6 +16,8 @@ package optimization
 import scala.collection.mutable.LinkedHashMap
 
 import scalation.mathstat._
+import scalation.optimization.quasi_newton.BFGS
+import scalation.optimization.old_LBFGS.L_BFGS_B
 
 import Minimizer._
 
@@ -41,13 +45,13 @@ import Minimizer._
     def test1 (): Unit =
         banner ("Minimize f(x)  = (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
         def f(x: VectorD): Double = (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1.0
-        def gr (x: VectorD): VectorD = VectorD (2*x(0) - 6, 2*x(1) - 8)
+//      def gr (x: VectorD): VectorD = VectorD (2*x(0) - 6, 2*x(1) - 8)
 
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-        res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
+//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
@@ -57,13 +61,13 @@ import Minimizer._
     def test2 (): Unit =
         banner ("Minimize f(x)  = (x_0 - 30)^2 + (x_1 - 40)^2 + 1")
         def f(x: VectorD): Double = (x(0) - 30)~^2 + (x(1) - 40)~^2 + 1.0
-        def gr (x: VectorD): VectorD = VectorD (2*x(0) - 60, 2*x(1) - 80)
+//      def gr (x: VectorD): VectorD = VectorD (2*x(0) - 60, 2*x(1) - 80)
 
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-        res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
+//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
@@ -73,13 +77,13 @@ import Minimizer._
     def test3 (): Unit =
         banner ("Minimize f(x)  = x_0^4 + (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
         def f(x: VectorD): Double = x(0)~^4 + (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1.0
-        def gr (x: VectorD): VectorD = VectorD (4*x(0)~^3 + 2*x(0) - 6, 2*x(1) - 8)
+//      def gr (x: VectorD): VectorD = VectorD (4*x(0)~^3 + 2*x(0) - 6, 2*x(1) - 8)
 
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-        res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
+//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
@@ -87,6 +91,7 @@ import Minimizer._
     end test3
 
     // @see http://math.fullerton.edu/mathews/n2003/gradientsearch/GradientSearchMod/Links/GradientSearchMod_lnk_5.html
+/*
     def test4 (): Unit =
         banner ("Minimize f(x)  = x_0/4 + 5x_0^2 + x_0^4 - 9x_0^2 x_1 + 3x_1^2 + 2x_1^4")
         def f(x: VectorD): Double = x(0)/4 + 5*x(0)~^2 + x(0)~^4 - 9*x(0)~^2*x(1) + 3*x(1)~^2 + 2*x(1)~^4
@@ -96,12 +101,13 @@ import Minimizer._
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
         res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-        res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
+//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
         res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
     end test4
+*/
 
     test1 ()
     test2 ()

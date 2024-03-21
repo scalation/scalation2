@@ -5,7 +5,7 @@
  *  @date    Fri Jan  5 14:03:36 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Null Model (predict the mean)
+ *  @note    Model: Null Model (predict the mean)
  */
 
 package scalation

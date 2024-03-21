@@ -5,7 +5,7 @@
  *  @date    Mon Jun 19 01:30:58 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Modified Wolfe Line Search Optimizer
+ *  @note    Modified Wolfe Line Search Optimizer
  *
  *  @see reference.wolfram.com/language/tutorial/UnconstrainedOptimizationStepControl.html
  *  @see pages.cs.wisc.edu/~ferris/cs730/chap3.pdf
@@ -42,7 +42,6 @@ import scalation.mathstat._
 class WolfeLS2 (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Double = 0.9):
 
     private val debug   = debugf ("WolfeLS2", true)                 // debug function
-    private val POS_INF = Double.PositiveInfinity                   // Positive Infinity
     private val MAX_IT  = 30                                        // maximum number of iterations
 
     if g == null then g = (x: VectorD) => ∇ (f)(x)                  // no function for gradient => use numerical
@@ -120,7 +119,7 @@ class WolfeLS2 (f: FunctionV2S, var g: FunctionV2V, c1: Double = 0.0001, c2: Dou
 
         var xx = x + p * a
         println (s"final a = $a satisfies the Wolfe conditions: xx = $xx, fxx = ${f(xx)}")
-//      a = bisection (0, a)                                        // comment out to skip bisection search
+        a = bisection (0, a)                                        // comment out to skip bisection search
         xx = x + p * a
         println (s"final a = $a after bisection search: xx = $xx, fxx = ${f(xx)}")
         (a, xx)                                                     // return displacement and new point

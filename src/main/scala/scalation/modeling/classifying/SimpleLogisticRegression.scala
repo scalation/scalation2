@@ -5,7 +5,7 @@
  *  @date    Sun Dec 28 21:52:38 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Logistic Regression
+ *  @note    Model: Simple Logistic Regression
  */
 
 package scalation
@@ -15,7 +15,7 @@ package classifying
 import scala.math.{exp, log}
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 import ActivationFun.{sigmoid, sigmoid_}
 
@@ -144,7 +144,7 @@ class SimpleLogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] 
     def test (x_ : MatrixD = x, y_ : VectorI = y): (VectorI, VectorD) =
         val yp  = predictI (x_)                                          // predicted classes
         val qof = diagnose (y_.toDouble, yp.toDouble)                    // diagnose from actual and predicted
-//      debug ("test", s" yp = $yp \n qof = $qof")
+        debug ("test", s" yp = $yp \n qof = $qof")
         (yp, qof)
     end test
 
@@ -361,7 +361,6 @@ end simpleLogisticRegressionTest3
     val y  = VectorI (   0,    0,    0,    0,    1,    1,    1)
     val xx = MatrixD (VectorD.one (x.dim), x).transpose
 
-    val k  = 2                                                    // number of classes
     val fname = Array ("one", "curvature")                        // feature names
     val cname = Array ("pass", "fail")                            // class names
 
@@ -393,7 +392,6 @@ end simpleLogisticRegressionTest4
     val y  = VectorI (0, 0, 1, 0, 1, 1)
     val xx = MatrixD (VectorD.one (x.dim), x).transpose
 
-    val k  = 2                                                    // number of classes
     val fname = Array ("one", "x1")                               // feature names
     val cname = Array ("pass", "fail")                            // class names
 

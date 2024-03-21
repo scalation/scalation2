@@ -5,7 +5,7 @@
  *  @date    Wed Sep 30 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate (RV) Generators
+ *  @note    Random Variate (RV) Generators
  *
  *  Many of the algorithms used are from:
  *    Averill M. Law and W. David Kelton
@@ -1148,7 +1148,7 @@ end RandiU0
  *  @param x       the value for this constant distribution
  *  @param stream  the random number stream
  */
-case class Sharp (x: Double = 1, stream: Int = 0)
+case class Sharp (x: Double = 1.0, stream: Int = 0)
      extends Variate (stream):
 
     _discrete = true
@@ -1353,7 +1353,7 @@ case class Trinomial (p: Double = 1.0/3.0, q: Double = 1.0/3.0, n: Int = 5, stre
     _discrete = true
 
     private val qq   = 1.0 - p - q               // the probability of low (0)
-    private val p_qq = p / qq                    // the ratio of high to low
+//  private val p_qq = p / qq                    // the ratio of high to low
     private val q_qq = q / qq                    // the ratio of medium to low
     private val dice = Dice (Array (qq, qq+q, 1.0), stream)
 
@@ -1637,9 +1637,9 @@ end diceTest
     val x   = VectorD (for i <- 0 until 100000 yield rvg.gen + rvg.gen + rvg.gen + rvg.gen)
     new Histogram (x)
 
-    var nrm = Normal ()
-    var y   = VectorD (for i <- 0 until 100 yield (i/20.0 - 2.5))
-    var p   = VectorD (for i <- 0 until 100 yield nrm.pf (y(i)))
+    val nrm = Normal ()
+    val y   = VectorD (for i <- 0 until 100 yield (i/20.0 - 2.5))
+    val p   = VectorD (for i <- 0 until 100 yield nrm.pf (y(i)))
     new Plot (y, p)
 
     val snr = StdNormal ()

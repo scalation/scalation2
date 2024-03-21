@@ -5,8 +5,10 @@
  *  @date    Wed Oct 28 20:43:47 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: 1D Convolutional Neural Network (CNN)
+ *  @note    Model: 1D Convolutional Neural Network (CNN)
  */
+
+// U N D E R   D E V E L O P M E N T
 
 package scalation
 package modeling
@@ -43,12 +45,12 @@ class CNN_1D (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
 
     private val debug = debugf ("CNN_1D", true)                           // debug function
     private val eta       = hp("eta").toDouble                            // learning rate
-    private val bSize     = hp("bSize").toInt                             // batch size
+//  private val bSize     = hp("bSize").toInt                             // batch size
     private val maxEpochs = hp("maxEpochs").toInt                         // maximum number of training epochs/iterations
     private val (n, ny)   = (x.dim2, y.dim2)
     private val nz = n - nc + 1
 
-    private var c = weightVec (nc)                                        // parameters (weights & biases) in to hid
+    private val c = weightVec (nc)                                        // parameters (weights & biases) in to hid
     private val b: NetParam = NetParam (weightMat (nz, ny), new VectorD (ny))   // parameters (weights & biases) hid to out
 
     modelName = s"CNN_1D_${f.name}_${f1.name}"
@@ -64,7 +66,7 @@ class CNN_1D (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
      */
     def filter (i: Int, f: Int): VectorD =
         val xi = x(i)
-        val ft = filt(f)
+//      val ft = filt(f)
         val xf = new VectorD (xi.dim - nc + 1)
 //      for j <- xf.indices fo xf(j) = ft.dot (xi, j)
         xf
@@ -96,8 +98,8 @@ class CNN_1D (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
 
         var (go, epoch) = (true, 1)
         cfor (go && epoch <= maxEpochs, epoch += 1) {  
-            var z  = f.fM (conv (c, x_))                                  // Z  = f(conv (c, X))
-            var yp = f1.fM (b * z)                                        // Yp = f(ZB)
+            val z  = f.fM (conv (c, x_))                                  // Z  = f(conv (c, X))
+            val yp = f1.fM (b * z)                                        // Yp = f(ZB)
             val ε  = yp - y                                               // negative error E  = Yp - Y
             val δ1 = f1.dM (yp) ⊙ ε                                       // delta matrix for y
             val δ0 = f.dM (z) ⊙ (δ1 * b.w.Ƭ)                              // delta matrix for z`
@@ -120,7 +122,7 @@ class CNN_1D (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
      *  @param y_  the training/full response/output matrix
      */
     override def train2 (x_ : MatrixD = x, y_ : MatrixD = y): Unit =
-        val epochs = 0 // optimize3 (x_, y_, c, b, eta, bSize, maxEpochs, f, f1)    // optimize parameters c, b
+        val epochs = 0 // optimize3 (x_, y_, c, b, eta, bSize, maxEpochs, f, f1)    // FIX: optimize parameters c, b
         println (s"ending epoch = $epochs")
 //      estat.tally (epochs._2)
     end train2

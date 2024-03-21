@@ -5,7 +5,7 @@
  *  @date    Fri Oct  1 00:38:28 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   A Resource Provides Services to SimAgents
+ *  @note    A Resource Provides Services to SimAgents
  */
 
 package scalation
@@ -36,10 +36,11 @@ class Resource (name: String, director: Model,
          with Statistical (name):
 
     Resource.add (this)
+    director.statList += this                                        // add to director's variable to keep track of
 
-    private val debug = debugf ("Resource", true)                 // debug function
-    private val flaw  = flawf ("Resource")                        // flaw function
-    private var inUse = 0                                         // number of units currently serving agents
+    private val debug = debugf ("Resource", false)                   // debug function
+    private val flaw  = flawf ("Resource")                           // flaw function
+    private var inUse = 0                                            // number of units currently serving agents
 
     if units < 0 then flaw ("init", s"$name may not have negative units")
 
@@ -71,11 +72,12 @@ class Resource (name: String, director: Model,
         if busy then flaw ("work", "no units available - call busy first")
         else
             collectStats (duration, inUse, director.clock)
-            agent.pos(0) = pos(0) + Resource.wh._1
+            agent.pos(0) = pos(0) + Resource.wh._1 / 2 - 5           // was wh.1
             agent.pos(1) = pos(1) + Resource.wh._2 / 2 - 5
             director.log.trace (this, s"work for $duration", agent, director.clock)
             director.animate (agent, MoveToken)
-            inUse += 1
+
+            if inUse < units then inUse += 1 else flaw ("utilize", "no units left")
             director.schedule (agent, duration)
             agent.yieldToDirector ()
         end if
@@ -99,13 +101,13 @@ end Resource
  *  a method of collecting its vertex instances.
  */
 object Resource
-       extends VertexType ("Resource", Array ("type"), color = blue,
+       extends VertexType ("Resource", Array ("type"), color = lightblue,
                             shape = Rectangle ()):
 
     Model.add (Resource)
 
     private val debug = debugf ("Resource_", true)                   // debug function
-    private val wh    = (20.0, 30.0)                                 // default display size
+    private val wh    = (22.0, 30.0)                                 // default display size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the position extended with the wh = (width, height).

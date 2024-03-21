@@ -11,7 +11,7 @@ package mathstat
 
 import org.junit.jupiter.api.Test
 
-import scala.math.{abs, max, min, sqrt}
+import scala.math.{abs, sqrt}
 
 import scalation._
 import scalation.mathstat._

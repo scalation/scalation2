@@ -5,7 +5,8 @@
  *  @date    Thu Jan 31 15:08:27 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Blood Pressure
+ *  @note    Example Dataset: Blood Pressure
+ *
  *-----------------------------------------------------------------------------
  *  Convention:
  *      'x'    - data/input matrix (may have an intercept column)

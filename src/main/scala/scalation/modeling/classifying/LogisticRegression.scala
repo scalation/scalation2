@@ -5,7 +5,7 @@
  *  @date    Sun Dec 28 21:52:38 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Logistic Regression
+ *  @note    Model: Logistic Regression
  */
 
 package scalation
@@ -15,7 +15,7 @@ package classifying
 import scala.math.{exp, log}
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 // FIX: needs improved optimization
 
@@ -39,11 +39,12 @@ class LogisticRegression (x: MatrixD, y: VectorI, fname_ : Array [String] = null
       extends SimpleLogisticRegression (x, y, fname_, cname_, hparam):
 
     private val debug = debugf ("LogisticRegression", true)              // debug function
-    private val flaw  = flawf ("LogisticRegression")                     // flaw function
 
     private val r_df  = (n-1.0) / (n-k-1.0)                              // ratio of degrees of freedom
 
     modelName = s"LogisticRegression_$cThresh"                           // name of the model
+
+    debug ("init", s"r_df = $r_df")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** For the full model, train the classifier by fitting the parameter vector

@@ -5,7 +5,7 @@
  *  @date    Tue Apr  9 13:31:26 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multi-way Tree Data Structure
+ *  @note    Multi-way Tree Data Structure
  */
 
 package scalation
@@ -151,16 +151,19 @@ import Tree._
 /** The `Tree` class provides a data structure for multi-way trees.
  *  @param root   the root node of the tree
  *  @param depth  the estimated average depth of the tree
+ *  @param name   the name of the tree
  */
 class Tree (val root: TreeNode, depth: Int, val name: String = "tree"):
 
-    private val DEBUG = true                                // debug flag
+    private val debug = debugf ("Tree", true)               // debug function
     private val TAB   = "    "                              // spaces for TAB
-    private val MID   = 600.0                               // x coordinate for root
-    private val TOP   = 100.0                               // y coordinate for root
-    private val DIA   = 15.0                                // diameter for circles
+//  private val MID   = 600.0                               // x coordinate for root
+//  private val TOP   = 100.0                               // y coordinate for root
+//  private val DIA   = 15.0                                // diameter for circles
     private val nodes = ArrayBuffer (root)                  // list of all nodes
     private var nCount = 0                                  // node counter for nid auto-increment
+
+    debug ("init", s"create a tree of depth = $depth and name = $name")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the i-th node.

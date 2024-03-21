@@ -5,7 +5,7 @@
  *  @date    Fri Sep 17 23:52:26 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Model: Bank for Process Simulation using 'jump'
+ *  @note    Example Model: Bank for Process Simulation using 'jump'
  */
 
 package scalation

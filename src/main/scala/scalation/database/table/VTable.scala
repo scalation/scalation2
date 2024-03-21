@@ -5,7 +5,7 @@
  *  @date    Fri Jul  8 23:10:18 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Graph-Relational Algebra (GRA) for Graph-Relational DBMS
+ *  @note    Graph-Relational Algebra (GRA) for Graph-Relational DBMS
  */
 
 package scalation

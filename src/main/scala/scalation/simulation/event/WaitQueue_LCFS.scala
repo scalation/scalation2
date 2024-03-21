@@ -5,7 +5,7 @@
  *  @date    Wed Feb  5 19:43:10 EST 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   LCFS Wait Queue holds Entities Waiting for Service
+ *  @note    LCFS Wait Queue holds Entities Waiting for Service
  */
 
 package scalation

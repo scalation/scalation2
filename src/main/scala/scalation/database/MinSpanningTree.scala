@@ -5,7 +5,7 @@
  *  @date    Sat Nov  7 21:01:31 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Minimum Spanning Tree Implementing Prim's Algorithm
+ *  @note    Minimum Spanning Tree Implementing Prim's Algorithm
  *           Use negative edge labels/weights for Maximum Spanning Tree
  */
 
@@ -32,7 +32,7 @@ class MinSpanningTree (g: Graph, undirected: Boolean = true):
     private val debug = debugf ("MinSpanningTree", true)                  // debug flag
     private var stree: Tree = null                                        // spanning tree built by calling span
     private val size  = g.size                                            // the number of nodes for the spanning tree
-    private val root  = new TreeNode (0, 0, 0.0)                          // for vertex 0 in g, create a root node
+//  private val root  = new TreeNode (0, 0, 0.0)                          // for vertex 0 in g, create a root node
     private val key   = Array.fill (size)(MAX_VALUE)                      // cost/key array
     private val out   = Array.fill (size)(true)                           // status of outside spanning tree
     private val qu    = PriorityQueue ()(NodeOrder)                       // priority queue of vertices

@@ -5,7 +5,7 @@
  *  @date    Mon Jun 19 01:30:58 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   General Trait to Make Zoomable Panels
+ *  @note    General Trait to Make Zoomable Panels
  */
 
 package scalation
@@ -42,8 +42,8 @@ trait ZoomablePanel
     addMouseMotionListener (this)
     addMouseListener (this)
 
-    at.scale (2, 2)                                              // scale up for initial size
-    val mat = Array.ofDim [Double] (6)
+    at.scale (1, 1)                                              // scale up for initial size
+    val mat = Array.ofDim [Double] (10)
     at.getMatrix (mat)                                           // get the first two rows of transform matrix
 //  println (s"zoomablePanel: mat = ${stringOf (mat)}")
 
@@ -55,7 +55,7 @@ trait ZoomablePanel
     override def mouseWheelMoved (e: MouseWheelEvent): Unit =
         var x = e.getX ().toDouble
         var y = e.getY ().toDouble
-        var p = new Point2D.Double ()
+        val p = new Point2D.Double ()
         try
             at.inverseTransform (new Point2D.Double (x, y), p)
         catch

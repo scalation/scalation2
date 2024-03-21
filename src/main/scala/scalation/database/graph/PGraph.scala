@@ -5,7 +5,7 @@
  *  @date    Sat Aug 29 14:14:32 EDT 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   PGraph - Property Graph Database
+ *  @note    PGraph - Property Graph Database
  */
 
 package scalation
@@ -253,8 +253,6 @@ import SocialNetwork._
 
     val g = PGraph ("SocialNetwork", VEC (vt0), VEC (et0, et1), true)
     g.updateNameMaps ()                                              // update vmap and emap
-    val person = g.vmap("person")                                    // shorthand definition
-    val knows  = g.emap("knows")                                     // shorthand definition
 
     println (s"g = $g")                                              // via toString
     g.print ()                                                       // more readable version via internal println's

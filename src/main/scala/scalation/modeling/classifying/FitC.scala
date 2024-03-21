@@ -5,7 +5,7 @@
  *  @date    Sun Mar 11 15:12:46 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Quality of Fit (QoF) and Confusion Matrix
+ *  @note    Model Support: Quality of Fit (QoF) and Confusion Matrix
  */
 
 package scalation
@@ -21,8 +21,9 @@ import Probability.centropy
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `QoFC` enum defines the Quality of Fit (QoF) measures for classifiers.
+ *  @param name  the name of ther QoF measure/metric
  */
-enum QoFC (name: String):
+enum QoFC (val name: String):
 
     case rSq    extends QoFC ("rSq")                        // index  0 - R-squared
     case p_rSq  extends QoFC ("p_rSq")                      // index  1 - pseudo R-squared (Efron's or McFadden's)
@@ -197,7 +198,6 @@ trait FitC (k: Int = 2)
       extends FitM:
 
     private val debug   = debugf ("FitC", false)                     // debug function
-    private val flaw    = flawf ("FitC")                             // flaw function
     private val cThresh = Classifier.hp ("cThresh").toDouble         // classification/decision threshold
 
 //  from FitM: m, sse, ssr, sst, mse0, rmse, mae, rSq
@@ -435,7 +435,7 @@ trait FitC (k: Int = 2)
         val fit1 = FitM.fitMap (fit, QoFC.values.map (_.toString))
         val fit2 = fitMicroMap
 
-        var sb = new StringBuilder ("-" * 58 + "\nSUMMARY")
+        val sb = new StringBuilder ("-" * 58 + "\nSUMMARY")
         sb.append ("\n" + "-" * 58)
         sb.append ("\nparameter = " + b)
         sb.append ("\n" + "-" * 58)

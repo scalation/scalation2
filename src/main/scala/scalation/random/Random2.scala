@@ -5,7 +5,7 @@
  *  @date    Sat Mar 22 14:39:30 EDT 2014
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   CMRG (Combined Multiple Recursive Generator) using 32-bit Int's
+ *  @note    CMRG (Combined Multiple Recursive Generator) using 32-bit Int's
  */
 
 package scalation
@@ -20,10 +20,10 @@ package random
  *  performance and statistical properties for simulations.  It has a period of
  *  about 2^185 and is considered to be a faster alternative to the popular
  *  'MRG32k3' generator.  MRG31k3p combines MRG1 and MRG2.
- *  <br>
+ *
  *      MRG1: x_i = (0          + a_12 x_i-2 + a_13 x_i-3) % M1
  *      MRG2: x_i = (a_21 x_i-1 + 0          + a_23 x_i-3) % M2
- *  <br>
+ * 
  *  where a_12 = 2^22, a_13 = 2^7+1, a_21 = 2^15 and a_23 = 2^15+1.
  *  @see http://www.informs-sim.org/wsc00papers/090.PDF
  *  @see http://www.iro.umontreal.ca/~simardr/ssj/doc/pdf/guiderng.pdf

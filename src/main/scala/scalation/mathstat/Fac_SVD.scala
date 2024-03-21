@@ -5,7 +5,7 @@
  *  @date    Sun Mar 19 15:16:20 EDT 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Singular Value Decomposition (SVD) Matrix Factorization
+ *  @note    Singular Value Decomposition (SVD) Matrix Factorization
  *
  *  @see Matrix Computations:  Algorithm 8.6.1 Golub-Kahan SVD Step Algorithm
  *  @see Matrix Computations:  Algorithm 8.6.2 SVD Algorithm

@@ -5,7 +5,7 @@
  *  @date    Sat May 18 14:57:50 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Support: Meta-data about a Variable
+ *  @note    Model Support: Meta-data about a Variable
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sat Aug 10 14:26:34 EDT 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Single-Source Shortest Path (SSSP) Problem
+ *  @note    Single-Source Shortest Path (SSSP) Problem
  */
 
 package scalation

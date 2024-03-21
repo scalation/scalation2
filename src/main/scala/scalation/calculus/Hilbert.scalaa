@@ -5,8 +5,12 @@
  *  @date    Sat Oct  8 12:37:32 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Operators for Functions in Hilbert Spaces   
+ *
  *  @see www.jstatsoft.org/article/view/v051i04/v51i04.pdf
  */
+
+// FIX - rewrite using extension methods
 
 package scalation
 package calculus
@@ -16,12 +20,12 @@ import scala.math.sqrt
 import Integral.∫
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Implicit conversion from 'FunctionS2S' to 'Hilbert', which supports
+/** Convert a function from `FunctionS2S` to `Hilbert`, which supports
  *  functional operators.
  *  @param f  the function to turn into a Hilbert function
  *
-implicit def functionS2S2Hilbert (f: FunctionS2S) = new Hilbert (f)
  */
+def functionS2S2Hilbert (f: FunctionS2S) = new Hilbert (f)
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Hilbert` class provides operators to add, subtract, mutiply, divide and
@@ -29,10 +33,7 @@ implicit def functionS2S2Hilbert (f: FunctionS2S) = new Hilbert (f)
  *  It also provides methods for computing dot/inner products, norms and
  *  distances for functions defined in Hilbert Space.
  *  On interval [a, b]
- *  <p>
  *      Lp-norm (f) = [ ∫f(t)^p dt ]^1/p
- *  <p>
- *  @see implicit conversion 'functionS2S2Hilbert' in `package.scala`
  *  @param f  the function to convert into a Hilbert function
  */
 class Hilbert (f: FunctionS2S):
@@ -141,10 +142,10 @@ end Hilbert
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `HilbertTest` object is used to test the `Hilbert` class.
- *  > runMain scalation.calculus.HilbertTest
+/** The `hilbertTest` object is used to test the `Hilbert` class.
+ *  > runMain scalation.calculus.hilbertTest
  */
-object HilbertTest extends App:
+@main def hilbertTest (): Unit =
 
     banner ("functions: f(x) = 2t, g(x) = t^2")
     val f = (t: Double) => 2.0 * t            // function definition
@@ -181,5 +182,5 @@ object HilbertTest extends App:
     println ("L2 distance = " + f.dist_p (g, 2))
     println ("L3 distance = " + f.dist_p (g, 3))
 
-end HilbertTest
+end hilbertTest
 

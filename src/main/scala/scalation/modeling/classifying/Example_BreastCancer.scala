@@ -5,7 +5,7 @@
  *  @date    Sat Apr  8 14:11:45 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example: Breast Cancer Dataset
+ *  @note    Example: Breast Cancer Dataset
  */
 
 package scalation

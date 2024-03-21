@@ -5,7 +5,7 @@
  *  @date    Sat Aug 27 18:19:54 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   `TimeOfWeek` Day and Time within a Week (Relative, not Absolute Time)
+ *  @note   `TimeOfWeek` Day and Time within a Week (Relative, not Absolute Time)
  *
  *  @see  https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/LocalDateTime.html
  *  @see  https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/time/format/DateTimeFormatter.html

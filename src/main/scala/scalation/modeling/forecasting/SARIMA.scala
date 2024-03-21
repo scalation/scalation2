@@ -5,12 +5,12 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  @note    Model: Seasonal Auto-Regressive, Integrated, Moving Average (SARIMA)
  *
- *  @title   Seasonal Auto-Regressive, Integrated, Moving Average (SARIMA) Model
+ *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
+ *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation
@@ -20,7 +20,7 @@ package forecasting
 import scala.math.sqrt
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 import scalation.random.{Normal, Uniform}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -198,7 +198,6 @@ class SARIMA (y: VectorD, dd: Int = 0, period: Int = 2,
               tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
       extends ARIMA (y, tt, hparam):
 
-    private val debug = debugf ("SARIMA", true)                  // debug function
     private val flaw  = flawf ("SARIMA")                         // flaw function
 
     if period < 2 then flaw ("init", "the seasonal period must be at least 2")
@@ -421,7 +420,7 @@ end sARIMATest
     println (s"y = $y")
 
     val (p, d, q) = (1, 1, 1)
-    val steps = 2                                        // number of steps for the forecasts
+//  val steps = 2                                        // number of steps for the forecasts
 
     val mod = new SARIMA (y, d)                          // time series data: y vs. t
 
@@ -522,11 +521,11 @@ end sARIMATest3
     val nfile = "travelTime.csv"
     val data  = MatrixD.load (nfile)
 
-    val t = data(?, 0)
+//  val t = data(?, 0)
     val y = data(?, 1)
 
     val (p, d, q) = (1, 1, 1)
-    val steps = 1                                        // number of steps for the forecasts
+//  val steps = 1                                        // number of steps for the forecasts
 
     val mod = new SARIMA (y, d)                          // time series data: y vs. t
 
@@ -604,7 +603,7 @@ end sARIMATest5
 
     val m     = 50
     val d     = 0                                        // levels of differencing
-    val steps = 2                                        // number of steps for the forecasts
+//  val steps = 2                                        // number of steps for the forecasts
     val sig2  = 10000.0
     val noise = Normal (0.0, sig2)
     val y = VectorD (for i <- 0 until m yield 40 * (i-1) - (i-2) * (i-2) + noise.gen)

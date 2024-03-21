@@ -5,7 +5,7 @@
  *  @date    Sat Mar 27 14:40:57 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Part: Convolutional Filter (one dimensional)
+ *  @note    Model Part: Convolutional Filter (one dimensional)
  *
  *  @see leonardoaraujosantos.gitbook.io/artificial-inteligence/machine_learning/deep_learning/convolution
  *  @see e2eml.school/convolution_one_d.html

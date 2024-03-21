@@ -5,7 +5,7 @@
  *  @date    Mon Feb 11 13:27:08 EST 2013
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Methods for Householder Orthogonalization
+ *  @note    Base Methods for Householder Orthogonalization
  */
 
 package scalation

@@ -5,6 +5,8 @@
  *  @date    Fri Sep 30 13:37:32 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Polak-Ribiere Conjugate Gradient (PR-CG)
+ *
  *  @see http://www.neos-guide.org/NEOS/index.php/Nonlinear_Conjugate_Gradient_Method
  */
 
@@ -204,3 +206,186 @@ end conjugateGradientTest2
 
 end conjugateGradientTest3
 
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientBoothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+ *  > runMain scalation.optimization.conjugateGradientBoothFunction
+ */
+@main def conjugateGradientBoothFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2")
+    def f (x: VectorD): Double = (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientBoothFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientBealeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+ *  > runMain scalation.optimization.conjugateGradientBealeFunction
+ */
+@main def conjugateGradientBealeFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
+    def f (x: VectorD): Double = (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientBealeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientBohachevsky1Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+ *  > runMain scalation.optimization.conjugateGradientBohachevsky1Function
+ */
+@main def conjugateGradientBohachevsky1Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientBohachevsky1Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientBohachevsky2Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization.conjugateGradientBohachevsky2Function
+ */
+@main def conjugateGradientBohachevsky2Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientBohachevsky2Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientBohachevsky3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+ *  > runMain scalation.optimization.conjugateGradientBohachevsky3Function
+ */
+@main def conjugateGradientBohachevsky3Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3")
+    def f (x: VectorD): Double = x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientBohachevsky3Function
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientCamel3Function` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+ *  > runMain scalation.optimization.conjugateGradientCamel3Function
+ */
+@main def conjugateGradientCamel3Function (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2")
+    def f (x: VectorD): Double =  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientCamel3Function
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientCubeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = 100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+ *  > runMain scalation.optimization.conjugateGradientCubeFunction
+ */
+@main def conjugateGradientCubeFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2")
+    def f (x: VectorD): Double =  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientCubeFunction
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `conjugateGradientFreudensteinRothFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+ *  > runMain scalation.optimization.conjugateGradientFreudensteinRothFunction
+ */
+@main def conjugateGradientFreudensteinRothFunction (): Unit =
+
+    val n = 2                                            // dimension of the search space
+    val x0   = new VectorD (n)                           // starting location
+
+    banner ("Minimize:  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2")
+    def f (x: VectorD): Double =  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2
+
+    val optimizer = new ConjugateGradient(f)
+    var opt = optimizer.solve(x0)
+    println(s"][ solve: optimal solution (f(x), x) = $opt")
+
+    opt = optimizer.resolve(n)
+    println(s"][ resolve: optimal solution (f(x), x) = $opt")
+
+end conjugateGradientFreudensteinRothFunction

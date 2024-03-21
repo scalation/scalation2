@@ -5,7 +5,7 @@
  *  @date    Wed May 22 14:17:49 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Base Trait for Decision Trees
+ *  @note    Model Framework: Base Trait for Decision Trees
  */
 
 package scalation

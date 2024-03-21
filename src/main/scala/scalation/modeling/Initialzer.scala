@@ -5,7 +5,7 @@
  *  @date    Sun Jan 27 15:34:08 EST 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Parameter (weights and biases) Initilization for Neural Networks
+ *  @note    Parameter (weights and biases) Initilization for Neural Networks
  */
 
 package scalation

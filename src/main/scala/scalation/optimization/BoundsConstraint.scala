@@ -5,7 +5,7 @@
  *  @date    Sun April  23 15:13:42 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Bounce Back at Constraint Boundary
+ *  @note    Bounce Back at Constraint Boundary
  */
 
 package scalation

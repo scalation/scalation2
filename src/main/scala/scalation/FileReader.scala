@@ -5,7 +5,7 @@
  *  @date    Sat Aug 28 18:17:12 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Top-Level Functions to Read from Files in ScalaTion's "data" Directory
+ *  @note    Top-Level Functions to Read from Files in ScalaTion's "data" Directory
  *           or from a full-path
  */
 

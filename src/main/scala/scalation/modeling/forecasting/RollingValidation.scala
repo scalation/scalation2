@@ -5,7 +5,7 @@
  *  @date    Sun May 29 13:45:56 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Rolling Validation for Forecasters
+ *  @note    Model Framework: Rolling Validation for Forecasters
  */
 
 package scalation
@@ -32,7 +32,6 @@ import Fit._
 object RollingValidation:
 
     private val debug    = debugf ("RollingValidation", true)             // debug function
-    private val flaw     = flawf ("RollingValidation")                    // flaw function
     private val TR_RATIO = 0.5                                            // ratio training set to full datasets
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

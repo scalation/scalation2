@@ -5,7 +5,8 @@
  *  @date    Sun Jun 25 16:30:31 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Keep Track of the Loss Function for each Epoch
+ *  @note    Keep Track of the Loss Function for each Epoch
+ *
  *  @see     http://papers.ssrn.com/sol3/papers.cfm?abstract_id=2097904
  */
 

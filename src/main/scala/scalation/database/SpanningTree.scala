@@ -4,6 +4,10 @@
  *  @version 2.0
  *  @date    Sat Nov  7 21:01:31 EST 2015
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Spanning Tree
+ *
+ *  @see    `MinSpanningTree`
  */
 
 package scalation
@@ -13,8 +17,6 @@ import scala.collection.mutable.{Map, Queue}
 
 import scalation.mathstat.MatrixD
 
-// FIX - need MinSpanningTree
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `SpanningTree` class is used to build spanning trees from graphs.
  *  @param g  the digraph (adjacency matrix) to build the spanning tree from
@@ -22,6 +24,7 @@ import scalation.mathstat.MatrixD
 class SpanningTree (g: MatrixD):
 
     private val debug = debugf ("SpanningTree", true)         // debug function
+
     private val size  = g.dim                                 // the number of nodes for the spanning tree
     private val root  = new TreeNode (0, 0, 0.0)              // for vertex 0 in g, create a root node
     private val stree = new Tree (root, 4)                    // make a tree based on this root, est. depth 

@@ -5,7 +5,7 @@
  *  @date    Thursday Feb 17 13:32:52 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Simultaneous Perturbation Stochastic Approximation
+ *  @note    Simultaneous Perturbation Stochastic Approximation
  */
 
 package scalation
@@ -14,7 +14,8 @@ package optimization
 import scala.math.pow
 
 import scalation.mathstat.{FunctionV2S, VectorD}
-import scalation.random.{Bernoulli, Normal, Uniform}
+import scalation.random.{Bernoulli, Uniform}
+//import scalation.random.{Bernoulli, Normal, Uniform}
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `SPSA` class implements the Simultaneous Perturbation Stochastic Approximation
@@ -87,7 +88,7 @@ class SPSA (f: FunctionV2S, max_iter: Int = 100, checkCon: Boolean = false,
 
         var x_old  = x0.copy                                           // old point
         var x_best = x0.copy                                           // best point so far
-        var x      = x0.copy                                           // new point
+        val x      = x0.copy                                           // new point
 
         var (k, go) = (1, true)
         cfor (k <= max_iter && go, k += 1) {
@@ -132,7 +133,7 @@ end SPSA
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
 
-    val noisen = Normal (0.0, 0.1)
+//  val noisen = Normal (0.0, 0.1)
     val noise  = Uniform (-0.1, 0.1)
 
     def f (x: VectorD): Double = (x(0) - 3)~^2 + (x(1) - 4)~^2 + 1 + noise.gen

@@ -5,7 +5,7 @@
  *  @date    Thu Jul  9 17:40:18 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Util - basic utilities: top-level constants and functions.
+ *  @note    Util Contains Basic Utilities: generally useful top-level constants and methods.
  */
 
 package scalation
@@ -30,7 +30,7 @@ import scala.util.Properties.envOrElse
  */
 type Interval = (Double, Double)
 
-/** Universal symbol for the ? character (e.g., meaning all rows of column 2 in x(?, 2) for maxtrix x)
+/** Universal symbol for the ? character (e.g., meaning all rows of column 2 in x(?, 2) for matrix x)
  */
 val ? = '?'
 
@@ -154,7 +154,7 @@ end timed
  */
 def gauge [R] (block: => R): Double = 
     val t0 = nanoTime ()
-    val result = block                                     // call-by-name
+    block                                                  // call-by-name
     val t1 = nanoTime ()
     (t1 - t0) * NS_PER_MS
 end gauge
@@ -287,7 +287,7 @@ end cfor
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Summation of the formula applied n times.
- *  @param n        the number of iteraations
+ *  @param n        the number of iterations
  *  @param formula  the formula to apply, repeatedly
  */
 inline def summation (n: Int)(formula: => Double): Double =

@@ -5,7 +5,7 @@
  *  @date    Thu Dec 23 13:54:30 EST 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Symbolic Ridge Regression, including Quadratic and Cubic Ridge Regression
+ *  @note    Model: Symbolic Ridge Regression, including Quadratic and Cubic Ridge Regression
  */
 
 package scalation
@@ -404,8 +404,7 @@ end symRidgeRegressionTest8
     val x  = VectorD (1, 2, 3, 4, 5)
     val y  = VectorD (1, 3, 3, 5, 4)
 
-    val mu_x = x.mean                                                      // center the data
-    val mu_y = y.mean
+    val mu_y = y.mean                                                      // center the response data
     val y_c  = y - mu_y
 
     val xx = MatrixD (x).transpose

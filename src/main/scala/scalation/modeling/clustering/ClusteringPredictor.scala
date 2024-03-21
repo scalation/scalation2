@@ -5,7 +5,7 @@
  *  @date    Fri Dec 21 14:38:32 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Prediction based upon Clustering
+ *  @note    Model: Prediction based upon Clustering
  */
 
 package scalation
@@ -15,7 +15,7 @@ package clustering
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
-import scalation.random.Bernoulli
+//import scalation.random.Bernoulli
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ClusteringPredictor` class is used to predict a response value for new vector 'z'.
@@ -39,7 +39,7 @@ class ClusteringPredictor (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
     private val MAX_DOUBLE = Double.PositiveInfinity                 // infinity
     private val kappa      = hparam ("kappa").toInt                  // the number of nearest neighbors to consider
     private val topK       = Array.fill (kappa)(-1, MAX_DOUBLE)      // top-kappa nearest points (in reserve order)
-    private val coin       = Bernoulli ()                            // use a fair coin for breaking ties
+//  private val coin       = Bernoulli ()                            // use a fair coin for breaking ties
 
     private val clust = new KMeansClusterer (x, kappa)               // underlying clustering algorithm
     private val yclus = new VectorD (kappa)                          // consensus response per cluster

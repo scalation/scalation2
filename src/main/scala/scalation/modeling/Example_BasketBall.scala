@@ -5,7 +5,7 @@
  *  @date    Sun Dec  9 15:22:42 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Basketball Scoring Averages
+ *  @note    Example Dataset: Basketball Scoring Averages
  *
  *  @see college.cengage.com/mathematics/brase/understandable_statistics/7e/students/datasets/mlr/frames/frame.html
  *  @see Reference: The official NBA basketball Encyclopedia, Villard Books

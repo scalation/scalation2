@@ -5,7 +5,7 @@
  *  @date    Mon Sep  7 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Monitor is used for Tracing Action/Events
+ *  @note    Monitor is used for Tracing Action/Events
  */
 
 package scalation

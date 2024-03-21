@@ -5,7 +5,7 @@
  *  @date    Sun Jan 11 19:05:20 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Poisson Regression
+ *  @note    Model: Poisson Regression
  *
  *  ncss-wpengine.netdna-ssl.com/wp-content/themes/ncss/pdf/Procedures/NCSS/Poisson_Regression.pdf
  */
@@ -20,7 +20,7 @@ package modeling
 import scala.math.{exp, round}
 
 import scalation.mathstat._
-import scalation.optimization.BFGS
+import scalation.optimization.quasi_newton.BFGS
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PoissonRegression` class supports Poisson regression.  In this case, 
@@ -40,10 +40,9 @@ class PoissonRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
 
-    private val DEBUG      = false                    // debug flag
 /*
     private val k          = x.dim2 - 1               // number of variables 
-    private val n          = x.dim1.toDouble          // number of data points (rows)
+    private val n          = x.dim.toDouble           // number of data points (rows)
     private val r_df       = (n-1.0) / (n-k-1.0)      // ratio of degrees of freedom
 */
     private var aic        = -1.0                     // Akaike’s Information Criterion
@@ -319,7 +318,7 @@ end poissonRegressionTest
     println ("x = " + x)
     println ("y = " + y)
 
-//  val rg = PoissonRegression (x(0 until x.dim1, 0 until 2), y, fn)
+//  val rg = PoissonRegression (x(0 until x.dim, 0 until 2), y, fn)
     val rg = PoissonRegression (x, y, fn, null)
     rg.train_null ()                                    // train based on null model
     rg.trainNtest ()()                                  // train based on full model

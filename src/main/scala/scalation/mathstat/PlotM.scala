@@ -5,13 +5,13 @@
  *  @date    Sun Nov 15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file). 
  *
- *  @title   Plot Rows in Matrix y versus x
+ *  @note    Plot Rows in Matrix y versus x
  */
 
 package scalation
 package mathstat
 
-import scala.math.{ceil, floor, min, pow, round}
+import scala.math.{ceil, floor, pow, round}
 
 import scalation.scala2d._
 import scalation.scala2d.Colors._
@@ -19,6 +19,12 @@ import scalation.scala2d.Colors._
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `PlotM` class takes an x vector and a y matrix of data values and plots
  *  the (x, y_i) data points for each row y_i of the matrix.
+ *------------------------------------------------------------------------------
+ *  Zoom functionality has two options:
+ *  (1) mouse wheel controls the amount of zooming (in/out);
+ *  (2) mouse dragging repositions the objects in the panel (drawing canvas).
+ *  @see ZoomablePanel
+ *------------------------------------------------------------------------------
  *  @param x_      the x vector of data values (horizontal)
  *  @param y_      the y matrix of data values where y(i) is the i-th vector (vertical)
  *  @param label   the label/legend/key for each curve in the plot
@@ -31,24 +37,23 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
 
     val xa: VectorD = if x_ == null then VectorD.range (0, y_.dim2) else x_
 
-    private val EPSILON   = 1E-9
-    private val frameW    = getW
-    private val frameH    = getH
-    private val offset    = 70
-    private val baseX     = offset
-    private val baseY     = frameH - offset
-    private val stepsX    = 10
-    private val stepsY    = 10
-    private val minX      = floor (xa.min)
-    private val maxX      = ceil (xa.max + EPSILON)
-    private val minY      = floor (y_.mmin)
-    private val maxY      = ceil (y_.mmax)
-//  private val maxY      = ceil (y_.mmax + EPSILON)
-    private val deltaX    = maxX - minX
-    private val deltaY    = maxY - minY
+    private val EPSILON  = 1E-9                                 // number close to zero
+    private val offset   = 70                                   // offset frame to axis
+    private val frameW   = getW                                 // frame width
+    private val frameH   = getH                                 // frame height
+    private val baseX    = offset                               // base for x-axis
+    private val baseY    = frameH - offset                      // base for y-axis
+
+    private val minX     = floor (xa.min)
+    private val maxX     = ceil (xa.max + EPSILON)
+    private val minY     = floor (y_.mmin)
+    private val maxY     = ceil (y_.mmax)
+//  private val maxY     = ceil (y_.mmax + EPSILON)
+    private val deltaX   = maxX - minX
+    private val deltaY   = maxY - minY
+
     private val diameter  = 4
     private val dot       = Ellipse ()
-    private val axis      = Line (0, 0, 0, 0)
 
     if label == null then label = defaultLabels
 
@@ -80,46 +85,20 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
          */
         override def paintComponent (gr: Graphics): Unit =
             super.paintComponent (gr)
-            val g2d = gr.asInstanceOf [Graphics2D]            // use hi-res
+            val g2d = gr.asInstanceOf [Graphics2D]              // use hi-res graphics
 
-            g2d.setTransform (at)                             // used for zooming
+            g2d.setTransform (at)                               // used for zooming (at @see `ZoomablePanel`)
 
-            var x_pos = 0
-            var y_pos = 0
-            var step  = 0.0
-
-            //:: Draw the axes
-
-            g2d.setPaint (black)
-            g2d.setStroke (new BasicStroke (2.0f))
-            axis.setLine (baseX - 1, baseY + 1, baseX + 15 + frameW - 2 * offset, baseY + 1)
-            g2d.draw (axis)
-            axis.setLine (baseX - 1, offset - 15, baseX - 1, baseY + 1)
-            g2d.draw (axis)
-
-            //:: Draw the labels on the axes
-
-            y_pos = baseY + 15
-            step  = deltaX / stepsX.asInstanceOf [Double]       // for x-axis
-            for j <- 0 to stepsX do
-                val x_val = clip (minX + j * step)
-                x_pos = offset - 8 + j * (frameW - 2 * offset) / stepsX
-                g2d.drawString (x_val, x_pos, y_pos)
-            end for
-
-            x_pos = baseX - 30
-            step  = deltaY / stepsY.asInstanceOf [Double]       // for y-axis
-            for j <- 0 to stepsY do
-                val y_val = clip (maxY - j * step)
-                y_pos = offset + 2 + j * (frameH - 2 * offset) / stepsY
-                g2d.drawString (y_val, x_pos, y_pos)
-            end for
+            Plot.drawAxes (g2d, baseX, baseY, frameW, frameH, offset, minX, maxY, deltaX, deltaY)
 
             //:: Draw the color keys below the x-axis
 
             g2d.drawString ("Key:", offset, frameH - 30)
 
             //:: Draw the dots for the data points being plotted
+
+            var x_pos  = 0                                      // current x position
+            var y_pos  = 0                                      // current y position
 
             for i <- 0 until y_.dim do
                 val y_i = y_(i)
@@ -128,13 +107,13 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
                 g2d.setPaint (color)
                 if i < label.length then g2d.drawString (label(i), offset * (i + 2), frameH - 30)
 
-                var px_pos = 0           // previous x
-                var py_pos = 0           // previous y
+                var px_pos = 0                                  // previous x position
+                var py_pos = 0                                  // previous y position
 
                 for j <- xa.indices do
-                    val xx = round ((xa(j) - minX) * (frameW - 2 * offset).asInstanceOf [Double])
+                    val xx = round ((xa(j) - minX) * (frameW - 2 * offset))
                     x_pos = (xx / deltaX).asInstanceOf [Int] + offset
-                    val yy = round ((maxY - y_i(j)) * (frameH - 2 * offset).asInstanceOf [Double])
+                    val yy = round ((maxY - y_i(j)) * (frameH - 2 * offset))
                     y_pos = (yy / deltaY).asInstanceOf [Int] + offset
                     dot.setFrame (x_pos, y_pos, diameter, diameter)         // x, y, w, h
                     g2d.fill (dot)
@@ -145,8 +124,8 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
                         g2d.drawLine (px_pos+1, py_pos+1, x_pos+1, y_pos+1)
                     end if
 
-                    px_pos = x_pos // update previous x
-                    py_pos = y_pos // update previous y
+                    px_pos = x_pos                              // update previous x
+                    py_pos = y_pos                              // update previous y
 
                 end for
             end for
@@ -173,19 +152,8 @@ class PlotM (x_ : VectorD, y_ : MatrixD, var label: Array [String] = null,
     end saveImage
      */
 
-    {
-        getContentPane ().add (new CanvasP ())
-        setVisible (true)
-    } // primary constructor
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Convert value to string and cut out the first four characters.
-     *  @param x  the value to convert and cut
-     */
-    def clip (x: Double): String =
-        val s = x.toString 
-        s.substring (0, min (s.length, 4))
-    end clip
+    getContentPane ().add (new CanvasP ())
+    setVisible (true)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this `PlotM` object to a string.
@@ -241,6 +209,7 @@ end plotMTest
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `plotMTest2` main function is used to test the `PlotM` class.  This
  *  version also plots lines connecting the points.
+ ^  @see scalation.scala2d.writeImage
  *  > runMain scalation.mathstat.plotMTest2
  */
 @main def plotMTest2 (): Unit =

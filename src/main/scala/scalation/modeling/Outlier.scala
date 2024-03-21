@@ -5,7 +5,7 @@
  *  @date    Sat Jun 9 14:09:25 EDT 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Outlier Detection and Handling
+ *  @note    Outlier Detection and Handling
  *
  *  @see Ch. 5 in Computational Data Science
  */

@@ -5,12 +5,12 @@
  *  @date    Thu May 26 18:06:08 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  @note    Model: Auto-Regressive, Integrated (0 or 1), Moving Average (AR1MA)
  *
- *  @title   Auto-Regressive, Integrated (0 or 1), Moving Average (AR1MA) Model
+ *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
+ *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation
@@ -63,7 +63,6 @@ class AR1MA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp,
          with Fit (dfm = hparam("p").toInt, df = y.dim - hparam("p").toInt):
 
     private val debug  = debugf ("AR1MA", true)                        // debug function
-    private val flaw   = flawf ("AR1MA")                               // flaw function
     private val p      = hparam("p").toInt                             // p-th order Auto-Regressive model
     private val q      = hparam("q").toInt                             // q-th order Moving-Average model
     private val v      = if diffr then Δ(y) else y                     // first difference of the full time-series
@@ -329,12 +328,13 @@ end aR1MATest3
     println (s"is = $is is first day with at least 2 deaths")
     val y    = yy(is until yy.dim)                                     // slice out days before is
 
-    val h   = 2                                                        // forecasting horizon
+//  val h   = 2                                                        // forecasting horizon
     for p <- 1 to 5; q <- 1 to 3 do                                    // AR1MA hyper-parameter settings
         hp("p") = p; hp("q") = q
         val mod = new AR1MA (y)                                        // create an AR1MA model
         val (vp, qof) = mod.trainNtest ()()                            // train and the model on full dataset
         val yp = mod.predictAll2 (y)                                   // results on original scale
+        println (s"yp = $yp")
 
 /*
         val yfa = mod.forecastAll (y, h)

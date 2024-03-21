@@ -5,7 +5,7 @@
  *  @date    Sun Mar  6 14:01:47 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   ADAptive Moment estimation (Adam) Optimizer
+ *  @note    ADAptive Moment estimation (Adam) Optimizer
  *
  *  @see https://arxiv.org/pdf/1412.6980.pdf
  */
@@ -31,7 +31,6 @@ class GradientDescent_Adam (f: FunctionV2S, grad: FunctionV2V, hparam: HyperPara
          with StoppingRule (hparam("upLimit").toInt):                   // limit on increasing loss
 
     private val debug = debugf ("GradientDescent_Adam", true)           // debug function
-    private val flaw  = flawf ("GradientDescent_Adam")                  // flaw function
 
     private val β1     = hp("beta").toDouble                            // momentum hyper-parameter
     private val β2     = hp("beta2").toDouble                           // second momentum hyper-parameter
@@ -49,7 +48,7 @@ class GradientDescent_Adam (f: FunctionV2S, grad: FunctionV2V, hparam: HyperPara
         var v    = new VectorD (x0.dim)                                 // second raw moment of momentum
         var ph   = VectorD.nullv                                        // bias-corrected first moment
         var vh   = VectorD.nullv                                        // bias-corrected second raw moment
-        var x    = x0                                                   // start parameters at initial guess
+        val x    = x0                                                   // start parameters at initial guess
         var f_x  = -0.0                                                 // loss function, value indefined
         var best = (f_x, x)                                             // start with best = initial
 
@@ -84,7 +83,7 @@ end GradientDescent_Adam
  */
 @main def gradientDescent_AdamTest (): Unit =
 
-    var x0    = VectorD (0.0, 0.0)                                      // starting point
+    val x0    = VectorD (0.0, 0.0)                                      // starting point
     hp("eta") = 0.08                                                    // learning rate (problem dependent)
 
     banner ("Minimize: (x_0 - 3)^2 + (x_1 - 4)^2 + 1")
@@ -92,7 +91,7 @@ end GradientDescent_Adam
     def gr (x: VectorD): VectorD = VectorD (2 * x(0) - 6, 2 * x(1) - 8)
 
     val optimizer = new GradientDescent_Adam (f, gr)
-    var opt = optimizer.solve (x0)
+    val opt = optimizer.solve (x0)
     println (s"][ optimal solution f(x), x) = $opt")
 
 end gradientDescent_AdamTest

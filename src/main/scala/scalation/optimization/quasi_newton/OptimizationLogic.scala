@@ -1,0 +1,89 @@
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** @author  André Filipe Caldas Laranjeira
+ *  @version 2.0
+ *  @note    Tue Sep 19 09:23:45 EDT 2023
+ *  @see     LICENSE (MIT style license file).
+ *------------------------------------------------------------------------------
+ *  Trait to specify the optimization logic used by the native implementation
+ *  of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for
+ *  unconstrained optimization (L-BFGS) algorithm.
+ */
+
+// Package definition.
+package scalation
+package optimization
+package quasi_newton
+
+// Project imports.
+import scalation.mathstat.VectorD
+
+// Trait.
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `OptimizationLogicNative` trait specifies the requirements for the logic
+ *  to be used in each step of a L-BFGS variable minimization done by the
+ *  `lbfgsMain` method of the [[LBFGS]] object. The methods provided in this
+ *  trait are called directly by the code used by the [[LBFGS]] class.
+ *
+ *  Classes mixing in this trait must implement two methods: evaluate and
+ *  progress. The evaluate method is used to evaluate the gradients and
+ *  objective function for a given state of the variables. The progress method
+ *  is used to report on how the minimization process is progressing.
+ */
+trait OptimizationLogic extends EvaluationLogic:
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Receives the progress of each iteration of the optimization process. Can
+     *  be used to display or record said progress and to determine if the
+     *  optimization should continue or be cancelled. A default implementation
+     *  is provided to just print the contents of the current iteration of the
+     *  optimization.
+     *
+     *  @param instance User data provided by each call of the `lbfgsMain`
+     *                  method of the [[LBFGS]] object. Can have [[Any]] type
+     *                  defined by the user as long as the same type is utilized
+     *                  in the `evaluate` method implementation for the class
+     *                  extending this trait and on the corresponding
+     *                  `lbfgsMain` calls from the [[LBFGS]] object that relies
+     *                  on this `OptimizationLogicNative`.
+     *  @param x        [[VectorD]] with the current values of the variables.
+     *  @param g        [[VectorD]] with the current value of the gradient
+     *                  vector.
+     *  @param fx       Current value of the objective function.
+     *  @param xnorm    Euclidean norm of the variables.
+     *  @param gnorm    Euclidean norm of the gradient vector.
+     *  @param step     Step used by the line search routine in this iteration.
+     *  @param n        The number of variables.
+     *  @param k        Iteration count.
+     *  @param ls       The number of evaluations called for this iteration.
+     *  @return int     Determines if optimization should continue. Zero
+     *                  continues optimization. Non-zero values cancel the
+     *                  optimization.
+     */
+    def progress(
+        instance: Any,
+        x: VectorD,
+        g: VectorD,
+        fx: Double,
+        xnorm: Double,
+        gnorm: Double,
+        step: Double,
+        n: Int,
+        k: Int,
+        ls: Int
+    ): LBFGSReturnCode =
+
+        println(s"""
+    Iteration $k:
+    x \t\t= $x
+    g \t\t= $g
+    fx \t\t= $fx
+    xnorm \t= $xnorm
+    gnorm \t= $gnorm
+    step \t= $step
+    n \t\t= $n
+    ls \t\t= $ls
+        """
+        )
+
+        LBFGSReturnCode.Success
+end OptimizationLogic

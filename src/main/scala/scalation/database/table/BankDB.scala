@@ -5,7 +5,7 @@
  *  @date    Sun Jul  2 19:49:36 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Database: Bank Database
+ *  @note    Example Database: Bank Database
  */
 
 package scalation
@@ -17,6 +17,79 @@ package table
  *  > runMain scalation.database.table.bankDB
  */
 @main def bankDB (): Unit =
+
+    val branch   = Table ("branch", "bname, assets, bcity", "S, D, S", "bname")
+    val customer = Table ("customer", "cname, street, ccity", "S, S, S", "cname")
+    val deposit  = Table ("deposit", "bname, accno, cname, balance", "S, I, S, D", "accno")
+    val loan     = Table ("loan", "bname, loanno, cname, amount", "S, I, S, D", "loanno")
+
+    branch.add ("Main",     15000000.0, "Athens")
+          .add ("Lake",     20000000.0, "Gainesville")
+          .add ("Downtown", 10000000.0, "Winder")
+          .add ("Alps",     11000000.0, "Athens" )
+          .show ()
+
+    customer.add ("Peter", "Maple St", "Athens")
+            .add ("Paul",  "Oak St",   "Athens")
+            .add ("Mary",  "Elm St",   "Winder")
+            .add ("Joe",   "Pine St",  "Athens")
+            .show ()
+
+    deposit.add ("Downtown", 901, "Peter", 1000.0)
+           .add ("Main",     902, "Paul",  2000.0)
+           .add ("Alps",     903, "Paul",  3000.0)
+           .add ("Lake",     904, "Paul",  1000.0)
+           .add ("Main",     905, "Mary",  1000.0)
+           .add ("Alps",     906, "Mary",  2000.0)
+           .add ("Lake",     907, "Joe",   1500.0)
+           .show ()
+
+    loan.add ("Lake",     1001, "Peter", 1000.0)
+        .add ("Alps",     1002, "Peter", 2000.0)
+        .add ("Main",     1003, "Paul",  1000.0)
+        .add ("Alps",     1004, "Paul",  2000.0)
+        .add ("Main",     1005, "Mary",  1000.0)
+        .add ("Downtown", 1006, "Mary",  2000.0)
+        .show ()
+
+    branch.create_index ()
+    customer.create_index ()
+    deposit.create_index ()
+    loan.create_index ()
+
+//  a) List the names and cities of customers who have at least one loan covered by one of their accounts (Silver Members).
+
+    banner ("""Q1: (customer ⋈ deposit ⋈ loan).π("cname, ccity")""")
+    val q1 = (customer ⋈ deposit ⋈ loan).π("cname, ccity")
+    q1.create_index ()
+    q1.show ()
+
+//  b) List the names and cities of customers who have accounts at all the branches located in the city they live in.
+
+    banner ("my_branches: cname, ccity and their branches")
+    val my_branches = (customer ⋈ deposit ⋈ branch).π("cname, ccity, bname")
+    my_branches.show ()
+
+    banner ("city_branches: cname, ccity and branches in their city")
+    val city_branches = (customer × branch).σ ("ccity == bcity").π("cname, ccity, bname")
+    city_branches.show ()
+
+    banner ("Q2: customers with accounts at all branches in their city ")
+    val q2 = customer.π("cname, ccity") - (city_branches - my_branches).π("cname, ccity")
+    q2.show ()
+
+    val q2_ = customer.π("cname, ccity") - ( (customer × branch).σ ("ccity == bcity").π("cname, ccity, bname") -
+                                           (customer ⋈ deposit ⋈ branch).π("cname, ccity, bname") ).π("cname, ccity")
+    q2_.show ()
+
+end bankDB
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bankDB2` main function uses the `Table` class for simple database application.
+ *  > runMain scalation.database.table.bankDB2
+ */
+@main def bankDB2 (): Unit =
 
     val branch    = Table ("branch", "bname, bcity, assets", "S, S, D", "bname")
     val customer  = Table ("customer", "id, cname, street, ccity", "I, S, S, S", "id")
@@ -125,5 +198,5 @@ package table
     t_gold2.create_index ()
     t_gold2.show ()
 
-end bankDB
+end bankDB2
 

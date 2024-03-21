@@ -5,10 +5,10 @@
  *  @date    Tue Nov 29 15:46:51 EST 2011
  *  @see     LICENSE (MIT style license file).
  *
+ *  @note    Jackson Queueing Network
+ *
  *  @see www.ece.virginia.edu/~mv/edu/715/lectures/QNet.pdf
  *  @see hspm.sph.sc.edu/Courses/J716/pdf/716-8%20Queuing%20Theory%20Cookbook.pdf
- *
- *  @title  Jackson Queueing Network
  */
 
 package scalation

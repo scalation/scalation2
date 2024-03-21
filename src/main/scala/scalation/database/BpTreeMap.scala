@@ -5,7 +5,7 @@
  *  @date    Fri Aug 11 00:26:03 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Map Implemented Using B+Trees
+ *  @note    Sorted Map Implemented Using B+Trees
  *
  *  Split Nodes on Overflow
  *  Borrow/Merge Nodes on Underflow (not yet implemented)
@@ -32,7 +32,6 @@ class BpTreeMap [V: ClassTag] ()
     var count = 0                                                        // count # nodes accessed (performance)
 
     private val debug = debugf ("BpTreeMap", true)                       // debug function
-    private val flaw  = flawf ("BpTreeMap")                              // flaw function
 
     private var keyCount = 0                                             // counter for total number of keys
     private var root  = new BpNode ()                                    // root node of this B+Tree

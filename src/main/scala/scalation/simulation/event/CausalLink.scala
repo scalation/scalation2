@@ -5,7 +5,7 @@
  *  @date    Sun Dec 6 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   CausalLink Shows Causality between Events
+ *  @note    CausalLink Shows Causality between Events
  */
 
 package scalation

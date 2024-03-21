@@ -5,7 +5,7 @@
  *  @date    Sun Sep 13 20:37:41 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Kalman Filter
+ *  @note    Model: Kalman Filter
  *
  *  @see web.mit.edu/kirtley/kirtley/binlustuff/literature/control/Kalman%20filter.pdf
  *  @see en.wikipedia.org/wiki/Kalman_filter
@@ -76,7 +76,6 @@ class KalmanFilter (x0: VectorD, ff: MatrixD, hh: MatrixD, qq: MatrixD, rr: Matr
      */
     def solve (dt: Double, u: VectorD = null): VectorD =
         var t  = 0.0                                      // initial time
-        var pp = new MatrixD (n, n)
 
         for k <- 0 until MAX_ITER do
 

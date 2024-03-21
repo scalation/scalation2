@@ -5,7 +5,7 @@
  *  @date    Wed Dec 30 14:48:41 EST 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model for Table-Oriented Simulation Models
+ *  @note    Model for Table-Oriented Simulation Models
  */
 
 package scalation

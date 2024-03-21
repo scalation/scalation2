@@ -5,12 +5,12 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  @note    Model: Auto-Regressive, Integrated, Moving Average (ARIMA)
  *
- *  @title   Auto-Regressive, Integrated, Moving Average (ARIMA) Model
+ *  @see http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
+ *  @see http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation
@@ -21,6 +21,7 @@ import scala.math.sqrt
 
 import scalation.mathstat._
 import scalation.optimization._
+import scalation.optimization.quasi_newton.BFGS
 import scalation.random.Normal
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -163,7 +164,6 @@ import ARIMA._
 class ARIMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARIMA.hp)
       extends ARMA (y, tt, hparam):
 
-    private val debug  = debugf ("ARIMA", true)                  // debug function
     private val flaw   = flawf ("ARIMA")                         // flaw function
 
     protected val d      = hparam("d").toInt                     // the number of differences to take
@@ -468,8 +468,6 @@ end aRIMATest
     println (s"y = $y")
 
     val (p, d, q) = (1, 1, 1)
-    val steps = 2                                                // number of steps for the forecasts
-
     hp("p") = p; hp("d") = d; hp("q") = q                        // set p, d and q for the ARIMA model
     val mod = new ARIMA (y)                                      // time series data: y vs. t
     mod.train (null, y)                                          // train the model on full dataset
@@ -489,7 +487,7 @@ end aRIMATest2
     val nfile = "travelTime.csv"
     val data  = MatrixD.load (nfile)
 
-    val t = data(?, 0)
+//  val t = data(?, 0)
     val y = data(?, 1)
     println (s"y = $y")
 

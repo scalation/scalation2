@@ -4,6 +4,8 @@
  *  @version 2.0
  *  @date    Mon Sep 21 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
+ *
+ *  @note    Quadratic (Quad) Curve
  */
 
 package scalation

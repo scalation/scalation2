@@ -5,7 +5,7 @@
  *  @date    Sat Jun 25 20:41:18 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Relational Table Generation
+ *  @note    Relational Table Generation
  */
 
 package scalation
@@ -22,7 +22,6 @@ import relation.Vectr
  */
 object TableGen:
 
-    private val debug = debugf ("TableGen", true)                     // debug function
     private val flaw  = flawf ("TableGen")                            // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

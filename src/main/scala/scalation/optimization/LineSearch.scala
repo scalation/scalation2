@@ -5,7 +5,7 @@
  *  @date    Wed Oct 24 18:32:24 EDT 2012
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Base Trait for Line Search Optimizers
+ *  @note    Base Trait for Line Search Optimizers
  */
 
 package scalation

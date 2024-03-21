@@ -6,7 +6,7 @@
  *  @see     LICENSE (MIT style license file).
  *  @see     http://irh.inf.unideb.hu/~jsztrik/education/16/SOR_Main_Angol.pdf
  *
- *  @title   M/G/c Queue
+ *  @note    M/G/c Queue
  */
 
 package scalation

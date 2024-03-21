@@ -5,7 +5,7 @@
  *  @date    Thu Nov 17 20:55:43 EST 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Relational Table Generation
+ *  @naote   Columnar Relational Table Generation
  */
 
 package scalation
@@ -38,7 +38,7 @@ object TableGen:
         val uranI = RandomVecI (dim = nRows, max = 2 * nRows)
         val uranS = RandomVecS (dim = nRows)
 
-        val n     = table.cols                                 // number of columns
+//      val n     = table.cols                                 // number of columns
         val cn    = table.schema                               // column names
         val dn    = table.domain                               // columns  domains
         val pk    = table.key                                  // primary key

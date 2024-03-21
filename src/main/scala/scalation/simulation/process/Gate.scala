@@ -5,7 +5,7 @@
  *  @date    Sat 04 Jan 2014 03:18:01 EST 
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Gates Can Open and Shut
+ *  @note    Gates Can Open and Shut
  */
 
 package scalation

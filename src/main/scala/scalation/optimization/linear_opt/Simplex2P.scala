@@ -5,7 +5,7 @@
  *  @date    Sun Sep  4 21:57:30 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Two-Phase Simplex Algorithm
+ *  @note    Two-Phase Simplex Algorithm
  *
  *  @see Linear Programming and Network Flows, Bazaraa and Jarvis
  *  @see www.wiley.com/WileyCDA/WileyTitle/productCd-0470462728,subjectCd-BA04.html
@@ -231,7 +231,7 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
      */
     def solve (): VectorD =
         var x: VectorD = null                                // the decision variables
-        var y: VectorD = null                                // the dual variables
+//      var y: VectorD = null                                // the dual variables
         var f = Double.PositiveInfinity                      // worst possible value for minimization
 
         if R > 0 then
@@ -290,7 +290,7 @@ class Simplex2P (a: MatrixD, b: VectorD, c: VectorD)
     /** Convert the current tableau and basis to a string suitable for display.
      */
     override def toString: String =
-        var s = new StringBuilder ()
+        val s = new StringBuilder ()
         for i <- 0 to M do
             s ++= (if i == 0 then "tableau = | " else        "          | ")
             for j <- 0 until jj-1 do s++= "%8.3f, ".format (t(i, j))

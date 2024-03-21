@@ -5,7 +5,7 @@
  *  @date    Sat Jan 31 20:59:02 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Ridge Regression (L2 Shrinkage/Regularization)
+ *  @note    Model: Ridge Regression (L2 Shrinkage/Regularization)
  *
  *  @see math.stackexchange.com/questions/299481/qr-factorization-for-ridge-regression
  *  Ridge Regression using SVD
@@ -55,7 +55,7 @@ class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
          // no intercept => correct Degrees of Freedom (DoF); as lambda get larger, need effective DoF
 
     private val debug     = debugf ("RidgeRegression", false)            // debug function
-    private var lambda    = if hparam("lambda") <= 0.0 then findLambda._1
+    private val lambda    = if hparam("lambda") <= 0.0 then findLambda._1
                             else hparam ("lambda").toDouble
     private val algorithm = hparam("factorization")                      // factorization algorithm
 
@@ -142,12 +142,12 @@ class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     end findLambda
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Find an optimal value for the shrinkage parameter 'λ' using Training to
+    /*  Find an optimal value for the shrinkage parameter 'λ' using Training to
      *  minimize 'sse'.
      *  FIX - try other QoF measures, e.g., sse_cv
      *  @param xx  the  data/input matrix (full or test)
      *  @param yy  the response/output vector (full or test)
-     */
+     *
     def findLambda2 (xx: MatrixD = x, yy: VectorD = y): Double =
 
         def f_sse (λ: Double): Double = 
@@ -160,10 +160,10 @@ class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
             sse
         end f_sse
 
-//      val gs = new GoldenSectionLS (f_sse _)
-//      gs.search ()
-        -0.0
+        val gs = new GoldenSectionLS (f_sse _)
+        gs.search ()
     end findLambda2
+     */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Predict the value of vector y = f(x_, b).  It is overridden for speed.
@@ -345,7 +345,8 @@ end ridgeRegressionTest
     println (s"predict ($z) = $yp")
 
     banner ("Optimize lambda")
-    println (s"findLambda2 = ${mod.findLambda2 ()}")
+    println (s"findLambda = ${mod.findLambda}")
+//  println (s"findLambda2 = ${mod.findLambda2 ()}")
 
 end ridgeRegressionTest2
 
@@ -366,7 +367,6 @@ end ridgeRegressionTest2
                              32.0,  53.0,
                               1.0, 101.0)
     val y = VectorD (745.0, 895.0, 442.0, 440.0, 1598.0)
-    val z = VectorD (20.0, 80.0)
 
     println (s"x = $x")
     println (s"y = $y")
@@ -480,7 +480,7 @@ end ridgeRegressionTest5
 
     import Example_BPressure._
 
-    var mod = new RidgeRegression (x, y)                               // ridge regression model with no intercept
+    val mod = new RidgeRegression (x, y)                               // ridge regression model with no intercept
     mod.trainNtest ()()                                                // train and test the model
     println (mod.summary ())                                           // parameter/coefficient statistics
 

@@ -5,7 +5,7 @@
  *  @date    Mon Sep 27 15:03:10 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Spatial Objects Positioned in Space
+ *  @note    Spatial Objects Positioned in Space
  */
 
 package scalation

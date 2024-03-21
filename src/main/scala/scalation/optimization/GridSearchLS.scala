@@ -5,7 +5,7 @@
  *  @date    Sat Feb  1 15:55:04 EST 2020
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Line Search Optimizer
+ *  @note    Line Search Optimizer
  */
 
 package scalation

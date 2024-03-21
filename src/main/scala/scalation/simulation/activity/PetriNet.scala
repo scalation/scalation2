@@ -5,7 +5,7 @@
  *  @date    Fri Oct  16 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Petri Nets Consisting of Places, Transitions, Tokens and Flows
+ *  @note    Petri Nets Consisting of Places, Transitions, Tokens and Flows
  */
 
 package scalation
@@ -29,9 +29,8 @@ import scalation.scala2d.Colors._
  *  @param x       the place's x-coordinate
  *  @param y       the place's y-coordinate
  *  @param tokens  the number of tokens per color
- *  @param stays   whether the tokens stay (test arc)
  */
-class PlaceI (val x: Double, val y: Double, var tokens: VectorI, stays: Boolean = false)
+class PlaceI (val x: Double, val y: Double, var tokens: VectorI)
       extends Identifiable:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -62,9 +61,8 @@ end PlaceI
  *  @param x       the place's x-coordinate
  *  @param y       the place's y-coordinate
  *  @param fluids  the amount of fluid per color
- *  @param stays   whether the fluids stay (test arc)
  */
-class PlaceD (val x: Double, val y: Double, var fluids: VectorD, stays: Boolean = false)
+class PlaceD (val x: Double, val y: Double, var fluids: VectorD)
       extends Identifiable:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -99,8 +97,6 @@ end PlaceD
  */
 class Transition (val x: Double, val y: Double, firingDist: Variate, colors: Array [Color])
       extends Temporal with Ordered [Transition] with PetriNetRules with Identifiable:
-
-    private val flaw = flawf ("Transition")                           // flaw function
 
     /** The containing Petri net
      */
@@ -424,9 +420,9 @@ class ArcD (val place: PlaceD, val transition: Transition, incoming: Boolean, va
      *  @param firingDelay  the time it takes for the transition to fire
      */
     def _fluidFlow (fluids: VectorD, time: Double, firingDelay: Double): VectorD =
-        if derv == null then                          // use a linear or constant flow model
+        if derv == null then                                    // use a linear or constant flow model
             fluidFlow (fluids, minFluids, rates, firingDelay / scaleFactor)
-        else                                          // use an ODE based flow model
+        else                                                    // use an ODE based flow model
             fluidFlow (fluids, derv, time, firingDelay / scaleFactor)
         end if
     end _fluidFlow
@@ -446,7 +442,7 @@ class PetriNet (colors: Array [Color], placeI: Array [PlaceI], placeD: Array [Pl
                 transition: Array [Transition])
       extends PetriNetRules:
 
-    private val flaw = flawf ("PetriNet")                           // flaw function
+    private val debug = debugf ("PetriNet", true)               // debug function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Construct a discrete Petri net (tokens, but no fluids).
@@ -494,7 +490,9 @@ class PetriNet (colors: Array [Color], placeI: Array [PlaceI], placeD: Array [Pl
 
     /** Number of timed transitions (need at least 1)
      */
-    private val ntransitions = transition.length
+    private val ntrans = transition.length
+
+    debug ("init", s"ncolors = $ncolors, ndplaces = $ndplaces, ncplaces = $ncplaces, ntrans = $ntrans") 
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Get the current time.
@@ -553,7 +551,6 @@ class PetriNet (colors: Array [Color], placeI: Array [PlaceI], placeD: Array [Pl
                     println ("PetriNet.initAnimation: token " + tk_id + " for place " + pI.id)
                     cqueue.add (AnimateCommand (CreateToken, tk_id, Ellipse (), "tk" + tk_id, false,
                                                 colors(i), null, 0, pI.id))
-                end for
             end for
         end for
 
@@ -583,19 +580,15 @@ class PetriNet (colors: Array [Color], placeI: Array [PlaceI], placeD: Array [Pl
             for aI <- tr.inI do
                 cqueue.add (AnimateCommand (CreateEdge, aI.id, QCurve (), "aI" + aI.id, true, gColors(3),
                                             null, 0, aI.place.id, aI.transition.id))
-            end for
             for aD <- tr.inD do
                 cqueue.add (AnimateCommand (CreateEdge, aD.id, QCurve (), "aD" + aD.id, true, gColors(3),
                             null, 0, aD.place.id, aD.transition.id))
-            end for
             for aI <- tr.outI do
                 cqueue.add (AnimateCommand (CreateEdge, aI.id, QCurve (), "aI" + aI.id, true, gColors(3),
                                             null, 0, aI.transition.id, aI.place.id))
-            end for
             for aD <- tr.outD do
                 cqueue.add (AnimateCommand (CreateEdge, aD.id, QCurve (), "aD" + aD.id, true, gColors(3),
                                             null, 0, aD.transition.id, aD.place.id))
-            end for
         end for
 
         println ("PetriNet.initAnimation: end drawing the Petri net graph")

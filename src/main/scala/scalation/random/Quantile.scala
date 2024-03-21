@@ -5,7 +5,7 @@
  *  @date    Wed Sep 30 18:41:26 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Quantiles: inverse Cumulative Distribution Functions (iCDF's)
+ *  @note    Quantiles: inverse Cumulative Distribution Functions (iCDF's)
  */
 
 package scalation

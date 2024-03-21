@@ -5,7 +5,7 @@
  *  @date    Tue Sep 29 14:14:15 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Example Dataset: Automobile Miles Per Gallon (MPG)
+ *  @note    Example Dataset: Automobile Miles Per Gallon (MPG)
  */
 
 package scalation

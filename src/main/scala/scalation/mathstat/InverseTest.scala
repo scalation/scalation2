@@ -5,7 +5,7 @@
  *  @date    Tue Jul  6 11:33:53 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Test: Inverse via Matrix Factorization
+ *  @note    Test: Inverse via Matrix Factorization
  */
 
 package scalation

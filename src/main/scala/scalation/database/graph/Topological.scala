@@ -5,7 +5,7 @@
  *  @date    Thu Oct 14 22:41:46 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Topological Objects/Tokens Located in a Graph
+ *  @note    Topological Objects/Tokens Located in a Graph
  */
 
 package scalation

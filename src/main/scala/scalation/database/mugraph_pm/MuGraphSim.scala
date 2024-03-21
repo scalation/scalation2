@@ -5,7 +5,7 @@
  *  @date    Tue Nov  1 19:12:16 EDT 2016
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Multi-Graph `MuGraph` Graph Simulation Using Mutable Sets
+ *  @note    Multi-Graph `MuGraph` Graph Simulation Using Mutable Sets
  */
 
 package scalation
@@ -37,7 +37,8 @@ class MuGraphSim (g: MuGraph, q: MuGraph)
      *  @param φ  array of mappings from a query vertex u to { graph vertices v }
      */
     def prune0 (φ: Array [SET [Int]]): Array [SET [Int]] =
-        var (rem, alter) = (SET [Int] (), true)                     // vertices to be removed, whether removed?
+        val rem   = SET [Int] ()                                    // vertices to be removed
+        var alter = true                                            // whether removed?
         breakable {
             while alter do                                          // check for matching children
                 alter = false                                       // no vertices removed yet
@@ -49,7 +50,6 @@ class MuGraphSim (g: MuGraph, q: MuGraph)
                     for v <- φ(u) do                                // for each v in g image of u
                         if (g.ch(v) & φ_u_c).isEmpty then           // v must have a child in φ(u_c)
                             rem += v; alter = true                  // match failed => add v to removal list
-                        end if
                     end for
                     if remove (φ, u, rem) then break ()             // remove rem vertices from φ(u)
                 end for
@@ -65,7 +65,8 @@ class MuGraphSim (g: MuGraph, q: MuGraph)
      *  @param φ  array of mappings from a query vertex u to { graph vertices v }
      */
     def prune (φ: Array [SET [Int]]): Array [SET [Int]] =
-        var (rem, alter) = (SET [Int] (), true)                     // vertices to be removed, whether removed?
+        val rem   = SET [Int] ()                                    // vertices to be removed
+        var alter = true                                            // whether removed?
         breakable {
             while alter do                                          // check for matching children
                 alter = false                                       // no vertices removed yet
@@ -79,7 +80,6 @@ class MuGraphSim (g: MuGraph, q: MuGraph)
                         val v_c = g.ch(v).filter (l_u2u_c subsetOf g.elabel (v, _))   // filter on edge labels with subset
                         if (v_c & φ_u_c).isEmpty then               // v must have a child in φ(u_c)
                             rem += v; alter = true                  // match failed => add v to removal list
-                        end if
                     end for
                     if remove (φ, u, rem) then break ()             // remove rem vertices from φ(u)
                 end for

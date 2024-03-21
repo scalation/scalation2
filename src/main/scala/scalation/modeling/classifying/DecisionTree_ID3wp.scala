@@ -5,7 +5,7 @@
  *  @date    Wed May 22 14:17:49 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: ID3 Decision/Classification Tree with Pruning
+ *  @note    Model: ID3 Decision/Classification Tree with Pruning
  */
 
 package scalation
@@ -144,7 +144,7 @@ end decisionTree_ID3wpTest2
     val cname = Array ("benign", "malignant")
     val k     = cname.size
 
-    val (x, y) = (xy.not (?, xy.dim2-1), xy(?, xy.dim2-1).toInt)
+    val y = xy(?, xy.dim2-1).toInt
     val ymin   = y.min
     println (s"unadjusted ymin = $ymin")
     if ymin != 0 then y -= ymin
@@ -178,7 +178,6 @@ end decisionTree_ID3wpTest2
     // Print the accuracy for unseen data
     var accurateCount = 0.0
     for i <- testFeature.indices do
-        val d = tree.classify (testFeature(i))._1
         if tree.classify (testFeature(i))._1 == testTarget(i) then accurateCount += 1
     end for
     var accuracy = accurateCount / testFeature.dim
@@ -187,7 +186,6 @@ end decisionTree_ID3wpTest2
     tree.prune (5)
     accurateCount = 0.0
     for i <- testFeature.indices do
-        val d = tree.classify (testFeature(i))._1
         if tree.classify (testFeature(i))._1 == testTarget(i) then accurateCount += 1
     end for
     accuracy = accurateCount / testFeature.dim

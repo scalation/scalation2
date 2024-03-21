@@ -5,7 +5,7 @@
  *  @date    Mon Sep 21 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Graph Structure Suitable for Animation
+ *  @note    Graph Structure Suitable for Animation
  */
 
 package scalation
@@ -18,7 +18,7 @@ import scalation.mathstat.VectorD
 import scalation.scala2d._
 import scalation.scala2d.Colors._
 
-import Counter.{nextE, nextN, nextT}
+import Counter.{nextE, nextN}
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Dgraph` class is for defining graph structures suitable for animation.
@@ -33,10 +33,15 @@ import Counter.{nextE, nextN, nextT}
  *  labeled (nodes, edges and tokens as well as the graph itself).  Nodes and edges
  *  may be added to/removed from graphs, while tokens may be added to/removed from
  *  either nodes or edges.  Tokens may also be free (not bound to nodes or edges).
+ *  @param name       the name of the graph
+ *  @param bipartite  whether the graph is bipartite (edges only between 2 types of nodes)
  */
-class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
+class Dgraph (name: String, bipartite: Boolean = false):
 
-    private val flaw = flawf ("Dgraph")                           // flaw function
+    private val debug = debugf ("Dgraph", false)                  // debug function
+    private val flaw  = flawf ("Dgraph")                          // flaw function
+
+    debug ("init", s"create graph: name = $name, bipartite = $bipartite")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `Node` class is used to represent nodes in the graph.
@@ -315,7 +320,7 @@ class Dgraph (name: String = "Dgraph", bipartite: Boolean = false):
     case class Token (shape: RectangularShape, label: String, primary: Boolean, var color: Color,
                       var onNode: Node, val w: Double, val h: Double):
 
-        private val id = nextT ()                                // token identifier
+//      private val id = nextT ()                                // token identifier
 
         if onNode != null then
             onNode.addToken (this)

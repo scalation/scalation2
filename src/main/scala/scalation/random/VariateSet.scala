@@ -5,7 +5,7 @@
  *  @date    Wed Sep 16 16:12:08 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Random Variate Set (RVS) Generators
+ *  @note    Random Variate Set (RVS) Generators
  */
 
 package scalation

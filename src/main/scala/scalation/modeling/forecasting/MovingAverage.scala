@@ -5,7 +5,7 @@
  *  @date    Sat Jun 13 01:27:00 EST 2017
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simple Moving Average
+ *  @note    Model: Simple Moving Average
  */
 
 package scalation
@@ -262,6 +262,8 @@ end movingAverageTest3
     val data = MatrixD.load ("travelTime.csv")                         // automatically prepends DATA_DIR
 
     val (t, y) = (data(?, 0), data(?, 1))
+
+    println (s"t.dim = ${t.dim}, y.dim = ${y.dim}")
 
     banner ("Build AR(1) Model")
     val ar = new AR (y)                                                // time series model

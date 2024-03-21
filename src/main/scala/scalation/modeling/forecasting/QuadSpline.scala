@@ -5,7 +5,7 @@
  *  @date    Tue May 11 16:25:40 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Quadratic Spline
+ *  @note    Model: Quadratic Spline
  */
 
 package scalation

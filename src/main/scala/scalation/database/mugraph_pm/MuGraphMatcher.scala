@@ -5,7 +5,7 @@
  *  @date    Wed May 13 14:58:25 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   MuGraph Pattern Matching Using Mutable Sets
+ *  @note    MuGraph Pattern Matching Using Mutable Sets
  */
 
 package scalation

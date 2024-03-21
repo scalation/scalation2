@@ -5,7 +5,7 @@
  *  @date    Sat Jun 15 13:19:05 EDT 2019
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Extreme-Learning Machines with Regression
+ *  @note    Model: Extreme-Learning Machines with Regression
  *
  *  @see     www.ntu.edu.sg/home/egbhuang/pdf/ELM-Unified-Learning.pdf
  *  @see     www.sciencedirect.com/science/article/pii/S0893608014002214
@@ -45,7 +45,6 @@ class ELM_3L1 (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
 
-    private val debug = debugf ("ELM_3L1", true)                        // debug function
     private val n     = x.dim2                                          // nodes in input layer
     private val s     = 8                                               // random number stream to use (0 - 999)
 
@@ -53,7 +52,7 @@ class ELM_3L1 (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     val df_m = compute_df_m (nz)                                        // degrees of freedom for model (first output only)
     resetDF (df_m, x.dim - df_m)                                        // degrees of freedom for (model, error)
  
-    private var a = new NetParam (weightMat3 (n, nz, s),
+    private val a = new NetParam (weightMat3 (n, nz, s),
                                   weightVec3 (nz, s))                   // parameters (weights & biases) in to hid (fixed)
 
     modelName = "ELM_3L1_" + f.name
@@ -145,8 +144,6 @@ object ELM_3L1 extends Scaling:
                nz: Int = -1, hparam: HyperParameter = Regression.hp,
                f: AFF = f_tanh)
               (col: Int = xy.dim2 - 1): ELM_3L1 =
-
-        var itran: FunctionV2V = null                                   // inverse transform -> orginal scale
         val (x, y) = (xy.not(?, col), xy(?, col))                       // column col is the response
 
         val x_s = if scale then rescaleX (x, f)
@@ -154,7 +151,7 @@ object ELM_3L1 extends Scaling:
         val y_s = y                                                     // no need to scale y
 
 //      println (s" scaled: x = $x_s \n scaled y = $y_s")
-        new ELM_3L1 (x_s, y_s, fname, nz, hparam, f, itran)
+        new ELM_3L1 (x_s, y_s, fname, nz, hparam, f, itran = null)
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -170,14 +167,12 @@ object ELM_3L1 extends Scaling:
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
                nz: Int = -1, hparam: HyperParameter = Regression.hp,
                f: AFF = f_tanh): ELM_3L1 =
-        var itran: FunctionV2V = null                                   // inverse transform -> orginal scale
-
         val x_s = if scale then rescaleX (x, f)
                   else x
         val y_s = y                                                     // no need to scale y
 
 //      println (s" scaled: x = $x_s \n scaled y = $y_s")
-        new ELM_3L1 (x_s, y_s, fname, nz, hparam, f, itran)
+        new ELM_3L1 (x_s, y_s, fname, nz, hparam, f, itran = null)
     end rescale
 
 end ELM_3L1

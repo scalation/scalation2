@@ -5,7 +5,7 @@
  *  @date    Fri Jan  5 14:03:36 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Simpler Linear Regression (one variable, one parameter)
+ *  @note    Model: Simpler Linear Regression (one variable, one parameter)
  */
 
 package scalation

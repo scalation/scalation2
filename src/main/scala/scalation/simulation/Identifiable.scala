@@ -5,7 +5,7 @@
  *  @date    Tue Sep  15 15:05:06 EDT 2009
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Identifiable Provides a Means for Identifying Simulation Components
+ *  @note    Identifiable Provides a Means for Identifying Simulation Components
  */
 
 package scalation

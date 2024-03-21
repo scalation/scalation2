@@ -5,7 +5,7 @@
  *  @date    Wed Aug 24 15:05:08 EDT 2011
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Quadratic Simplex Method for QP with Linear Constraints
+ *  @note    Quadratic Simplex Method for QP with Linear Constraints
  */
 
 package scalation
@@ -41,7 +41,6 @@ import scalation.mathstat.{MatrixD, VectorD}
 class QuadraticSimplex (a: MatrixD, b: VectorD, q: MatrixD, c: VectorD, var x_B: Array [Int] = null):
 
     private val flaw     = flawf ("QuadraticSimplex")   // if true, show each pivot
-    private val EPSILON  = 1E-9                         // number close to zero
     private val M        = a.dim                        // number of constraints (rows in a)
     private val N        = a.dim2                       // number of original variables (columns in a)
     private val MM       = M + q.dim                    // # rows in tableau

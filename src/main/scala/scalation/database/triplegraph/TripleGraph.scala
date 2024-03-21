@@ -5,7 +5,7 @@
  *  @date    Sun Oct  9 15:40:47 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Triple-Graph Data Structure Using Mutable Sets Supporting Pattern Matching
+ *  @note    Triple-Graph Data Structure Using Mutable Sets Supporting Pattern Matching
  */
 
 package scalation
@@ -47,8 +47,6 @@ case class TripleGraph (label: Array [ValueType],
                         name: String = "g",
                         schema: Array [String] = Array ())
      extends Cloneable:
-
-    private val flaw = flawf ("TripleGraph")                    // flaw function
 
     val hindex    = Map [Int, SET [Triple]] ()                  // index to triples with the given head vertex
     val tindex    = Map [Int, SET [Triple]] ()                  // index to triples with the given tail vertex

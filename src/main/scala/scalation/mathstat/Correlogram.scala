@@ -5,7 +5,7 @@
  *  @date    Sat Dec  8 14:32:12 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model Framework: Correlogram with ACF and PACF
+ *  @note    Model Framework: Correlogram with ACF and PACF
  */
 
 package scalation

@@ -5,7 +5,7 @@
  *  @date    Sun Jan  4 23:09:27 EST 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: Regression Containing Categorical Variables
+ *  @note    Model: Regression Containing Categorical Variables
  */
 
 package scalation

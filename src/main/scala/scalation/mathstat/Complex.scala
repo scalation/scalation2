@@ -5,7 +5,7 @@
  *  @date    Mon Feb 22 12:11:17 EST 2010
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Complex Numbers
+ *  @note    Complex Numbers
  */
 
 package scalation

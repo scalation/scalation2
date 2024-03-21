@@ -5,7 +5,7 @@
  *  @date    Thu Sep  8 20:34:26 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Knowledge-Graph Algebra (KGA) for Knowledge-Graph DBMS
+ *  @note    Knowledge-Graph Algebra (KGA) for Knowledge-Graph DBMS
  */
 
 package scalation
@@ -19,12 +19,10 @@ package table
  */
 object KGTable:
 
-    private val debug = debugf ("KGTable", true)                            // debug function
-    private val flaw  = flawf ("KGTable")                                   // flaw function
     private val cntr  = Counter ()                                          // counter for generating unique names
 
-    private var useFullPath = false                                         // defaults to using relative file paths
-    private var limit       = -1                                            // limit on number of lines to read
+//  private var useFullPath = false                                         // defaults to using relative file paths
+//  private var limit       = -1                                            // limit on number of lines to read
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a knowledge-graph-table given convenient string specifications.
@@ -240,8 +238,8 @@ end kGTableTest
     //--------------------------------------------------------------------------
     banner ("Populate Database")
 
-    val v_Joe    = person.addV (91, "Joe", "Birch St", "Athens")
-    val v_Sue    = person.addV (92, "Sue", "Ceder St", "Athens")
+    person.addV (91, "Joe", "Birch St", "Athens")
+    person.addV (92, "Sue", "Ceder St", "Athens")
 
     val v_Peter  = student.addV (101, "Peter", "Oak St",   "Bogart",       "CS", 3)
     val v_Paul   = student.addV (102, "Paul",  "Elm St",   "Watkinsville", "CE", 4)

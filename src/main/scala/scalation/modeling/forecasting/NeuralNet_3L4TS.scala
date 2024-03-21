@@ -5,7 +5,7 @@
  *  @date    Sun Feb 13 16:22:21 EST 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   Model: NeuralNet_3L for Time Series
+ *  @note    Model: NeuralNet_3L for Time Series
  */
 
 package scalation
@@ -22,32 +22,28 @@ import neuralnet.{NeuralNet_3L, Optimizer}
  *  for Time Series data.  Given a response vector y, a predictor matrix x is built
  *  that consists of lagged y vectors.
  *      y_t = f2 (b dot f(a dot x))
- *  where x = [y_{t-1}, y_{t-2}, ... y_{t-lag}].
+ *  where x = [y_{t-1}, y_{t-2}, ... y_{t-lags}].
  */
 object NeuralNet_3L4TS:
-
-    private val debug   = debugf ("NeuralNet_3L4TS", true)                // debug function
-    private val flaw    = flawf ("NeuralNet_3L4TS")                       // flaw function
-    private val MISSING = -0.0                                            // missing value
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `NeuralNet_3L` object from a response vector.  The input/data matrix
      *  x is formed from the lagged y vectors as columns in matrix x.
      *  @param y       the original un-expanded output/response vector
-     *  @param lag     the maximum lag included (inclusive)
+     *  @param lags    the maximum lag included (inclusive)
      *  @param h       the forecasting horizon (1, 2, ... h)
      *  @param nz      the number of nodes in hidden layer (-1 => use default formula)
      *  @param hparam  the hyper-parameters (use Optimizer.hp for default)
      *  @param f       the activation function family for layers 1->2 (input to output)
      *  @param f1      the activation function family for layers 2->3 (hidden to output)
      */
-    def apply (y: VectorD, lag: Int, h: Int, nz: Int = -1,
+    def apply (y: VectorD, lags: Int, h: Int, nz: Int = -1,
                hparam: HyperParameter = Optimizer.hp,
                f: AFF = f_eLU, f1: AFF = f_tanh): NeuralNet_3L =
-        var (x, yy) = buildMatrix4TS (y, lag, h)                          // column for each lag
+        val (x, yy) = buildMatrix4TS (y, lags, h)                         // column for each lag
 
         val mod = NeuralNet_3L.rescale (x, yy, null, nz, hparam, f, f1)
-        mod.modelName = s"NeuralNet_3L4TS_$lag${f.name}_${f1.name}"
+        mod.modelName = s"NeuralNet_3L4TS_$lags${f.name}_${f1.name}"
         mod
     end apply
 
@@ -91,7 +87,6 @@ end neuralNet_3L4TSTest
 @main def neuralNet_3L4TSTest2 (): Unit =
 
     import Example_LakeLevels.y
-    val m = y.dim
     val h = 2                                                          // the forecasting horizon
 
     for p <- 1 to 7 do                                                 // autoregressive hyper-parameter p
@@ -122,6 +117,9 @@ end neuralNet_3L4TSTest2
  */
 @main def neuralNet_3L4TSTest4 (): Unit =
 
+    val LAGS = 10                                                               // number of lags
+    val h    = 4                                                                // forecasting horizon
+
     val (x, y) = Example_Covid.loadData (Array ("new_cases", "hosp_patients", "icu_patients"), "new_deaths")
 
     println (s"x.dims = ${x.dims}, y.dim = ${y.dim}")
@@ -130,14 +128,14 @@ end neuralNet_3L4TSTest2
     Optimizer.hp ("eta") = 0.01
 
     banner ("Test NeuralNet_3L4TS on COVID-19 Weekly Data")
-    val mod = NeuralNet_3L4TS (y, 10, 4, f = f_(0), f1 = f_(1))                 // create model for time series data
-//  val mod = NeuralNet_3L4TS.exo (y, 10, x(?, 0), x(?, 1), x(?, 2), 4)(1, 11)  // create model for time series data
+    val mod = NeuralNet_3L4TS (y, LAGS, h, f = f_(0), f1 = f_(1))                 // create model for time series data
+//  val mod = NeuralNet_3L4TS.exo (y, LAGS, x(?, 0), x(?, 1), x(?, 2), 4)(1, 11)  // create model for time series data
 
 //  val (x_, y_, xx, yy) = NeuralNet_3L4TS.split_TnT (mod.getX, mod.getY)
 //  val (yp, qof) = mod.trainNtest (x_, y_)(xx, yy)                             // train on (x_, y_) and test on (xx, yy)
 
     val (yp, qof) = mod.trainNtest ()()                                         // train on full and test on full
-    val yy = y(10 until y.dim)
+    val yy = y(LAGS until y.dim)
     new Plot (null, yy, yp(?, 0), s"${mod.modelName}, yy vs. yp", lines = true)
 
     banner (s"Feature Selection Technique: stepRegression")

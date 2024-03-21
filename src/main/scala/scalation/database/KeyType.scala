@@ -5,7 +5,7 @@
  *  @date    Mon Jul  4 12:55:00 EDT 2022
  *  @see     LICENSE (MIT style license file).
  *
- *  @title   KeyType for Handling Non-Composite and Composite Keys
+ *  @note    KeyType for Handling Non-Composite and Composite Keys
  */
 
 package scalation
