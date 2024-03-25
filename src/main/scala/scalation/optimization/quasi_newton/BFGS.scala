@@ -29,7 +29,6 @@ import scala.util.control.Breaks.{break, breakable}
 import scalation.calculus.Differential.∇
 import scalation.mathstat.*
 import scalation.optimization.functions.*
-import scalation.scala2d.writeImage
 
 // Simplifying imports.
 import MatrixD.eye
@@ -275,7 +274,6 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
      *  @param x0                   The starting point/guess.
      *  @param grad                 The gradient as explicit functions for
      *                              partials.
-     *  @param step_                The initial step size.
      *  @param toler                The tolerance.
      *  @param lineSearchAlgorithm  [[LBFGSLineSearchAlgorithm]] representing
      *                              the line search algorithm chosen for the
@@ -289,15 +287,13 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
     def solve3 (
         x0: VectorD,
         grad: FunctionV2V,
-        step_ : Double = STEP,
         toler: Double = TOL,
         lineSearchAlgorithm: LBFGSLineSearchAlgorithm = LBFGSLineSearchAlgorithm.Default,
         lineSearchParams: LBFGSLineSearchParameters = LBFGSLineSearchParameters()
     ): FuncVec =
-        debug ("solve3", s"x0 = $x0, step_ = $step_, toler = $toler")
+        debug ("solve3", s"x0 = $x0, toler = $toler")
         clearPath()
 
-        var step = step_                                          // set the current step size
         var x    = (x0, grad (x0))                                // current (point, gradient)
         var xx:  (VectorD, VectorD) = (null, null)                // next (point, gradient)
         var dir: VectorD = null                                   // initial direction is -gradient
@@ -325,7 +321,7 @@ class BFGS (f: FunctionV2S, g: FunctionV2S = null,
         val dampeningCoefficient = 0.99                           // how much the increase to aHi should be dampened
 
         dir = if bfgs then -(aHi * x._2) else -x._2
-        step = 1 / dir.norm
+        var step = 1 / dir.norm                                   // set the current step size
 
         breakable {
             for it <- 1 to MAX_IT do
@@ -510,6 +506,41 @@ end bFGSTest3
 
 end bFGSTest4
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bFGSBealeFunction` main function is used to test the `BFGS` class on f(x):
+ *      f(x) = (1.5 - x(0) + x(0)*x(1))^2^ + (2.25 - x(0) + x(0)*(x(1)^2^))^2^ + (2.625 - x(0) + x(0)*(x(1)^3^))^2^
+ *  {{{
+ *  > runMain scalation.optimization.bFGSBealeFunction
+ *  }}}
+ */
+@main def bFGSBealeFunction (): Unit =
+//    val functionDomainLowerBound = VectorD(-10, -10)
+//    val functionDomainUpperBound = VectorD(10, 10)
+
+    def f = BealeFunction.objectiveFunction
+    def grad = BealeFunction.gradientFunction
+    val optimizer = new BFGS (f)
+
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(3, 0), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(2, -1), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(0, 1), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(-2, -1), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
+
+//    val plot = new PlotC(BealeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, optimizer.getPath, BealeFunction.functionMinimum)
+//    writeImage("./plots/BFGS/BFGS_bealeFunction_plot.png", plot)
+
+//  opt = optimizer.resolve (n)                             // try multiple starting points
+//  println (s"][ optimal solution (f(x), x) = $opt")
+
+end bFGSBealeFunction
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSBoothFunction` main function is used to test the `BFGS` class on f(x):
@@ -520,139 +551,27 @@ end bFGSTest4
  */
 @main def bFGSBoothFunction (): Unit =
 
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize: (x(0) + 2 * x(1) - 7) ~^ 2 + (2 * x(0) + x(1) - 5) ~^ 2")
     def f = BoothFunction.objectiveFunction
     def grad = BoothFunction.gradientFunction
-
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(2, 1), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
     println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(-1, 5), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(-5, 5), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(-5, -2), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")
 
 end bFGSBoothFunction
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bFGSBealeFunction` main function is used to test the `BFGS` class on f(x):
- *      f(x) = (1.5 - x(0) + x(0)*x(1))^2^ + (2.25 - x(0) + x(0)*(x(1)^2^))^2^ + (2.625 - x(0) + x(0)*(x(1)^3^))^2^
- *  {{{
- *  > runMain scalation.optimization.bFGSBealeFunction
- *  }}}
- */
-@main def bFGSBealeFunction (): Unit =
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val x0   = VectorD (2, -2)                           // starting location
-    val functionDomainLowerBound = VectorD(-10, -10)
-    val functionDomainUpperBound = VectorD(10, 10)
-
-    banner ("Minimize: (1.5 - x(0) + x(0)*x(1))~^2 + (2.25 - x(0) + x(0)*(x(1)~^2))~^2 + (2.625 - x(0) + x(0)*(x(1)~^3))~^2")
-    def f = BealeFunction.objectiveFunction
-    def grad = BealeFunction.gradientFunction
-
-    val optimizer = new BFGS (f)
-    val opt = optimizer.solve3 (x0, grad, step)
-    println (s"][ optimal solution (f(x), x) = $opt")
-
-    val plot = new PlotC(BealeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, optimizer.getPath, BealeFunction.functionMinimum)
-    writeImage("./plots/BFGS/BFGS_bealeFunction_plot.png", plot)
-
-//  opt = optimizer.resolve (n)                             // try multiple starting points
-//  println (s"][ optimal solution (f(x), x) = $opt")
-
-end bFGSBealeFunction
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bFGSBohachevsky1Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7
- *  {{{
- *  > runMain scalation.optimization.bFGSBohachevsky1Function
- *  }}}
- */
-@main def bFGSBohachevsky1Function (): Unit =
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)) - 0.4*math.cos(4*math.Pi*x(1)) + 0.7")
-    def f = Bohachevsky1Function.objectiveFunction
-    def grad = Bohachevsky1Function.gradientFunction
-
-    val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
-    println (s"][ optimal solution (f(x), x) = $opt")
-
-//  opt = optimizer.resolve (n)                             // try multiple starting points
-//  println (s"][ optimal solution (f(x), x) = $opt")
-
-end bFGSBohachevsky1Function
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bFGSBohachevsky2Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3
- *  {{{
- *  > runMain scalation.optimization.bFGSBohachevsky2Function
- *  }}}
- */
-@main def bFGSBohachevsky2Function (): Unit =
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0))*math.cos(4*math.Pi*x(1)) + 0.3")
-    def f = Bohachevsky2Function.objectiveFunction
-    def grad = Bohachevsky2Function.gradientFunction
-
-    val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
-    println (s"][ optimal solution (f(x), x) = $opt")
-
-//  opt = optimizer.resolve (n)                             // try multiple starting points
-//  println (s"][ optimal solution (f(x), x) = $opt")
-
-end bFGSBohachevsky2Function
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bFGSBohachevsky3Function` main function is used to test the `BFGS` class on f(x):
- *      f(x) = x(0)^2^ + 2*x(1)^2^ - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3
- *  {{{
- *  > runMain scalation.optimization.bFGSBohachevsky3Function
- *  }}}
- */
-@main def bFGSBohachevsky3Function (): Unit =
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize: x(0)~^2 + 2*x(1)~^2 - 0.3*math.cos(3*math.Pi*x(0)+4*math.Pi*x(1)) + 0.3")
-    def f = Bohachevsky3Function.objectiveFunction
-    def grad = Bohachevsky3Function.gradientFunction
-
-    val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
-    println (s"][ optimal solution (f(x), x) = $opt")
-
-//  opt = optimizer.resolve (n)                             // try multiple starting points
-//  println (s"][ optimal solution (f(x), x) = $opt")
-
-end bFGSBohachevsky3Function
-
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bFGSCamel3Function` main function is used to test the `BFGS` class on f(x):
@@ -663,18 +582,22 @@ end bFGSBohachevsky3Function
  */
 @main def bFGSCamel3Function (): Unit =
 
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize:  2*x(0)~^2 - 1.05*x(0)~^4 + (1/6.0)*x(0)~^6 + x(0)*x(1) + x(1)~^2")
     def f = Camel3Function.objectiveFunction
     def grad = Camel3Function.gradientFunction
-
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(2, 2), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
     println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(-3, -3), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(4, -4), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(-5, 5), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")
@@ -690,18 +613,22 @@ end bFGSCamel3Function
  */
 @main def bFGSCubeFunction (): Unit =
 
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize:  100*(x(1) - x(0)~^3)~^2 + (1-x(0))~^2")
     def f = CubeFunction.objectiveFunction
     def grad = CubeFunction.gradientFunction
-
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(0, 0), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
     println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(3, 3), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(4, 5), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(5, -5), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")
@@ -717,19 +644,22 @@ end bFGSCubeFunction
  *  }}}
  */
 @main def bFGSFreudensteinRothFunction (): Unit =
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val n = 2                                            // dimension of the search space
-    val x0   = new VectorD (n)                           // starting location
-
-    banner ("Minimize:  (x(0) - 13 + x(1)*((5-x(1))*x(1) -2))~^2 + (x(0) -29 + x(1)*((x(1) + 1)*x(1) -14))~^2")
     def f =  FreudensteinRothFunction.objectiveFunction
     def grad = FreudensteinRothFunction.gradientFunction
-
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
+
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(5, 7), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
     println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(3, 2), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(1, 0), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(-1, -2), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")
@@ -745,24 +675,22 @@ end bFGSFreudensteinRothFunction
  */
 @main def bFGSMcCormickFunction (): Unit =
 
-    // Variable declaration.
-    val functionDomainLowerBound = VectorD(-4, -4)
-    val functionDomainUpperBound = VectorD(4, 4)
-    val functionMinimum = McCormickFunction.functionMinimum
-
-    val step = 1.0                                       // step size (may need adjustment)
-    val x0   = VectorD (2.5, 3.5)                        // starting location
-
-    banner ("Minimize:  math.sin(x(0) + x(1)) + (x(0) - x(1)) ~^ 2 - 1.5 * x(0) + 2.5 * x(1) + 1")
     def f = McCormickFunction.objectiveFunction
     def grad = McCormickFunction.gradientFunction
-
     val optimizer = new BFGS (f)
-    //  val opt = optimizer.solve (x0, step)                    // use numerical partials
-    val opt = optimizer.solve2 (x0, grad, step)             // use functions for partials
-    println (s"][ optimal solution (f(x), x) = $opt")
 
-    new PlotC(f, functionDomainLowerBound, functionDomainUpperBound, optimizer.getPath, functionMinimum)
+    banner("-----------------Test 1--------------------------------------")
+    val opt = optimizer.solve3 (VectorD(-1, -1), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt")
+    banner("-----------------Test 2--------------------------------------")
+    val opt2 = optimizer.solve3 (VectorD(0, 0), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt2")
+    banner("-----------------Test 3--------------------------------------")
+    val opt3 = optimizer.solve3 (VectorD(0, 2), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt3")
+    banner("-----------------Test 4--------------------------------------")
+    val opt4 = optimizer.solve3 (VectorD(3, 3), grad, lineSearchParams = LBFGSLineSearchParameters(defaultStep=4))
+    println (s"][ optimal solution (f(x), x) = $opt4")
 
 //  opt = optimizer.resolve (n)                             // try multiple starting points
 //  println (s"][ optimal solution (f(x), x) = $opt")

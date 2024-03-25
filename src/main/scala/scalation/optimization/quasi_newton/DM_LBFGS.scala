@@ -19,7 +19,7 @@ package quasi_newton
 import scala.math.abs
 
 // Project imports.
-import scalation.mathstat.{PlotC, VectorD}
+import scalation.mathstat.VectorD
 import scalation.optimization.functions.*
 
 // Object.
@@ -390,24 +390,132 @@ object DM_LBFGS extends PathMonitor:
             case LBFGSLineSearchAlgorithm.BacktrackingOrthantWise => LBFGSBacktrackingOrthantWise
 end DM_LBFGS
 
+@main def bealeFunctiondmDMLBFGSTest(): Unit =
+    // Variable declaration.
+    // val functionDomainLowerBound = VectorD(-10, -10)
+    // val functionDomainUpperBound = VectorD(10, 10)
+    val functionOptimizationLogic = FunctionOptimization(BealeFunction)
+
+    // Testing.
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(3, 0), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2, -1), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(0, 1), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-2, -1), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+
+// val plot = new PlotC(BealeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, BealeFunction.functionMinimum)
+// writeImage("./plots/LBFGS/LBFGS_bealeFunction_plot.png", plot)
+end bealeFunctiondmDMLBFGSTest
+
+@main def boothFunctionDMLBFGSTest(): Unit =
+    // Variable declaration.
+    //    val functionDomainLowerBound = VectorD(-10, -10)
+    //    val functionDomainUpperBound = VectorD(10, 10)
+    val functionOptimizationLogic = FunctionOptimization(BoothFunction)
+
+    // Testing.
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2, 1), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-1, 5), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-5, -2), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+
+//    val plot = new PlotC(BoothFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, BoothFunction.functionMinimum)
+//    writeImage("./plots/LBFGS/LBFGS_boothFunction_plot.png", plot)
+end boothFunctionDMLBFGSTest
+
+@main def camel3FunctionDMLBFGSTest(): Unit =
+    // Variable declaration.
+    //    val functionDomainLowerBound = VectorD(-10, -10)
+    //    val functionDomainUpperBound = VectorD(10, 10)
+    val functionOptimizationLogic = FunctionOptimization(Camel3Function)
+
+    // Testing.
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2, 2), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-3, -3), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(4, -4), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-5, 5), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+
+//    val plot = new PlotC(Camel3Function.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, Camel3Function.functionMinimum)
+//    writeImage("./plots/LBFGS/LBFGS_camel3Function_plot.png", plot)
+end camel3FunctionDMLBFGSTest
+
+@main def cubeFunctionDMLBFGSTest(): Unit =
+    // Variable declaration.
+    //    val functionDomainLowerBound = VectorD(-10, -10)
+    //    val functionDomainUpperBound = VectorD(10, 10)
+    val functionOptimizationLogic = FunctionOptimization(CubeFunction)
+
+    // Testing.
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(0, 0), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(3, 3), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(4, 5), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(5, -5), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+
+//    val plot = new PlotC(CubeFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, CubeFunction.functionMinimum)
+//    writeImage("./plots/LBFGS/LBFGS_cubeFunction_plot.png", plot)
+end cubeFunctionDMLBFGSTest
+
+@main def freudensteinRothFunctionDMLBFGSTest(): Unit =
+    // Variable declaration.
+    //    val functionDomainLowerBound = VectorD(-10, -10)
+    //    val functionDomainUpperBound = VectorD(10, 10)
+    val functionOptimizationLogic = FunctionOptimization(FreudensteinRothFunction)
+
+    // Testing.
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(5, 7), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(3, 2), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(1, 0), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-1, -2), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+
+//    val plot = new PlotC(FreudensteinRothFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, FreudensteinRothFunction.functionMinimum)
+//    writeImage("./plots/LBFGS/LBFGS_freudensteinRothFunction_plot.png", plot)
+end freudensteinRothFunctionDMLBFGSTest
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `mccormickFunctionDMLBFGSTest` main function uses the McCormick Function
- *  to test the `dmlbfgsMain` method provided by the [[dmLBFGS]] object.
- *  Multiple tests are performed with different values for the variables.
+/** The `mccormickFunctionDMLBFGSTest` main function uses the McCormick Function to test
+ *  the `lbfgsMain` method provided by the [[LBFGS]] object. Multiple tests are
+ *  performed with different values for the variables.
  *
  *  This test function can be run on the sbt shell with the following command:
  *  {{{
- *  > runMain scalation.optimization.mccormickFunctionDMLBFGSTest
+ *  > runMain scalation.optimization.L_BFGS_C.mccormickFunctionDMLBFGSTest
  *  }}}
  */
 @main def mccormickFunctionDMLBFGSTest(): Unit =
     // Variable declaration.
-    val functionDomainLowerBound = VectorD(-4, -4)
-    val functionDomainUpperBound = VectorD(4, 4)
+    //    val functionDomainLowerBound = VectorD(-4, -4)
+    //    val functionDomainUpperBound = VectorD(4, 4)
     val functionOptimizationLogic = FunctionOptimization(McCormickFunction)
 
     // Testing.
-    println(DM_LBFGS.dmlbfgsMain(2, VectorD(2.50, 3.50), functionOptimizationLogic, params = LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep = 10.5)), momentum = 0.5))
+    println("-----------------Test 1--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(-1, -1), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 2--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(0, 0), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 3--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(0, 2), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
+    println("-----------------Test 4--------------------------------------")
+    println(DM_LBFGS.dmlbfgsMain(2, VectorD(3, 3), functionOptimizationLogic, params=LBFGSParameters(lineSearchParams = LBFGSLineSearchParameters(defaultStep=4)), momentum=0.99))
 
-    new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, DM_LBFGS.getPath, McCormickFunction.functionMinimum)
+//    val plot = new PlotC(McCormickFunction.objectiveFunction, functionDomainLowerBound, functionDomainUpperBound, LBFGS.getPath, McCormickFunction.functionMinimum)
+//    writeImage("./plots/LBFGS/LBFGS_mccormickFunction_plot.png", plot)
 end mccormickFunctionDMLBFGSTest
