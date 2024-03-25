@@ -20,7 +20,7 @@ import scalation.mathstat.VectorD
 // Object.
 object CubeFunction extends BenchmarkFunction:
     // Public fields.
-    val functionMinimum: VectorD = VectorD(-1, 1)
+    val functionMinimum: VectorD = VectorD(1, 1)
 
     // Public methods.
     def objectiveFunction(x: VectorD): Double = 100 * (x(1) - x(0) ~^ 3) ~^ 2 + (1 - x(0)) ~^ 2
