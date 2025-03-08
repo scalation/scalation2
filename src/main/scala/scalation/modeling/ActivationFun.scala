@@ -6,6 +6,8 @@
  *  @see     LICENSE (MIT style license file).
  *
  *  @note    Model Support: Activation Functions for Neural Networks
+ *
+ *  @see     `MatrixD` for `matricize`
  */
 
 package scalation
@@ -29,8 +31,11 @@ import scalation.mathstat._
 case class AFF (name: String, f: FunctionS2S, f_ : FunctionV2V, d: FunctionV2V,
                 bounds: (Double, Double) = null, arange: (Double, Double) = null):
 
-    val fM = matrixize (f_)             // the matrix version of the activation function
-    val dM = matrixize (d)              // the matrix version of the activation function derivative
+    val fM = matricize (f_)             // the matrix version of the activation function
+    val dM = matricize (d)              // the matrix version of the activation function derivative
+
+//  val fM2 = matrixize (f_)            // the matrix version of the activation function via FP
+//  val dM2 = matrixize (d)             // the matrix version of the activation function derivative via FP
 
 end AFF
 
@@ -57,7 +62,7 @@ object ActivationFun:
     /** Compute the value of the Identity id function at scalar t.
      *  @param t  the id function argument
      */
-    def id (t: Double): Double    = t
+    inline def id (t: Double): Double    = t
     def id_ (t: VectorD): VectorD = t
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -76,8 +81,9 @@ object ActivationFun:
     /** Compute the value of the Rectified Linear Unit reLU function at scalar t.
      *  @param t  the reLU function argument
      */
-    def reLU (t: Double): Double = max (0.0, t)
-    val reLU_ : FunctionV2V = vectorize (reLU _)
+    inline def reLU (t: Double): Double = max0 (t)
+    def reLU_ (t: VectorD): VectorD = t.max0
+//  val _reLU_ : FunctionV2V = vectorize (reLU)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for reLU function at vector yp where
@@ -108,8 +114,9 @@ object ActivationFun:
     /** Compute the value of the Leaky Rectified Linear Unit lreLU function at scalar t.
      *  @param t  the lreLU function argument
      */
-    def lreLU (t: Double): Double = max (a * t, t)
-    val lreLU_ : FunctionV2V = vectorize (lreLU _)
+    inline def lreLU (t: Double): Double = max (a * t, t)
+    def lreLU_ (t: VectorD): VectorD = t.map (lreLU (_))
+//  val _lreLU_ : FunctionV2V = vectorize (lreLU)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for lreLU function at vector yp where
@@ -136,8 +143,9 @@ object ActivationFun:
     /** Compute the value of the Exponential Linear Unit eLU function at scalar t.
      *  @param t  the eLU function argument
      */
-    def eLU (t: Double): Double = if t > 0.0 then t else a2 * (exp (t) - 1)
-    val eLU_ : FunctionV2V = vectorize (eLU _)
+    inline def eLU (t: Double): Double = if t > 0.0 then t else a2 * (exp (t) - 1)
+    def eLU_ (t: VectorD): VectorD = t.map (eLU (_))
+//  val _eLU_ : FunctionV2V = vectorize (eLU)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for eLU function at vector yp where
@@ -181,8 +189,9 @@ object ActivationFun:
      *  the standard logistic function.  It is also the inverse of the logit function.
      *  @param t  the sigmoid function argument
      */
-    def sigmoid (t: Double): Double = 1.0 / (1.0 + exp (-t))
-    val sigmoid_ : FunctionV2V = vectorize (sigmoid _)
+    inline def sigmoid (t: Double): Double = 1.0 / (1.0 + exp (-t))
+    def sigmoid_ (t: VectorD): VectorD = t.map (sigmoid (_))
+//  val _sigmoid_ : FunctionV2V = vectorize (sigmoid)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for sigmoid function at vector yp where
@@ -205,8 +214,9 @@ object ActivationFun:
     /** Compute the value of the Gaussian function at scalar t.
      *  @param t  the Gaussian function argument
      */
-    def gaussian (t: Double): Double = exp (-t * t)
-    val gaussian_ : FunctionV2V = vectorize (gaussian _)
+    inline def gaussian (t: Double): Double = exp (-t * t)
+    def gaussian_ (t: VectorD): VectorD = t.map (gaussian (_))
+//  val _gaussian_ : FunctionV2V = vectorize (gaussian)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for Gaussian function at vector yp where
@@ -225,12 +235,9 @@ object ActivationFun:
     /** Approximately compute the value of the geLU function at t.
      *  @param t  the geLU function argument
      */
-    def geLU (t: Double): Double = 
-        val t3 = t~^3
-        0.5 * t * (1.0 + tanh (sqrt_2byPi * (t + 0.044715 * t3)))
-    end geLU
-
-    val geLU_ : FunctionV2V = vectorize (geLU _)
+    inline def geLU (t: Double): Double = 0.5 * t * (1.0 + tanh (sqrt_2byPi * (t + 0.044715 * t~^3)))
+    def geLU_ (t: VectorD): VectorD = t.map (geLU (_))
+//  val _geLU_ : FunctionV2V = vectorize (geLU)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for geLU function at vector yp where
@@ -243,7 +250,7 @@ object ActivationFun:
         (0.0535161 * t3 + 0.398942 * t) / cosh (0.0356774 * t3 + 0.797885 * t)~^2
     end geLUd
 
-    val geLUD : FunctionV2V = vectorize (geLUd _)
+    val geLUD : FunctionV2V = vectorize (geLUd)
 
     val f_geLU = AFF ("geLU", geLU, geLU_, geLUD)                                 // geLU family
 
@@ -252,11 +259,11 @@ object ActivationFun:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the vector of values of the Softmax function applied to vector t.
-     *  @see https://en.wikipedia.org/wiki/Softmax_function
+     *  @see en.wikipedia.org/wiki/Softmax_function
      *  Note, scalar function version softmax is not needed.
      *  @param t  the softmax function vector argument
      */
-    def softmax_ (t: VectorD): VectorD = 
+    inline def softmax_ (t: VectorD): VectorD = 
         val ts = t - t.max                                  // shift for numeric stability
         val et = ts.map (exp (_))
         et / et.sum
@@ -267,14 +274,13 @@ object ActivationFun:
      *  yp is pre-computed by yp = softmax_ (t).
      *  @param yp  the derivative function vector argument
      */
-    def softmaxD (yp: VectorD): VectorD =
-        VectorD (for i <- yp.indices yield yp(i) * (1.0 - yp(i)))
-    end softmaxD
+    def softmaxD (yp: VectorD): VectorD = yp.map (t => t * (1 - t))
+//      VectorD (for i <- yp.indices yield yp(i) * (1.0 - yp(i)))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative matrix (Jacobian) for Softmax function at vector yp where
      *  yp is pre-computed by yp = softmax_ (t).
-     *  @see https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
+     *  @see eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
      *  @param yp  the derivative function vector argument
      */
     def softmaxDM (yp: VectorD): MatrixD = 
@@ -301,13 +307,8 @@ object ActivationFun:
      *            althtough typically positive, a negative b will cause the function to decrease
      *  @param c  the scale parameter (range is 0 to c)
      */
-    def logistic (t: Double, a: Double = 1.0, b: Double = 1.0, c: Double = 1.0): Double =
-        c / (1.0 + a * exp (-b*t))
-    end logistic
-
-    def logistic_ (t: VectorD, a: Double = 1.0, b: Double = 1.0, c: Double = 1.0): VectorD =
-        t.map (t => c / (1.0 + a * exp (-b*t)))
-    end logistic_
+    inline def logistic (t: Double, a: Double = 1, b: Double = 1, c: Double = 1): Double = c / (1 + a * exp (-b*t))
+    def logistic_ (t: VectorD, a: Double = 1, b: Double = 1, c: Double = 1): VectorD = t.map (logistic (_, a, b, c))
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // logit: Logit functions - related function
@@ -319,9 +320,12 @@ object ActivationFun:
      *  Note, it is not typically used as an activation function
      *  @param p  the probability, a number between 0 and 1.
      */
-    def logit (p: Double): Double = log (p / (1.0 - p))
+    inline def logit (p: Double): Double = log (p / (1 - p))
+    def logit_ (p: VectorD): VectorD = p.map (logit (_))
+//  val _logit_ : FunctionV2V = vectorize (logit)                 // vector version
 
-    val logit_ : FunctionV2V = vectorize (logit _)                 // vector version
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// Utility rescaling functions based on the active range of activation functions
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Rescale the input/data matrix x to the arange (active range) of the "first"
@@ -341,6 +345,26 @@ object ActivationFun:
     end rescaleX
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Rescale the input/data tensor x to the arange (active range) of the "first"
+     *  activation function f; otherwise normalize.  Return the rescaled tensor.
+     *  @param x  the input/data matrix
+     *  @param f  the activation function family (first)
+     */
+    def rescaleX (x: TensorD, f: AFF): TensorD =
+/*                                                              // FIX - need to adapt for tensor level
+        if f.arange != null then                                // scale to arange of f
+            val (min_x, max_x) = (x.min, x.max)
+            debug ("rescaleX", s"from ($min_x, $max_x) to ${f.arange}")
+            scale ((min_x, max_x), f.arange) (x)
+        else                                                    // normalize: Normal (0, 1)
+            val (mu_x, sig_x) = (x.mean, x.stdev)
+            normalize ((mu_x, sig_x)) (x)
+        end if
+*/
+        null
+    end rescaleX
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Rescale the output/response vector y to the bounds of the "last" activation
      *  function f; otherwise normalize.  Return the rescaled vector and the
      *  rescaling inverse function.
@@ -352,11 +376,11 @@ object ActivationFun:
             val (min_y, max_y) = (y.min, y.max)
             debug ("rescaleY", s"from ($min_y, $max_y) to ${f.bounds}")
             (scaleV ((min_y, max_y), f.bounds) (y),
-             unscaleV ((min_y, max_y), f.bounds) _)             // rescaling inverse
+             unscaleV ((min_y, max_y), f.bounds))               // rescaling inverse
         else                                                    // normalize: Normal (0, 1)
             val (mu_y, sig_y) = (y.mean, y.stdev)
             (normalizeV ((mu_y, sig_y)) (y),
-             denormalizeV ((mu_y, sig_y)) _)                    // rescaling inverse
+             denormalizeV ((mu_y, sig_y)))                      // rescaling inverse
         end if
     end rescaleY
 
@@ -372,11 +396,11 @@ object ActivationFun:
             val (min_y, max_y) = (y.min, y.max)
             debug ("rescaleY", s"from ($min_y, $max_y) to ${f.bounds}")
             (scale ((min_y, max_y), f.bounds) (y),
-             unscale ((min_y, max_y), f.bounds) _)              // rescaling inverse
+             unscale ((min_y, max_y), f.bounds))                // rescaling inverse
         else                                                    // normalize: Normal (0, 1)
             val (mu_y, sig_y) = (y.mean, y.stdev)
             (normalize ((mu_y, sig_y)) (y),
-             denormalize ((mu_y, sig_y)) _)                     // rescaling inverse
+             denormalize ((mu_y, sig_y)))                       // rescaling inverse
         end if
     end rescaleY
 
@@ -385,7 +409,7 @@ end ActivationFun
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `activationFunTest` main function tests the `ActivationFun` object.
- *  This test individually plots the activation function f(t).
+ *  This test individually plots the vector versions of the activation functions f_(t).
  *  > runMain scalation.modeling.activationFunTest
  */
 @main def activationFunTest (): Unit =
@@ -451,7 +475,7 @@ end activationFunTest2
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `activationFunTest3` main function tests the `ActivationFun` object.
- *  This test plots the derivatives of the activation functions f'(t).
+ *  This test plots the derivatives of the vector versions of the activation functions f'(t).
  *  > runMain scalation.modeling.activationFunTest2
  */
 @main def activationFunTest3 (): Unit =
@@ -495,23 +519,37 @@ end activationFunTest3
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `activationFunTest4` main function tests the `ActivationFun` object.
+/** The `activationFunTest4` main function tests the `ActivationFun` object softmax
+ *  activation function.
  *  @see en.wikipedia.org/wiki/Softmax_function
  *  > runMain scalation.modeling.activationFunTest4
  */
 @main def activationFunTest4 (): Unit =
 
     import ActivationFun.softmax_
+    import Probability.centropy
 
+    banner ("Example Softmax Calculation")
     val t = VectorD (1.0, 2.0, 3.0, 4.0, 1.0, 2.0, 3.0)
-
     println (s"softmax_ ($t) = \n ${softmax_ (t)}")
+
+    banner ("Neural Network Classifier, see section 10.8 in ScalaTion Textbook")
+    val y    = VectorD (0, 0, 1)
+    val u    = VectorD (2.1, 1.2, 8.3)
+    val yp   = softmax_ (u)
+    val loss = centropy (y, yp)
+
+    println (s"y    = given            = $y")
+    println (s"u    = given            = $u")
+    println (s"yp   = softmax_ (u)     = $yp")
+    println (s"loss = centropy (y, yp) = $loss")
 
 end activationFunTest4
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `activationFunTest3` main function tests the `ActivationFun` object.
+/** The `activationFunTest5` main function tests the `ActivationFun` object.
+ *  It tests the `logit_` and `logistic_` functions.
  *  > runMain scalation.modeling.activationFunTest5
  */
 @main def activationFunTest5 (): Unit =
@@ -526,4 +564,24 @@ end activationFunTest4
     val logisticf = logistic_ (t); new Plot (t, logisticf, null, "t vs. logistic_")
 
 end activationFunTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `activationFunTest6` main function tests the `ActivationFun` object.
+ *  It tests the `matricise` or `matrixize` functions.
+ *  > runMain scalation.modeling.activationFunTest6
+ */
+@main def activationFunTest6 (): Unit =
+
+    import ActivationFun.sigmoid_
+    
+    val x = MatrixD (VectorD.range (-5, 5), VectorD.range(0, 10))
+
+    val fM = matricize (sigmoid_)(x)
+    println (s"fM = $fM")
+
+    val fM2 = matrixize (sigmoid_)
+    println (s"fM2 (x) = ${fM2 (x)}")
+
+end activationFunTest6
 

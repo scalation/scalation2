@@ -224,7 +224,8 @@ end example_ConcreteTest
 
         banner (s"Perceptron: trainNtest for $j th column")
         pt.trainNtest ()()                                       // try train vs. train0
-        val e = pt.residual
+        val yp  = pt.predict (x)                                 // predicted output values
+        val e   = yj - yp
         val sse = e dot e
         val sst = (yj dot yj) - yj.sum~^2 / yj.dim
         println ("sse = " + sse)
@@ -232,7 +233,6 @@ end example_ConcreteTest
         sst_all += sst
 
         banner ("predicted output")
-        val yp = pt.predict (x)                                  // predicted output values
 //      println ("diff: y - yp = " + (y - yp))
         new Plot (null, yj, yp, s"y vs yp for $j th column")
     end for

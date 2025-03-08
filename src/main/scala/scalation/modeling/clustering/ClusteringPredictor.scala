@@ -79,7 +79,6 @@ class ClusteringPredictor (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
      */
     override def test (xx: MatrixD = x, yy: VectorD = y): (VectorD, VectorD) =
         val yp = predict (xx)                                            // y predicted for xx (test/full)
-        e = yy - yp                                                      // compute residual/error vector e
         val df1 = kappa                                                  // degrees of freedom model = kappa
         val df2 = yy.dim - df1                                           // degrees of freedom error
         resetDF ((df1, df2))

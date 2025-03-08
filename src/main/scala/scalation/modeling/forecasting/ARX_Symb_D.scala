@@ -20,7 +20,7 @@ import scalation.mathstat._
 import scalation.modeling.neuralnet.RegressionMV as REGRESSION
 import MakeMatrix4TS._
 
-//import scala.math.min
+import scala.math.min
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARX_Symb_D` class provides time series analysis capabilities for ARX_D Symbolic
@@ -50,7 +50,7 @@ class ARX_Symb_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [Str
                 val itran: FunctionS2S = null, bakcast: Boolean = false)    // backcast value used only `MakeMatrix4TS`
       extends Forecaster_D (x, y, hh, tRng, hparam, bakcast):            // no automatic backcasting
 
-    private val debug = debugf ("ARX_Symb_D", false)                      // debug function
+    private val debug = debugf ("ARX_Symb_D", true)                      // debug function
     private val p     = hparam("p").toInt                                // use the last p values (p lags)
     private val q     = hparam("q").toInt                                // use the last q exogenous values (q lags)
     private val spec  = hparam("spec").toInt                             // trend terms: 0 - none, 1 - constant, 2 - linear, 3 - quadratic
@@ -61,9 +61,7 @@ class ARX_Symb_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [Str
     modelName = s"ARX_Symb_D($p, $q, $n_exo)"
 
     debug ("init", s"$modelName with with $n_exo exogenous variables and additional term spec = $spec")
-    println(s"${x.dims}, ${y.dims}")
-
-//    debug ("init", s"[ x | y ] = ${x ++^ y}")
+//  debug ("init", s"[ x | y ] = ${x ++^ y}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `ARX_Symb_D` model to the times-series data in vector y_.
@@ -115,7 +113,7 @@ class ARX_Symb_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [Str
      */
     override def forecast (t: Int, y_ : VectorD): VectorD =
         val pred = predict (t, MatrixD(y_).transpose)
-        for h <- 1 to hh do yf(t, h) = pred(h - 1)                         // why not using forecast in Forecaster?
+        for h <- 1 to hh do yf(t - 1, h) = pred(h - 1)
         pred                                                              // yh is pred
     end forecast
 
@@ -206,12 +204,10 @@ object ARX_Symb_D:
         val cross = hparam("cross").toInt == 1                          // whether to include ENDO-EXO cross terms
         val xet   = scale (extreme (xe), bounds)(xe)                    // rescale x matrix to bounds
         val yt    = if tran != null then y.map (tran)                   // y transformed
-                    else scaleV (extreme (y), bounds)(y)
+                    else y
         val (xy, yy)    = buildMatrix4TS (xet, yt, p, pp, pr, q, qp, qr, spec, lwave, cross, hh, bakcast)
         new ARX_Symb_D (xy, yy, hh, xe.dim2, fname, tRng, hparam, itran, bakcast)
     end rescale
-
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Build an input matrix by combining up 5 trend terms, endogenous terms from
@@ -221,10 +217,8 @@ object ARX_Symb_D:
      *      endogenous terms:  p lagged linear terms, p lagged power terms, p lagged root terms,
      *      exogenous terms:   q * n lagged linear terms, q * n lagged power terms, q * n lagged root terms,
      *      cross terms:       q * n lagged linear cross terms.
- *
      *  @param xe       the matrix of exogenous variable values
      *  @param y        the response vector (time series data)
-     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
      *  @param p        the number of lags for the endogenous variable (lags 1 to p)
      *  @param pp       the power (defaults to quadratic) to raise the lags of the endogenous variable to
      *  @param pr       the root (defaults to sqrt) to take of the lags of the endogenous variable
@@ -244,21 +238,16 @@ object ARX_Symb_D:
                         hh: Int, bakcast: Boolean): (MatrixD, MatrixD) =
         val xy = ARX_Symb.buildMatrix4TS (xe, y, p, pp, pr, q, qp, qr, spec, lwave, cross, bakcast)
 
-        val yy = makeMatrix4y(y, hh, bakcast)
-//        val yb = if bakcast then WeightedMovingAverage.backcast(y) +: y      // y prepended with one backcast
-//                 else y
-//
-//        val m  = y.dim
-//        val yy = new MatrixD(m, hh)                                          // yy = [ y_h ] for h = 1 to hh
-//        for t <- yy.indices do
-//            for h <- yy.indices2 do
-//                yy(t, h) = if t + h >= m then -0.0 else yb(t + h)            // yy -> actual and horizons
+        val yb = if bakcast then WeightedMovingAverage.backcast(y) +: y      // y prepended with one backcast
+                 else y
+
+        val m  = y.dim
+        val yy = new MatrixD(m, hh)                                          // yy = [ y_h ] for h = 1 to hh
+        for t <- yy.indices do
+            for h <- yy.indices2 do
+                yy(t, h) = if t + h >= m then -0.0 else yb(t + h)            // yy -> actual and horizons
         (xy, yy)
     end buildMatrix4TS
-
-
-
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Form an array of names for the features included in the model.
@@ -299,8 +288,8 @@ end ARX_Symb_D
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
-    hp("cross") = 1
-    for p <- 6 to 6; s <- 1 to 1 do                                     // number of lags; trend; number of exo lags
+
+    for p <- 1 to 6; s <- 1 to 5 do                                     // number of lags; trend; number of exo lags
         hp("p")    = p                                                  // endo lags
         hp("q")    = 2                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
@@ -340,13 +329,11 @@ end aRX_Symb_DTest3
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
-    hp("pp")    = 1.5
-    hp("qp")    = 1.5
-    hp("cross") = 1
-    for p <- 5 to 5; s <- 1 to 1 do                                     // number of lags; trend
+
+    for p <- 1 to 6; s <- 1 to 5 do                                     // number of lags; trend
         hp("p")    = p                                                  // endo lags
 //      hp("q")    = 1                                                  // exo lags
-        hp("q")    = 3                                         // try various rules
+        hp("q")    = min (2, p)                                         // try various rules
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
         val mod = ARX_Symb_D (xe, y, hh)                                // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
@@ -360,5 +347,4 @@ end aRX_Symb_DTest3
     end for
 
 end aRX_Symb_DTest4
-
 

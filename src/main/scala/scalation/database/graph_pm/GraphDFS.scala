@@ -130,7 +130,7 @@ class GraphDFS (g: Graph, bfs: Boolean = false):
                 else qu.asInstanceOf [QUEUE].dequeue ()           // take next go vertex from FIFO queue
 
             if go(j) then
-                debug("visit", s"label($j)")
+                debug ("visit", s"label($j)")
                 go(j) = false                                     // mark as visited
                 for c <- g.ch(j) if go(c) do qu += c              // put unvisited children in queue
                 for p <- g.ch(j) if go(p) do qu += p              // put unvisited parent in queue

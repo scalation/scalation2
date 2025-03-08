@@ -68,7 +68,7 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
         case "Fac_LU"       => new Fac_LU (x_.transpose * x_)            // LU Factorization
         case "Fac_Inverse"  => new Fac_Inverse (x_.transpose * x_)       // Inverse Factorization
         case "Fac_SVD"      => new Fac_SVD (x_)                          // Singular Value Decomposition
-        case _              => new Fac_QR (x_)                           // QR Factorization (default)
+        case _              => Fac_QR (x_)                               // QR/LQ Factorization (default)
         end match
     end solver
 

@@ -1,4 +1,5 @@
 
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller, Casey Bowman
  *  @version 2.0
@@ -12,7 +13,7 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{breakable, break}
 
@@ -39,22 +40,21 @@ import scalation.scala2d.Colors._
 class Gate (name: String, director: Model, line: WaitQueue, units: Int,
             onTime: Variate, offTime: Variate,
             loc: Array [Double], shut0: Boolean = false, cap: Int = 10)
-      extends SimActor (name, director) with Component:
+      extends SimActor (name, director)
+         with Component:
 
     initStats (name)
     at = loc
 
     private val debug = debugf ("Gate", true)                        // debug function 
     private val flaw  = flawf ("Gate")                               // flaw function
+ 
+    private var _shut = shut0                                        // initial value for _shut
 
-    debug ("init", s"located at ${stringOf (at)}")
+    debug ("init", s"name = $name with cor_id $cor_id, located at ${stringOf (at)}")
 
     if line == null then flaw ("init", "must have line for entities when gate is closed")
 
-    /** Initial value for _shut
-     */
-    private var _shut = shut0
- 
     schedule (0.0)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -106,7 +106,7 @@ class Gate (name: String, director: Model, line: WaitQueue, units: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Specifies how the gate is controlled.
      */
-    def act (): Unit =
+    override def act (): Unit =
         for i <- 1 to units do
             flip ()
             if ! _shut then release ()
@@ -173,7 +173,7 @@ object Gate:
      */
     def group (director: Model, units: Int, onTime: Variate, offTime: Variate, xy: (Int, Int),
                gte: (String, WaitQueue, (Int, Int))*): List [Gate] =
-        val gateGroup = new ListBuffer [Gate] ()
+        val gateGroup = new VEC [Gate] ()
         var odd = false
         for g <- gte do
             gateGroup += (if odd then Gate (g._1, director, g._2, units, onTime, offTime, 

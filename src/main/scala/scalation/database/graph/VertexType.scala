@@ -174,7 +174,7 @@ class VertexType (_name: String, val schema: Schema,
     /** Union this vertex-type with a second vertex-type.
      *  @param vt2  the second vertex-type
      */
-    def unionAll (vt2: VertexType): VertexType =
+    infix def unionAll (vt2: VertexType): VertexType =
         new VertexType (name + "_ua_" + vt2.name, schema, verts ++ vt2.verts)
     end unionAll
 
@@ -182,7 +182,7 @@ class VertexType (_name: String, val schema: Schema,
     /** Union this vertex-type with a second vertex-type with no duplication.
      *  @param vt2  the second vertex-type
      */
-    def union (vt2: VertexType): VertexType =
+    infix def union (vt2: VertexType): VertexType =
         new VertexType (name + "_u_" + vt2.name, schema, (verts ++ vt2.verts).distinct)
     end union
 
@@ -192,7 +192,7 @@ class VertexType (_name: String, val schema: Schema,
     /** Intersect this vertex-type with a second vertex-type.
      *  @param vt2  the second vertex-type
      */
-    def intersect (vt2: VertexType): VertexType =
+    infix def intersect (vt2: VertexType): VertexType =
         new VertexType (name + "_i_" + vt2.name, schema, (verts intersect vt2.verts))
     end intersect
 
@@ -209,7 +209,7 @@ class VertexType (_name: String, val schema: Schema,
     /** Subtract (minus) second vertex-type from this vertex-type.
      *  @param vt2  the second vertex-type
      */
-    def minus (vt2: VertexType): VertexType =
+    infix def minus (vt2: VertexType): VertexType =
         new VertexType (name + "_m_" + vt2.name, schema, verts diff vt2.verts)
     end minus
 

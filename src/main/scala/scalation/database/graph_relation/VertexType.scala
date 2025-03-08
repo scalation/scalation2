@@ -130,7 +130,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Project each vertex in this vertex type down to the given subschema of properties.
      *  @param subschema  the subset of properies to project onto
      */
-    def project (subschema: String*): VertexType = project (VEC (subschema :_*))
+    def project (subschema: String*): VertexType = project (VEC (subschema*))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Project each vertex in this vertex type down to the given esubschema of edges.
@@ -145,7 +145,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Project each vertex in this vertex type down to the given esubschema of edges.
      *  @param subschema  the subset of edges to project onto
      */
-    def eproject (esubschema: String*): VertexType = eproject (VEC (esubschema :_*))
+    def eproject (esubschema: String*): VertexType = eproject (VEC (esubschema*))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Select the vertices in this vertex type that satisfy the predicate.
@@ -160,7 +160,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Union this vertex type with a second vertex type.
      *  @param vtype2  the second vertex type
      */
-    def unionAll (vtype2: VertexType): VertexType =
+    infix def unionAll (vtype2: VertexType): VertexType =
         VertexType (name + "a" + next (), schema, eschema, verts ++ vtype2.verts)
     end unionAll
 
@@ -168,7 +168,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Union this vertex type with a second vertex type with no duplication.
      *  @param vtype2  the second vertex type
      */
-    def union (vtype2: VertexType): VertexType =
+    infix def union (vtype2: VertexType): VertexType =
         VertexType (name + "u" + next (), schema, eschema, (verts ++ vtype2.verts).distinct)
     end union
 
@@ -183,7 +183,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Minus second vertex type from this vertex type.
      *  @param vtype2  the second vertex type
      */
-    def minus (vtype2: VertexType): VertexType =
+    infix def minus (vtype2: VertexType): VertexType =
         VertexType (name + "m" + next (), schema, eschema, verts diff vtype2.verts)
     end minus
 
@@ -191,7 +191,7 @@ case class VertexType (name: String, schema: VEC [String], eschema: VEC [String]
     /** Intersect this vertex type with a second vertex type with no duplication.
      *  @param vtype2  the second vertex type
      */
-    def intersect (vtype2: VertexType): VertexType =
+    infix def intersect (vtype2: VertexType): VertexType =
         VertexType (name + "i" + next (), schema, eschema, verts intersect vtype2.verts)
     end intersect
 
@@ -307,23 +307,23 @@ end VertexType
     println (query2)
 
     println ("query3: project")
-    val query3 = professor project VEC ("name")
+    val query3 = professor.project (VEC ("name"))
     println (query3)
 
     println ("query3b: project")
-    val query3b = professor project "name"
+    val query3b = professor.project ("name")
     println (query3b)
 
     println ("query4: select ==")
-    val query4 = professor select ((p: Property) => p("name") == "Sue")
+    val query4 = professor.select ((p: Property) => p("name") == "Sue")
     println (query4)
 
     println ("query4b: select ==")
-    val query4b = professor select (_("name") == "Sue")
+    val query4b = professor.select (_("name") == "Sue")
     println (query4b)
 
     println ("query4c: select <")
-    val query4c = professor select (_("phone") < 2000000)
+    val query4c = professor.select (_("phone") < 2000000)
     println (query4c)
 
     println ("query5: unionAll")
@@ -343,15 +343,15 @@ end VertexType
     println (query8)
 
     println ("query9: join")
-    val query9 = course join ("taughtBy", professor)
+    val query9 = course.join ("taughtBy", professor)
     println (query9)
 
     println ("query10: groupBy")
-    val query10 = course groupBy ("dept")
+    val query10 = course.groupBy ("dept")
     println (query10.showGroups)
 
     println ("query11: orderBy")
-    val query11 = course orderBy ("dept")
+    val query11 = course.orderBy ("dept")
     println (query11)
 
 end vertexTypeTest

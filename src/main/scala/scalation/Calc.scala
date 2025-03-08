@@ -6,6 +6,7 @@
  *  @see     LICENSE (MIT style license file).
  *
  *  @note    A Simple Function Calculator (Double - double precision floating point numbers)
+ *  @see     `CommonFunctions`
  */
 
 package scalation
@@ -18,7 +19,9 @@ import scala.math._
  */
 object Calc:
 
-    def f(x: Double): Double = 6.67408E-11 * 5.97219E24 * x / 6.371E6~^2 + log (1.0)
+//  def f(x: Double): Double = 6.67408E-11 * 5.97219E24 * x / 6.371E6~^2 + log (1.0)
+
+    def f(x: Double): Double = ceil (log10 (x / 9.0))
 
 end Calc
 
@@ -51,9 +54,16 @@ end runCalc
         /       divide
         %       mod
         ~^      exponentiate
-        log     logarithm
+        log     logarithm (base e)
+        log2    logarithm (base 2)
+        log10   logarithm (base 10)
+        sin     sine (unit circle y-ccordinate)
+        cos     cosine (unit circle x-ccordinate)
+        tan     tangent (sin/cos)
+        round   round to nearest integer
+        ceil    ceiling (round up)
+        floor   floor (round down)
         see     https://scala-lang.org/api/3.x/scala/math.html
-        see     https://cobweb.cs.uga.edu/~jam/scalation_2.0/target/scala-3.1.1-RC2/api/scalation.html
     """
 
     println (help)

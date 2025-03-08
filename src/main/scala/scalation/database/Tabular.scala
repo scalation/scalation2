@@ -37,6 +37,13 @@
  *  inline def ℱ (ag: String, f_as: (AggFunction, String)*): T = aggregate (ag, f_as :_*)
  *  inline def ↑ (x: String*): T = orderBy (x :_*)
  *  inline def ↓ (x: String*): T = orderByDesc (x :_*)
+ *
+ *  Join Algorithms:
+ *  r join s       NESTED LOOP JOIN (NLJ)
+ *  r join_ s      INDEX JOIN (IJ) -- uses UNIQUE INDEX on the right (primary key) table (s)
+ *                 may use r join s for this when case is unambiguous
+ *  r _join s      INDEX JOIN (IJ) -- uses NON-UNIQUE INDEX on the left (foreign key) table (r)
+ *  r _join_ s     SORT-MERGE JOIN (SMJ)
  */
 
 package scalation
@@ -84,16 +91,16 @@ inline def meet (x: Schema, y: Schema): Schema = (for a <- x if y contains a yie
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Definitions of comparison operators for `ValueType`.
  */
-def == (x: ValueType, y: ValueType): Boolean = x == y
-def != (x: ValueType, y: ValueType): Boolean = x != y
-def ne (x: ValueType, y: ValueType): Boolean = x != y
-def <  (x: ValueType, y: ValueType): Boolean = x < y
-def <= (x: ValueType, y: ValueType): Boolean = x <= y
-def >  (x: ValueType, y: ValueType): Boolean = x > y
-def >= (x: ValueType, y: ValueType): Boolean = x >= y
+inline def == (x: ValueType, y: ValueType): Boolean = x == y
+inline def != (x: ValueType, y: ValueType): Boolean = x != y
+inline def ne (x: ValueType, y: ValueType): Boolean = x != y
+inline def <  (x: ValueType, y: ValueType): Boolean = x < y
+inline def <= (x: ValueType, y: ValueType): Boolean = x <= y
+inline def >  (x: ValueType, y: ValueType): Boolean = x > y
+inline def >= (x: ValueType, y: ValueType): Boolean = x >= y
 
-def equ (x: ValueType, y: ValueType): Boolean = x == y
-def neq (x: ValueType, y: ValueType): Boolean = x != y
+inline def equ (x: ValueType, y: ValueType): Boolean = x == y
+inline def neq (x: ValueType, y: ValueType): Boolean = x != y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Split and trim the comma-separated names contained in the given string str.
@@ -121,7 +128,6 @@ def parseCond (condition: String): (Array [String], Boolean) =
         println (s"part = ${stringOf (part)}")
         val twoAtrs = java.lang.Character.isUnicodeIdentifierStart (part(2)(0))
         (part, twoAtrs)
-    end if
 end parseCond
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -169,7 +175,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the size in terms of number of columns in the table.
      */
-    def cols: Int = schema.size
+    inline def cols: Int = schema.size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the cardinality (number of tuples) and arity (number of attributes).
@@ -179,7 +185,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the range of row numbers for the table.
      */
-    def indices: Range = 0 until rows
+    inline def indices: Range = 0 until rows
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the j-th column in this table (or the passed in tuples) as an array of value-type.
@@ -191,7 +197,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the range of columns numbers for the table.
      */
-    def colIndices: Range = 0 until schema.size
+    inline def colIndices: Range = 0 until schema.size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return whether this table contains tuple u.
@@ -208,7 +214,6 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
         if t.size != domain.size then
             flaw ("typeCheck", s"$name: the size of tuple ${stringOf (t)} != ${domain.size} (the domain size)")
             return false
-        end if
         var matches = true
         var j = 0
         cfor (matches && j < t.size, j += 1) {
@@ -217,7 +222,6 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
             if type_t_j != dom_j then
                 flaw ("typeCheck", s"$name: domain constraint violation: tuple ${stringOf (t)} has wrong type for $j-th domain")
                 matches = false
-            end if
         } // cfor
         true
     end typeCheck
@@ -358,7 +362,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  Acts like union-all, so to remove duplicates call create_index after union.
      *  @param r2  the second table
      */
-    def union (r2: T): T
+    infix def union (r2: T): T
 
     inline def ⋃ (r2: T): T = union (r2)
 
@@ -367,7 +371,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  the two tables are compatible.  If they are not, return the first table.
      *  @param r2  the second table
      */
-    def minus (r2: T): T
+    infix def minus (r2: T): T
 
     inline def - (r2: T): T = minus (r2)
 
@@ -376,7 +380,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  If they are not, return the first table.
      *  @param r2  the second table
      */
-    def intersect (r2: T): T
+    infix def intersect (r2: T): T
 
     inline def ⋂ (r2: T): T = intersect (r2)
 
@@ -386,7 +390,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     /** Compute the CARTESIAN PRODUCT of this table and r2 (this × r2).
      *  @param r2  the second table
      */
-    def product (r2: T): T
+    infix def product (r2: T): T
 
     inline def × (r2: T): T = product (r2)
 
@@ -414,8 +418,8 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     inline def ⋈ (condition: String, r2: T): T = join (condition, r2)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the EQUI-JOIN of this table and r2 keeping concatenated tuples that
-     *  are equal on specified attributes.
+    /** Compute the EQUI-JOIN via the NESTED LOOP JOIN (NLJ) algorithm of this table
+     *  and r2 keeping concatenated tuples that are equal on specified attributes.
      *  @param x   the subschema/attributes for the first/this table
      *  @param y   the subschema/attributes for the second table
      *  @param r2  the second table
@@ -429,10 +433,12 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     inline def ⋈ (x: String, y: String, r2: T): T = join (strim (x), strim (y), r2)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the EQUI-JOIN via the INDEX of this table and the referenced table keeping
-     *  concatenated tuples that are equal on the primary key and foreign key attributes.
+    /** Compute the EQUI-JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a UNIQUE INDEX (UI) on the primary key.
      *  Caveat:  Requires the foreign key table to be first [ fkey_table join ((fkey, pkey_table) ].
      *  Usage:   deposit join (("cname", customer))
+     *           as if join_
      *  @param ref  the foreign key reference (foreign key attribute, referenced table)
      */
     def join (ref: (String, T)): T
@@ -440,13 +446,64 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
     inline def ⋈ (fkey: (String, T)): T = join (fkey)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the NATURAL JOIN of this table and r2 keeping concatenated tuples
-     *  that agree on the common attributes.
+    /** Compute the EQUI-JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a NON-UNIQUE INDEX (NUI) on the foreign key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join ((fkey, pkey_table) ].
+     *  Usage:   deposit _join (("cname", customer))
+     *  @param ref  the foreign key reference (foreign key attribute, referenced table)
+     */
+    def _join (ref: (String, T)): T
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the EQUI-JOIN via the SORT-MERGE JOIN (SMJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Requires both tables to be ordered.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join ((fkey, pkey_table) ].
+     *  Usage:   deposit _join (("cname", customer))
+     *  @param ref  the foreign key reference (foreign key attribute, referenced table)
+     */
+    def _join_ (ref: (String, T)): T
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the NESTED LOOP JOIN (NLJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.
+     *  Usage:   deposit join customer
      *  @param r2  the second table
      */
-    def join (r2: T): T
+    infix def join (r2: T): T
 
     inline def ⋈ (r2: T): T = join (r2)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the INDEX JOIN (IJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.  Uses a
+     *  UNIQUE INDEX on the primary key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table join_ ((fkey, pkey_table) ].
+     *  Usage:   deposit join_ customer
+     *  @param r2  the second table
+     */
+    infix def join_ (r2: T): T
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the INDEX JOIN (IJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.  Uses a
+     *  NON-UNIQUE INDEX on the foreign key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join ((fkey, pkey_table) ].
+     *  Usage:   deposit _join customer
+     *  @param r2  the second table
+     */
+    infix def _join (r2: T): T
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the SORT-MERGE JOIN (SMJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.  Requires
+     *  both tables to be ordered.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join_ pkey_table ].
+     *  Usage:   deposit _join_ customer
+     *  @param r2  the second table
+     */
+    infix def _join_ (r2: T): T
 
     // ============================================================== OUTER JOIN
 
@@ -470,7 +527,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  table padding the missing attributes with null.
      *  @param r2  the second table
      */
-    def leftJoin (r2: T): T = 
+    infix def leftJoin (r2: T): T = 
         val x = schema intersect r2.schema
         leftJoin (x, x, r2)
     end leftJoin
@@ -552,7 +609,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      */
     def aggregate (ag: String, f_as: (AggFunction, String)*): T
 
-    inline def ℱ (ag: String, f_as: (AggFunction, String)*): T = aggregate (ag, f_as :_*)
+    inline def ℱ (ag: String, f_as: (AggFunction, String)*): T = aggregate (ag, f_as*)
 
     // ================================================================ ORDER BY
 
@@ -563,7 +620,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      */
     def orderBy (x: String*): T
 
-    inline def ↑ (x: String*): T = orderBy (x :_*)
+    inline def ↑ (x: String*): T = orderBy (x*)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** ORDER-BY-DESC the given attributes, i.e., reorder the tuples in this table into
@@ -572,7 +629,7 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      */
     def orderByDesc (x: String*): T
 
-    inline def ↓ (x: String*): T = orderByDesc (x :_*)
+    inline def ↓ (x: String*): T = orderByDesc (x*)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the basic statistics for each column of this table.
@@ -589,9 +646,9 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      */
     def add (t: Tuple): T
 
-    def add (v: ValueType*): T = add (v.toArray)
+    inline def add (v: ValueType*): T = add (v.toArray)
 
-    def += (v: ValueType*): T = add (v.toArray)
+    inline def += (v: ValueType*): T = add (v.toArray)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** UPDATE the column with attribute name a using newVal for elements with value
@@ -659,7 +716,6 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
              true
          else
              false                                                      // i.e., they are compatible
-         end if
     end incompatible
 
     // ==================================================================== PULL
@@ -669,47 +725,63 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  @param t  the given tuple to pull values out of
      *  @param x  the subschema/attributes to be collected
      */
-    def pull (t: Tuple, x: Schema): Tuple = (for a <- x yield t(on(a))).toArray
+    inline def pull (t: Tuple, x: Schema): Tuple = (for a <- x yield t(on(a))).toArray
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull the values out of tuple t for the attributes in subschema column positions cp.
+     *  It is more EFFICIENT to use column positions rather than attribute names.
      *  @param t   the given tuple to pull values out of
      *  @param cp  the subschema/attribute column positions to be collected
      */
-    def pull (t: Tuple, cp: IndexedSeq [Int]): Tuple = (for c <- cp yield t(c)).toArray
+    inline def pull (t: Tuple, cp: IndexedSeq [Int]): Tuple =
+        val tup = Array.ofDim [ValueType] (cp.size)
+        for i <- tup.indices do tup(i) = t(cp(i))
+        tup
+    end pull
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull the values out of row t for the attributes in subschema x.
      *  @param t  the given row to pull values out of
      *  @param x  the subschema/attributes to be collected
      */
-    def pull (t: Row, x: Schema): Row = (for a <- x yield t(on(a))).toVector
+    inline def pull (t: Row, x: Schema): Row = (for a <- x yield t(on(a))).toVector
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull the values out of row t for the attributes in subschema column positions cp.
      *  @param t   the given row to pull values out of
      *  @param cp  the subschema/attribute column positions to be collected
      */
-    def pull (t: Row, cp: IndexedSeq [Int]): Row = (for c <- cp yield t(c)).toVector
+    inline def pull (t: Row, cp: IndexedSeq [Int]): Row = (for c <- cp yield t(c)).toVector
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull a value out of tuple t for attribute a.
      *  @param t  the given tuple to pull value out of
      *  @param a  the attribute to be collected
      */
-    def pull (t: Tuple, a: String): ValueType = t(on(a))
+    inline def pull (t: Tuple, a: String): ValueType = t(on(a))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull the domains out of this table for the attributes in subschema x.
      *  @param x  the subschema/attributes to be collected
      */
-    def pull (x: Schema): Domain = (for a <- x yield domain(on(a))).toArray
+    inline def pull (x: Schema): Domain = (for a <- x yield domain(on(a))).toArray
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Pull the domains out of this table for the attributes in subschema column positions cp.
      *  @param cp  the subschema/attribute column positions to be collected
      */
-    def pull (cp: IndexedSeq [Int]): Domain = (for c <- cp yield domain(c)).toArray
+    inline def pull (cp: IndexedSeq [Int]): Domain = (for c <- cp yield domain(c)).toArray
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Pull the column positions within this table for the attributes in subschema x.
+     *  It is more EFFICIENT to pull all the column positions before looping through tuples.
+     *  @param x  the subschema/attributes to be collected
+     */
+    inline def pullPos (x: Schema): Array [Int] =
+        val pos = Array.ofDim [Int] (x.size)
+        for i <- pos.indices do pos(i) = on(x(i))
+        pos
+    end pullPos
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert the tuples in tups into a string, e.g., for displaying a collection
@@ -726,6 +798,12 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
         sb.append ("\n")
         sb.toString
     end showT
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a copy of this table limited to the first n tuples/rows.
+     *  @param n  the number of tuples/rows to keep
+     */
+    def limit (n: Int): T
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** SHOW/print this table, one tuple per row.
@@ -761,6 +839,28 @@ trait Tabular [T <: Tabular [T]] (val name: String, val schema: Schema, val doma
      *  @param fileName  the file name of the data file
      */
     def writeJSON (fileName: String): Unit
+
+end Tabular
+
+ 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `Tabular` companion object provides methods supporting prefix forms for
+ *  unary relational algebra operators.
+ *  Example: prefix form vs. postfix form. 
+ *
+ *      π("cname, ccity")(σ("balance < amount")(customer ⋈ deposit ⋈ loan))
+ *
+ *      (customer ⋈ deposit ⋈ loan).σ("balance < amount").π("cname, ccity")
+ */
+object Tabular:
+
+    inline def project [T <: Tabular [T]] (x: String)(tab: Tabular [T]): T = tab.project (strim (x))
+
+    inline def π [T <: Tabular [T]] (x: String)(tab: Tabular [T]): T = tab.project (strim (x))
+
+    def select [T <: Tabular [T]] (condition: String)(tab: Tabular [T]): T = tab.select (condition)
+
+    inline def σ [T <: Tabular [T]] (condition: String)(tab: Tabular [T]): T = tab.select (condition)
 
 end Tabular
 

@@ -1,12 +1,11 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** @author  John Miller
  *  @version 2.0
- *  @date    Sat Jun 13 01:27:00 EST 2017
+ *  @date    Sun Jun 30 13:27:00 EDT 2024
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Null Model (guess the mean)
- *           Also known as the Mean Model
+ *  @note    Model: Null/Mean Model (guess = mean value from training set)
  */
 
 package scalation
@@ -15,122 +14,53 @@ package forecasting
 
 import scalation.mathstat._
 
-import Forecaster.differ
+import Example_Covid.loadData_y
+import Example_LakeLevels.y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `NullModel` class provides basic time series analysis capabilities for 
+/** The `NullModel` class provides basic time series analysis capabilities for
  *  NullModel models.  NullModel models are often used for forecasting.
- *  Given time series data stored in vector y, its next value y_t+1 = y(t+1)
- *  may be predicted based on prior value of y and its noise:
- *      y_t+1 = mu_y + e_t+1
- *  where mu_y is the mean of y and e_t+1 is the noise term.
- *  @param y       the response vector (time-series data)
- *  @param tt      the time vector, if relevant (time index may suffice)
- *  @param hparam  the hyper-parameters (none => use null)
+ *  Given time series data stored in vector y, its next value y_t = mean
+ *  may be predicted based on its past value of y:
+ *
+ *      y_t = mean + e_t
+ *
+ *  where mean is the mean of y and e_t is the new residual/error term.
+ *  @param y        the response vector (time series data) 
+ *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+ *  @param tRng     the time range, if relevant (time index may suffice)
+ *  @param hparam   the hyper-parameters (none => use null)
+ *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
  */
-class NullModel (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null)
-      extends Forecaster (y, tt, hparam)
-         with Correlogram (y)
-         with Fit (dfm = 0, df = y.dim - 1):
-
-    private val debug = debugf ("NullModel", true)                     // debug function
-    private val flaw  = flawf ("NullModel")                            // flaw function
-                m     = y.dim                                          // number of time points (@see `FitM`)
-    private var mu    = NO_DOUBLE                                      // the relevant sample mean of y
+class NullModel (y: VectorD, hh: Int, tRng: Range = null,
+                 hparam: HyperParameter = null,
+                 bakcast: Boolean = false)
+      extends Forecaster (y, hh, tRng, hparam, bakcast):
 
     modelName = s"NullModel"
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Train/fit a `NullModel` model to the times-series data in vector y_.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Given a time series y_, train the forecasting function y_ = f(lags (y_)) + e,
+     *  where f(lags (y_)) is a function of the lagged values of y_,
+     *  by fitting its parameters.
      *  @param x_null  the data/input matrix (ignored, pass null)
-     *  @param y_      the training/full response vector
+     *  @param y_      the testing/full response/output vector (e.g., full y)
      */
-    def train (x_null: MatrixD, y_ : VectorD): Unit = 
-        m = y_.dim                                                     // length of relevant time-series
-        makeCorrelogram (y_)                                           // correlogram computes psi matrix
-        mu = y_(1 until y_.dim).mean                                   // record the relevant sample mean (check rSq = 0)
-        debug ("train", s"parameters for $modelName = $parameter")     // [mu]
+    override def train (x_null: MatrixD, y_ : VectorD): Unit =
+        val yy = y_(skip until y_.dim)
+        b = VectorD (yy.mean)
     end train
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test PREDICTIONS of a NullModel forecasting model y_ = f(lags (y_)) + e
-     *  and return its predictions and  QoF vector.  Testing may be in-sample
-     *  (on the training set) or out-of-sample (on the testing set) as determined
-     *  by the parameters passed in.  Note: must call train before test.
-     *  @param x_null  the training/testing data/input matrix (ignored, pass null)
-     *  @param y_      the training/testing/full response/output vector
-     */
-    def test (x_null: MatrixD, y_ : VectorD): (VectorD, VectorD) =
-        val (yy, yp) = testSetup (y_)                                  // get and align actual and predicted values
-        resetDF (0, yy.dim - 1)                                        // reset the degrees of freedom
-        println (s"test: yy.dim = ${yy.dim}, yp.dim = ${yp.dim}")
-//      differ (yy, yp)                                                // uncomment for debugging
-        (yp, diagnose (yy, yp))                                        // return predictions and QoF vector
-    end test
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of a NullModel forecasting model y_ = f(lags (y_)) + e
-     *  and return its forecasts and QoF vector.  Testing may be in-sample
-     *  (on the training set) or out-of-sample (on the testing set) as determined
-     *  by the parameters passed in.  Note: must call train and forecastAll before testF.
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     *  @param y_  the training/testing/full response/output vector
-     */
-    def testF (h: Int, y_ : VectorD): (VectorD, VectorD) =
-        val (yy, yfh) = testSetupF (y_, h)                             // get and align actual and forecasted values
-        resetDF (0, yy.dim - 1)                                        // reset the degrees of freedom
-        println (s"testF: yy.dim = ${yy.dim}, yfh.dim = ${yfh.dim}")
-//      differ (yy, yfh)                                               // uncomment for debugging
-        (yfh, diagnose (yy, yfh))                                      // return predictions and QoF vector
-    end testF
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the parameter vector for the Null Model model.
-     */
-    override def parameter: VectorD = VectorD (mu)
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Predict a value for y_t+1 using the 1-step ahead forecast.
-     *      y_t+1 = mu_y
-     *  @param t   the time point from which to make prediction
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Predict a value for y_t using the 1-step ahead forecast.
+     *
+     *      y_t = f (y_t-1, ...) = b_0    (null model, b(0) = mean)
+     *
+     *  Override for other models.
+     *  @param t   the time point being predicted
      *  @param y_  the actual values to use in making predictions
      */
-    def predict (t: Int, y_ : VectorD): Double = mu                    // predict using the mean value
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a vector of size h, of 1 through h-steps ahead forecasts for the model.
-     *      forecast the following time points:  t+1, ..., t-1+h.
-     *  Note, must create the yf matrix before calling the forecast method.
-     *  Intended to work with rolling validation (analog of predict method)
-     *  @param t   the time point from which to make forecasts
-     *  @param yf  the forecasting matrix (time x horizons)
-     *  @param y_  the actual values to use in making predictions
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     */
-    def forecast (t: Int, yf: MatrixD, y_ : VectorD, h: Int): VectorD =
-        if h < 1 then flaw ("forecast", s"horizon h = $h must be at least 1")
-        val yd = new VectorD (h)                                       // hold forecasts for each horizon
-        for k <- 1 to h do
-            yf(t+k, k) = mu                                            // forecast down the diagonal
-            yd (k-1)   = mu                                            // record diagonal values
-        end for
-        yd                                                             // return forecasts for each horizon
-    end forecast
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Forecast values for all y_.dim time points at horizon h (h-steps ahead).
-     *  Assign to forecasting matrix and return h-step ahead forecast.
-     *  @param yf  the forecasting matrix (time x horizons)
-     *  @param y_  the actual values to use in making forecasts
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     */
-    def forecastAt (yf: MatrixD, y_ : VectorD, h: Int): VectorD =
-        if h < 1 then flaw ("forecastAt", s"horizon h = $h must be at least 1")
-        for t <- y_.indices do                                         // make forecasts over all time points for horizon k
-            yf(t+h, h) = mu                                            // forecast down the diagonal - training mean
-        end for
-        yf(?, h)                                                       // return the h-step ahead forecast vector
-    end forecastAt
+    override def predict (t: Int, y_ : VectorD): Double = b(0)
 
 end NullModel
 
@@ -141,88 +71,123 @@ end NullModel
 object NullModel:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create an `NullModel` object.
+    /** Create a `NullModel` object.
      *  @param y       the response vector (time series data)
-     *  @param tt      the time vector, if relevant (time index may suffice)
+     *  @param hh      the maximum forecasting horizon (h = 1 to hh)
+     *  @param tRng    the time range, if relevant (time index may suffice)
      *  @param hparam  the hyper-parameters
      */
-    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = null): NullModel = 
-        new NullModel (y, tt, hparam)
+    def apply (y: VectorD, hh: Int, tRng: Range = null, hparam: HyperParameter = null): NullModel =
+        new NullModel (y, hh, tRng, hparam)
     end apply
 
 end NullModel
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `nullModelTest` main function tests the `NullModel` class on simulated data.
- *  Test predictions (one step ahead forecasts).
+/** The `nullModelTest` main function tests the `NullModel` class on real data:
+ *  Forecasting Lake Levels using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.nullModelTest
  */
 @main def nullModelTest (): Unit =
 
-    val y = makeTSeries ()                                             // create simulated time-series (see `Stationary`)
+    val hh = 3                                                            // maximum forecasting horizon
 
-    banner (s"Test Predictions: NullModel on simulated time-series")
-    val mod = new NullModel (y)                                        // create model for time series data Null Model
-    mod.trainNtest ()()                                                // train and test on full dataset
+    val mod = new NullModel (y, hh)                                       // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
 
-    banner ("Select model based on ACF and PACF")
-    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
-    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
+    mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
+    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest
 
-import Example_LakeLevels.y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `nullModelTest2` main function tests the `NullModel` class on real data:
- *  Forecasting lake levels.
- *  Test predictions (one step ahead forecasts).
+ *  Forecasting Lake Levels using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.nullModelTest2
  */
 @main def nullModelTest2 (): Unit =
 
-    banner (s"Test Predictions: NullModel on LakeLevels Dataset")
-    val mod = new NullModel (y)                                        // create model for time series data
-    mod.trainNtest ()()                                                // train and test on full dataset
+    val hh = 3                                                            // maximum forecasting horizon
 
-    banner ("Select model based on ACF and PACF")
-    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
-    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
+    val mod = new NullModel (y, hh)                                       // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
+
+    mod.rollValidate ()                                                   // TnT with Rolling Validation
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `nullModelTest3` main function tests the `NullModel` class on real data:
- *  Forecasting lake levels.
- *  Test forecasts (1 to h steps ahead forecasts).
- *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+ *  Forecasting COVID-19 using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  > runMain scalation.modeling.forecasting.nullModelTest3
  */
 @main def nullModelTest3 (): Unit =
 
-    val m  = y.dim                                                     // number of data points
-    val hh = 3                                                         // maximum forecasting horizon
+    val yy = loadData_y ()
+//  val y  = yy                                                           // full
+    val y  = yy(0 until 116)                                              // clip the flat end
+    val hh = 6                                                            // maximum forecasting horizon
 
-    banner (s"Test Forecasts: NullModel on LakeLevels Dataset")
-    val mod = new NullModel (y)                                        // create model for time series data
-    val (yp, qof) = mod.trainNtest ()()                                // train and test on full dataset
+    val mod = new NullModel (y, hh)                                       // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
 
-    val yf = mod.forecastAll (y, hh)                                   // forecast h-steps ahead (h = 1 to hh) for all y
-    println (s"yf = $yf")
-    println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
-    assert (yf(?, 0)(0 until m) == y)                                  // column 0 must agree with actual values
-    differ (yf(?, 1)(1 until m), yp)
-    assert (yf(?, 1)(1 until m) == yp)                                 // column 1 must agree with one step-ahead predictions
-
-    for h <- 1 to hh do
-        val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
-        println (s"Evaluate QoF for horizon $h:")
-        println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
-    end for
+    mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
+    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest3
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `nullModelTest4` main function tests the `NullModel` class on real data:
+ *  Forecasting COVID-19 using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  > runMain scalation.modeling.forecasting.nullModelTest4
+ */
+@main def nullModelTest4 (): Unit =
+
+    val yy = loadData_y ()
+//  val y  = yy                                                           // full
+    val y  = yy(0 until 116)                                              // clip the flat end
+    val hh = 6                                                            // maximum forecasting horizon
+
+    val mod = new NullModel (y, hh)                                       // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
+    mod.trainNtest ()()
+
+    mod.rollValidate ()                                                   // TnT with Rolling Validation
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+
+end nullModelTest4
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `nullModelTest5` main function tests the `NullModel` class on small dataset.
+ *  Test forecasts (h = 1 step ahead forecasts).
+ *  > runMain scalation.modeling.forecasting.nullModelTest5
+ */
+@main def nullModelTest5 (): Unit =
+
+    val y  = VectorD (1, 3, 4, 2, 5, 7, 9, 8, 6, 3)
+
+    val mod = new NullModel (y, 1)                                        // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on a Small Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    new Baseline (y, "NULL")
+
+end nullModelTest5
 

@@ -24,17 +24,18 @@ import scala.reflect.ClassTag
  *  home buckets.  Uses the SRI rule: Split, Rehash, and then Insert.
  *  @tparam K        the type of the keys contained in this hash map
  *  @tparam V        the type of the values assigned to keys in this hash map
+ *  @param  name     the name of Linear Hash Map
  *  @param  order    the number of slots per bucket
  *  @param  loadFac  the (lower, upper) bound on the load factor (# keys over # home slots)
  */
-class LinHashMap [K: ClassTag, V: ClassTag] (order: Int = 4, loadFac: (Double, Double) = (0.2, 1.2))
+class LinHashMap [K: ClassTag, V: ClassTag] (name: String, order: Int = 4,
+                  loadFac: (Double, Double) = (0.3, 1.2))
       extends AbstractMap [K, V]
          with Serializable:
 
     var count = 0                                             // count # buckets accessed (performance)
 
     private val debug = debugf ("LinHashMap", true)           // debug function
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** The `Bucket` inner class defines buckets that are stored in this hash table.
@@ -207,7 +208,7 @@ class LinHashMap [K: ClassTag, V: ClassTag] (order: Int = 4, loadFac: (Double, D
     /** Show/print this hash table.
      */
     def show (): Unit =
-        println ("LinHashMap")
+        println (s"LinHashMap_$name")
         println ("-" * 60)
 
         for i <- hTable.indices do
@@ -365,7 +366,7 @@ end LinHashMap
     val RANDOMLY  = false
     val totalKeys = 50
 
-    val ht = new LinHashMap [Int, Int] ()
+    val ht = new LinHashMap [Int, Int] ("Test")
 
     banner ("Insert Keys")
     if RANDOMLY then

@@ -12,7 +12,7 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.CommandType._
@@ -25,13 +25,14 @@ import scalation.scala2d.Colors._
  *  @param at    the location of the sink (x, y, w, h)
  */
 class Sink (name: String, at: Array [Double])
-      extends Component:
+      extends Component
+         with Recorder ():
 
     initComponent (name, at)
 
     private val debug = debugf ("Sink", true)                          // debug function 
 
-    debug ("init", s"located at ${stringOf (at)}")
+    debug ("init", s"name = $name, located at ${stringOf (at)}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width 'w' and height 'h'.
@@ -54,11 +55,13 @@ class Sink (name: String, at: Array [Double])
      */
     def leave (): Unit =
         val actor = director.theActor
-        tally (director.clock - actor.arrivalT)
+        val ctime = director.clock                                     // clock timeA
+        tally (ctime - actor.arrivalT)                                 // tally actor time in system
+        record (actor, ctime)                                          // record actor flow
         director.log.trace (this, "terminates", actor, director.clock)
         director.animate (actor, MoveToken, null, null, Array (at(0) + DIAM, at(1) + at(3) / 2.0 - RAD))
 
-        actor.yieldToDirector (true)          // yield and terminate
+        actor.yieldToDirector (true)                                   // yield and terminate
     end leave
     
 end Sink
@@ -85,7 +88,7 @@ object Sink:
      */
     def group (xy: (Int, Int),
                snk: (String, (Int, Int))*): List [Sink] =
-        val sinkGroup = new ListBuffer [Sink] ()
+        val sinkGroup = new VEC [Sink] ()
         for s <- snk do sinkGroup += Sink (s._1, (xy._1 + s._2._1, xy._2 + s._2._2))
         sinkGroup.toList
     end group

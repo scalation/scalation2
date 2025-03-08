@@ -33,7 +33,7 @@ import scala.collection.mutable.{AbstractIterable, ArrayBuilder, ArrayBuffer,
 import scala.math.Ordering
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `PriorityQueues` class implements priority queues using a heap.
+/** The `PriorityQueue` class implements priority queues using a heap.
  *  To prioritize elements of type A there must be an implicit
  *  Ordering [A] available at creation.
  *
@@ -418,7 +418,7 @@ class PriorityQueue [A] (implicit val ord: Ordering [A])
      *  @return  an iterator over all elements sorted in descending order.
      */
     def reverseIterator: Iterator [A] = new AbstractIterator [A] {
-        private [this] var i = resarr.p_size0 - 1
+        private [PriorityQueue] var i = resarr.p_size0 - 1
         def hasNext: Boolean = i >= 1
         def next (): A =
             val n = resarr.p_array(i)
@@ -479,14 +479,14 @@ class PriorityQueue [A] (implicit val ord: Ordering [A])
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Use Defaultn Serialization Proxy for writing in place.
      */
-    protected [this] def writeReplace (): AnyRef =
+    protected [PriorityQueue] def writeReplace (): AnyRef =
         new DefaultSerializationProxy (PriorityQueue.evidenceIterableFactory [A], this)
     end writeReplace
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the name of this class.
      */
-    override protected [this] def className = "PriorityQueue"
+    override protected [PriorityQueue] def className = "PriorityQueue"
 
 end PriorityQueue
 
@@ -504,7 +504,7 @@ object PriorityQueue extends SortedIterableFactory [PriorityQueue]:
         new Builder [A, PriorityQueue [A]] {
             val pq = new PriorityQueue [A]
             def addOne (elem: A): this.type = { pq.unsafeAdd (elem); this }
-            def result (): PriorityQueue[A] = { pq.heapify (1); pq }
+            def result (): PriorityQueue [A] = { pq.heapify (1); pq }
             def clear (): Unit = pq.clear () }
     end newBuilder
 

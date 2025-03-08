@@ -5,14 +5,18 @@
  *  @date    Sat Aug 28 18:17:12 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Top-Level Functions to Read from Files in ScalaTion's "data" Directory
- *           or from a full-path
+ *  @note    Top-Level Functions to Read from Files (FileReader) in ScalaTion's
+ *           "data" Directory or from a full-path
  */
 
 package scalation
 
+import java.io.IOException
+
 import scala.collection.mutable.ArrayBuffer
 import scala.io.{BufferedSource, Source}
+
+val _flaw = flawf ("FileReader")                                       // flaw function
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Read and print each line in the file.
@@ -25,7 +29,12 @@ def readFile (fileName: String, fullPath: Boolean = false): Int =
     val path = if fullPath then fileName
                else DATA_DIR + fileName                                // relative to DATA_DIR
     println (s"readFile: $path")
-    val buffer = Source.fromFile (path)
+    var buffer: BufferedSource = null
+    try
+        buffer = Source.fromFile (path)                                // @see BufferedSource
+    catch 
+        case ex: IOException => _flaw ("readFile", s"IOException: file $path may not exist.")
+
     val lines  = buffer.getLines
     var i = 0
     for line <- lines do
@@ -50,7 +59,11 @@ def readFileIntoArray (fileName: String, fullPath: Boolean = false, limit: Int =
     val path = if fullPath then fileName
                else DATA_DIR + fileName                                // relative to DATA_DIR
     println (s"readFileIntoArray: $path")
-    val buffer = Source.fromFile (path)                                // @see BufferedSource
+    var buffer: BufferedSource = null
+    try
+        buffer = Source.fromFile (path)                                // @see BufferedSource
+    catch 
+        case ex: IOException => _flaw ("readFileIntoArray", s"IOException: file $path may not exist.")
 
     val lineArr = 
     if limit <= 0 then
@@ -87,7 +100,12 @@ def readFileIter (fileName: String, fullPath: Boolean = false): (Iterator [Strin
     val path = if fullPath then fileName
                else DATA_DIR + fileName                                // relative to DATA_DIR
     println (s"readFileIterator: $path")
-    val buffer = Source.fromFile (path)                                // @see BufferedSource
+    var buffer: BufferedSource = null
+    try
+        buffer = Source.fromFile (path)                                // @see BufferedSource
+    catch 
+        case ex: IOException => _flaw ("readFileIter", s"IOException: file $path may not exist.")
+
     val it: Iterator [String] = buffer.getLines ()                     // line iterator
     (it, buffer)                                                       // return iterator and buffer
 end readFileIter

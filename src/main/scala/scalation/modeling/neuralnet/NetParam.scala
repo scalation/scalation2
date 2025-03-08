@@ -22,7 +22,7 @@ type NetParams = Array [NetParam]
  *  @param b  the parameters (weights and biases)
  */
 extension (b: MatrixD | NetParam)
-    def dot (x: VectorD): VectorD =
+    infix def dot (x: VectorD): VectorD =
         b match 
         case b: MatrixD  => b.asInstanceOf [MatrixD] dot x
         case b: NetParam => b.asInstanceOf [NetParam] dot x
@@ -110,7 +110,7 @@ case class NetParam (var w: MatrixD, var b: VectorD = null):
      */
     def -= (cw: MatrixD, cb: VectorD = null): Unit =
         w -= cw
-        if cb != null then b -= cb
+        if b != null && cb != null then b -= cb
     end -=
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -128,13 +128,16 @@ case class NetParam (var w: MatrixD, var b: VectorD = null):
      *  This is the right associative version (`NetParam` on the left).
      *  @param x  the matrix to multiply by
      */
-    def *: (x: MatrixD): MatrixD = x * w + b
+    def *: (x: MatrixD): MatrixD =
+        if b != null then x * w + b
+        else x * w
+    end *:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Multiply vector x by the weight matrix w and add the bias vector b.
      *  @param x  the vector to multiply by
      */
-    def dot (x: VectorD): VectorD = (w dot x) + b
+    infix def dot (x: VectorD): VectorD = (w dot x) + b
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return whether this and `NetParam` c are approximately equal.

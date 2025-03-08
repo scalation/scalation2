@@ -12,14 +12,13 @@ package scalation
 package modeling
 package forecasting
 
-//import scala.math.min
+import scala.math.min
 
-import scalation.mathstat.*
-import scalation.modeling.neuralnet.RegressionMV as REGRESSION
+import scalation.mathstat._
+import scalation.modeling.neuralnet.{RegressionMV => REGRESSION}
+
 import Example_Covid.{loadData, response}
-import MakeMatrix4TS.*
-
-import scala.runtime.ScalaRunTime.stringOf
+import MakeMatrix4TS._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARX_D` class provides basic time series analysis capabilities for
@@ -109,7 +108,7 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String] 
     override def forecast (t: Int, y_ : VectorD): VectorD =
 //      val pred = reg.predict (x(min (t+1, x.dim-1)))               // FIX - why t+1
         val pred = predict (t, MatrixD (y_).transpose)
-        for h <- 1 to hh do yf(t, h) = pred(h-1)                    // t is correct for the new version
+        for h <- 1 to hh do yf(t-1, h) = pred(h-1)                   // FIX - why t-1
         pred                                                         // yh is pred
     end forecast
 
@@ -153,7 +152,6 @@ object ARX_D:
         val lwave = hparam("lwave").toDouble                            // wavelength (distance between peaks)
         val (x, yy) = buildMatrix4TS (xe, y, p, q, spec, lwave, hh)
         debug ("apply", s"x.dims = ${x.dims}, yy.dims = ${yy.dims}")
-        println(s"fname: ${stringOf(fname)}")
         new ARX_D (x, yy, hh, xe.dim2, fname, tRng, hparam)
     end apply
 
@@ -310,9 +308,9 @@ end aRX_DTest3
  *  > runMain scalation.modeling.forecasting.aRX_DTest4
  */
 @main def aRX_DTest4 (): Unit =
-//    val exo_vars  = NO_EXO
+
 //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-    val exo_vars  = Array ("icu_patients")
+    val exo_vars  = Array ("icu_patients", "hosp_patients")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
@@ -323,10 +321,10 @@ end aRX_DTest3
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
-    for p <- 6 to 6; s <- 1 to 1 do                                    // number of lags; trend
+    for p <- 1 to 10; s <- 1 to 5 do                                    // number of lags; trend
         hp("p")    = p                                                  // number of endo lags
 //      hp("q")    = p                                                  // number of exo lags
-        hp("q")    = 6                                         // try various rules
+        hp("q")    = min (2, p)                                         // try various rules
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
         val mod = ARX_D (xe, y, hh)                                     // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
@@ -336,7 +334,7 @@ end aRX_DTest3
         mod.rollValidate ()
 //      println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
         mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim))        // only diagnose on the testing set
-        println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRX_DTest4

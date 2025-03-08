@@ -91,7 +91,7 @@ object TimeOfWeek:
     /** Determine whether this time is AM (false) or PM (true).
      *  @param ts  the time-string in hh:mm:ss [ | AM | PM ]
      */
-    def isPM (ts: String): Boolean = ts.toUpperCase contains "PM"
+    def isPM (ts: String): Boolean = ts.toUpperCase `contains` "PM"
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether the string specification of a day is a correct abbreviation.

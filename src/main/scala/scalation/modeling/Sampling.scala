@@ -11,6 +11,8 @@
 package scalation
 package modeling
 
+import scala.collection.mutable.Set
+
 import scalation.mathstat._
 import scalation.random.RandomVecSample
 
@@ -67,4 +69,18 @@ def subSample (x: MatrixD, y: VectorI, nSamp: Int, stream: Int): (MatrixD, Vecto
         (x(irows), y(irows), irows)
     end if
 end subSample
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Create a random sub-sample of features from matrix x, returning the sub-sample
+ *  matrix along with the indices selected (as a set).
+ *  @author Prudhvi Chekka, Lalithya Sajja
+ *  @param x       the original input/data matrix
+ *  @param nFeat   the desired number of features in the sub-sample
+ *  @param stream  the random number stream to use
+ */
+def featureSubSample (x: MatrixD, nFeat: Int, stream: Int): (MatrixD, Set [Int]) =
+    val rsgFeat = RandomVecSample (x.dim2, nFeat, stream)          // randomly sample features
+    val ifeats  = rsgFeat.igen.to (Set)                            // select features, e.g., 2, 4, 1
+    (x(?, ifeats), ifeats)
+end featureSubSample
 

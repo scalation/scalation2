@@ -1,6 +1,0 @@
-# Library object files.
-src/obj
-*.o
-
-# Library executables.
-*.so

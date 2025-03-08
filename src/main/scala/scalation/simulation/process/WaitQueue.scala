@@ -12,7 +12,7 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.{ListBuffer, Queue}
+import scala.collection.mutable.{ArrayBuffer => VEC, Queue}
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.CommandType._
@@ -31,17 +31,16 @@ import scalation.scala2d.Colors._
  *  @param cap   the capacity of the queue (defaults to unbounded)
  */
 class WaitQueue (name: String, at: Array [Double], cap: Int = Int.MaxValue)
-      extends Queue [SimActor] with Component:
+      extends Queue [SimActor]
+         with Component:
 
     initComponent (name, at)
 
-    private val debug = debugf ("WaitQueue", true)                 // debug function
+    private val debug   = debugf ("WaitQueue", true)           // debug function
 
-    debug ("init", s"located at ${stringOf (at)}")
+    protected var _barred = 0            // number of entities barred from entering due to the wait-queue being full
 
-    /** The number of entities barred from entering due to the wait-queue being full
-     */
-    private var _barred = 0
+    debug ("init", s"name = $name, located at ${stringOf (at)}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width (w) and height (h).
@@ -77,21 +76,20 @@ class WaitQueue (name: String, at: Array [Double], cap: Int = Int.MaxValue)
     def waitIn (): Boolean =
         val actor  = director.theActor
         val timeIn = director.clock
-        accum (size)                                    // collect for persistent statistics
+        accum (size)                                           // collect for persistent statistics
         director.log.trace (this, "wait begins", actor, timeIn)
 
         val joined = if isFull then
-            _barred += 1                                // entity/actor barred
+            _barred += 1                                       // entity/actor barred
             false
         else
-            super.+= (actor)                            // entity/actor joins queue
-            actor.yieldToDirector ()                    // indefinite delay
+            super.+= (actor)                                   // entity/actor joins queue
+            actor.yieldToDirector ()                           // indefinite delay
             true
-        end joined
 
         val timeOut = director.clock
-        tally (timeOut - timeIn)                        // collect for sample/durations statistics
-        accum (if joined then size + 1 else size)       // collect for persistent statistics
+        tally (timeOut - timeIn)                               // collect for sample/durations statistics
+        accum (if joined then size + 1 else size)              // collect for persistent statistics
         director.log.trace (this, "wait ends", actor, timeOut)
         joined
     end waitIn
@@ -128,7 +126,7 @@ object WaitQueue:
      */
     def group (xy:  (Int, Int),
                que: (String, (Int, Int))*): List [WaitQueue] =
-        val queueGroup = new ListBuffer [WaitQueue] ()
+        val queueGroup = new VEC [WaitQueue] ()
         for q <- que do queueGroup += WaitQueue (q._1, (xy._1 + q._2._1, xy._2 + q._2._2))
         queueGroup.toList
     end group

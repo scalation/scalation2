@@ -11,7 +11,7 @@
 package scalation
 package simulation
 package process
-package example_MIR                                  // Method of Independent Replications
+package example_MIR                                    // Method of Independent Replications
 
 import scalation.random.{Exponential, Sharp}
 import scalation.random.RandomSeeds.N_STREAMS
@@ -45,9 +45,9 @@ class BankModel (name: String = "Bank", reps: Int = 40, animating: Boolean = fal
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val lambda   = 12.0  // 6.0                       // customer arrival rate (per hour)
-    val mu       = 7.5                                // customer service rate (per hour)
-    val nTellers = 2     // 1                         // the number of bank tellers (servers)
+    val lambda   = 12.0  // 6.0                         // customer arrival rate (per hour)
+    val mu       = 7.5                                  // customer service rate (per hour)
+    val nTellers = 2     // 1                           // the number of bank tellers (servers)
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
@@ -73,13 +73,14 @@ class BankModel (name: String = "Bank", reps: Int = 40, animating: Boolean = fal
 
     case class Customer () extends SimActor ("c", this):
 
-        def act (): Unit =
-            toTellerQ.jump ()
-            if teller.busy then tellerQ.waitIn () else tellerQ.noWait ()
-            teller.utilize ()
-            teller.release ()
-            toDoor.jump ()
-            door.leave ()
+        override def act (): Unit =
+            toTellerQ.jump ()                           // junp (one step) to the teller queus
+            if teller.busy then tellerQ.waitIn ()       // wait when all tellers are busy
+            else tellerQ.noWait ()                      // record no waiting time
+            teller.utilize ()                           // process transaction with teller
+            teller.release ()                           // release the teller
+            toDoor.jump ()                              // jump to door
+            door.leave ()                               // exit the bank
         end act
 
     end Customer

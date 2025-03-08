@@ -31,12 +31,13 @@ object Optimizer:
     /** hyper-parameters for tuning the optimization algorithms - user tuning
      */
     val hp = new HyperParameter
-    hp += ("eta", 0.1, 0.1)                                               // learning/convergence rate
+    hp += ("eta", 0.1, 0.1)                                               // learning/convergence rate (smaller for Adam)
     hp += ("bSize", 20, 20)                                               // mini-batch size, common range 10 to 40
     hp += ("maxEpochs", 400, 400)                                         // maximum number of epochs/iterations
     hp += ("lambda", 0.01, 0.01)                                          // regularization/shrinkage hyper-parameter
     hp += ("upLimit", 4, 4)                                               // up-limit hyper-parameter for stopping rule
     hp += ("beta", 0.9, 0.9)                                              // momentum decay hyper-parameter
+    hp += ("beta2", 0.999, 0.999)                                         // momentum decay hyper-parameter (second moment)
     hp += ("nu", 0.9, 0.9)                                                // interpolates between SGD (ν = 0) and
                                                                           // (normalized) SHB (ν = 1)
 

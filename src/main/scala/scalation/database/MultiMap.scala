@@ -30,11 +30,13 @@ import scala.reflect.ClassTag
  *  @see scalation.database.LinHashMap
  *  @tparam K           the type of the keys contained in this hash map
  *  @tparam V           the base-type of the values assigned to keys in this hash map
+ *  @param  name        the name of the Linear Hash MultiMap
  *  @param  order       the number of slots per bucket
  *  @param  loadFactor  the (lower, upper) bound on the load factor (# keys over # home slots)
  */
-class LinHashMultiMap [K: ClassTag, V: ClassTag] (order: Int = 4, loadFactor: (Double, Double) = (0.2, 1.2))
-      extends LinHashMap [K, Set [V]] (order, loadFactor):
+class LinHashMultiMap [K: ClassTag, V: ClassTag] (name: String, order: Int = 4,
+                       loadFactor: (Double, Double) = (0.3, 1.2))
+      extends LinHashMap [K, Set [V]] (name, order, loadFactor):
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add one key-value pair into this hash table and return this (called by put).
@@ -157,9 +159,11 @@ end JHashMultiMap
  *  @tparam V      the base-type of the values assigned to keys in this tree map
  *  @param  order  the number of order (maximum number of children) of the tree
  *  @param  ord    the implicit ordering used to compare objects of type K
- *  FIX - type error
+ */
 class BpTreeMultiMap [V: ClassTag] (order: Int = 4)
-      extends BpTreeMap [ValueType, Set [V]] (order):
+      extends BpTreeMap [Set [V]] ("BpTreeMultiMap"):     // FIX: add ", order"
+ 
+    println (s"BpTreeMultiMap: order = $order")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add one key-value pair into this tree map and return this (called by put).
@@ -175,7 +179,6 @@ class BpTreeMultiMap [V: ClassTag] (order: Int = 4)
     end addOne1
 
 end BpTreeMultiMap
- */
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

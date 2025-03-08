@@ -6,6 +6,14 @@
  *  @see     LICENSE (MIT style license file).
  *
  *  @note    Model Framework: Correlogram with ACF and PACF
+ *
+ *  @see www.jstatsoft.org/article/view/v027i03
+ *  @see www.kaggle.com/code/iamleonie/time-series-interpreting-acf-and-pacf
+ *       Time Series: Interpreting ACF and PACF
+ *       AR(p)      PACF drops-off after p lags
+ *       MA(q)      ACF  drops-off after q lags
+ *       ARMA(p, q) both tail-off (rather than drop-off)
+ *                  better to use other criteria (e.g., AIC/AICc) to chose p and q
  */
 
 package scalation
@@ -13,14 +21,16 @@ package mathstat
 
 import scala.math.{min, sqrt}
 
-val MAX_LAGS = 39                                    // maximum amount of lag supported
+val MAX_LAGS = 49                                    // maximum amount of lag supported
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Correlogram` trait provides functions for computing the Auto-Correlation
  *  Function (ACF) and the Partial Auto-Correlation Function (PACF).
- *  @param y  the time series data (response vector)
+ *  @param y         the time series data (response vector)
+ *  @param adjusted  whether to adjust to account for the number of elements in the sum Σ (or use dim-1)
+ *                   @see `VectorD.acov`
  */
-trait Correlogram (y: VectorD):
+trait Correlogram (y: VectorD, adjusted: Boolean = true):
 
     private val ml = min (y.dim-1, MAX_LAGS)         // maximum lag to consider (can't exceed dataset size)
     private var stats: Stats4TS = null               // statistics on time-series y
@@ -32,7 +42,7 @@ trait Correlogram (y: VectorD):
      *  @param y_  the current (e.g., training) times-series to use (defaults to full y)
      */
     def makeCorrelogram (y_ : VectorD = y): Unit =
-        stats = Stats4TS (y_, ml)
+        stats = Stats4TS (y_, ml, adjusted)
         psi   = durbinLevinson (stats.acv, ml)
         pacf  = psi(?)
     end makeCorrelogram
@@ -40,22 +50,22 @@ trait Correlogram (y: VectorD):
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the autocorrelation vector (ACF).
      */
-    def acF: VectorD  = stats.acr
+    inline def acF: VectorD  = stats.acr
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the partial autocorrelation vector (PACF).
      */
-    def pacF: VectorD = pacf
+    inline def pacF: VectorD = pacf
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the psi matrix.
      */
-    def psiM: MatrixD = psi
+    inline def psiM: MatrixD = psi
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return basic statistics on time-series y or y_.
      */
-    def statsF: Stats4TS = stats
+    inline def statsF: Stats4TS = stats
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Apply the Durbin-Levinson Algorithm to iteratively compute the psi matrix.
@@ -96,6 +106,16 @@ trait Correlogram (y: VectorD):
         if show then println (s"$name: fVec = $fVec")
     end plotFunc
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Plot both the Auto-Correlation Function (ACF) and the Partial Auto-Correlation
+     *  Function (PACF) with confidence bound.
+     *  @param show  whether to show the ACF, PACF values
+     */
+    def plotCorrelogram (show: Boolean = true): Unit =
+        plotFunc (acF, "ACF")
+        plotFunc (pacF, "PACF")
+    end plotCorrelogram
+
 end Correlogram
 
 
@@ -109,19 +129,13 @@ end Correlogram
     val y = VectorD (1, 2, 5, 8, 3, 6, 9, 4, 5, 11,
                      12, 16, 7, 6, 13, 15, 10, 8, 14, 17)
 
-    object CT extends Correlogram (y)
-
     banner ("Plot Data")
     new Plot (null, y, null, "y vs. t", lines = true)
 
     banner ("Test Correlogram")
+    object CT extends Correlogram (y)
     CT.makeCorrelogram ()
-    val acf  = CT.acF
-    val pacf = CT.pacF
-    println (s"acF = $acf")
-    println (s"pacF = $pacf")
-    CT.plotFunc (acf, "ACF")
-    CT.plotFunc (pacf, "PACF")
+    CT.plotCorrelogram ()
     
 end correlogramTest
 

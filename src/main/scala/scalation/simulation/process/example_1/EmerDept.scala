@@ -11,10 +11,9 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
 import scalation.random.Uniform
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runEmerDept` function is used to launch the `EmerDeptModel` class.
@@ -25,8 +24,8 @@ import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `EmerDeptModel` class defines a simple process-interaction model of an
- *  Emergency Department model where service is provided by one or more nurses and
- *  one or more doctors.   A patient will first see a nurse and then a doctor.
+ *  Emergency Department (ED) model where service is provided by one or more nurses
+ *  and one or more doctors.   A patient will first see a nurse and then a doctor.
  *  @param name       the name of the simulation model
  *  @param reps       the number of independent replications to run
  *  @param animating  whether to animate the model
@@ -41,20 +40,20 @@ class EmerDeptModel (name: String = "EmerDept", reps: Int = 1, animating: Boolea
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val ia_time    = (2000.0, 4000.0)                 // patient inter-arrival time range
-    val nurse_ser  = (7000.0, 9000.0)                 // nurse service time range
-    val doctor_ser = (5000.0, 7000.0)                 // doctor service time range
-    val mv_time    = (900.0, 1100.0)                  // move time range
-    val nurses     = 3                                // number of nurses
-    val doctors    = 2                                // number of doctors
+    val ia_time    = (2000.0, 4000.0)                   // patient inter-arrival time range
+    val nurse_ser  = (7000.0, 9000.0)                   // nurse service time range
+    val doctor_ser = (5000.0, 7000.0)                   // doctor service time range
+    val mv_time    = (900.0, 1100.0)                    // move time range
+    val nurses     = 3                                  // number of nurses
+    val doctors    = 2                                  // number of doctors
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Uniform (ia_time, stream)
-    val nurseRV    = Uniform (nurse_ser, (stream + 1) % N_STREAMS)
-    val doctorRV   = Uniform (doctor_ser, (stream + 2) % N_STREAMS)
-    val moveRV     = Uniform (mv_time, (stream + 3) % N_STREAMS)
+    val iArrivalRV = Uniform (ia_time, stream)          // use different random number streams for independence
+    val nurseRV    = Uniform (nurse_ser, stream + 1)
+    val doctorRV   = Uniform (doctor_ser, stream + 2)
+    val moveRV     = Uniform (mv_time, stream + 3)
 
     //--------------------------------------------------
     // Create Model Components
@@ -76,17 +75,20 @@ class EmerDeptModel (name: String = "EmerDept", reps: Int = 1, animating: Boolea
 
     case class Patient () extends SimActor ("p", this):
 
-        def act (): Unit =
-            toNurseQ.move ()
-            if nurse.busy then nurseQ.waitIn ()
-            nurse.utilize ()
-            nurse.release ()
-            toDoctorQ.move ()
-            if doctor.busy then doctorQ.waitIn ()
-            doctor.utilize ()
-            doctor.release ()
-            toDoor.move ()
-            door.leave ()
+        override def act (): Unit =
+            toNurseQ.move ()                            // move to queue to see a nurse
+            if nurse.busy then nurseQ.waitIn ()         // wait if all nurses are busy
+            else nurseQ.noWait ()                       // record no waiting
+            nurse.utilize ()                            // nurse's examination
+            nurse.release ()                            // relaase nurse
+
+            toDoctorQ.move ()                           // move to queue to see a doctor
+            if doctor.busy then doctorQ.waitIn ()       // wait if all doctors are busy
+            else nurseQ.noWait ()                       // record no waiting
+            doctor.utilize ()                           // doctor's examination
+            doctor.release ()                           // relaase doctor
+            toDoor.move ()                              // move to door
+            door.leave ()                               // exit the ED
         end act
 
     end Patient

@@ -71,18 +71,18 @@ end BiMap
 @main def biMapTest (): Unit =
 
     val m = new BiMap [String, Int] ()
-    m put "Jan" ->  1
-    m put "Feb" ->  2
-    m put "Mar" ->  3
-    m put "Apr" ->  4
-    m put "May" ->  5
-    m put "Jun" ->  6
-    m put "Jul" ->  7
-    m put "Aug" ->  8
-    m put "Sep" ->  9
-    m put "Oct" -> 10
-    m put "Nov" -> 11
-    m +=  "Dec" -> 12
+    m.put ("Jan" ->  1)
+    m.put ("Feb" ->  2)
+    m.put ("Mar" ->  3)
+    m.put ("Apr" ->  4)
+    m.put ("May" ->  5)
+    m.put ("Jun" ->  6)
+    m.put ("Jul" ->  7)
+    m.put ("Aug" ->  8)
+    m.put ("Sep" ->  9)
+    m.put ("Oct" -> 10)
+    m.put ("Nov" -> 11)
+    m +=  ("Dec" -> 12)
 
     for i <- 1 to 12 do println (s"month $i is ${m.from (i)}")
     println (s"May is month ${m("May")}")

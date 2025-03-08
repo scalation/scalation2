@@ -22,6 +22,10 @@ import ActivationFun._
 import Initializer._
 import Optimizer._
 
+//import neuralnet.{Optimizer_SGD  => OPTIMIZER}
+//import neuralnet.{Optimizer_SGDM => OPTIMIZER}
+import neuralnet.{Optimizer_Adam => OPTIMIZER}
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `NeuralNet_2L` class supports multi-output, 2-layer (input and output)
  *  Neural-Networks.  It can be used for both classification and prediction,
@@ -45,9 +49,8 @@ class NeuralNet_2L (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
 
-    private val eta       = hp("eta").toDouble                            // learning rate
-//          val opti      = new Optimizer_SGD ()                          // parameter optimizer SGD
-            val opti      = new Optimizer_SGDM ()                         // parameter optimizer SGDM
+    private val eta  = hp("eta").toDouble                                 // learning rate
+            val opti = new OPTIMIZER ()                                   // parameter optimizer
 
 //  b  = new NetParam (weightMat (x.dim2, y.dim2))                        // initialize parameters b
 //  bb = Array (b.asInstanceOf [NetParam])                                // inside array 
@@ -334,26 +337,26 @@ import Example_AutoMPG._
  *  > runMain scalation.modeling.neuralnet.neuralNet_2LTest3
  */
 @main def neuralNet_2LTest3 (): Unit =
-
  
 //  println (s"ox = $ox")
 //  println (s"yy = $yy")
     println (s"ox_fname = ${stringOf (ox_fname)}")
-
+ 
+    Optimizer.hp("eta") = 0.08                                   // try 0.1 for SGDM, 0.08 for Adam
 //  val mod = new NeuralNet_2L (ox, yy, ox_fname)                // create model with intercept (else pass x)
 //  val mod = NeuralNet_2L.rescale (ox, yy, ox_fname)            // create model with intercept (else pass x) - rescales
     val mod = NeuralNet_2L.perceptron (ox, y, ox_fname)          // create model with intercept (else pass x) - rescales
 
-    banner ("AutoMPG - NeuralNet_2L: trainNtest")
+    banner ("AutoMPG - NeuralNet_2L: In-Sample trainNtest")
     mod.trainNtest ()()                                          // train and test the model - manual tuning
     mod.opti.plotLoss ("NeuralNet_2L")                           // loss function vs epochs
 
-    banner ("AutoMPG NeuralNet_2L: trainNtest2")
+    banner ("AutoMPG NeuralNet_2L: In-Sample trainNtest2 - auto-tune")
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
     mod.opti.plotLoss ("NeuralNet_2L")                           // loss function vs epochs for each eta
     println (mod.summary2 ())                                    // parameter/coefficient statistics
 
-    banner ("AutoMPG - NeuralNet_2L: validate")
+    banner ("AutoMPG - NeuralNet_2L: TnT validate")
     println (FitM.showFitMap (mod.validate ()(), QoF.values.map (_.toString)))
 
     banner ("AutoMPG - NeuralNet_2L: crossValidate")
@@ -492,10 +495,67 @@ end neuralNet_2LTest7
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_2LTest8` main function is used to test the `NeuralNet_2L` class.
- *  It compares `NeuralNet_2L.perceptron` using sigmoid with `TransRegression` using logit.
+ *  It test the basic vector equations for gradient descent. 
  *  > runMain scalation.modeling.neuralnet.neuralNet_2LTest8
  */
 @main def neuralNet_2LTest8 (): Unit =
+
+    // 9 data points:    Constant    x1    x2    y0    y1
+    val xy = MatrixD ((9, 5), 1.0,  0.0,  0.0,  0.5,  0.4,            // dataset
+                              1.0,  0.0,  0.5,  0.3,  0.3,
+                              1.0,  0.0,  1.0,  0.2,  0.2,
+
+                              1.0,  0.5,  0.0,  0.8,  0.7,
+                              1.0,  0.5,  0.5,  0.5,  0.5,
+                              1.0,  0.5,  1.0,  0.3,  0.4,
+
+                              1.0,  1.0,  0.0,  1.0,  0.9,
+                              1.0,  1.0,  0.5,  0.8,  0.7,
+                              1.0,  1.0,  1.0,  0.5,  0.5)
+    val x    = xy(?, 0 until 3)                                       // matrix for predictor variables
+    val y    = xy(?, 3 until 5)                                       // matrix for response variables
+    val sst0 = (y(?, 0) - y(?, 0).mean).normSq                        // sum of squares total for y_:0
+    val sst1 = (y(?, 1) - y(?, 1).mean).normSq                        // sum of squares total for y_:1
+
+    val η = 1.0                                                       // learning rate
+    val b = MatrixD ((3, 2), 0.1, 0.1,                                // weights/parameters
+                             0.2, 0.1,
+                             0.1, 0.1)
+
+    val f = f_sigmoid
+
+    for epoch <- 1 to 10 do
+        banner (s"improvement step $epoch")
+        val u  = x * b                                                // pre-activation vector
+        val yp = f.fM (u)                                             // predicted response from calculation for sigmoid
+        val ε  = y - yp                                               // error matrix
+        val δ  = f.dM(yp) ⊙ ε                                         // delta matrix for y
+        b     += x.𝐓 * δ * η                                          // parameter update (transpose (𝐓))
+
+        val sse0 = ε(?, 0).normSq                                     // sum of squared errors for column 0
+        val sse1 = ε(?, 1).normSq                                     // sum of squared errors for column 1
+
+        println (s"u     = $u")
+        println (s"y     = $y")
+        println (s"yp    = $yp")
+        println (s"e     = $ε")
+        println (s"δ     = $δ")
+        println (s"b     = $b")
+        println (s"sse0  = $sse0")
+        println (s"sse1  = $sse1")
+        println (s"R^2_0 = ${1 - sse0/sst0}")
+        println (s"R^2_1 = ${1 - sse1/sst1}")
+    end for
+
+end neuralNet_2LTest8
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `neuralNet_2LTest9` main function is used to test the `NeuralNet_2L` class.
+ *  It compares `NeuralNet_2L.perceptron` using sigmoid with `TransRegression` using logit.
+ *  > runMain scalation.modeling.neuralnet.neuralNet_2LTest9
+ */
+@main def neuralNet_2LTest9 (): Unit =
 
 //  val x  = VectorD (1, 2, 3, 4, 5, 6)
     val x  = MatrixD ((6, 1), 1, 2, 3, 4, 5, 6)
@@ -514,5 +574,5 @@ end neuralNet_2LTest7
     val tr = new TranRegression (ox, y, tran = logit, itran = sigmoid) 
     tr.trainNtest ()()                                                // train and test the model
 
-end neuralNet_2LTest8
+end neuralNet_2LTest9
 

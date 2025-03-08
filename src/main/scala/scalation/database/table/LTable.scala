@@ -21,7 +21,7 @@ import scala.runtime.ScalaRunTime.stringOf
  */
 object LTable:
 
-    private val debug = debugf ("LTable", true)                             // debug function
+    private val debug = debugf ("LTable", false)                            // debug function
     private val flaw  = flawf ("LTable")                                    // flaw function
     private val cntr  = Counter ()                                          // counter for generating unique names
 
@@ -43,6 +43,16 @@ object LTable:
      */
     def apply (name: String, tab: Table): LTable =
         new LTable (name, tab.schema, tab.domain, tab.key)
+    end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a new linkable-table from an existing table.
+     *  @param tab   the existing table
+     */
+    def apply (tab: Table): LTable =
+        val s = new LTable ("l_" + tab.name, tab.schema, tab.domain, tab.key)
+        s.tuples ++= tab.tuples
+        s
     end apply
 
 end LTable
@@ -88,7 +98,8 @@ case class LTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
      */
     def addLink (fkey: String, t: Tuple, refTab: Table): Unit =
         val t_fkey = pull (t, fkey)
-        val refTup = refTab.index.getOrElse (new KeyType (t_fkey), null)
+//      val refTup = refTab.index.getOrElse (new KeyType (t_fkey), null)      // FIX - unify use of indices
+        val refTup = refTab.index.getOrElse (t_fkey, null)
         if refTup == null then
             flaw ("addLink", s"$name: referential integrity violation for fkey = $fkey, value = $t_fkey")
         else
@@ -110,10 +121,12 @@ case class LTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
     end removeLink
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the EQUI-JOIN via direct LINKS from this linkable-table to the referenced table
-     *  keeping concatenated tuples that are equal on the primary key and foreign key attributes.
+    /** Compute the EQUI-JOIN via the LINK JOIN (LJ) algorithm that uses direct LINKS
+     *  from this linkable-table to the referenced table keeping concatenated tuples
+     *  that are equal on the primary key and foreign key attributes.
      *  Caveat:  Requires the foreign key table to be first [ fkey_table join ((fkey, pkey_table) ].
      *  Usage:   deposit join (("cname", customer))
+     *--------------------------------------------------------------------------
      *  @param ref  the foreign key reference (foreign key attribute, referenced table)
      */
     override def join (ref: (String, Table)): LTable =
@@ -122,17 +135,43 @@ case class LTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
         val s = new LTable (s"${name}_j_${cntr.inc ()}", disambiguate (schema, refTab.schema),
                             domain ++ refTab.domain, key)
 
-        val link = links.getOrElse (fkey, null)                             // get link for foreign key
+        var link = links.getOrElse (fkey, null)                             // get link for foreign key
         if link == null then
-            s.addLinkage (fkey, refTab)                                     // add the linkage
-//          flaw ("join", s"$name: foreign key $fkey not established as a link")
-        else
-            for t <- tuples do                                              // iterate over fkey table
-                val t_fkey = pull (t, fkey)                                 // pull out foreign key value
-                val u = link.getOrElse (t_fkey, null)                       // get tuple from pkey table
-                if u != null then s.tuples += t ++ u                        // add concatenated tuples
-            end for
+            addLinkage (fkey, refTab)                                       // add the linkage
+            link = links.getOrElse (fkey, null)                             // try again
+            if link == null then
+                flaw ("join", s"$name: foreign key $fkey not established as a link")
         end if
+        debug ("join", s"link = $link")
+        for t <- tuples do                                                  // iterate over fkey table
+            val t_fkey = pull (t, fkey)                                     // pull out foreign key value
+            val u = link.getOrElse (t_fkey, null)                           // get tuple from pkey table
+            if u != null then s.tuples += t ++ u                            // add concatenated tuples
+        end for
+        s
+    end join
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the LINK JOIN (LJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.
+     *  Usage:  customer join deposit
+     *--------------------------------------------------------------------------
+     *  @param r2  the second table
+     */
+    override infix def join (r2: Table): Table =
+//      val common = schema intersect r2.schema                             // common attributes
+        val common = meet (schema, r2.schema)                               // common attributes
+        debug ("join", s"common = ${stringOf (common)}")
+        val rest   = r2.schema diff common
+        val newKey = if subset (common, key) then r2.key                    // three possibilities for new key
+                     else if subset (common, r2.key) then key
+                     else key ++ r2.key
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
+                           domain ++ r2.pull (rest), newKey)
+
+        // implement LJ algorithm
+
         s
     end join
 
@@ -308,11 +347,11 @@ end lTableTest
     banner ("Example Queries")
 
     banner ("locations of students")
-    val locs = student project ("sname, city")
+    val locs = student.project ("sname, city")
     locs.show ()
 
     banner ("living in Athens")
-    val inAthens = student select ("city == 'Athens'")
+    val inAthens = student.select ("city == 'Athens'")
     inAthens.show ()
 
     banner ("not living in Athens")
@@ -336,13 +375,13 @@ end lTableTest
 
 // FIX - fails since linkage must be established for intermediate tables
 
-    banner ("course taken: course name")
+    banner ("courses taken: course name")
     val taken_nm = takes.join (("sid", student))
                         .join (("cid", course))
                         .project ("sname, cname")
     taken_nm.show ()
 
-    banner ("student taught by")
+    banner ("students taught by")
     val taught_by = takes.join (("sid", student))
                          .join (("cid", course))
                          .join (("pid", professor))
@@ -350,4 +389,190 @@ end lTableTest
     taught_by.show ()
 
 end lTableTest2
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `lTableTest3` main function tests the `LTable` class with queries on the
+ *  University database.  It does performance testing of EQUI-JOIN using large
+ *  tables populated using `TableGen`.
+ *  Tables:  student, professor, course, section, transcript
+ *  > runMain scalation.database.table.lTableTest3
+ */
+@main def lTableTest3 (): Unit =
+
+    val n_students = 10000
+
+    banner ("Create and populate the student table")
+    val student = Table ("student", "sid, name, address, status", "I, S, S, S", "sid")
+    TableGen.popTable (student, n_students)
+    println (s"After removing duplicates - student - has ${student.rows} rows")
+
+    banner ("Create and populate the professor table")
+    val professor = Table ("professor", "pid, name, deptid", "I, S, I", "pid")
+    TableGen.popTable (professor, n_students / 10)
+    println (s"After removing duplicates - professor - has ${professor.rows} rows")
+
+    banner ("Create and populate the course table")
+    val course = Table ("course", "cid, deptid, crsname, descr", "I, I, S, S", "cid")
+    TableGen.popTable (course, n_students / 10)
+    println (s"After removing duplicates - course - has ${course.rows} rows")
+
+    banner ("Create and populate the section table")
+    val section = Table ("section", "crn, cid, semester, pid", "I, I, S, I", "crn")
+    section.addLinkage ("cid", course)                             // teaching cid references course cid
+    section.addLinkage ("pid", professor)                          // teaching pid references professor pid
+    TableGen.popTable (section, n_students / 5)
+    section.show_foreign_keys ()
+    println (s"After removing duplicates - section - has ${section.rows} rows")
+
+    banner ("Create and populate the transcript table")
+    val transcript = Table ("transcript", "sid, crn, grade", "I, I, S", "sid, crn")
+    transcript.addLinkage ("sid", student)                         // transcript sid references student sid
+    transcript.addLinkage ("crn", section)                         // transcript crn references section crn
+    TableGen.popTable (transcript, n_students * 3)
+    transcript.show_foreign_keys ()
+    transcript.create_index ()
+    println (s"After removing duplicates - transcript - has ${transcript.rows} rows")
+
+    // Perform Timing Tests to compare 5 Join Algorithms
+
+    var transcript_student: Table = null
+
+    banner ("transcript join student USING NLJ")
+    time (5) {
+        transcript_student = transcript.join (Array ("sid"), Array ("sid"), student)
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript join student USING IJ with UI")
+    time (100) {
+        transcript_student = transcript.join (("sid", student))
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript _join student USING IJ with NUI")
+    transcript.create_mindex ("sid")                               // create Non-Unique Index
+    time (100) {
+        transcript_student = transcript._join (("sid", student))
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript _join_ student USING SMJ")
+    time (100) {
+        transcript_student = transcript._join_ (("sid", student))
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("l_transcript join l_student USING LJ")
+    val l_student    = LTable (student)                            // create Linked Tables
+    val l_transcript = LTable (transcript)
+    l_student.create_index ()
+    l_transcript.create_index ()
+    l_transcript.addLinkage ("sid", student)
+    println (s"After removing duplicates - l_student - has ${l_student.rows} rows")
+    println (s"After removing duplicates - l_transcript - has ${l_transcript.rows} rows")
+    time (100) {
+        transcript_student = l_transcript.join (("sid", l_student))
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+end lTableTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `lTableTest4` main function tests the `LTable` class with queries on the
+ *  University database.  It does performance testing of NATURAL JOIN using large
+ *  tables populated using `TableGen`.
+ *  Tables:  student, professor, course, section, transcript
+ *  > runMain scalation.database.table.lTableTest3
+ */
+@main def lTableTest4 (): Unit =
+
+    val n_students = 10000
+
+    banner ("Create and populate the student table")
+    val student = Table ("student", "sid, name, address, status", "I, S, S, S", "sid")
+    TableGen.popTable (student, n_students)
+    println (s"After removing duplicates - student - has ${student.rows} rows")
+
+    banner ("Create and populate the professor table")
+    val professor = Table ("professor", "pid, name, deptid", "I, S, I", "pid")
+    TableGen.popTable (professor, n_students / 10)
+    println (s"After removing duplicates - professor - has ${professor.rows} rows")
+
+    banner ("Create and populate the course table")
+    val course = Table ("course", "cid, deptid, crsname, descr", "I, I, S, S", "cid")
+    TableGen.popTable (course, n_students / 10)
+    println (s"After removing duplicates - course - has ${course.rows} rows")
+
+    banner ("Create and populate the section table")
+    val section = Table ("section", "crn, cid, semester, pid", "I, I, S, I", "crn")
+    section.addLinkage ("cid", course)                             // teaching cid references course cid
+    section.addLinkage ("pid", professor)                          // teaching pid references professor pid
+    TableGen.popTable (section, n_students / 5)
+    section.show_foreign_keys ()
+    println (s"After removing duplicates - section - has ${section.rows} rows")
+
+    banner ("Create and populate the transcript table")
+    val transcript = Table ("transcript", "sid, crn, grade", "I, I, S", "sid, crn")
+    transcript.addLinkage ("sid", student)                         // transcript sid references student sid
+    transcript.addLinkage ("crn", section)                         // transcript crn references section crn
+    TableGen.popTable (transcript, n_students * 3)
+    transcript.show_foreign_keys ()
+    transcript.create_index ()
+    println (s"After removing duplicates - transcript - has ${transcript.rows} rows")
+
+    // Perform Timing Tests to compare 5 Join Algorithms
+
+    var transcript_student: Table = null
+
+    banner ("transcript join student USING NLJ")
+    time (5) {
+        transcript_student = transcript join student
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript join student USING IJ with UI")
+    time (100) {
+        transcript_student = transcript join_ student
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript _join student USING IJ with NUI")
+    transcript.create_mindex ("sid")                               // create Non-Unique Index
+    time (100) {
+        transcript_student = transcript _join student
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("transcript _join_ student USING SMJ")
+    time (100) {
+        transcript_student = transcript _join_ student
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+    banner ("l_transcript join l_student USING LJ")
+    val l_student    = LTable (student)                            // create Linked Tables
+    val l_transcript = LTable (transcript)
+    l_student.create_index ()
+    l_transcript.create_index ()
+    l_transcript.addLinkage ("sid", student)
+    println (s"After removing duplicates - l_student - has ${l_student.rows} rows")
+    println (s"After removing duplicates - l_transcript - has ${l_transcript.rows} rows")
+    time (100) {
+        transcript_student = l_transcript join l_student
+    }
+    println (s"transcript_student has ${transcript_student.rows} rows")
+    transcript_student.show (0 until 10)
+
+end lTableTest4
 

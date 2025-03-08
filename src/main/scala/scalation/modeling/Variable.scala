@@ -17,7 +17,9 @@ import scalation.mathstat._
 /** The `VariableKind` enumeration indicates the kind of variable.
  */
 enum VariableKind:
+
     case Categorical, Ordinal, Continuous
+
 end VariableKind
 
 import VariableKind._
@@ -53,11 +55,17 @@ end Variable
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Variable` companion object provides utilities for variables.
+ *  Pick either COMMON or ROBUST values to the dummy variables.
  */
 object Variable:
 
-    val VAL0 = 1.0                                           // first value  (e.g., 0 or 1)
-    val VAL1 = 2.0                                           // second value (e.g., 1 or 2)
+//  Common values for dummy variables
+    val VAL0 = 0.0                                           // first value  (e.g., 0 or 1)
+    val VAL1 = 1.0                                           // second value (e.g., 1 or 2)
+
+//  Robust values for dummy variables
+//  val VAL0 = 1.0                                           // first value  (e.g., 0 or 1)
+//  val VAL1 = 2.0                                           // second value (e.g., 1 or 2)
 
     private val debug = debugf ("Variable", false)           // debug function
     private val flaw  = flawf ("Variable")                   // flaw function
@@ -104,7 +112,7 @@ object Variable:
      *  @param tmx  the maximum categorical/treatment after shifting
      */
     def dummyVar (tt: Int, shf: Int = shift, tmx: Int = tmax): VectorD =
-        if tmx < 1 then flaw ("dummyVar", s"requires maximum categorical value $tmx > 1")
+        if tmx < 1 then flaw ("dummyVar", s"requires maximum categorical value $tmx >= 1")
         val xd = new VectorD (tmx); xd.set (VAL0)
 
         val t  = if shf != 0 then tt - shf else tt

@@ -15,8 +15,6 @@ package scalation
 package modeling
 package neuralnet
 
-import scala.math.min
-
 import scalation.mathstat._
 import scalation.random.RandomVecD
 
@@ -32,97 +30,111 @@ class CoFilter_1D (width: Int = 5):
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the parameters, i.e., the filter's vector.
-     *  @param vec  the new vector parameters
+     *  @param vec_  the new vector parameters
      */
-    def update (vec2: VectorD): Unit = vec = vec2
+    def update (vec_ : VectorD): Unit = vec = vec_
 
 end CoFilter_1D
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `CoFilter_1D` object provides the convolution and pooling operators.
+ *  @see `mathstat.VectorD` for infix implementations of
+ *  conv (*+)   -- `valid` convolution, no reversal (conv_ for reversal)
+ *  convs (*~+) -- `same`  convolution, with reversal
+ *  convf (*++) -- `full`  convolution, with reversal
  */
 object CoFilter_1D:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the 'full' convolution of cofilter c and input vector x.
-     *  @param c  the cofilter vector of coefficient
-     *  @param x  the input/data vector
-     */
-    def convf (c: VectorD, x: VectorD): VectorD =
-        val y = new VectorD (c.dim + x.dim - 1)
-        for k <- y.indices do
-            var sum = 0.0
-            for j <- 0 until min (k+1, c.dim) do
-                if k - j < x.dim then sum += c(j) * x(k - j)
-            end for
-            y(k) = sum
-        end for
-        y
-    end convf
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the 'same' convolution of cofilter c and input vector x.
-     *  Same means that the size of the result is the same as the input.
-     *  @param c  the cofilter vector of coefficient
-     *  @param x  the input/data vector
-     */
-    def convs (c: VectorD, x: VectorD): VectorD =
-        val y   = new VectorD (x.dim)
-        val off = c.dim / 2
-        for k <- off until y.dim + off do
-            var sum = 0.0
-            for j <- 0 until min (k+1, c.dim) do
-                if k - j < x.dim then sum += c(j) * x(k - j)
-            end for
-            y(k-off) = sum
-        end for
-        y
-    end convs
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the 'valid' (no padding) convolution of cofilter c and input vector x.
+    /** Return the 'valid' (no padding) convolution of cofilter vector c and
+     *  input vector x.
      *  Caveat: does not include reversal.
-     *  @param c  the cofilter vector of coefficient
+     *  @param c  the cofilter vector of coefficients
      *  @param x  the input/data vector
      */
-    def conv (c: VectorD, x: VectorD): VectorD =
-        val y = new VectorD (x.dim - c.dim + 1)
-        for k <- y.indices do y(k) = x(k until k + c.dim) dot c
-        y
-    end conv
+    def conv (c: VectorD, x: VectorD): VectorD = c *+ x
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the convolution over all data instances.
-     *  @param c  the cofilter vector of coefficient
+    /** Return the 'valid' (no padding) convolution of cofilter vector c and
+     *  input matrix x.
+     *  Caveat: does not include reversal.
+     *  @param c  the cofilter vector of coefficients
      *  @param x  the input/data matrix
      */
-    def conv (c: VectorD, x: MatrixD): MatrixD =
-        MatrixD (for i <- x.indices yield conv (c, x(i)))
-    end conv
+    def conv (c: VectorD, x: MatrixD): MatrixD = x.mmap (c *+ _)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the 'same' (with padding) convolution of cofilter vector c and
+     *  input vector x.
+     *  Same means that the size of the result is the same as the input.
+     *  @param c  the cofilter vector of coefficients
+     *  @param x  the input/data vector
+     */
+    def convs (c: VectorD, x: VectorD): VectorD = c *~+ x
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the 'same' (with padding) convolution of cofilter vector c and
+     *  input matrix x.
+     *  @param c  the cofilter vector of coefficients
+     *  @param x  the input/data matrix
+     */
+    def convs (c: VectorD, x: MatrixD): MatrixD = x.mmap (c *~+ _)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the 'full' convolution of cofilter vector c and input vector x.
+     *  Same means that the size of the result is the same as the input.
+     *  @param c  the cofilter vector of coefficients
+     *  @param x  the input/data vector
+     */
+    def convf (c: VectorD, x: VectorD): VectorD = c *++ x
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the 'full' convolution of cofilter vector c and input matrix x.
+     *  @param c  the cofilter vector of coefficients
+     *  @param x  the input/data matrix
+     */
+    def convf (c: VectorD, x: MatrixD): MatrixD = x.mmap (c *++ _)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the max-pooling results over all pooling windows.
      *  @param x  the input/data vector
-     *  @param s  the the size of the pooling window
+     *  @param s  the size of the pooling window
      */
     def pool (x: VectorD, s: Int = 2): VectorD =
         val p = new VectorD (x.dim / s)
         for j <- p.indices do
             val jj = s * j
             p(j)   = x(jj until jj+s).max
-        end for
         p
     end pool
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the pooling results over all data instances.
+    /** Return the max-pooling results over all data instances (matrix level).
      *  @param x  the input/data matrix
      *  @param s  the the size of the pooling window
      */
-    def pool (x: MatrixD, s: Int): MatrixD =
-        MatrixD (for i <- x.indices yield pool (x(i), s))
-    end pool
+    def pool (x: MatrixD, s: Int): MatrixD = x.mmap (pool (_, s))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the avg-pooling results over all pooling windows.
+     *  @param x  the input/data vector
+     *  @param s  the size of the pooling window
+     */
+    def pool_a (x: VectorD, s: Int = 2): VectorD =
+        val p = new VectorD (x.dim / s)
+        for j <- p.indices do
+            val jj = s * j
+            p(j)   = x(jj until jj+s).mean
+        p
+    end pool_a
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the avg-pooling results over all data instances (matrix level).
+     *  @param x  the input/data matrix
+     *  @param s  the the size of the pooling window
+     */
+    def pool_a (x: MatrixD, s: Int): MatrixD = x.mmap (pool_a (_, s))
 
 end CoFilter_1D
 
@@ -138,23 +150,49 @@ import CoFilter_1D._
     val x = MatrixD ((2, 5), 1, 2, 3, 4, 5,
                              6, 7, 8, 9, 10)
     val c = VectorD (0.5, 1, 0.5)
-    val z = conv (c, x)
-    val p = pool (z, 3)
+    val φ = conv (c, x)
+    val z = pool (φ, 3)
 
     println (s"input       x = $x")
     println (s"filter      c = $c")
-    println (s"feature map z = $z")
-    println (s"pooled      p = $p")
+    println (s"feature map φ = $φ")
+    println (s"pooled      z = $z")
 
 end coFilter_1DTest
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `coFilter_1DTest2` main function is used to test the `CoFilter_1D` class's
- *  convolutional operator.
+/** The `coFilter_1DTest2` main function is used to test the `CoFilter_1D` class.
+ *  Test using the Example Calculation from the 1D CNN section of the ScalaTion textbook.
  *  > runMain scalation.modeling.neuralnet.coFilter_1DTest2
  */
 @main def coFilter_1DTest2 (): Unit =
+
+    import ActivationFun.reLU_
+
+    val x  = VectorD (-3, -2, -1, 0, 1, 2, 3, 4)
+    val c  = VectorD (0.5, 1, 0.5)
+
+//  val φ  = c conv x
+    val φ  = c *+ x
+    val φa = reLU_ (φ)
+    val z  = pool (φa, 2)
+
+    println (s"input vector  x  = $x")
+    println (s"conv. filter  c  = $c")
+    println (s"feature map   φ  = $φ")
+    println (s"feature map-a φa = $φa")
+    println (s"hidden vector z  = $z")
+
+end coFilter_1DTest2
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `coFilter_1DTest3` main function is used to test the `CoFilter_1D` class's
+ *  convolutional operator.
+ *  > runMain scalation.modeling.neuralnet.coFilter_1DTest3
+ */
+@main def coFilter_1DTest3 (): Unit =
 
     val c = VectorD (1, 2, 3, 4, 5)
     val x = VectorD (1, 2, 3, 4, 5, 6, 7)
@@ -163,15 +201,13 @@ end coFilter_1DTest
     println (s"c = $c")
     println (s"x = $x")
 
-    banner ("Full Convolution: convf (c, x)")
-    println (s"y = ${convf (c, x)}")
     banner ("Same Convolution: convs (c, x)")
     println (s"y = ${convs (c, x)}")
-    banner ("Valid Convolution: conv (c.reverse, x)")
-    println (s"y = ${conv (c.reverse, x)}")
+    banner ("Valid Convolution: c.reverse *+ x")
+    println (s"y = ${c.reverse *+ x}")
 
-    banner ("Valid Convolution: conv (c, x)")   // without expected reversal
-    println (s"y = ${conv (c, x)}")
+    banner ("Valid Convolution: c *+ x")       // without expected reversal
+    println (s"y = ${c *+ x}")
 
-end coFilter_1DTest2
+end coFilter_1DTest3
 

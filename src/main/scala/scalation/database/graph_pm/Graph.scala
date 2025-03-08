@@ -34,7 +34,7 @@ import scalation.mathstat.MatrixD
  */
 case class Graph (ch: Array [SET [Int]],
                   label: Array [ValueType],
-                  elabel: Map [(Int, Int), ValueType],
+                  elabel: Map [(Int, Int), ValueType] = Map (),
                   inverse: Boolean = false,
                   name: String = "g",
                   schema: Array [String] = Array ())

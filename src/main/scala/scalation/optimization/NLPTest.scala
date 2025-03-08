@@ -16,8 +16,7 @@ package optimization
 import scala.collection.mutable.LinkedHashMap
 
 import scalation.mathstat._
-import scalation.optimization.quasi_newton.BFGS
-import scalation.optimization.old_LBFGS.L_BFGS_B
+import scalation.optimization.quasi_newton.{BFGS, LBFGS_B}
 
 import Minimizer._
 
@@ -29,8 +28,8 @@ import Minimizer._
  *      - Polak-Ribiere Conjugate Gradient with Golden Section Line Search
  *      - Gradient Descent with Wolfe Line Search (option ib BFGS)
  *      - Broyden–Fletcher–Goldfarb–Shanno (BFGS) with Wolfe Line Search
- *      - Limited Memory Broyden–Fletcher–Goldfarb–Shanno (L_BFGS) with Wolfe Line Search
- *      - Limited Memory Broyden–Fletcher–Goldfarb–Shanno Bounded (L_BFGS_B) with Wolfe Line Search
+ *      - Limited Memory Broyden–Fletcher–Goldfarb–Shanno (LBFGS) with Wolfe Line Search
+ *      - Limited Memory Broyden–Fletcher–Goldfarb–Shanno Bounded (LBFGS_B) with Wolfe Line Search
  *      - Nelder-Mead Simplex
  *      - Coordinate Descent
  *      - Grid Search
@@ -50,9 +49,9 @@ import Minimizer._
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
-        res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
-        res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
+        res += "BFGS"              -> test (new BFGS (f), new VectorD (2))
+//      res += "LBFGS"             -> test (new LBFGS (f), new VectorD (2))
+        res += "LBFGS_B"           -> test (new LBFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
@@ -66,9 +65,9 @@ import Minimizer._
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
-        res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
-        res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
+        res += "BFGS"              -> test (new BFGS (f), new VectorD (2))
+//      res += "LBFGS"             -> test (new LBFGS (f), new VectorD (2))
+        res += "LBFGS_B"           -> test (new LBFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
@@ -82,9 +81,9 @@ import Minimizer._
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
-        res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
-        res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
+        res += "BFGS"              -> test (new BFGS (f), new VectorD (2))
+//      res += "LBFGS"             -> test (new LBFGS (f), new VectorD (2))
+        res += "LBFGS_B"           -> test (new LBFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
@@ -100,9 +99,9 @@ import Minimizer._
         res += "GradientDescent"   -> test (new GradientDescent (f), new VectorD (2))
         res += "SteepestDescent"   -> test (BFGS (f), new VectorD (2))
         res += "ConjugateGradient" -> test (new ConjugateGradient (f), new VectorD (2))
-        res += "BFGS     "         -> test (new BFGS (f), new VectorD (2))
-//      res += "L_BFGS   "         -> test (new L_BFGS (f, gr), new VectorD (2))
-        res += "L_BFGS_B "         -> test (new L_BFGS_B (f), new VectorD (2))
+        res += "BFGS"              -> test (new BFGS (f), new VectorD (2))
+//      res += "LBFGS"             -> test (new LBFGS (f), new VectorD (2))
+        res += "LBFGS_B"           -> test (new LBFGS_B (f), new VectorD (2))
 //      res += "NelderMeadSimplex" -> test (new NelderMeadSimplex (f, 2), new VectorD (2))
         res += "CoordinateDescent" -> test (new CoordinateDescent (f), new VectorD (2))
         for ((n, o) <- res) println (s"$n\t$o")
@@ -156,7 +155,7 @@ end nLPTest
         opt = bfgs.solve (x0)
         println (s"][ bfgs: optimal solution (f(x), x) = $opt")
 
-//      val l_bfgs_b = new L_BFGS_G (f, g)
+//      val l_bfgs_b = new LBFGS_G (f, g)
 //      opt = l_bfgs_b.solve (x0)
 //      println (s"][ bfgs: optimal solution (f(x), x) = $opt")
     end test

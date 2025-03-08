@@ -25,7 +25,7 @@ package scalation
 package database
 package table
 
-import com.google.gson.Gson
+//import com.google.gson.Gson
 //import com.google.gson.reflect.TypeToken
 
 import java.io.{FileInputStream, FileOutputStream, File}
@@ -36,14 +36,14 @@ import java.io.{ObjectInputStream, ObjectOutputStream, PrintWriter}
 //import scalation.database.{LinHashMap => IndexMap}
 //import scalation.database.{LinHashMultiMap => MIndexMap}
 
-  import scala.collection.mutable.{HashMap => IndexMap}
-  import scalation.database.{HashMultiMap => MIndexMap}
+//import scala.collection.mutable.{HashMap => IndexMap}
+//import scalation.database.{HashMultiMap => MIndexMap}
 
 //import scalaTion.database.{JHashMap => IndexMap}
 //import scalaTion.database.{JHashMultiMap => MIndexMap}
 
-//import scalation.database.{BpTreeMap => IndexMap}
-//import scalation.database.{BpTreeMultiMap => MIndexMap}
+import scalation.database.{BpTreeMap => IndexMap}
+import scalation.database.{BpTreeMultiMap => MIndexMap}
 
 //import scala.collection.mutable.{TreeMap => IndexMap}
 //import scalation.database.{TreeMultiMap => MIndexMap}
@@ -52,11 +52,42 @@ import java.io.{ObjectInputStream, ObjectOutputStream, PrintWriter}
 //import scalation.database.{JTreeMultiMap => MIndexMap}
 
 import scala.collection.mutable.{ArrayBuffer => Bag, IndexedSeq, Map}
-import scala.math.{max, min}
+import scala.math.max
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{breakable, break}
 
 import scalation.mathstat.{MatrixD, VectorD, VectorI, VectorL, VectorS, VectorT}
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Determine whether the bag of tuples ts1 is the same ts2.
+ *  @param ts1  the first bag of tuples
+ *  @param ts2  the second bag of tuples
+ */
+def sameTuples (ts1: Bag [Tuple], ts2: Bag [Tuple]): Boolean =
+    if ts1.size != ts2.size then return false
+    var i = 0
+    while i < ts1.size do
+        if ! (ts1(i) eqElements ts2(i)) then return false
+        i += 1
+    true
+end sameTuples
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Determine whether two tuples have the same elements (in the same order).
+ *  This extension mwethod serves as faster alternative to Scala's `sameElements` method.
+ *  @param t  the main tuple
+ */
+extension (t: Tuple)
+    infix def eqElements (u: Tuple): Boolean =
+        if t.length != u.length then return false
+        var i = 0
+        while i < t.length do
+            if t(i) != u(i) then return false
+            i += 1
+        true
+    end eqElements
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Table` companion object provides factory methods for creating tables.
@@ -65,7 +96,7 @@ import scalation.mathstat.{MatrixD, VectorD, VectorI, VectorL, VectorS, VectorT}
  */
 object Table:
 
-    private val debug = debugf ("Table", true)                              // debug function
+    private val debug = debugf ("Table", false)                             // debug function
     private val flaw  = flawf ("Table")                                     // flaw function
     private val cntr  = Counter ()                                          // counter for generating unique names
 
@@ -154,13 +185,12 @@ object Table:
             if l_no == 0 then                                               // FIRST LINE - for schema
                 val header = ln.split (sep, -1).map (_.trim)                // array of column names
                 debug ("load", s"header = ${stringOf (header)}")
-                for j <- pos.indices do schema(j) = header(pos(j))          // use those at positions in pos
+                cfor (0, pos.size) { j => schema(j) = header(pos(j)) }      // use those at positions in pos
                 s = new Table (name, schema, domain, strim (key))           // make table after schema is formed
 
             else                                                            // REMAINING LINES
                 val token = ln.split (sep, -1).map (_.trim)                 // array of token strings
                 s.tuples += makeTuple (token, domain, pos)
-            end if
 
             l_no += 1
         end for
@@ -201,20 +231,19 @@ object Table:
             if l_no == 0 then                                               // FIRST LINE - for schema
                 val header = ln.split (sep, -1).map (_.trim)                // array of column names
                 debug ("load", s"header = ${stringOf (header)}")
-                for j <- 0 until numCol do schema(j) = header(j)            // collect from header
+                cfor (0, numCol) { j => schema(j) = header(j) }             // collect from header
                 s = new Table (name, schema, domain, strim (key))           // make table after schema is formed
 
             else if l_no == 1 then                                          // SECOND LINE - for domains
                 val token = ln.split (sep, -1).map (_.trim)                 // array of token strings
                 val dom   = tuple2type (token)                              // guess domains from first data row
                 debug ("load", s"dom = ${stringOf (dom)}")
-                for j <- 0 until numCol do domain(j) = dom(j)               // collect from dom
+                cfor (0, numCol) { j => domain(j) = dom(j) }                // collect from dom
                 s.tuples += makeTuple (token, domain, pos)
 
             else                                                            // REMAINING LINES
                 val token = ln.split (sep, -1).map (_.trim)                 // array of token strings
                 s.tuples += makeTuple (token, domain, pos)
-            end if
 
             l_no += 1
         end for
@@ -233,10 +262,9 @@ object Table:
         if token.size < pos.max then
             flaw ("makeTuple", "not enough tokens for positions given in pos")
             return null
-        end if
 
         val tup = Array.ofDim [ValueType] (domain.size)                     // more robust than using token.size
-        for j <- pos.indices do
+        cfor (0, pos.size) { j =>
             val nextToken = token(pos(j))                                   // get j-th token according to pos
             tup(j) = domain(j) match
             case 'D' =>       nextToken.mkDouble                            // Double
@@ -245,7 +273,7 @@ object Table:
             case 'S' | 'X' => nextToken                                     // String or Long-String
             case 'T' =>       TimeNum (nextToken)                           // TimeNum
             case _   =>     { flaw ("makeTuple", s"domain($j) = ${domain(j)} not supported"); "?" }
-        end for
+        } // cfor
         tup
     end makeTuple
 
@@ -258,7 +286,7 @@ object Table:
      */
     def tuple2type (tup: Array [String]): Domain =
         val dom = Array.ofDim [Char] (tup.size)
-        for j <- dom.indices do dom(j) = typeOfStr (tup(j))
+        cfor (0, dom.size) { j => dom(j) = typeOfStr (tup(j)) }
         dom
     end tuple2type
 
@@ -309,7 +337,7 @@ object Table:
         val domain = Array.fill (x.dim2)('D')                               // domain is all 'D'
         val s = new Table (name, schema, domain, strim (key))
 
-        for i <- x.indices do s.tuples += x(i).toArray                      // i-th vector to tuple
+        cfor (0, x.dim) { i => s.tuples += x(i).toArray }                   // i-th vector to tuple
         s
     end fromMatrix
 
@@ -358,10 +386,11 @@ object Table:
      *  @param colj  the given column
      */
     def sum (colj: Array [ValueType]): ValueType =
+        val n = colj.size
         colj(0) match
-        case _: Double  => var s = 0.0; for x <- colj do s += x.toDouble; s
-        case _: Int     => var s = 0.0; for x <- colj do s += x.toDouble; s
-        case _: Long    => var s = 0.0; for x <- colj do s += x.toDouble; s
+        case _: Double  => Σ (0, n) { i => colj(i).toDouble }
+        case _: Int     => Σ (0, n) { i => colj(i).toDouble }
+        case _: Long    => Σ (0, n) { i => colj(i).toDouble }
         case _: String  => -0.0
         case _: TimeNum => -0.0
         case null       => -0.0
@@ -390,10 +419,13 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
 
     private [table] val tuples    = Bag [Tuple] ()                                 // storage of tuples
     private [table] val linkTypes = Map [String, Table] ()                         // link types for foreign keys
-    private [table] val index     = IndexMap [KeyType, Tuple] ()                   // index on primary key
+//  private [table] val index     = IndexMap [KeyType, Tuple] ()                   // index on primary key
+    private [table] val index     = IndexMap [Tuple] ()                            // index on primary key
     private [table] var hasIndex  = false                                          // whether the primary index has been built
-    private [table] val sindex    = Map [String, IndexMap [ValueType, Tuple]] ()   // map of secondary unique indices 
-    private [table] val mindex    = Map [String, MIndexMap [ValueType, Tuple]] ()  // map of secondary non-unique indices
+//  private [table] val sindex    = Map [String, IndexMap [ValueType, Tuple]] ()   // map of secondary unique indices 
+    private [table] val sindex    = Map [String, IndexMap [Tuple]] ()              // map of secondary unique indices 
+//  private [table] val mindex    = Map [String, MIndexMap [ValueType, Tuple]] ()  // map of secondary non-unique indices
+    private [table] val mindex    = Map [String, MIndexMap [Tuple]] ()             // map of secondary non-unique indices
     private val groupMap          = Map [ValueType, Bag [Tuple]] ()                // map from group key to collection of tuples
 
     protected val countX          = domain.count ((c: Char) => c == 'X')           // count the number of eXtended Strings
@@ -401,7 +433,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the cardinality (number of tuples) in this table.
      */
-    def rows: Int = tuples.size
+    inline def rows: Int = tuples.size
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the j-th column in this table (or the passed in tuples) as an array of value-type.
@@ -411,9 +443,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def col (j: Int, tups: Bag [Tuple] = tuples): Array [ValueType] =
         if j >= schema.size then
             flaw ("col", s"column index j = $j exceeds the number of columns")
-        end if
         val c = Array.ofDim [ValueType] (tups.size)
-        for i <- c.indices do c(i) = tups(i)(j)
+        cfor (0, c.size) { i => c(i) = tups(i)(j) }
         c
     end col
 
@@ -421,7 +452,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     /** Return whether this table contains tuple u.
      *  @param u  the tuple to look for
      */
-    def contains (u: Tuple): Boolean = tuples.exists (_ sameElements u)
+    infix def contains (u: Tuple): Boolean = tuples.exists (_ eqElements u)
 
     // I N T E G R I T Y   C H E C K S
 
@@ -446,11 +477,13 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def referenceCheck (t: Tuple): Boolean =
         var satisfy = true
         for (fkey, refTab) <- linkTypes do
-            val fkeyVal = new KeyType (pull (t, fkey))
+            debug ("referenceCheck", s"does fkey = $fkey reference a pkey in ${refTab.name}")
+//          val fkeyVal = new KeyType (pull (t, fkey))
+            val fkeyVal = pull (t, fkey)
             if refTab.hasIndex && refTab.index.getOrElse (fkeyVal, null) == null then
                 flaw ("referenceCheck", s"foreign key $fkey = $fkeyVal is not in table ${refTab.name}")
+                flaw ("referenceCheck", s"where the tuple is ${stringOf (t)}")
                 satisfy = false
-            end if
         end for
         satisfy
     end referenceCheck
@@ -459,7 +492,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     /** Return the i-th primary key.
      *  @param i  the index in the tuples/row index
      */
-    def getPkey (i: Int): KeyType = new KeyType (pull (tuples(i), key))
+    inline def getPkey (i: Int): KeyType = new KeyType (pull (tuples(i), key))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** CREATE/recreate the primary INDEX that maps the primary key to the tuple
@@ -472,11 +505,22 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         if rebuild then flaw ("create_index", "rebuilding off old primary key index has not yet been implemented")
         index.clear ()
         val toRemove = Bag [Tuple] ()
-        for t <- tuples do
-            val pkey = new KeyType (pull (t, key))                           // primary key
-            if index.getOrElse (pkey, null) == null then index += pkey -> t
-            else toRemove += t
-        end for
+
+        cfor (0, tuples.size) { i =>
+            val t_i  = tuples(i)
+//          val pkey = new KeyType (pull (t_i, key))                         // primary key
+            val pkey = pull (t_i, key)(0)                                    // primary key
+            if index.getOrElse (pkey, null) == null then index += pkey -> t_i
+            else toRemove += t_i
+        } // cfor
+
+//      for t <- tuples do
+//          val pkey = new KeyType (pull (t, key))                           // primary key
+//          val pkey = pull (t, key)(0)                                      // primary key
+//          if index.getOrElse (pkey, null) == null then index += pkey -> t
+//          else toRemove += t
+//      end for
+
         debug ("create_index", s"remove duplicate tuples = ${showT (toRemove)}")
         tuples --= toRemove
         hasIndex = true
@@ -491,11 +535,20 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def create_sindex (atr: String): Unit =
         debug ("create_sindex", s"create a secondary unique index of type ${index.getClass.getName}")
         if ! hasIndex then flaw ("create_sindex", "should first create a primary index to eliminate duplicates")
-        val newIndex = IndexMap [ValueType, Tuple] ()
-        for t <- tuples do
-            val skey = (pull (t, atr))                                       // secondary (non-composite) key
-            newIndex += skey -> t                                            // add key-value pair into new index
-        end for
+//      val newIndex = IndexMap [ValueType, Tuple] ()
+        val newIndex = IndexMap [Tuple] ()
+
+        cfor (0, tuples.size) { i =>
+            val t_i  = tuples(i)
+            val skey = (pull (t_i, atr))                                     // secondary (non-composite) key
+            newIndex += skey -> t_i                                          // add key-value pair into new index
+        } // cfor
+
+//      for t <- tuples do
+//          val skey = (pull (t, atr))                                       // secondary (non-composite) key
+//          newIndex += skey -> t                                            // add key-value pair into new index
+//      end for
+
         sindex += atr -> newIndex                                            // add new index into the sindex map
     end create_sindex
 
@@ -507,11 +560,20 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      */
     def create_mindex (atr: String): Unit =
         debug ("create_mindex", s"create a non-unique index of type ${index.getClass.getName}")
-        val newIndex = MIndexMap [ValueType, Tuple] ()
-        for t <- tuples do
-            val t_atr = (pull (t, atr))                                      // non-unique attribute
-            newIndex.addOne1 (t_atr, t)                                      // add key-value pair into new index
-        end for
+//      val newIndex = MIndexMap [ValueType, Tuple] ()
+        val newIndex = MIndexMap [Tuple] ()
+
+        cfor (0, tuples.size) { i =>
+            val t_i   = tuples(i)
+            val t_atr = (pull (t_i, atr))                                    // non-unique attribute
+            newIndex.addOne1 (t_atr, t_i)                                    // add key-value pair into new index
+        } // cfor
+
+//      for t <- tuples do
+//          val t_atr = (pull (t, atr))                                      // non-unique attribute
+//          newIndex.addOne1 (t_atr, t)                                      // add key-value pair into new index
+//      end for
+
         mindex += atr -> newIndex                                            // add new index into the mindex map
     end create_mindex
 
@@ -533,7 +595,6 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
             sindex -= atr
         else
             flaw ("drop_sindex", s"no index found for attribute = $atr")
-        end if
     end drop_sindex
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -546,7 +607,6 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
             mindex -= atr
         else
             flaw ("drop_mindex", s"no index found for attribute = $atr")
-        end if
     end drop_mindex
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -636,10 +696,15 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val newDom = Array (domain(on(a)))
         val s = new Table (s"${name}_s_${cntr.inc ()}", newAtr, newDom, newAtr)
 
-        for t <- tuples do 
-            val ta = pull (t, a)
+        cfor (0, tuples.size) { i =>
+            val ta = pull (tuples(i), a)
             if apred (ta) then s.tuples += Array (ta)
-        end for
+        } // for
+
+//      for t <- tuples do 
+//          val ta = pull (t, a)
+//          if apred (ta) then s.tuples += Array (ta)
+//      end for
         s
     end selproject
 
@@ -655,7 +720,12 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def select (a: String, apred: APredicate): Table =
         val s = new Table (s"${name}_s_${cntr.inc ()}", schema, domain, key)
 
-        for t <- tuples if apred (pull (t, a)) do s.tuples += t
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            if apred (pull (t_i, a)) then s.tuples += t_i
+        } // for
+
+//      for t <- tuples if apred (pull (t, a)) do s.tuples += t
         s
     end select
 
@@ -695,9 +765,10 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *  Returns an empty table if the primary index has not been created.
      *  Usage:  customer select (new KeyType ("Mary"))
      *--------------------------------------------------------------------------
-     *  @param pkey  the primary key value
+     *  @param pkey_  the primary key value
      */
-    def select (pkey: KeyType): Table =
+    def select (pkey_ : KeyType): Table =
+        val pkey = pkey_.key(0)                                               // FIX
         val s = new Table (s"${name}_s_${cntr.inc ()}", schema, domain, key)
 
         if hasIndex then
@@ -706,7 +777,6 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
             if t != null then s.tuples += t
         else
             flaw ("select", s"must call 'create_index' before using indexed-select on table $name")
-        end if
         s
     end select
 
@@ -721,7 +791,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */
-    def union (r2: Table): Table =
+    infix def union (r2: Table): Table =
         if incompatible (r2) then return this
         val s = new Table (s"${name}_u_${cntr.inc ()}", schema, domain, key)
 
@@ -738,11 +808,16 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */
-    def minus (r2: Table): Table =
+    infix def minus (r2: Table): Table =
         if incompatible (r2) then return this
         val s = new Table (s"${name}_m_${cntr.inc ()}", schema, domain, key)
      
-        for t <- tuples do if ! (r2 contains t) then s.tuples += t
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            if ! (r2 contains t_i) then s.tuples += t_i
+        } // for
+
+//      for t <- tuples do if ! (r2 contains t) then s.tuples += t
         s
     end minus
 
@@ -755,11 +830,16 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */
-    def intersect (r2: Table): Table =
+    infix def intersect (r2: Table): Table =
         if incompatible (r2) then return this
         val s = new Table (s"${name}_i_${cntr.inc ()}", schema, domain, key)
 
-        for t <- tuples do if r2 contains t then s.tuples += t
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            if r2 contains t_i then s.tuples += t_i
+        } // for
+
+//      for t <- tuples do if r2 contains t then s.tuples += t
         s
     end intersect
 
@@ -771,14 +851,20 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */
-    def product (r2: Table): Table =
+    infix def product (r2: Table): Table =
         val newKey = key ++ r2.key                                          // requires keys from both tables
         val s = new Table (s"${name}_x_${cntr.inc ()}", disambiguate (schema, r2.schema),
                        domain ++ r2.domain, newKey)
 
-        for t <- tuples; u <- r2.tuples do
-            s.tuples += t ++ u
-        end for
+        cfor (0, tuples.size) { i =>
+            cfor (0, r2.tuples.size) { j =>
+                s.tuples += tuples(i) ++ r2.tuples(j)
+            } // for
+        } // for
+
+//      for t <- tuples; u <- r2.tuples do
+//          s.tuples += t ++ u
+//      end for
         s
     end product
 
@@ -798,9 +884,17 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val s = new Table (s"${name}_j_${cntr.inc ()}", disambiguate (schema, r2.schema),
                        domain ++ r2.domain, newKey)
 
-        for t <- tuples; u <- r2.tuples do
-            if predicate (t, u) then s.tuples += t ++ u
-        end for
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            cfor (0, r2.tuples.size) { j =>
+                val t_j = r2.tuples(j)
+                if predicate (t_i, t_j) then s.tuples += t_i ++ t_j
+            } // for
+        } // for
+
+//      for t <- tuples; u <- r2.tuples do
+//          if predicate (t, u) then s.tuples += t ++ u
+//      end for
         s
     end join
 
@@ -835,8 +929,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     end join
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the EQUI-JOIN of this table and r2 keeping concatenated tuples that
-     *  are equal on specified attributes.
+    /** Compute the EQUI-JOIN via the NESTED-LOOP JOIN (NLJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that are equal on specified attributes.
      *  Usage:  customer join (Array ("cname"), Array ("cname"), deposit)
      *--------------------------------------------------------------------------
      *  @param x   the subschema/attributes for the first/this table
@@ -851,17 +945,30 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val s = new Table (s"${name}_j_${cntr.inc ()}", disambiguate (schema, r2.schema),
                            domain ++ r2.domain, newKey)
 
-        for t <- tuples; u <- r2.tuples do
-            if pull (t, x) sameElements r2.pull (u, y) then s.tuples += t ++ u
-        end for
+        val ix = pullPos (x)                                                // using integers is faster than strings
+        val iy = pullPos (y)
+
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            cfor (0, r2.tuples.size) { j =>
+                val t_j = r2.tuples(j)
+                if pull (t_i, ix) eqElements r2.pull (t_j, iy) then s.tuples += t_i ++ t_j
+            } // for
+        } // for
+
+//      for t <- tuples; u <- r2.tuples do
+//          if pull (t, x) eqElements r2.pull (u, y) then s.tuples += t ++ u
+//      end for
         s
     end join
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the EQUI-JOIN via the INDEX of this table and the referenced table keeping
-     *  concatenated tuples that are equal on the primary key and foreign key attributes.
+    /** Compute the EQUI-JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a UNIQUE INDEX (UI) on the primary key.
      *  Caveat:  Requires the foreign key table to be first [ fkey_table join ((fkey, pkey_table) ].
      *  Usage:   deposit join (("cname", customer))
+     *           as if join_, where the index is on the right, i.e., customer
      *--------------------------------------------------------------------------
      *  @param ref  the foreign key reference (foreign key attribute, referenced table)
      */
@@ -873,26 +980,155 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
                            domain ++ refTab.domain, key)
 
         if refTab.hasIndex then
-            for t <- tuples do                                              // iterate over fkey table
-                val t_fkey = new KeyType (pull (t, fkey))
+            cfor (0, tuples.size) { i =>                                    // iterate over fkey table
+                val t_i = tuples(i)
+//              val t_fkey = new KeyType (pull (t_i, fkey))
+                val t_fkey = pull (t_i, fkey)
                 debug ("join", s"foreign key t_fkey = $t_fkey")
-                val u = refTab.index.getOrElse (t_fkey, null)               // get pkey from refTab
-                if u != null then s.tuples += t ++ u                        // add concatenated tuples
-            end for
+                val t_j = refTab.index.getOrElse (t_fkey, null)              // get u via pkey from refTab
+                if t_j != null then s.tuples += t_i ++ t_j                   // add concatenated tuples
+            } // cfor
         else
             flaw ("join", s"must call 'create_index' before using indexed-join on ${refTab.name}")
-        end if
         s
     end join
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Compute the NATURAL JOIN of this table and r2 keeping concatenated tuples
-     *  that agree on the common attributes.
+    /** Compute the EQUI-JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a NON-UNIQUE INDEX (NUI) on the foreign key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join ((fkey, pkey_table) ].
+     *  Usage:   deposit _join (("cname", customer))
+     *           where the index is on the left, i.e., deposit
+     *--------------------------------------------------------------------------
+     *  @param ref  the foreign key reference (foreign key attribute, referenced table)
+     */
+    def _join (ref: (String, Table)): Table =
+//      show_foreign_keys ()
+        val (fkey, refTab) = ref                                            // foreign key, referenced table
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", disambiguate (schema, refTab.schema),
+                           domain ++ refTab.domain, key)
+
+        if hasIndex then
+            cfor (0, refTab.tuples.size) { j =>                             // iterate over pkey/refTab table
+                val u = refTab.tuples(j)
+                val u_pkey = pull (u, key)
+                debug ("join", s"primary key u_pkey = $u_pkey")
+                val idx = mindex(key(0))                                    // select multi-index by attribute
+                val ts  = idx.getOrElse (u_pkey(0), null)                   // get {t} via fkey from this table
+                if ts != null then
+                    for t <- ts do s.tuples += t ++ u                       // add concatenated tuples
+            } // for
+        else
+            flaw (")join", s"must call 'create_index' before using indexed-join on $name")
+
+//          for u <- refTab.tuples do                                       // iterate over pkey/refTab table
+//              val u_pkey = pull (u, key)
+//              debug ("join", s"primary key u_pkey = $u_pkey")
+//              val idx = mindex(key(0))                                    // select multi-index by attribute
+//              val ts  = idx.getOrElse (u_pkey(0), null)                   // get {t} via fkey from this table
+//              if ts != null then
+//                  for t <- ts do s.tuples += t ++ u                       // add concatenated tuples
+//          end for
+        s
+    end _join
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the EQUI-JOIN via the SORT-MERGE JOIN (SMJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join_ ((fkey, pkey_table) ].
+     *  Usage:   deposit _join_ (("cname", customer))
+     *           where both sides (left and right) must be in order
+     *--------------------------------------------------------------------------
+     *  @param ref  the foreign key reference (foreign key attribute, referenced table)
+     */
+    def _join_ (ref: (String, Table)): Table =
+//      show_foreign_keys ()
+        val (fkey, refTab) = ref                                            // foreign key, referenced table
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", disambiguate (schema, refTab.schema),
+                           domain ++ refTab.domain, key)
+
+        val t_sz = tuples.size                                              // number of typles in foreign key table  
+        val pkey = refTab.key (0)                                           // again requires non-composite primary keys
+        orderBy (fkey)                                                      // order the foreign key table
+        refTab.orderBy (pkey)                                               // order the primary key table
+
+        var i, j = 0                                                        // cursors i and j for foreign, primary key tables
+        // Loop over both tables
+        while i < t_sz && j < refTab.tuples.size do
+            val t = tuples(i)                                               // current tuple from foreign key table
+            val u = refTab.tuples(j)                                        // current tuple from primary key table
+
+            val t_k = pull (t, fkey)                                        // foreign key value in current tuple
+            val u_k = pull (u, pkey)                                        // primary key value in current tuple
+
+            if t_k == u_k then
+                // If the keys match, concatenate the tuples and add to result table
+                s.tuples += (t ++ u)
+                i += 1                                                      // move forward in foreign key table
+                j += 1                                                      // move forward in primary key table
+            else if t_k < u_k then
+                // If foreign key is less than primary key, move forward in foreign key table
+                i += 1
+            else
+                // If primary key is less than foreign key, move forward in primary key table
+                j += 1
+        end while
+
+        debug ("_join_", s"cursors: i = $i, j = $j")
+        s
+    end _join_
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the NESTED LOOP JOIN (NLJ) algorithm of this table and
+     *  r2 keeping concatenated tuples that agree on the common attributes.
      *  Usage:  customer join deposit
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */
-    def join (r2: Table): Table =
+    infix def join (r2: Table): Table =
+//      val common = schema intersect r2.schema                             // common attributes
+        val common = meet (schema, r2.schema)                               // common attributes
+        debug ("join", s"common = ${stringOf (common)}")
+        val rest   = r2.schema diff common
+        val newKey = if subset (common, key) then r2.key                    // three possibilities for new key
+                     else if subset (common, r2.key) then key
+                     else key ++ r2.key
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
+                           domain ++ r2.pull (rest), newKey)
+        val icommon = pullPos (common)                                      // using integers id faster than strings
+
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            cfor (0, r2.tuples.size) { j =>
+                val t_j = r2.tuples(j)
+                if pull (t_i, icommon) eqElements r2.pull (t_j, icommon) then
+                    s.tuples += t_i ++ r2.pull (t_j, rest)
+            } // for
+        } // for
+
+//      for t <- tuples; u <- r2.tuples do
+//          if pull (t, common) eqElements r2.pull (u, common) then
+//              s.tuples += t ++ r2.pull (u, rest)
+//      end for
+        s
+    end join
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a UNIQUE INDEX (UI) on the primary key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table join_ pkey_table ].
+     *  Usage:   deposit join_ customer
+     *           where the index is on the right, i.e., customer
+     *--------------------------------------------------------------------------
+     *  @param r2  the second table
+     */
+    infix def join_ (r2: Table): Table =
 //      val common = schema intersect r2.schema                             // common attributes
         val common = meet (schema, r2.schema)                               // common attributes
         debug ("join", s"common = ${stringOf (common)}")
@@ -904,13 +1140,64 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
                            domain ++ r2.pull (rest), newKey)
 
-        for t <- tuples; u <- r2.tuples do
-            if pull (t, common) sameElements r2.pull (u, common) then
-                s.tuples += t ++ r2.pull (u, rest)
-            end if
-        end for
+        // implement IJ-UI
+
         s
-    end join
+    end join_
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the NATURAL JOIN via the INDEX JOIN (IJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.  Uses a NON-UNIQUE INDEX () on the foreign key.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join pkey_table ].
+     *  Usage:   deposit _join customer
+     *           where the index is on the left, i.e., deposit
+     *--------------------------------------------------------------------------
+     *  @param r2  the second table
+     */
+    infix def _join (r2: Table): Table =
+//      val common = schema intersect r2.schema                             // common attributes
+        val common = meet (schema, r2.schema)                               // common attributes
+        debug ("join", s"common = ${stringOf (common)}")
+        val rest   = r2.schema diff common
+        val newKey = if subset (common, key) then r2.key                    // three possibilities for new key
+                     else if subset (common, r2.key) then key
+                     else key ++ r2.key
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
+                           domain ++ r2.pull (rest), newKey)
+
+        // implement IJ-NUI
+
+        s
+    end _join
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the EQUI-JOIN via the SORT-MERGE JOIN (SMJ) algorithm of this table and the
+     *  referenced table keeping concatenated tuples that are equal on the primary key
+     *  and foreign key attributes.
+     *  Caveat:  Requires the foreign key table to be first [ fkey_table _join_ pkey_table ].
+     *  Usage:   deposit _join_ customer
+     *           where both sides (left and right) must be in order
+     *--------------------------------------------------------------------------
+     *  @param r2  the second table
+     */
+    infix def _join_ (r2: Table): Table =
+//      val common = schema intersect r2.schema                             // common attributes
+        val common = meet (schema, r2.schema)                               // common attributes
+        debug ("join", s"common = ${stringOf (common)}")
+        val rest   = r2.schema diff common
+        val newKey = if subset (common, key) then r2.key                    // three possibilities for new key
+                     else if subset (common, r2.key) then key
+                     else key ++ r2.key
+
+        val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
+                           domain ++ r2.pull (rest), newKey)
+
+        // implement SMJ
+
+        s
+    end _join_
 
     // =============================================================== LEFT-JOIN
 
@@ -930,9 +1217,15 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
 
         val absentTuple = nullTuple (r2.domain)
         val ss = s.project (schema)                        // join projected onto original schema
-        for t <- tuples if ! (ss contains t) do
-            s.tuples += t ++ absentTuple
-        end for
+
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            if ! (ss contains t_i) then s.tuples += t_i ++ absentTuple
+        } // for
+
+//      for t <- tuples if ! (ss contains t) do
+//          s.tuples += t ++ absentTuple
+//      end for
         s
     end leftJoin
 
@@ -950,9 +1243,15 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
 
         val absentTuple = nullTuple (refTab.domain)
         val ss = s.project (schema)                        // join projected onto original schema
-        for t <- tuples if ! (ss contains t) do
-            s.tuples += t ++ absentTuple
-        end for
+
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            if ! (ss contains t_i) then s.tuples += t_i ++ absentTuple
+        } // for
+
+//      for t <- tuples if ! (ss contains t) do
+//          s.tuples += t ++ absentTuple
+//      end for
         s
     end leftJoin
 
@@ -965,7 +1264,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *--------------------------------------------------------------------------
      *  @param r2  the second table
      */  
-    def divide (r2: Table): Table =
+    infix def divide (r2: Table): Table =
         val divisor  = r2.schema
         if ! subset (divisor, schema) then flaw ("divide", "divisor schema must be a subset of schema")
         val quotient = schema diff divisor
@@ -974,15 +1273,27 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
 
         val q    = project (quotient)
         var keep = false
-        for t <- q.tuples do
+
+        cfor (0, q.tuples.size) { i =>
+            val t_i = q.tuples(i)
             keep = true
             breakable {
-                for u <- r2.tuples do
-                    if ! (this contains t ++ u) then { keep = false; break () }
+                for u <- r2.tuples do                                              // change to cfor
+                    if ! (this contains t_i ++ u) then { keep = false; break () }
                 end for
             } // breakable
-            if keep then s.tuples += t
-        end for
+            if keep then s.tuples += t_i
+        } // cfor
+
+//      for t <- q.tuples do
+//          keep = true
+//          breakable {
+//              for u <- r2.tuples do
+//                  if ! (this contains t ++ u) then { keep = false; break () }
+//              end for
+//          } // breakable
+//          if keep then s.tuples += t
+//      end for
         s
     end divide
 
@@ -998,14 +1309,21 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def groupBy (ag: String): Table =
         if ! (schema contains ag) then
             flaw ("groupBy", s"ag = $ag is not contained in schema")
-        end if
 
         val col = on(ag)                                                    // the column number for ag 
-        for t <- tuples do
-            val gkey  = t(col)
+
+        cfor (0, tuples.size) { i =>
+            val t_i   = tuples(i)
+            val gkey  = t_i(col)
             val group = groupMap.getOrElseUpdate (gkey, Bag [Tuple] ())
-            group += t                                                      // add tuple t to gkey's group
-        end for
+            group += t_i                                                    // add tuple t_i to gkey's group
+        } // cfor
+
+//      for t <- tuples do
+//          val gkey  = t(col)
+//          val group = groupMap.getOrElseUpdate (gkey, Bag [Tuple] ())
+//          group += t                                                      // add tuple t to gkey's group
+//      end for
         this
     end groupBy
 
@@ -1052,8 +1370,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def orderBy (x: String*): Table =
         val s    = new Table (s"${name}_o_${cntr.inc ()}", schema, domain, key)
 
-        val perm = rankOrder (x :_*)
-        for i <- perm do s.tuples += tuples(i)
+        val perm = rankOrder (x*)
+        cfor (0, perm.size) { i => s.tuples += tuples(perm(i)) }
         s
     end orderBy
 
@@ -1067,8 +1385,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def orderByDesc (x: String*): Table =
         val s    = new Table (s"${name}_o_${cntr.inc ()}", schema, domain, key)
 
-        val perm = rankOrder (x :_*)
-        for i <- perm.reverse do s.tuples += tuples(i)
+        val perm = rankOrder (x*).reverse
+        cfor (0, perm.size) { i => s.tuples += tuples(perm(i)) }
         s
     end orderByDesc
 
@@ -1080,7 +1398,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
                            Array ("column", "count", "countd", "min", "max", "sum", "avg"),
                            Array ('S', 'I', 'I', 'S', 'S', 'D', 'D'), Array ("column"))
 
-        for j <- colIndices do s add Table.stats (schema(j), col(j))
+        cfor (0, schema.size) { j => s.add (Table.stats (schema(j), col(j))) }
         s
     end stats
 
@@ -1095,16 +1413,15 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def add (t: Tuple): Table =
         if typeCheck (t) && referenceCheck (t) then
             if hasIndex then
-                val pkey = new KeyType (pull (t, key))                      // values for primary key part of t
+//              val pkey = new KeyType (pull (t, key))                      // values for primary key part of t
+                val pkey = pull (t, key)(0)                                 // values for primary key part of t
                 if index.getOrElse (pkey, null) == null then                // check if it's a duplicate
                     index  += pkey -> t                                     // add to index map
                     tuples += t                                             // add to tuples
                 else
                     flaw ("add", s"$name: tuple ${stringOf (t)} has a duplicate value for its primary key") 
-                end if
             else
                 tuples += t                                                 // no index - allow duplicates
-            end if
         end if
         this
     end add
@@ -1120,15 +1437,13 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         var updated = false
         if hasIndex && (key contains a) then 
             flaw ("update", "attempt to update an indexed primary key: use delete and add")
-        end if
 
         val j = on(a)
-        for i <- tuples.indices do
+        cfor (0, tuples.size) { i =>
             if tuples(i)(j) == matchVal then
                tuples(i)(j) = newVal
                updated = true
-            end if
-        end for
+        } // for
         updated
     end update
 
@@ -1143,16 +1458,14 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         var updated = false
         if hasIndex && (key contains a) then 
             flaw ("update", "attempt to update an indexed primary key: use delete and add")
-        end if
 
         val funcVal = func (matchVal)
         val j       = on(a)
-        for i <- tuples.indices do
+        cfor (0, tuples.size) { i =>
             if tuples(i)(j) == matchVal then
                tuples(i)(j) = funcVal
                updated = true
-            end if
-        end for
+        } // cfor
         updated
     end update
 
@@ -1164,10 +1477,12 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      */
     def delete (predicate: Predicate): Boolean =
         val rem = tuples.filter (predicate)
-        for t <- rem do
-            tuples -= t                                                     // remove from tuples
-            if hasIndex then index -= new KeyType (pull (t, key))           // remove from index map
-        end for
+        cfor (0, rem.size) { i =>
+            val t_i = rem(i)
+            tuples -= t_i                                                   // remove from tuples
+//          if hasIndex then index -= new KeyType (pull (t_i, key))         // remove from index map
+            if hasIndex then index -= pull (t_i, key)(0)                    // remove from index map
+        } // cfor
         rem.size > 0
     end delete
 
@@ -1183,15 +1498,15 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val (m, n) = (tuples.size, cols.size)
 
         val a = Array.ofDim [Double] (m, n)
-        for j <- 0 until n do
+        cfor (0, n) { j =>
             val jj = cols(j)
             domain(jj) match
             case 'S' | 'X' => val x = VectorS.map2Int (col(jj).map (_.toString))._1 
-                        for i <- 0 until m do a(i)(j) = x(i).toDouble
+                        cfor (0, m) { i => a(i)(j) = x(i).toDouble }
             case 'T' => val x = VectorT.map2Long (col(jj).map (TimeNum.fromValueType (_)))._1
-                        for i <- 0 until m do a(i)(j) = x(i).toDouble
-            case _   => for i <- 0 until m do a(i)(j) = tuples(i)(jj).toDouble
-        end for
+                        cfor (0, m) { i => a(i)(j) = x(i).toDouble }
+            case _   => cfor (0, m) { i => a(i)(j) = tuples(i)(jj).toDouble }
+        } // cfor
 
         new MatrixD (m, n, a)
     end toMatrix
@@ -1208,23 +1523,23 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val (m, n) = (tuples.size, cols.size)
 
         val a = Array.ofDim [Double] (m, n)
-        for j <- 0 until n do
+        cfor (0, n) { j =>
             val jj = cols(j)
             domain(j) match
             case 'S' | 'X' => val x = VectorS.map2Int (col(jj).map (_.toString))._1
-                        for i <- 0 until m do a(i)(j) = x(i).toDouble
+                        cfor (0, m) { i => a(i)(j) = x(i).toDouble }
             case 'T' => val x = VectorT.map2Long (col(jj).map (TimeNum.fromValueType (_)))._1
-                        for i <- 0 until m do a(i)(j) = x(i).toDouble
-            case _   => for i <- 0 until m do a(i)(j) = tuples(i)(jj).toDouble
-        end for
+                        cfor (0, m) { i => a(i)(j) = x(i).toDouble }
+            case _   => cfor (0, m) { i => a(i)(j) = tuples(i)(jj).toDouble }
+        } // cfor
 
         val b = Array.ofDim [Double] (m)
         domain(colj) match
         case 'S' | 'X' => val x = VectorS.map2Int (col(colj).map (_.toString))._1
-                    for i <- 0 until m do b(i) = x(i).toDouble
+                    cfor (0, m) { i => b(i) = x(i).toDouble }
         case 'T' => val x = VectorT.map2Long (col(colj).map (TimeNum.fromValueType (_)))._1
-                    for i <- 0 until m do b(i) = x(i).toDouble
-        case _   => for i <- 0 until m do b(i) = tuples(i)(colj).toDouble
+                    cfor (0, m) { i => b(i) = x(i).toDouble }
+        case _   => cfor (0, m) { i => b(i) = tuples(i)(colj).toDouble }
 
         (new MatrixD (m, n, a), new VectorD (m, b))
     end toMatrixV
@@ -1235,33 +1550,53 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      */
     def toVectorD (colj: Int = 0): VectorD =
         val b = Array.ofDim [Double] (rows)
-        for i <- indices do b(i) = tuples(i)(colj).toDouble
+        cfor (0, rows) { i =>
+             b(i) = tuples(i)(colj).toDouble
+        } // cfor
         new VectorD (rows, b)
     end toVectorD
 
     def toVectorI (colj: Int = 0): VectorI =
         val b = Array.ofDim [Int] (rows)
-        for i <- indices do b(i) = tuples(i)(colj).toInt
+        cfor (0, rows) { i =>
+            b(i) = tuples(i)(colj).toInt
+        } // cfor
         new VectorI (rows, b)
     end toVectorI
 
     def toVectorL (colj: Int = 0): VectorL =
         val b = Array.ofDim [Long] (rows)
-        for i <- indices do b(i) = tuples(i)(colj).toLong
+        cfor (0, rows) { i =>
+            b(i) = tuples(i)(colj).toLong
+        } // cfor
         new VectorL (rows, b)
     end toVectorL
 
     def toVectorS (colj: Int = 0): VectorS =
         val b = Array.ofDim [String] (rows)
-        for i <- indices do b(i) = tuples(i)(colj).toString
+        cfor (0, rows) { i =>
+            b(i) = tuples(i)(colj).toString
+        } // cfor
         new VectorS (rows, b)
     end toVectorS
 
     def toVectorT (colj: Int = 0): VectorT =
         val b = Array.ofDim [TimeNum] (rows)
-        for i <- indices do b(i) = tuples(i)(colj).asInstanceOf [TimeNum]
+        cfor (0, rows) { i =>
+            b(i) = tuples(i)(colj).asInstanceOf [TimeNum]
+        } // cfor
         new VectorT (rows, b)
     end toVectorT
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a copy of this table limited to the first n tuples/rows.
+     *  @param n  the number of tuples/rows to keep
+     */
+    def limit (n: Int): Table =
+        val s = new Table (name + "_$n", schema, domain, key)
+        s.tuples ++= tuples.slice (0, n)
+        s
+    end limit
 
     // O U T P U T
 
@@ -1286,22 +1621,23 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         println (s"\n>> Table $name with ${rng.size} rows, primary key = ${stringOf (key)}")
         println ("|-" + "-" * len + "-|")
         print ("| ")
-        for j <- schema.indices do
+        cfor (0, schema.size) { j =>
             val wj = if domain(j) == 'X' then 2 * width_ else width_
             prt (schema(j), wj)
-        end for
+        } // cfor
         println (" |")
         println ("|-" + "-" * len + "-|")
-        for i <- rng do
-            print ("| ")
-            val tuple_i = tuples(i)
-            if tuple_i.size > domain.size then flaw ("show", s"tuple($i) has size ${tuple_i.size}")
-            for j <- tuple_i.indices do
-                val wj = if domain(j) == 'X' then 2 * width_ else width_
-                prt (tuple_i(j), wj)
+        if rows > 0 then
+            for i <- rng do
+                print ("| ")
+                val tuple_i = tuples(i)
+                if tuple_i.size > domain.size then flaw ("show", s"tuple($i) has size ${tuple_i.size}")
+                cfor (0, tuple_i.size) { j =>
+                    val wj = if domain(j) == 'X' then 2 * width_ else width_
+                    prt (tuple_i(j), wj)
+                } // cfor
+                println (" |")
             end for
-            println (" |")
-        end for
         println ("|-" + "-" * len + "-|")
     end show
 
@@ -1311,7 +1647,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *  @param w  the width (# chars) for the column
      */
     def prt (v: ValueType, w: Int): Unit =
-        val str = v.toString
+        val str = if v == null then "null" else v.toString
         val w0  = str.size
         val rem = w - w0
         val lft = max (rem / 2, 0)
@@ -1331,8 +1667,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     /** SHOW/print this table's foreign keys.
      */
     def show_foreign_keys (): Unit =
-        println (s"\n>> Table $name has foreign keys")
-        for lnk <- linkTypes do println ("link = $lnk")
+        println (s"\n>> Table $name has foreign keys:")
+        for (fk, fkt) <- linkTypes do println (s"\t foreign key link = $fk references ${fkt.name}")
     end show_foreign_keys
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1353,10 +1689,10 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     def writeCSV (fileName: String = name + ".csv"): Unit =
         val out = new PrintWriter (DATA_DIR + fileName)
         out.println (stringOf (schema).drop (6).dropRight (1))
-        for i <- tuples.indices do
-            val tuple_i = stringOf (tuples(i))
-            out.println (tuple_i.drop (6).dropRight (1))
-        end for
+        cfor (0, tuples.size) { i =>
+            val t_i = stringOf (tuples(i))
+            out.println (t_i.drop (6).dropRight (1))
+        } // cfor
         out.close
     end writeCSV
 
@@ -1364,7 +1700,8 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
     /** WRITE this table into a JavaScript Object Notation (JSON) file.
      *  @param fileName  the file name of the data file
      */
-    def writeJSON (fileName: String = name + ".json"): Unit =
+    def writeJSON (fileName: String = name + ".json"): Unit = ???
+    /*
         val gson    = new Gson () 
         val jsonStr = gson.toJson (this)
         debug ("writeJSON", s"jsonStr = ${jsonStr.slice (0, min (jsonStr.size, 5000))}")
@@ -1372,8 +1709,9 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         out.println (jsonStr)
         out.close ()
     end writeJSON
+     */
 
-    // P R I V A T E   M E T H O D S
+    // P R I V A T E / U T I L I T Y   M E T H O D S
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the tuples in this table that satisfy the given simple (3 token) condition.
@@ -1406,7 +1744,6 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
             case ">"  => tups.filter (t => t(col) >  a2_)
             case ">=" => tups.filter (t => t(col) >= a2_)
             case _    => flaw ("select", s"$op is an unrecognized operator"); tups
-        end if
     end selectTups
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1431,12 +1768,24 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
      *  @param a2  the attribute from the second table
      *  @param r2  the second table
      */
-    private def tJoinTups (a1: String, op: (ValueType, ValueType) => Boolean, a2: String,
-                           r2: Table): Bag [Tuple] =
+    private def tJoinTups (a1: String, op: (ValueType, ValueType) => Boolean,
+                           a2: String, r2: Table): Bag [Tuple] =
         val tups = Bag [Tuple] ()
-        for t <- tuples; u <- r2.tuples do
-            if op (t(on(a1)), u(r2.on(a2))) then tups += t ++ u
-        end for
+
+        val ia1 = on(a1)                                                    // using integers is faster than strinfs
+        val ia2 = r2.on(a2)                                                 // a2 is attribute name, ia2 is its column index
+
+        cfor (0, tuples.size) { i =>
+            val t_i = tuples(i)
+            cfor (0, r2.tuples.size) { j =>
+                val t_j = r2.tuples(j)
+                if op (t_i(ia1), t_j(ia2)) then tups += t_i ++ t_j
+            } // for
+        } // for
+
+//      for t <- tuples; u <- r2.tuples do
+//          if op (t(on(a1)), u(r2.on(a2))) then tups += t ++ u
+//      end for
         tups
     end tJoinTups
 
@@ -1518,35 +1867,35 @@ end Table
     var a, q: Table = null
 
     banner (""" customer rename "client" """)
-    q = customer rename "client"
+    q = customer.rename ("client")
     q.show ()
 
-    banner (""" customer project (Array ("street", "ccity")) """)
-    q = customer project (Array ("street", "ccity"))
+    banner (""" customer.project (Array ("street", "ccity")) """)
+    q = customer.project (Array ("street", "ccity"))
     q.show ()
 
-    banner (""" customer project (Array (1, 2)) """)
+    banner (""" customer.project (Array (1, 2)) """)
     q = customer.project (Array (1, 2))
     q.show ()
 
-    banner (""" customer selproject ("ccity", _ > "Athens") """)
-    q = customer selproject ("ccity", _ > "Athens")
+    banner (""" customer.selproject ("ccity", _ > "Athens") """)
+    q = customer.selproject ("ccity", _ > "Athens")
     q.show ()
 
-    banner (""" customer select ("ccity", _ == "Athens") """)
-    q = customer select ("ccity", _ == "Athens")
+    banner (""" customer.select ("ccity", _ == "Athens") """)
+    q = customer.select ("ccity", _ == "Athens")
     q.show ()
 
-    banner (""" customer select (t => t(customer.on("ccity")) == "Athens") """)
-    q = customer select (t => t(customer.on("ccity")) == "Athens")
+    banner (""" customer.select (t => t(customer.on("ccity")) == "Athens") """)
+    q = customer.select (t => t(customer.on("ccity")) == "Athens")
     q.show ()
 
-    banner (""" customer select ("ccity == 'Athens'") """)
-    q = customer select ("ccity == 'Athens'")
+    banner (""" customer.select ("ccity == 'Athens'") """)
+    q = customer.select ("ccity == 'Athens'")
     q.show ()
 
-    banner (""" customer select (new KeyType ("Mary")) """)
-    q = customer select (new KeyType ("Mary"))
+    banner (""" customer.select (new KeyType ("Mary")) """)
+    q = customer.select (new KeyType ("Mary"))
     q.show ()
 
     banner (""" deposit union loan """)
@@ -1565,53 +1914,53 @@ end Table
     q = customer product deposit
     q.show ()
 
-    banner (""" customer join ((t, u) => t(customer.on("cname")) == u(deposit.on("cname")), deposit) """)
-    q = customer join ((t, u) => t(customer.on("cname")) == u(deposit.on("cname")), deposit)
+    banner (""" customer.join ((t, u) => t(customer.on("cname")) == u(deposit.on("cname")), deposit) """)
+    q = customer.join ((t, u) => t(customer.on("cname")) == u(deposit.on("cname")), deposit)
     q.show ()
 
-    banner (""" customer join ("cname == cname", deposit) """)
-    q = customer join ("cname == cname", deposit)
+    banner (""" customer.join ("cname == cname", deposit) """)
+    q = customer.join ("cname == cname", deposit)
     q.show ()
 
-    banner (""" customer join (Array ("cname"), Array ("cname"), deposit) """)
-    q = customer join (Array ("cname"), Array ("cname"), deposit)
+    banner (""" customer.join (Array ("cname"), Array ("cname"), deposit) """)
+    q = customer.join (Array ("cname"), Array ("cname"), deposit)
     q.show ()
 
-    banner (""" deposit join (("cname", customer)) """)
-    q = deposit join (("cname", customer))
+    banner (""" deposit.join (("cname", customer)) """)
+    q = deposit.join (("cname", customer))
     q.show ()
 
     banner (""" customer join deposit """)
     q = customer join deposit
     q.show ()
 
-    banner (""" customer leftJoin (Array ("cname"), Array ("cname"), deposit) """)
-    q = customer leftJoin (Array ("cname"), Array ("cname"), deposit)
+    banner (""" customer.leftJoin (Array ("cname"), Array ("cname"), deposit) """)
+    q = customer.leftJoin (Array ("cname"), Array ("cname"), deposit)
     q.show ()
 
-    banner (""" deposit leftjoin (("cname", customer)) """)
+    banner (""" deposit.leftjoin (("cname", customer)) """)
     deposit.create_index ()
-    q = deposit leftJoin (("cname", customer))
+    q = deposit.leftJoin (("cname", customer))
     q.show ()
 
     banner (""" deposit.project ("cname, bname") divide branch.project ("bname") """)
     q = deposit.project ("cname, bname") divide branch.project ("bname")
     q.show ()
 
-    banner (""" deposit groupBy "bname" """)
-    q = deposit groupBy "bname"
+    banner (""" deposit.groupBy ("bname") """)
+    q = deposit.groupBy ("bname")
     q.show ()
 
-    banner (""" deposit aggregate ("bname", (avg, "balance")) """)
-    q = deposit aggregate ("bname", (avg, "balance"))
+    banner (""" deposit.aggregate ("bname", (avg, "balance")) """)
+    q = deposit.aggregate ("bname", (avg, "balance"))
     q.show ()
 
-    banner (""" deposit orderBy "bname" """)
-    q = deposit orderBy "bname"
+    banner (""" deposit.orderBy ("bname") """)
+    q = deposit.orderBy ("bname")
     q.show ()
 
-    banner (""" deposit orderByDesc "bname" """)
-    q = deposit orderByDesc "bname"
+    banner (""" deposit.orderByDesc ("bname") """)
+    q = deposit.orderByDesc ("bname")
     q.show ()
 
     //--------------------------------------------------------------------------
@@ -1718,11 +2067,11 @@ end tableTest
     banner ("Example Queries")
 
     banner ("locations of students")
-    val locs = student project ("sname, city")
+    val locs = student.project ("sname, city")
     locs.show ()
 
     banner ("living in Athens")
-    val inAthens = student select ("city == 'Athens'")
+    val inAthens = student.select ("city == 'Athens'")
     inAthens.show ()
 
     banner ("not living in Athens")
@@ -1817,7 +2166,7 @@ end tableTest2
     // Serialize and output the data into a JSON file (covid.json) in DATA_DIR
     //--------------------------------------------------------------------------
 
-    covid.writeJSON ()
+//  covid.writeJSON ()
 
 end tableTest3
 

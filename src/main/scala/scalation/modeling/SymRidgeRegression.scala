@@ -51,7 +51,7 @@ object SymRidgeRegression:
                      else x.indices2.map ("x" + _).toArray                // default feature/variable names
 
         val (xx, f_name) = SymbolicRegression.buildMatrix (x, fname_, powers,
-                                                           false, cross, cross3, terms :_*)
+                                                           false, cross, cross3, terms*)
 //      val mod       = new RidgeRegression (xx, y, f_name, hparam)       // user must center
         val mod       = RidgeRegression.center (xx, y, f_name, hparam)    // automatically centers the data
         mod.modelName = "SymRidgeRegression" + (if cross then "X" else "") +
@@ -80,7 +80,7 @@ object SymRidgeRegression:
                  terms: Array [Xj2p]*): RidgeRegression =
         val xn = normalize ((x.mean, x.stdev)) (x)
         println (s"rescale: xn = $xn")
-        apply (xn, y, fname, powers, cross, cross3, hparam, terms :_*)
+        apply (xn, y, fname, powers, cross, cross3, hparam, terms*)
     end rescale
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

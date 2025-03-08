@@ -194,7 +194,7 @@ end PoissonRegression
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `poissonRegressionTest` main function tests the `PoissonRegression` class.
- *  @see http://www.cookbook-r.com/Statistical_analysis/Logistic_regression/
+ *  @see www.cookbook-r.com/Statistical_analysis/Logistic_regression/
  *  Answer: b = (-8.8331, 0.4304),
  *          n_dev = 43.860, r_dev = 25.533, aci = 29.533, pseudo_rSq = 0.4178
  *  > runMain scalation.modeling.poissonRegressionTest

@@ -15,6 +15,7 @@ package classifying
 import scala.collection.mutable.Set
 
 import scalation.mathstat._
+import scalation.modeling.neuralnet.NeuralNet_3L_C2
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Example_Iris` object is used to test all classifiers.
@@ -210,7 +211,7 @@ end Example_Iris
  *
  *  BaggingTrees, DecisionTree_C45, DecisionTree_C45wp, DecisionTree_ID3, DecisionTree_ID3wp,
  *  HiddenMarkov, KNN_Classifier, LinDiscAnalyis, LogisticRegression, NaiveBayes,
- *  NaiveBayesR, NeuralNet_Class_3L, NullModel, RandomForest, SupportVectorMachine, TANBayes.
+ *  NaiveBayesR, NeuralNet_3L_C2, NullModel, RandomForest, SupportVectorMachine, TANBayes.
  *
  *  Require having only a single feature: SimpleLDA, SimpleLogisticRegression => SKIP
  *
@@ -313,8 +314,8 @@ end Example_Iris
 
 // Neural Network Classifiers (1)
 
-    banner ("Example_Iris: NeuralNet_Class_3L")
-    mod = new NeuralNet_Class_3L (xx, yy, fname)
+    banner ("Example_Iris: NeuralNet_3L_C2")
+    mod = new NeuralNet_3L_C2 (xx, yy, fname)
     mod.trainNtest ()()
     println (mod.summary ())
 

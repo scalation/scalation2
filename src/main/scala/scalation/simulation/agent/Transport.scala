@@ -45,8 +45,9 @@ class Transport (name: String, director: Model, from: Vertex, to: Vertex,
     private val debug       = debugf ("Transport", true)           // debug function
     private val STEP_SIZE   = 10                                   // number of units/pixels to move per step
     private var onTransport = 0                                    // the number of entities/sim-agents on this Transport
-    private val p1          = from.pos(0 to 2) + shift1            // position of first endpoint vertex
-    private val p2          = to.pos(0 to 2) + shift2              // position of second endpoint vertex
+//  private val p1          = from.pos(0 to 2) + shift1            // position of first endpoint vertex
+//  private val p2          = to.pos(0 to 2) + shift2              // position of second endpoint vertex
+    private val (p1, p2)    = Transport.calcEndPoints (from, to, shift1, shift2)   // first and second endpoints
     private val diff        = p2 - p1                              // the difference between the end points
     private val distance    = diff.norm                            // the distance from p1 to p2 (length of transport)
     private val angle       = atan2 (diff(1), diff(0))             // the angle from p1 to p2
@@ -118,23 +119,23 @@ object Transport
      *  @param to      the to vertex
      *  @param shift1  the x-y shift for the transport's first end-point (from-side)
      *  @param shift2  the x-y shift for the transport's second end-point (to-side)
+     */
     def calcEndPoints (from: Vertex, to: Vertex,
-                               shift1: VectorD = VectorD (0.0, 0.0),
-                               shift2: VectorD = VectorD (0.0, 0,0)): (VectorD, VectorD) =
+                       shift1: VectorD = VectorD (0.0, 0.0),
+                       shift2: VectorD = VectorD (0.0, 0,0)): (VectorD, VectorD) =
         val w1 = from.pos(2)
         val h1 = from.pos(3)
-        var x1 = from.pos(0) + 0.5 * w1 + shift1(0)
+        val x1 = from.pos(0) + 0.5 * w1 + shift1(0)
         val y1 = from.pos(1) + 0.5 * h1 + shift1(1)
 
         val w2 = to.pos(2)
         val h2 = to.pos(3)
-        var x2 = to.pos(0) + 0.5 * w2 + shift2(0)
+        val x2 = to.pos(0) + 0.5 * w2 + shift2(0)
         val y2 = to.pos(1) + 0.5 * h2 + shift2(1)
 
 //      if x1 < x2 then x1 += w1 else x2 += w2
         (VectorD (x1, y1), VectorD (x2, y2))
     end calcEndPoints
-     */
 
 end Transport
 

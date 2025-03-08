@@ -14,7 +14,7 @@ package simulation.agent
 import java.util.concurrent.Semaphore
 
 import scala.collection.mutable
-import scala.collection.mutable.{LinkedHashMap, PriorityQueue, ArrayBuffer as VEC}
+import scala.collection.mutable.{PriorityQueue, ArrayBuffer as VEC}
 
 import scalation.animation.{AnimateCommand, CommandType}
 import scalation.animation.CommandType.MoveToken

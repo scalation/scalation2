@@ -25,7 +25,7 @@ package mathstat
  *  robustness and reasonably accurate rank determination (Rank Revealing QR).
  *  Caveat: for m < n use `Fac_LQ`.
  *-------------------------------------------------------------------------------
- *  @param aa     the matrix to be factor into q and r
+ *  @param aa     the matrix to be factored into q and r
  *  @param needQ  flag indicating whether a full q matrix is needed
  */
 class Fac_QR_RR (aa: MatrixD, needQ: Boolean = true)

@@ -5,15 +5,13 @@
  *  @date    Fri Jan  5 16:54:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Regression Tree Random Forest (RF)
+ *  @note    Model: Random Forest (RF) of Regression Trees
  */
-
-// FIX - implement for case where use_fb = true
 
 package scalation
 package modeling
 
-import scala.runtime.ScalaRunTime.stringOf
+//import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
 
@@ -25,24 +23,24 @@ import modeling.{RegressionTree  => REG_TREE}                                // 
  *  It randomly selects sub-samples of 'bRatio * x.dim' size from the data x and y to
  *  build nTrees regression trees.  The predict method uses the average over all trees.
  *  Note:  By default this class does not select sub-features to build the trees (like Bagging Trees)
- *         Set use_fb (feature bagging) to true to turn this capability on
+ *         Set use_fb (feature bagging) to true to turn this capability on.
  *  @param x       the input/data matrix (instances by features)
  *  @param y       the ouput/response vector (instances)
  *  @param fname_  the names of the variables/features (defaults to null => auto-generate))
  *  @param use_fb  whether to use feature bagging (select subsets of the features)
  *  @param hparam  the hyper-parameters to the random forest (defaults to RegressionTree.hp)
  */
-class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null, use_fb: Boolean = false,
-                        hparam: HyperParameter = RegressionTree.hp)
+class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
+                        use_fb: Boolean = false, hparam: HyperParameter = RegressionTree.hp)
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):                    // call resetDF once tree is built
 
-    private val debug      = debugf ("RegressionTreeRF", true)                // debug function
+//  private val debug      = debugf ("RegressionTreeRF", false)               // debug function
     private val flaw       = flawf ("RegressionTreeRF")                       // flaw function
     private val depth      = hparam("maxDepth").toInt                         // the max depth for the base regression trees
-    private val nTrees     = hparam ("nTrees").toInt                          // number of trees
-    private val bRatio     = hparam ("bRatio").toDouble                       // bagging ratio 
-    private val fbRatio    = hparam ("fbRatio").toDouble                      // feature bagging ratio 
+    private val nTrees     = hparam("nTrees").toInt                           // number of trees
+    private val bRatio     = hparam("bRatio").toDouble                        // bagging ratio 
+    private val fbRatio    = hparam("fbRatio").toDouble                       // feature bagging ratio 
     private val sampleSize = (bRatio * x.dim).toInt                           // size of matrix sub-samples
     private val forest     = Array.ofDim [REG_TREE] (nTrees)                  // forest of regression trees
 
@@ -54,19 +52,19 @@ class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null, 
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train the regression tree RF by selecting thresholds for the features/variables
-     *  in matrix x_.
-     *  Build the trees of the forest by selecting a subSample for each tree.
+     *  in matrix x_.  Build the trees of the forest by selecting a subSample for each tree.
+     *  @author Prudhvi Chekka, Lalithya Sajja
      *  @param x_  the training/full data/input matrix
      *  @param y_  the training/full response/output vector
      */
     def train (x_ : MatrixD, y_ : VectorD): Unit =
         for k <- 0 until nTrees do
             val (xx, yy, imap) = subSample (x_, y_, sampleSize, k)            // select rows of data matrix
-            debug ("train", s"for tree$k, imap = ${stringOf (imap)}")
+//          debug ("train", s"for tree$k, imap = ${stringOf (imap)}")
 
-            forest(k) = new REG_TREE (xx, yy, fname, hparam)                  // means/regression in leaves
+            forest(k) = new REG_TREE (xx, yy, fname, hparam, use_r_fb = use_fb)  // means/regression in leaves
             forest(k).train (xx, yy)
-            debug ("train", s"for tree$k === \n ${forest(k).printTree ()}")
+//          debug ("train", s"for tree$k === \n ${forest(k).printTree ()}")
         end for
     end train
 
@@ -101,8 +99,8 @@ class RegressionTreeRF (x: MatrixD, y: VectorD, fname_ : Array [String] = null, 
     /** Build a sub-model that is restricted to the given columns of the data matrix.
      *  @param x_cols  the columns that the new model is restricted to
      */
-    override def buildModel (x_cols: MatrixD): RegressionTreeGB =
-        new RegressionTreeGB (x_cols, y, null, hparam)
+    override def buildModel (x_cols: MatrixD): RegressionTreeRF =
+        new RegressionTreeRF (x_cols, y, fname, use_fb, hparam)
     end buildModel
 
 end RegressionTreeRF
@@ -164,7 +162,7 @@ end regressionTreeRFTest
 //  println (s"x = $o")
 //  println (s"y = $y")
 
-    val dmax    = 6                                                     // range of depths 1 to dmax
+    val dmax = 6                                                        // range of depths 1 to dmax
     val qual = new MatrixD (dmax, 3)
 
     for d <- 1 to dmax do
@@ -190,9 +188,9 @@ end regressionTreeRFTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `regressionTreeRFTest3` main function tests the `RegressionTreeRF` class using the
- *  AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and stepwise
- *  selection.
+/** The `regressionTreeRFTest3` main function tests the `RegressionTreeRF` class using
+ *  the AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and
+ *  stepwise selection.
  *  > runMain scalation.modeling.regressionTreeRFTest3
  */
 @main def regressionTreeRFTest3 (): Unit =
@@ -221,4 +219,58 @@ end regressionTreeRFTest2
     end for
 
 end regressionTreeRFTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTreeRFTest4` main function tests the `RegressionTreeRF` class using
+ *  the Boston House Prices dataset.
+ *  > runMain scalation.modeling.regressionTreeRFTest4
+ */
+@main def regressionTreeRFTest4 (): Unit =
+
+//  println (s"x = $o")
+//  println (s"y = $y")
+
+    val data = MatrixD.load ("boston_house_prices.csv", 1, 0)
+    val x    = data(?, 0 until data.dim2 - 1)
+    val y    = data(?, data.dim2 - 1)
+    val dmax = 5
+
+    for d <- 1 to dmax do
+        banner (s"AutoMPG Regression Tree RF with depth d = $d")
+        RegressionTree.hp("maxDepth") = d
+        RegressionTree.hp("nTrees") = 9
+        val mod = new RegressionTreeRF (x, y)                           // create model with intercept (else pass x)
+        mod.trainNtest ()()._2                                          // train and test the model
+    end for
+
+end regressionTreeRFTest4
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTreeRFTest5` main function tests the `RegressionTreeRF` class using
+ *  the Forest Fires dataset.
+ *  > runMain scalation.modeling.regressionTreeRFTest5
+ */
+@main def regressionTreeRFTest5 (): Unit =
+
+//  println (s"x = $o")
+//  println (s"y = $y")
+
+    val xy    = MatrixD.load ("forestfires.csv", 1, 4)
+    val resp  = xy.dim2 - 1
+    val y     = xy(?, resp)                                             // response - burned area
+    val x     = xy.not (?, resp)
+    val fname = Array ("FFMC", "DMC", "DC", "ISI", "temp", "RH", "wind", "rain")
+    val dmax  = 5
+
+    for d <- 1 to dmax do
+        banner (s"Forest Fires Regression Tree RF with depth d = $d")
+        RegressionTree.hp("maxDepth") = d
+        RegressionTree.hp("nTrees")   = 51
+        val mod = new RegressionTreeRF (x, y, fname)                    // create model with intercept (else pass x)
+        mod.trainNtest ()()._2                                          // train and test the model
+    end for
+
+end regressionTreeRFTest5
 

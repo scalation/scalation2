@@ -32,12 +32,11 @@ object TableGen:
      */
     def popTable (table: Table, m: Int, stream: Int = 0): Unit =
         val n     = table.schema.size
-        val ranD  = RandomVecD (dim = m, max = 2 * m)
-        val ranI  = RandomVecI (dim = m, max = 2 * m, unique = false)
-        val ranS  = RandomVecS (dim = m, unique = false)
-        val uranI = RandomVecI (dim = m, max = 2 * m)
-        val uranS = RandomVecS (dim = m)
-        val ranRw = RandomVecI (dim = m, max = m-1)
+        val ranD  = RandomVecD (dim = m, max = 2 * m, stream = stream)
+        val ranI  = RandomVecI (dim = m, max = 2 * m, unique = false, stream = stream+1)
+        val ranS  = RandomVecS (dim = m, unique = false, stream = stream+2)
+        val uranI = RandomVecI (dim = m, max = 2 * m, stream = stream+3)  // unique random integers
+        val uranS = RandomVecS (dim = m, stream = stream+4)               // unique random strings
         val pkey  = table.key
         val dmain = table.domain
 
@@ -47,6 +46,8 @@ object TableGen:
         /** Make tuples: (1) random unique values for primary key attributes,
          *  (2) copies of primary keys from fkt for foreign key attributes, or
          *  (3) random values based on domain for other attributes.
+         *  Caveat: for a composite primary key (sid, cid) pulling primary keys from
+         *          Student.sid and Course.cid may results in a duplicate primary key
          */
         def makeTuples (): Unit =
             val col = Array.ofDim [Vectr] (n)                         // generate column-by-column
@@ -56,9 +57,10 @@ object TableGen:
                 val fkt = table.linkTypes.getOrElse (atrj, null)      // which foreign key table or null
 
                 if pkey contains atrj then                            // >> case PRIMARY KEY
-                    col(j) = genUnique (j)                            // generate unique keys for attributes in pkey
+                    col(j) = if fkt == null then genUnique (j)        // generate unique keys for attributes in pkey
+                             else pullPkeys (atrj, fkt, j)            // primary and foreign = copy pkey from fkt
                 else if fkt != null then                              // >> case FOREIGN KEY
-                    col(j) = pullPkeys (atrj, fkt)                    // foreign key = copy pkeys from fkt
+                    col(j) = pullPkeys (atrj, fkt, j)                 // foreign key = copy pkey from fkt
                 else                                                  // >> case REGULAR ATTRIBUTE
                     col(j) = genValue (j)                             // generate value for a regular attribute
                 end if
@@ -73,19 +75,23 @@ object TableGen:
         end makeTuples
 
         //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        /** Randomly pull the primary key value out of the foreign key table (fkt).
+        /** Randomly pull m primary key values out of the foreign key table (fkt).
+         *  Caveat:  Currently only works for non-composite foreign keys.
          *  @param fkey  the foreign key attribute
-         *  @param fkt   the foreign key table (fkt)
+         *  @param fkt   the foreign key table (fkt) this_table references fkt
+         *  @param strm  the random number stream to use (reduce redundancy)
          */
-        def pullPkeys (fkey: String, fkt: Table): Vectr =
-            val  rows = ranRw.igen
-            val jj = fkt.on (fkt.key(0))
+        def pullPkeys (fkey: String, fkt: Table, strm: Int): Vectr =
+            val k     = fkt.rows                                      // number of rows in fkt
+            val ranRw = RandomVecI (dim = m, max = k-1, min = 0, unique = false, stream = strm)
+            val rows  = ranRw.igen                                    // randomly select m rows
+            val jj    = fkt.on (fkt.key(0))                           // column for foreign key
             fkt.domain(jj) match
             case 'D' => VectorD (for i <- rows yield fkt.getPkey (i).key(0).asInstanceOf [Double])
             case 'I' => VectorI (for i <- rows yield fkt.getPkey (i).key(0).asInstanceOf [Int])
             case 'L' => VectorL (for i <- rows yield fkt.getPkey (i).key(0).asInstanceOf [Long])
             case 'S' => VectorS (for i <- rows yield fkt.getPkey (i).key(0).asInstanceOf [String])
-            case _  => { flaw ("pullPkeys", "type not supported"); null }
+            case _   => { flaw ("pullPkeys", "type not supported"); null }
         end pullPkeys
 
         //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -127,18 +133,22 @@ end TableGen
  */
 @main def tableGenTest (): Unit =
 
+    banner ("Create and populate the student table")
     val student = Table ("student", "sid, name, address, status", "I, S, S, S", "sid")
     TableGen.popTable (student, 40)
     student.show ()
 
+    banner ("Create and populate the professor table")
     val professor = Table ("professor", "pid, name, deptid", "I, S, I", "pid")
     TableGen.popTable (professor, 10)
     professor.show ()
 
+    banner ("Create and populate the course table")
     val course = Table ("course", "cid, deptid, crsname, descr", "I, I, S, S", "cid")
     TableGen.popTable (course, 20)
     course.show ()
 
+    banner ("Create and populate the section table")
     val section = Table ("section", "crn, cid, semester, pid", "I, I, S, I", "crn")
     section.addLinkage ("cid", course)                             // teaching cid references course cid
     section.addLinkage ("pid", professor)                          // teaching pid references professor pid
@@ -146,12 +156,18 @@ end TableGen
     section.show ()
     section.show_foreign_keys ()
 
-    val transript = Table ("transript", "sid, crn, grade", "I, I, S", "sid, crn")
-    transript.addLinkage ("sid", student)                          // transript sid references student sid
-    transript.addLinkage ("crn", section)                          // transript crn references section crn
-    TableGen.popTable (transript, 70)
-    transript.show ()
-    transript.show_foreign_keys ()
+    banner ("Create and populate the transcript table")
+    val transcript = Table ("transcript", "sid, crn, grade", "I, I, S", "sid, crn")
+    transcript.addLinkage ("sid", student)                        // transcript sid references student sid
+    transcript.addLinkage ("crn", section)                        // transcript crn references section crn
+    TableGen.popTable (transcript, 70)
+    transcript.show ()
+    transcript.show_foreign_keys ()
+
+    banner ("Check for duplicates: transcript has foreign keys inside primary keys")
+    transcript.orderBy ("sid").show ()
+    transcript.create_index ()
+    println (s"After removing duplicates transcript has ${transcript.rows} rows")
 
 end tableGenTest
 

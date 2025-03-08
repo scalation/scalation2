@@ -11,10 +11,9 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
 import scalation.random.{Bernoulli, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runRoad` function is used to run the `RoadModel` class.
@@ -26,7 +25,7 @@ import scalation.random.RandomSeeds.N_STREAMS
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RoadModel` class simulates a two-lane road in two directions, i.e., it
  *  has 2 West-bound lanes and 2 East-bound lanes.  It used a composite class called
- *  `Route`, which will have a `Transport` for each lane.
+ *  `Path`, which will have a `Transport` for each lane.
  *  @param name       the name of the simulation model
  *  @param reps       the number of independent replications to run
  *  @param animating  whether to animate the model
@@ -41,15 +40,15 @@ class RoadModel (name: String = "Road", reps: Int = 1, animating: Boolean = true
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val iaTime = (4000.0, 6000.0)                     // (lower, upper) on inter-arrival time
-    val mvTime = (2900.0, 3100.0)                     // (lower, upper) on move time
+    val iaTime = (4000.0, 6000.0)                       // (lower, upper) on inter-arrival time
+    val mvTime = (2900.0, 3100.0)                       // (lower, upper) on move time
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Uniform (iaTime, stream)
-    val moveRV     = Uniform (mvTime, (stream + 1) % N_STREAMS)
-    val laneRV     = Bernoulli ((stream + 2) % N_STREAMS)
+    val iArrivalRV = Uniform (iaTime, stream)           // use different random number streams for independence
+    val moveRV     = Uniform (mvTime, stream + 1)
+    val laneRV     = Bernoulli (stream = stream + 2)
 
     //--------------------------------------------------
     // Create Model Components
@@ -58,30 +57,30 @@ class RoadModel (name: String = "Road", reps: Int = 1, animating: Boolean = true
     val src2  = Source ("src2", this, () => Car2 (), 0, nStop, iArrivalRV, (100, 260))
     val snk1  = Sink ("snk1", (100, 220))
     val snk2  = Sink ("snk2", (400, 260))
-    val road1 = Route ("road1", 2, src1, snk1, moveRV)
-    val road2 = Route ("road2", 2, src2, snk2, moveRV)
+    val road1 = Path ("road1", 2, src1, snk1, moveRV)
+    val road2 = Path ("road2", 2, src2, snk2, moveRV)
 
     addComponent (src1, src2, snk1, snk2, road1, road2)
 
     //--------------------------------------------------
     // Specify Scripts for each Type of Simulation Actor
 
-    case class Car1 () extends SimActor ("c1", this):      // for West-bound cars
+    case class Car1 () extends SimActor ("c1", this):   // for West-bound cars
 
-        def act (): Unit =
-            val l = laneRV.igen
-            road1.lane(l).move ()
-            snk1.leave ()
+        override def act (): Unit =
+            val l = laneRV.igen                         // pick a lane
+            road1.lane(l).move ()                       // move down road 1
+            snk1.leave ()                               // exit road 1 via sink 1
         end act
 
     end Car1
 
-    case class Car2 () extends SimActor ("c2", this):      // for East-bound cars
+    case class Car2 () extends SimActor ("c2", this):   // for East-bound cars
 
-        def act (): Unit =
-            val l = laneRV.igen
-            road2.lane(l).move ()
-            snk2.leave ()
+        override def act (): Unit =
+            val l = laneRV.igen                         // pick a lane
+            road2.lane(l).move ()                       // move down road 2
+            snk2.leave ()                               // exit road 2 via sink 2
         end act
 
     end Car2

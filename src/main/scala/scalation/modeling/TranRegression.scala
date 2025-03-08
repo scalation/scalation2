@@ -5,9 +5,14 @@
  *  @date    Sat Jan 20 15:41:27 EST 2018
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Transformed Multiple Linear Regression
+ *  @note    Model: Transformed Multiple Linear Regression (Transforms y)
  *
  *  @see data.princeton.edu/wws509/notes/c2s10.html
+ *  @see scala-lang.org/api/3.x/scala/math.html
+ *  @see `scalation.CommonFunctions`
+ *
+ *  Common transformation pairs: (tran, itran) or reversed
+ *  (log, exp), (log1p, expm1), (ihs, sinh), (cbrt, cb), (sqrt, sq), (box_cox, cox_box)
  */
 
 package scalation
@@ -46,9 +51,9 @@ class TranRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
 
     private val debug = debugf ("TranRegression", true)                    // debug function
     private val flaw  = flawf ("TranRegression")                           // flaw function
-    private val inf   = getY.findInfinity                                  // infinite transfomred response elements
+    private val inf   = getY.findInfinity                                  // infinite transformed response elements
 
-    modelName = "TranRegression"
+    modelName = s"TranRegression"
 
     if ! inf.isEmpty then flaw ("init", s"the transformed response vector has infinite elements at $inf")
     if ! y.isNonnegative then
@@ -98,7 +103,7 @@ class TranRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         println (report (qof))
         if DO_PLOT then
             val (ryy, ryp) = orderByY (yy, yp)                           // order by yy
-            new Plot (null, ryy, ryp, s"$modelName: y actual, predicted")
+            new Plot (null, ryy, ryp, s"$modelName: y actual, predicted", lines = true)
         end if
         (yp, qof)
     end trainNtest
@@ -159,7 +164,7 @@ end TranRegression
 object TranRegression:
 
     private val debug  = debugf ("TranRegression", false)                 // debug function
-    private var lambda = 0.5                                              // the power parameter for Box-Cox tranformations
+    private var lambda = 0.5                                              // the power parameter for Box-Cox transformations
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the value for the 'lambda' parameter.  Must be called before Box-Cox
@@ -192,7 +197,7 @@ object TranRegression:
      *  @param x       the data/input matrix
      *  @param y       the response/output vector
      *  @param fname   the feature/variable names (defaults to null)
-     *  @param hparam  the hyper-parameters (defualts to Regression.hp)
+     *  @param hparam  the hyper-parameters (defaults to Regression.hp)
      */
     def apply (x: MatrixD, y: VectorD, fname: Array [String] = null,
                hparam: HyperParameter = Regression.hp): TranRegression =
@@ -299,12 +304,12 @@ end TranRegressionEx
     println ("x = " + x)
     println ("y = " + y)
 
-    banner ("Parameter Estimation and Quality of Fit")
+    banner ("Parameter Estimation and Quality of Fit - log transform")
     val mod = new TranRegression (x, y)
     mod.trainNtest ()()                                       // train and test the model
     println (mod.summary ())                                  // parameter/coefficient statistics
 
-    banner ("Quality of Fit - based on original data")
+    banner ("Quality of Fit - based on transformed data")
     println (mod.report (mod.test0 ()._2))
 
     banner ("Prediction")
@@ -389,7 +394,7 @@ end tranRegressionTest2
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `tranRegressionTest3` main function tests `TranRegression` class using the
- *  following regression equation and uses the simulated data in `TranRegressionEx`..
+ *  following regression equation and uses the simulated data in `TranRegressionEx`.
  *      sqrt (y)  =  b dot x  =  b_0 + b_1*x_1 + b_2*x_2.
  *  @see 6.12.9 exercises 1, 2, and 3.
  *  > runMain scalation.modeling.tranRegressionTest3
@@ -409,8 +414,8 @@ end tranRegressionTest2
     val yp = reg.predict (x)
     val e  = y - yp
 
-    new Plot (null, y, yp, "Original Regression y and yp vs. t")
-    new Plot (null, e, null, "Original e vs. t")
+    new Plot (null, y, yp, "Original Regression y and yp vs. t", lines = true)
+    new Plot (null, e, null, "Original e vs. t", lines = true)
 
     // Phase 2 ================================================================
     banner ("Transform y to y2")
@@ -422,8 +427,8 @@ end tranRegressionTest2
     val yp2 = trg.predict (x)
     val e2  = y2 - yp2
 
-    new Plot (null, y2, yp2, "Transformed Regression y2 and yp2 vs. t")
-    new Plot (null, e2, null, "Transformed e2 vs. t")
+    new Plot (null, y2, yp2, "Transformed Regression y2 and yp2 vs. t", lines = true)
+    new Plot (null, e2, null, "Transformed e2 vs. t", lines = true)
 
     // Phase 3 ================================================================
     banner ("Inverse Transform yp2 to yp3")
@@ -433,13 +438,13 @@ end tranRegressionTest2
     val sse = e3 dot e3
     println (s"R^2 = ${1 - (sse / sst)}")
 
-    new Plot (null, y, yp3, "Tran-back Regression y and yp3 vs. t")
-    new Plot (null, e3, null, "Tran-back e3 vs. t")
+    new Plot (null, y, yp3, "Tran-back Regression y and yp3 vs. t", lines = true)
+    new Plot (null, e3, null, "Tran-back e3 vs. t", lines = true)
 
     val ys2 = MatrixD (y2, yp2)
     val ys3 = MatrixD (y, yp3, yp)
-    new PlotM (null, ys2.transpose, null, "Transformed")
-    new PlotM (null, ys3.transpose, null, "Tran-back")
+    new PlotM (null, ys2.transpose, null, "Transformed", lines = true)
+    new PlotM (null, ys3.transpose, null, "Tran-back", lines = true)
 
 end tranRegressionTest3
 
@@ -454,32 +459,32 @@ end tranRegressionTest3
 
     import TranRegressionEx.{x, y}
 
-    banner ("Regession")
+    banner ("Regression")
     val reg = new Regression (x, y)
     reg.trainNtest ()()                                       // train and test the model
     println (reg.summary ())                                  // parameter/coefficient statistics
 
     val yp = reg.predict (x)
-    val e  = reg.residual
+    val e  = y - yp
 
-    banner ("TranRegession")
+    banner ("TranRegression with sqrt")
     val mod = new TranRegression (x, y, null, Regression.hp, sqrt, sq)
     mod.trainNtest ()()                                       // train and test the model
     println (mod.summary ())                                  // parameter/coefficient statistics
 
+    banner ("Quality of Fit - based on transformed data")
     println (mod.report (mod.test0 ()._2))                    // test on transformed data
 
     val yp2 = mod.predict (x)
     val e2  = y - yp2
-//  val e2  = mod.residual                                     // FIX - returns null
 
     println (s"e2.dim = ${e2.dim}")
 
     val ys = MatrixD (y, yp, yp2)
-    new PlotM (null, ys.transpose)
+    new PlotM (null, ys.transpose, lines = true)
 
-    new Plot (null, e, null, "e vs. t")
-    new Plot (null, e2, null, "e2 vs. t")
+    new Plot (null, e, null, "e vs. t", lines = true)
+    new Plot (null, e2, null, "e2 vs. t", lines = true)
 
 end tranRegressionTest4
 
@@ -503,7 +508,7 @@ end tranRegressionTest4
     val yy = scaleV (extrem, bounds)(y)                       // rescale to domain of transform
     println (s"yy = $yy")
 
-    banner ("Regession")
+    banner ("Regression")
     val reg = new Regression (ox, yy)
     reg.trainNtest ()()                                       // train and test the model
     println (reg.summary ())                                  // parameter/coefficient statistics
@@ -511,12 +516,13 @@ end tranRegressionTest4
     val yp = reg.predict (ox)
     val e  = yy - yp
 
-    banner ("TranRegession")
+    banner ("TranRegression")
 //  val mod = new Regression (ox, yy.map (f))                         // rescale & transform
     val mod = new TranRegression (ox, yy,  ox_fname, Regression.hp, f, fi)   // rescale
     mod.trainNtest ()()                                       // train and test the model
     println (mod.summary ())                                  // parameter/coefficient statistics
 
+    banner ("Quality of Fit - based on transformed data")
     println (mod.report (mod.test0 ()._2))                    // test with transformed
 
     val yp2 = mod.predict (ox)
@@ -531,10 +537,10 @@ end tranRegressionTest4
     val ryp2 = yp2_.reorder (rnk)                             // TranRegression - blue
 
     val ys = MatrixD (ry, ryp, ryp2)
-    new PlotM (null, ys.transpose)
+    new PlotM (null, ys.transpose, lines = true)
 
-    new Plot (null, e, null, "e vs. t")
-    new Plot (null, e2, null, "e2 vs. t")
+    new Plot (null, e, null, "e vs. t", lines = true)
+    new Plot (null, e2, null, "e2 vs. t", lines = true)
 
 end tranRegressionTest5
 
@@ -542,7 +548,7 @@ end tranRegressionTest5
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `tranRegressionTest6` main function tests `TranRegression` class using the
  *  following regression equation on the beer foam dataset.
- *  @see https://www.tf.uni-kiel.de/matwis/amat/iss/kap_2/articles/beer_article.pdf
+ *  @see www.tf.uni-kiel.de/matwis/amat/iss/kap_2/articles/beer_article.pdf
  *      exp (y)  =  b dot x  =  b_0 + b_1*x_1.
  *  > runMain scalation.modeling.tranRegressionTest6
  */

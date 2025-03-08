@@ -105,7 +105,7 @@ case class VTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
     /** Return whether this vertex-table contains tuple u.
      *  @param t  the tuple to look for
      */
-    override def contains (t: Tuple): Boolean = vertices.exists (_.tuple sameElements t)
+    override infix def contains (t: Tuple): Boolean = vertices.exists (_.tuple sameElements t)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the primary key for the given vertex.
@@ -249,7 +249,7 @@ case class VTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
      *  Acts like union-all, so to remove duplicates call create_index after union.
      *  @param r2  the second table (may be a Table or VTable)
      */
-    override def union (r2: Table): VTable =
+    override infix def union (r2: Table): VTable =
         if incompatible (r2) then return this
 
         val s = new VTable (s"${name}_u_${cntr.inc ()}", schema, domain, key)
@@ -265,7 +265,7 @@ case class VTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
      *  Check that the two tables are compatible.  If they are not, return the first table.
      *  @param r2  the second table (may be a Table or VTable)
      */
-    override def minus (r2: Table): VTable =
+    override infix def minus (r2: Table): VTable =
         if incompatible (r2) then return this
 
         val s = new VTable (s"${name}_m_${cntr.inc ()}", schema, domain, key)
@@ -281,7 +281,7 @@ case class VTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Sc
      *  If they are not, return the first table.
      *  @param r2  the second table (may be a Table or VTable)
      */
-    override def intersect (r2: Table): VTable =
+    override infix def intersect (r2: Table): VTable =
         if incompatible (r2) then return this
 
         val s = new VTable (s"${name}_i_${cntr.inc ()}", schema, domain, key)
@@ -628,11 +628,11 @@ end vTableTest
     banner ("Example Queries")
 
     banner ("locations of students")
-    val locs = student project ("sname, city")
+    val locs = student.project ("sname, city")
     locs.show ()
 
     banner ("living in Athens")
-    val inAthens = student select ("city == 'Athens'")
+    val inAthens = student.select ("city == 'Athens'")
     inAthens.show ()
 
     banner ("not living in Athens")
@@ -648,15 +648,15 @@ end vTableTest
     unio.show ()
 
     banner ("courses taken: course id")
-    val taken_id = student expand ("sname, cid", ("cid", course))
+    val taken_id = student.expand ("sname, cid", ("cid", course))
     taken_id.show ()
 
     banner ("courses taken: course name")
-    val taken_nm = student expand ("sname, cname", ("cid", course))
+    val taken_nm = student.expand ("sname, cname", ("cid", course))
     taken_nm.show ()
 
     banner ("courses taken: course name via ejoin")
-    val taken_ej = student ejoin ("cid", course, "sid") project ("sname, cname")
+    val taken_ej = student.ejoin ("cid", course, "sid").project ("sname, cname")
     taken_ej.show ()
 
 /*
