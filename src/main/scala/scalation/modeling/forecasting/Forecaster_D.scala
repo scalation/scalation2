@@ -33,7 +33,7 @@ abstract class Forecaster_D (x: MatrixD, y: MatrixD, hh: Int, tRng: Range = null
                              bakcast: Boolean = false)
       extends Forecaster (y(?, 0), hh, tRng, hparam, bakcast):          // no automatic backcasting, @see `ARY_D.apply`
 
-    private val debug = debugf ("Forecaster_D", true)                   // debug function
+    private val debug = debugf ("Forecaster_D", false)                  // debug function
 
     protected var bb: MatrixD = null                                    // use parameter matrix bb instead of vector b
 
@@ -78,7 +78,7 @@ abstract class Forecaster_D (x: MatrixD, y: MatrixD, hh: Int, tRng: Range = null
      *  @param y_      the actual testing/full response/output matrix
      */
     def test (x_ : MatrixD, y_ : MatrixD): (VectorD, VectorD) =
-        val m = y_.dim - 1
+        val m = y_.dim
         predictAll (y_)                                                 // make all predictions - saved in yf
         debug ("test", s"x_.dims = ${x_.dims}, y_.dims, ${y_.dims}, yf.dims = ${yf.dims}")
 
@@ -131,15 +131,6 @@ abstract class Forecaster_D (x: MatrixD, y: MatrixD, hh: Int, tRng: Range = null
     end predictAll
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a vector of size hh, h = 1 to hh-steps ahead forecasts for the model,
-     *  i.e., forecast the following time points:  t+1, ..., t+h.
-     *  Intended to work with rolling validation (analog of predict method).
-     *  @param t   the time point from which to make forecasts
-     *  @param y_  the actual values to use in making predictions
-     */
-//  def forecast (t: Int, y_ : MatrixD): VectorD
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forecast values for all y_.dim time points and all horizons (1 through hh-steps ahead).
      *  Record these in the FORECAST MATRIX yf, where
      *
@@ -166,19 +157,17 @@ abstract class Forecaster_D (x: MatrixD, y: MatrixD, hh: Int, tRng: Range = null
         val tr_size = y.dim - te_size                                   // size of initial training set
         debug ("rollValidate", s"y.dims = ${y.dims}, train: tr_size = $tr_size; test: te_size = $te_size, rc = $rc")
 
-        val yp = new VectorD (te_size-1)
-        for i <- 0 until te_size-1 do                                   // iterate through testing set
+        val yp = new VectorD (te_size)
+        for i <- yp.indices do                                          // iterate through testing set
             val is = if growing then 0 else i
             val t  = tr_size + i                                        // next time point to forecast
             if i % rc == 0 then
                 val x_ = if x != null then x(is until t) else null
                 train_x (x_, y(is until t))                             // retrain on sliding training set
                 debug ("rollValidate", s"retrain on i = $i, bb = $bb")
-//          val yd = predict (min (t+1, y.dim-1), y)                    // predict the next value (only for h=1)
-            val yd = predict (t, y)                                     // predict the next value (only for h=1)
-            val yd2 = forecast (t, y(?, 0))                             // forecast the next hh-values, yf is updated
-            println (s"n yd = $yd \n yd2 = $yd2")
-            yp(i) = yd2(0)
+//          val yd = predict (t, y)                                     // predict the next value (only for h=1)
+            val yd = forecast (t, y(?, 0))                              // forecast the next hh-values, yf is updated
+            yp(i)  = yd(0)
             println (s"yf(t, 0) = ${yf(t, 0)}, yp(i) = ${yp(i)}, yd = $yd")
         end for
 

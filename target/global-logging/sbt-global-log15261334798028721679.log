@@ -1,0 +1,6 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(runMain scalation.modeling.forecasting.aRX_QuadTest4, Some(226d8a32-789d-4009-a81b-6360d96d5700), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / runMain[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 27 s, completed Mar 26, 2025, 11:34:25 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m

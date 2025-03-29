@@ -593,17 +593,21 @@ class MatrixD (val dim:  Int,
      *  @param y  the other matrix
      */
     def ++^ (y: MatrixD): MatrixD =
-        if dim != y.dim then
-            flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = ${y.dim}")
 
-        val n = dim2 + y.dim2
-        val a = Array.ofDim [Double] (dim, n)
-        cfor (0, dim) { i =>
-            val a_i = a(i)
-            cfor (0, dim2) { j => a_i(j) = v(i)(j) }
-            cfor (dim2, n) { j => a_i(j) = y.v(i)(j-dim2) }
-        } // cfor
-        new MatrixD (dim, n, a)
+        if y.dim == 0 then            // YousefChange
+            this
+        else
+            if dim != y.dim then
+                flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = ${y.dim}")
+
+            val n = dim2 + y.dim2
+            val a = Array.ofDim [Double] (dim, n)
+            cfor (0, dim) { i =>
+                val a_i = a(i)
+                cfor (0, dim2) { j => a_i(j) = v(i)(j) }
+                cfor (dim2, n) { j => a_i(j) = y.v(i)(j-dim2) }
+            } // cfor
+            new MatrixD (dim, n, a)
     end ++^
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1363,6 +1367,19 @@ class MatrixD (val dim:  Int,
         MatrixD (indices.map { i => f(apply(i)) })
     end mmap
 
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Map each column of this matrix by applying function f to each column vector and
+     * returning the collected result as a matrix.
+     * MatrixD (for j <- indices2 yield f(apply(?, j)))
+     *
+     * @param f the vector to vector function to apply
+     */
+    def mmap_(f: FunctionV2V): MatrixD =
+        MatrixD(indices2.map { j => f(apply(?, j)) }).transpose
+    end mmap_
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Map each element of this matrix by applying function f to each element and
      *  returning the collected result as a matrix.
@@ -1375,9 +1392,27 @@ class MatrixD (val dim:  Int,
     end map_
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the matrix consisting of the square root of each element of this vector.
+     */
+    def sqrtM: MatrixD = map_ (math.sqrt(_))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Log transform this matrix by using math.log (avoiding the log (0) problem).
+     */
+    def log: MatrixD = map_ (math.log (_))
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Log transform this matrix by using math.log1p (avoiding the log (0) problem).
      */
     def log1p: MatrixD = map_ (math.log1p (_))
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Exp transform this matrix by using math.exp (the inverse of log).
+     */
+    def exp: MatrixD = map_ (math.exp (_))
+
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Exp transform this matrix by using math.expm1 (the inverse of log1p).
@@ -1449,6 +1484,13 @@ class MatrixD (val dim:  Int,
         cfor (0, dim2) { j => a(j) = apply(?, j).min }
         new VectorD (a.size, a)
     end min
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the range (min to max) of values in this vector.
+     */
+    def min_max: MatrixD = MatrixD(min, max)
+
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the trace of this matrix, i.e., the sum of the elements on the
@@ -1703,6 +1745,31 @@ class MatrixD (val dim:  Int,
         } // cfor
         out.close
     end write
+
+    /** Produce a standardized version of the matrix by apply the standardize method to each column
+     */
+    def standardizeCol: MatrixD =
+        val xe_std = new MatrixD(this.dim, this.dim2)           // Create a new MatrixD with the same dimensions
+        for (j <- 0 until this.dim2) {
+            xe_std(?, j) = this(?, j).standardize               // Standardize each column and set it back
+        }
+        xe_std
+    end standardizeCol
+
+    def standardize2Col: MatrixD =
+        val xe_std = new MatrixD(this.dim, this.dim2)           // Create a new MatrixD with the same dimensions
+        println(s"dimdim: ${xe_std.dims}")
+        for (j <- 0 until this.dim2) {
+            xe_std(?, j) = this(?, j).standardize2               // Standardize each column and set it back
+        }
+        xe_std
+    end standardize2Col
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the first 2 moments (mean mu and standard deviation sig).
+     */
+    def mu_sig: MatrixD = MatrixD(mean, stdev)
+
 
 end MatrixD
 

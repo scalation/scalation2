@@ -1,0 +1,29 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(20e480db-3615-47a1-b768-bc9157e31269), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 5 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:113:51 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m113 |[0m            x_fcast_fEndo = tForms([31m"tForm_endo"[0m).f(x_fcast_fEndo)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                   ^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                Found:    [1m[31m([0m[1m[31mx[0m[1m[31m_[0m[1m[31mfcast[0m[1m[31m_[0m[1m[31mfEndo[0m[1m[31m [0m[1m[31m:[0m[1m[31m [0mscalation.mathstat.[1m[31mMatrixD[0m[1m[31m)[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                Required: scalation.mathstat.[1m[32mVectorD[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Tree: x_fcast_fEndo[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   (x_fcast_fEndo : scalation.mathstat.MatrixD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   ==> (x_fcast_fEndo : scalation.mathstat.MatrixD)  <:  scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m     ==> scalation.mathstat.MatrixD  <:  scalation.mathstat.VectorD  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m     ---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0mone error found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 4 s, completed Mar 27, 2025, 2:10:18 AM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m

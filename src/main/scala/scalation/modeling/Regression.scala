@@ -42,7 +42,7 @@ import scalation.mathstat._
  *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
-                  hparam: HyperParameter = Regression.hp)
+                  hparam: HyperParameter = Regression.hp, tForm_y: Transform = null)  // YousefChange
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
          // if not using an intercept df = (x.dim2, x.dim-x.dim2), correct by calling 'resetDF' method from `Fit`
@@ -53,7 +53,8 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val n         = x.dim2                                       // number of columns
 
     modelName = s"Regression @dfm = $dfm"
-
+    yForm = tForm_y         // YousefChange
+    println(s"reg, yForm = ${yForm}")
     if n < 1 then flaw ("init", s"dim2 = $n of the 'x' matrix must be at least 1")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -81,7 +82,6 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     def train (x_ : MatrixD = x, y_ : VectorD = y): Unit =
         val fac = solver (x_)
         fac.factor ()                                                    // factor the matrix, either X or X.t * X
-
         b = fac match                                                    // RECORD the parameters/coefficients (@see `Predictor`)
             case fac: Fac_QR  => fac.solve (y_)
             case fac: Fac_SVD => fac.solve (y_)
@@ -130,7 +130,7 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      */
     override def buildModel (x_cols: MatrixD): Regression =
         debug ("buildModel", s"${x_cols.dim} by ${x_cols.dim2}")
-        new Regression (x_cols, y, null, hparam)
+        new Regression (x_cols, y, null, hparam, yForm)    // YousefChange
     end buildModel
 
 end Regression

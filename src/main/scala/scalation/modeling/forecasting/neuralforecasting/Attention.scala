@@ -386,3 +386,58 @@ end attentionTest3
 
 end attentionTest4
 
+
+def patch (y: VectorD, ps: Int): MatrixD =
+    val m = y.dim / ps
+    val x = new MatrixD (m, ps)
+    for i <- x.indices; j <- x.indices2 do x(i, j) = y(i * ps + j)
+    x
+end patch
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `attentionTest5` main function tests the `attention` top-level function.
+ *  Test Self-Attention with fixed weights
+ *  > runMain scalation.modeling.forecasting.neuralforecasting.attentionTest5
+ */
+@main def attentionTest5 (): Unit =
+
+    import Example_Covid.y
+
+    val ps = 4
+    val x  = patch (y, 4)
+
+    println (s"patched time series x = $x")
+
+    val n_var = ps                                                        // number of variables in input vector x_t
+    val n_mod = ps                                                        // size of each query/key vector (q_t, k_t)
+    val n_val = ps                                                        // size of the value vector v_t
+    val heads = 1                                                         // number of attention heads
+    object att extends Attention (n_var, n_mod, heads, n_val)
+
+    val w_q = new MatrixD (x.dim, ps); w_q.setAll (1.0/ps)
+    val w_k = new MatrixD (x.dim, ps); w_k.setAll (1.0/ps)
+    val w_v = new MatrixD (x.dim, ps); w_v.setAll (1.0/ps)
+    val (q, k, v) = att.queryKeyValue (x, w_q, w_k, w_v)
+
+    banner ("Dimensions for input x, query q, key k, value v")
+    println (s"x.dims = ${x.dims}")
+    println (s"q.dims = ${q.dims}")
+    println (s"k.dims = ${k.dims}")
+    println (s"v.dims = ${v.dims}")
+
+    banner ("Attention Matrix")
+    val aw = att.attention (q, k, v)
+    println (s"aw.dims = ${aw.dims}")
+    println (s"aw      = $aw")
+
+    banner ("Context Vectors Collected into Matrix")
+    val cxt = new MatrixD (aw.dim, aw.dim2)
+    println (s"cxt.dims = ${cxt.dims}")
+    for i <- q.indices do cxt(i) = att.context (q(i), k, v)
+    println (s"cxt      = $cxt")
+    assert (cxt =~ aw)
+    println ("succeed")
+
+end attentionTest5
+

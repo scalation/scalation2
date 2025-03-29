@@ -1,0 +1,7 @@
+[warn] -- [E198] Unused Symbol Warning: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb_D.scala:18:18 
+[warn] 18 |import scala.math._
+[warn]    |                  ^
+[warn]    |                  unused import
+[error] No warnings can be incurred under -Werror (or -Xfatal-warnings)
+[warn] one warning found
+[error] one error found

@@ -1,0 +1,7 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(024a167c-74b3-4f0f-98a6-71cb82f3bf9a), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 2 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 21 s, completed Mar 26, 2025, 11:14:48 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[31merror[0m] [0m[0mserver failed to start on local:sbt-server-cd9827489054cfd038f5. java.io.IOException: Could not create lock for \\.\pipe\sbt-server-cd9827489054cfd038f5_lock, error 5[0m

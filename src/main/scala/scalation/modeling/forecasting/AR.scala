@@ -14,10 +14,6 @@ package forecasting
 
 import scalation.mathstat._
 
-//import Forecaster.rdot
-import Example_Covid.loadData_y
-import Example_LakeLevels.y
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `AR` class provides basic time series analysis capabilities for Auto-Regressive
  *  (AR) models.  AR models are often used for forecasting.
@@ -163,6 +159,8 @@ object AR:
 
 end AR
 
+import Example_Covid.loadData_y
+import Example_LakeLevels.y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `aRTest` main function tests the `AR` class on real data:
@@ -180,7 +178,8 @@ end AR
     mod.trainNtest ()()                                                   // train and test on full dataset
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end aRTest
@@ -255,8 +254,10 @@ end aRTest3
         AR.hp("p") = p                                                    // number of AR terms
         val mod = new AR (y, hh)                                          // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
+//      mod.setSkip (p)                                                   // may wish to skip until all p past values are available
         mod.trainNtest ()()
 
+        mod.setSkip (0)                                                   // can use values from training set to not skip any in test
         mod.rollValidate ()                                               // TnT with Rolling Validation
         println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for

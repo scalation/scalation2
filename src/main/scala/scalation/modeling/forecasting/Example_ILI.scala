@@ -15,6 +15,8 @@ package scalation
 package modeling
 package forecasting
 
+import scala.math._
+
 import scalation.mathstat._
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -148,7 +150,7 @@ end example_ILITest2
 @main def example_ILITest3 (): Unit =
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                            // max forecasting horizon
+    val hh = 12                                                           // max forecasting horizon
 
     new Plot (null, y, null, s"y ($response)", lines = true)
 
@@ -186,7 +188,7 @@ end example_ILITest3
 @main def example_ILITest5 (): Unit =
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                          // max forecasting horizon
+    val hh = 12                                                         // max forecasting horizon
     val hp = AR.hp                                                      // hyper-parameters for AR family of models
 
     new Plot (null, y, null, s"y ($response)", lines = true)
@@ -201,7 +203,7 @@ end example_ILITest5
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ILITest6` main function test the `Example_ILI` object.
- *  This test compares the ARMA model for several values of p and q.
+ *  This test compares the `ARMA` model for several values of p and q.
  *  > runMain scalation.modeling.forecasting.example_ILITest6
  */
 @main def example_ILITest6 (): Unit =
@@ -209,7 +211,7 @@ end example_ILITest5
     import AR.hp
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                          // maximum forecasting horizon
+    val hh = 12                                                         // maximum forecasting horizon
 
     for p <- 1 to 8; q <- 0 to 3 do
         hp("p") = p; hp("q") = q                                        // set p (AR) and q (MA) hyper-parameters
@@ -227,7 +229,7 @@ end example_ILITest6
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ILITest7` main function test the `Example_ILI` object.
- *  This test compares the ARY model for several values of p.
+ *  This test compares the `ARY` model for several values of p.
  *  > runMain scalation.modeling.forecasting.example_ILITest7
  */
 @main def example_ILITest7 (): Unit =
@@ -235,7 +237,7 @@ end example_ILITest6
     import MakeMatrix4TS.hp
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                          // maximum forecasting horizon
+    val hh = 12                                                         // maximum forecasting horizon
     hp("spec") = 1                                                      // trend specification
 
     for p <- 1 to 26 do
@@ -255,7 +257,7 @@ end example_ILITest7
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ILITest8` main function test the `Example_ILI` object.
- *  This test compares the ARY_D model for several values of p.
+ *  This test compares the `ARY_D` model for several values of p.
  *  > runMain scalation.modeling.forecasting.example_ILITest8
  */
 @main def example_ILITest8 (): Unit =
@@ -263,7 +265,7 @@ end example_ILITest7
     import MakeMatrix4TS.hp
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                          // maximum forecasting horizon
+    val hh = 12                                                         // maximum forecasting horizon
     hp("spec") = 1                                                      // trend specification
 
     for p <- 1 to 26 do
@@ -283,7 +285,7 @@ end example_ILITest8
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `example_ILITest9` main function test the `Example_ILI` object.
- *  This test compares the ARIMA model for several values of p and q.
+ *  This test compares the `ARIMA` model for several values of p and q.
  *  > runMain scalation.modeling.forecasting.example_ILITest9
  */
 @main def example_ILITest9 (): Unit =
@@ -291,7 +293,7 @@ end example_ILITest8
     import AR.hp
 
     val y  = Example_ILI.loadData_y (response)
-    val hh = 6                                                          // maximum forecasting horizon
+    val hh = 12                                                         // maximum forecasting horizon
 
     for p <- 1 to 8; q <- 0 to 3 do
         hp("p") = p; hp("q") = q                                        // set p (AR) and q (MA) hyper-parameters
@@ -306,4 +308,60 @@ end example_ILITest8
     end for
 
 end example_ILITest9
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `example_ILITest10` main function test the `Example_ILI` object.
+ *  This test compares the `ARX_Symb` and `ARX_Symb_D` models for several values of p and q.
+ *  > runMain scalation.modeling.forecasting.example_ILITest10
+ */
+//@main def example_ILITest10 (): Unit =
+//
+//    import AR.hp
+//
+//    val exo_vars = Array ("%WEIGHTED ILI", "%UNWEIGHTED ILI")
+//    val (xe, y)  = loadData (exo_vars, response)
+//    println (s"xe.dims = ${xe.dims}, y.dim = ${y.dim}")
+//
+//    val hh = 12                                                          // maximum forecasting horizon
+//    val p  = 10
+//    val q  = 10
+//    hp("p")     = p                                                     // endo lags
+//    hp("q")     = q                                                     // exo lags
+//    hp("spec")  = 1                                                     // trend specification: 0, 1, 2, 3, 5
+//    hp("lwave") = 20                                                    // wavelength (distance between peaks)
+//    hp("cross") = 1
+//    hp("lambda") = 1.0
+//
+//    val ff = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)
+//    val gg = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)
+//
+//    val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)               // create model for time series data
+//    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+//    mod.trainNtest_x ()()                                               // train and test on full dataset
+//
+//    mod.setSkip(0)
+//    mod.rollValidate (rc = 2)                                           // TnT with Rolling Validation
+//    mod.diagnoseAll (y, mod.getYf, Forecaster.teRng(y.dim), 0)
+//
+//    banner ("Feature Selection Technique: stepwise")
+//    val (cols, rSq) = mod.stepwiseSelAll ()                             // R^2, R^2 bar, sMAPE, R^2 cv
+////  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
+//    val k = cols.size
+//    println (s"k = $k")
+//    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
+//               s"R^2 vs n for ${mod.modelName}", lines = true)
+//    println (s"rSq = $rSq")
+//
+//    val modBest = mod.getBest.mod
+//    val x_fs = modBest.getX
+//
+//    val yy_D  = MakeMatrix4TS.makeMatrix4Y (y, hh, false)               // FIX - switch to usiing apply method in next line)
+//    val mod_D = new ARX_Symb_D (x_fs, yy_D, hh, n_exo = 1, null)
+//    mod_D.trainNtest_x ()()
+//
+//    mod_D.setSkip (0)
+//    mod_D.rollValidate (rc = 2)                                         // TnT with Rolling Validation
+//    mod_D.diagnoseAll (y, mod_D.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
+//
+//end example_ILITest10
 

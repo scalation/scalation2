@@ -132,6 +132,21 @@ inline def log10 (x: Double): Double = log (x) / log_10
  */
 inline def pow2 (x: Double): Double = pow (2.0, x)
 
+
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The power to pp function of type `FunctionS2S`.
+ * Its inverse function is powTo(1/pp)(x)
+ *
+ * @param x the value of the exponent x^pp
+ */
+
+inline def powTo(pp : Double)(x: Double): Double = pow(x, pp)
+
+
+
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The power base 10 function of type `FunctionS2S`.
  *  Its inverse function is log10.
@@ -194,6 +209,7 @@ inline def ihs (x: Double): Double = log (x + sqrt (x*x + 1.0))
  *  @param x  the value whose log is sought
  */
 inline def logb (b: Double, x: Double): Double = log (x) / log (b)
+
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

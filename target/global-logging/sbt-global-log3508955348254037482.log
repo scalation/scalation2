@@ -1,0 +1,9 @@
+[debug] > Exec(all {file:/C:/Users/youse/OneDrive/Documents/New%20Scalation/scalation_2.0/}scalation/products {file:/C:/Users/youse/OneDrive/Documents/New%20Scalation/scalation_2.0/}scalation/test:products, None, None)
+[debug] Evaluating tasks: Compile / products, Test / products
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[info] compiling 2 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...
+[info] done compiling
+[info] compiling 3 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...
+[info] done compiling
+[success] Total time: 6 s, completed Mar 27, 2025, 2:16:20 AM
+[debug] > Exec(idea-shell, None, None)

@@ -92,7 +92,7 @@ class ARY_D (x: MatrixD, y: MatrixD, hh: Int, tRng: Range = null,
     override def forecast (t: Int, y_ : VectorD): VectorD =
 //      val pred = reg.predict (x(min (t+1, x.dim-1)))               // FIX - why t+1
         val pred = predict (t, MatrixD (y_).transpose)
-        for h <- 1 to hh do yf(t-1, h) = pred(h-1)                   // FIX - why t-1
+        for h <- 1 to hh do yf(t, h) = pred(h-1)
         pred                                                         // yh is pred
     end forecast
 
@@ -284,14 +284,15 @@ end aRY_DTest3
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
 
-    for p <- 2 to 2 do                                                  // number of lags
-        hp("p") = p
+    for p <- 5 to 5; s <- 1 to 1 do                                     // number of lags; trend
+        hp("p")    = p
+        hp("spec") = s
         val mod = ARY_D (y, hh)                                         // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
         mod.setSkip (0)
-        mod.rollValidate ()
+        mod.rollValidate (rc = 2)
         mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim))        // only diagnose on the testing set
         println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for

@@ -1,0 +1,5 @@
+[debug] Created transactional ClassFileManager with tempDir = C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\test-classes.bak
+[debug] About to delete class files:
+[debug] We backup class files:
+[debug] Created transactional ClassFileManager with tempDir = C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\test-classes.bak
+[debug] Removing the temporary directory used for backing up class files: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\test-classes.bak

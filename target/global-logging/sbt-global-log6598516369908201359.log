@@ -1,0 +1,117 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(runMain scalation.modeling.forecasting.aRX_QuadTest4, Some(682c87ef-d68a-4983-b06a-1b2cca3438a5), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / runMain[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 567 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E008] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:109:54 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m109 |[0m            [33mfor[0m i <- [31m0[0m until n_fEndo [33mdo[0m f_tForm(i) = (tForms([31m"fEndo"[0m)(i).f(_: [35mVectorD[0m)) ⚬ (tForms([31m"tForm_y"[0m).fi(_: [35mVectorD[0m))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                      ^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mvalue apply is not a member of scalation.mathstat.Transform | Array[scalation.mathstat.Transform].[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mAn extension method was tried, but could not be fully constructed:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m    scalation.modeling.forecasting.apply(ARX_Symb.this.tForms.apply([32m"fEndo"[0m))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m    failed with:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m        Found:    scalation.mathstat.Transform | Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m        Required: scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E008] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:109:109 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m109 |[0m            [33mfor[0m i <- [31m0[0m until n_fEndo [33mdo[0m f_tForm(i) = (tForms([31m"fEndo"[0m)(i).f(_: [35mVectorD[0m)) ⚬ (tForms([31m"tForm_y"[0m).fi(_: [35mVectorD[0m))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                                                           ^^^^^^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mvalue fi is not a member of scalation.mathstat.Transform | Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E008] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:113:49 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m113 |[0m            x_fcast_fEndo = tForms([31m"tForm_endo"[0m).f(x_fcast_fEndo)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                            ^^^^^^^^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mvalue f is not a member of scalation.mathstat.Transform | Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E008] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:116:53 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m116 |[0m            [33mfor[0m i <- [31m0[0m until n_fEndo [33mdo[0m x_fEndo(i) = tForms([31m"fEndo"[0m)(i).f(x_fcast)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                     ^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mvalue apply is not a member of scalation.mathstat.Transform | Array[scalation.mathstat.Transform].[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mAn extension method was tried, but could not be fully constructed:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m    scalation.modeling.forecasting.apply(ARX_Symb.this.tForms.apply([32m"fEndo"[0m))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m    failed with:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m        Found:    scalation.mathstat.Transform | Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m        Required: scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:56:43 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m56 |[0m                tForms: [35mTransformMap[0m =  Map([31m"tForm_y"[0m -> [31mnull[0m)) [34m// backcast value used only `MakeMatrix4TS`[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m                                        ^^^^^^^^^^^^^^^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m                   Found:    scala.collection.Map[String, Null][0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m                   Required: scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Tree: scala.collection.Map.apply[[35mString[0m, [35mNull[0m]([0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   [ArrowAssoc[[35mString[0m]([32m"tForm_y"[0m).->[[35mNull[0m]([31mnull[0m) : [35m(String, Null)[0m]*)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scala.collection.Map[String, Null][0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   ==> scala.collection.Map[String, Null]  <:  scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     ==> scala.collection.Map[String, Null]  <:  Map[String, scalation.mathstat.Transform | Array[scalation.mathstat.Transform]]  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:182:70 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m182 |[0m        [33mnew[0m [35mARX_Symb[0m (xy, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                                      ^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mFound:    (tForms : scala.collection.Map[String, Array[scalation.mathstat.Transform]])[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0mRequired: scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Tree: tForms[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   (tForms : scala.collection.Map[String, Array[scalation.mathstat.Transform]])[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   ==> (tForms : scala.collection.Map[String, Array[scalation.mathstat.Transform]])  <:  scalation.modeling.forecasting.TransformMap[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m     ==> (tForms : scala.collection.Map[String, Array[scalation.mathstat.Transform]])  <:  Map[String, scalation.mathstat.Transform | Array[scalation.mathstat.Transform]][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m       ==> scala.collection.Map[String, Array[scalation.mathstat.Transform]]  <:  Map[String, scalation.mathstat.Transform | Array[scalation.mathstat.Transform]]  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m     ---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:417:46 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m417 |[0m        [33mval[0m [36mmod[0m = ARX_Symb (xe, y, hh, fEndo= ff, fExo= gg) [34m// create model for time series data[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                              ^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                    Found:    [1m[31m([0m[1m[31mff[0m[1m[31m [0m[1m[31m:[0m[1m[31m [0mArray[scalation.mathstat.[1m[31mpowForm[0m][1m[31m)[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                    Required: Array[scalation.mathstat.[1m[32mTransform[0m][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Tree: ff[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   (ff : Array[scalation.mathstat.powForm])[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   ==> (ff : Array[scalation.mathstat.powForm])  <:  Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m     ==> scalation.mathstat.Transform  <:  scalation.mathstat.powForm  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m     ==> Array[scalation.mathstat.powForm]  <:  Array[scalation.mathstat.Transform][0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m       ==> scalation.mathstat.Transform  <:  scalation.mathstat.powForm  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m The tests were made under a constraint with:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  uninstantiated variables: U, U, U[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  constrained types: [U](f: Int => U): Unit, [U](f: Int => U): Unit,[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m   [U](f: Int => U): Unit[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  bounds:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m      U >: Unit[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m      U >: Unit[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m      U[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  ordering:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  co-deps:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  contra-deps:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m     ---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m7 errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 55 s, completed Mar 26, 2025, 8:59:25 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m

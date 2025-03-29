@@ -1,0 +1,7 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(6108d727-4e28-4c35-856e-4e9d900f58d7), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 550 Scala sources to C:\New Scalation\scalation_2.0\target\scala-3.5.2\classes ...[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 61 s (01:01), completed Nov 7, 2024, 8:49:51 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0mForcing garbage collection...[0m

@@ -123,7 +123,8 @@ import Example_LakeLevels.y
     mod.trainNtest_x ()()                                               // train and test on full dataset
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end aRY_QuadTest
@@ -238,7 +239,8 @@ end aRY_QuadTest4
     println (mod.summary ())                                            // statistical summary of fit
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
     banner ("Feature Selection Technique: Forward")

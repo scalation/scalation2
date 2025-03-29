@@ -33,7 +33,7 @@ abstract class Forecaster (y: VectorD, hh: Int, tRng: Range = null, hparam: Hype
          with ForecastMatrix (y, hh, tRng)
          with Model:
 
-    private val debug = debugf ("Forecaster", true)                        // debug function
+    private val debug = debugf ("Forecaster", false)                       // debug function
     private val flaw  = flawf ("Forecaster")                               // flaw function
 
     protected val yb = if bakcast then WeightedMovingAverage.backcast (y) +: y   // prepend by adding one backcasted value
@@ -201,7 +201,7 @@ abstract class Forecaster (y: VectorD, hh: Int, tRng: Range = null, hparam: Hype
             yf(?, 1)(0 until y_.dim-1)                                        // return yp: first horizon only
         else
 //          debug ("predictAll", s"y_.dim = ${y_.dim}, yf.dims = ${yf.dims}")
-            for t <- 1 until yf.dim do yf(t, 1) = predict (t, y_    )         // skip t = 0
+            for t <- 1 until yf.dim do yf(t, 1) = predict (t, y_)             // skip t = 0
             yf(?, 1)
     end predictAll
 
@@ -474,7 +474,7 @@ object Forecaster:
      *  @param y     the actual time series values (use `mod.getYb` for full time series with backcast)
      *  @param hh    the maximum forecasting horizon (h = 1 to hh)
      *  @param ints  whether to evaluate prediction interval forecasts as well as point forecasts
-     */
+     *
     def evalForecasts (mod: Forecaster, y: VectorD, hh: Int, ints: Boolean = false): Unit =
         val ftMat = new MatrixD (hh, Fit.N_QoF)
         banner (s"Evaluate ${mod.modelName}'s QoF for horizons 1 to $hh:")
@@ -493,6 +493,7 @@ object Forecaster:
         println ("fitMap     qof = ")
         println (FitM.showFitMap (ftMat.transpose, QoF.values.map (_.toString)))
     end evalForecasts
+     */
 
 end Forecaster
 

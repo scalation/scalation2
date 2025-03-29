@@ -1,0 +1,6 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(runMain scalation.modeling.forecasting.aRX_QuadTest4, Some(85d097aa-bc98-4c11-b1e1-ed0d7ddaaea4), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / runMain[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 383 s (06:23), completed Mar 26, 2025, 11:28:50 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[31merror[0m] [0m[0mserver failed to start on local:sbt-server-cd9827489054cfd038f5. java.io.IOException: Could not create lock for \\.\pipe\sbt-server-cd9827489054cfd038f5_lock, error 5[0m

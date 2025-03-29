@@ -29,6 +29,8 @@ import scala.util.control.Breaks.{break, breakable}
 type FunctionS2V = Double  => VectorD                             // scalar `Double`  to vector `VectorD`
 type FunctionV2S = VectorD => Double                              // vector `VectorD` to scalar `Double`
 type FunctionV2V = VectorD => VectorD                             // vector `VectorD` to vector `VectorD`
+type FunctionV2V2V = VectorD => FunctionV2V
+type FunctionV2VV = VectorD => (VectorD, VectorD)
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Vectorize a scalar function (S2S) to create a vector function (V2V).
@@ -619,6 +621,11 @@ class VectorD (val dim: Int,
     infix def minv (y: IndexedSeq [Double]): VectorD =
         new VectorD (dim, cfor (dim) { i => if v(i) <= y(i) then v(i) else y(i) })
     end minv
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the range (min to max) of values in each column of this Matrix.
+     */
+    def min_max: VectorD = VectorD (min, max)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Find the argument maximum of this vector (index of maximum element).
@@ -1230,6 +1237,12 @@ class VectorD (val dim: Int,
      */
     def standardize: VectorD = (this - mean) / stdev
     def standardize2: VectorD = (this - mean) / (stdev + EPSILON)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the first 2 moments (mean mu and standard deviation sig).
+     */
+    def mu_sig: VectorD = VectorD (mean, stdev)
+
 
 end VectorD
 

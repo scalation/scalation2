@@ -245,7 +245,7 @@ abstract class Forecaster_Reg (x: MatrixD, y: VectorD, hh: Int, fname: Array [St
      */
     def correctQoF (skip: Int, best: BestStep): BestStep =
         if skip > 0 && best.mod != null then
-            val bmod = best.mod.asInstanceOf [Regression]
+            val bmod = best.mod.asInstanceOf [REGRESSION]
             val y    = bmod.getY
             val yp   = bmod.predict (bmod.getX)
             val qof  = bmod.diagnose (y.drop (skip), yp.drop (skip), null)

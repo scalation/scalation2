@@ -73,6 +73,12 @@ val TOL = 1000.0 * EPSILON
  */
 val _2Pi = 2.0 * Pi
 
+
+/** The number π/2 (needed in common calculations)
+ */
+val Piby2 = Pi / 2.0
+
+
 /** The number 2/π (needed in common calculations)
  */
 val _2byPi = 2.0 / Pi

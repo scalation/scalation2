@@ -129,7 +129,8 @@ import Example_LakeLevels.y
     mod.trainNtest_x ()()                                               // train and test on full dataset
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end aRYTest
@@ -181,7 +182,6 @@ end aRYTest2
 //      mod.setSkip (p)                                                 // full ARY-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf)                                  // model diagnostics for all horizons
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for
@@ -203,7 +203,7 @@ end aRYTest3
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") =     20                                                // wavelength (distance between peaks) 
 
-    for p <- 1 to 10; s <- 1 to 5 do                                    // number of lags; trend
+    for p <- 5 to 5; s <- 1 to 1 do                                     // number of lags; trend
         hp("p")     = p                                                 // endo lags
         hp("spec")  = s                                                 // trend specification: 0, 1, 2, 3, 5
         val mod = ARY (y, hh)                                           // create model for time series data
@@ -211,7 +211,7 @@ end aRYTest3
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
         mod.setSkip (0)
-        mod.rollValidate ()                                             // TnT with Rolling Validation
+        mod.rollValidate (rc = 2)                                       // TnT with Rolling Validation
         println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
         mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
 //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
@@ -243,7 +243,8 @@ end aRYTest4
     println (mod.summary ())                                            // statistical summary of fit
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
     banner ("Feature Selection Technique: Forward")
@@ -283,7 +284,7 @@ end aRYTest5
 //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf)
-        Forecaster.evalForecasts (mod, mod.getYb, hh)
+//      Forecaster.evalForecasts (mod, mod.getYb, hh)
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for

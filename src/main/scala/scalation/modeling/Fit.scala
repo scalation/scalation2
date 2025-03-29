@@ -136,7 +136,7 @@ help: Quality of Fit (QoF) metrics/measures:
                  else cv_fit(rSq.ordinal).mean                              // mean for R^2 cv
         VectorD (100 * fit(rSq.ordinal),                                    // R^2 as percentage
                  100 * fit(rSqBar.ordinal),                                 // R^2 Bar as percentage
-                 fit(smape.ordinal),                                        // sMAPE
+                 fit(smapeIC.ordinal),                                        // sMAPE
                  100 * cv)                                                  // R^2 cv as percentage
     end qofVector
 
@@ -313,6 +313,15 @@ trait Fit (protected var dfm: Double, protected var df: Double)
 
     protected var sig2e = -1.0                                  // MLE estimate of the population variance on the residuals 
 
+
+    // YousefChange
+    protected var scaledMatrics = false
+    protected var yForm: Transform = null // Optional transformation for rescaling response variable y
+
+    def getYForm: Transform = yForm
+
+
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reset the degrees of freedom to the new updated values.  For some models,
      *  the degrees of freedom is not known until after the model is built.
@@ -336,14 +345,19 @@ trait Fit (protected var dfm: Double, protected var df: Double)
      *  from the error/residual vector and the predicted & actual responses.
      *  For some models the instances may be weighted.
      *  @see `Regression_WLS`
-     *  @param y   the actual response/output vector to use (test/full)
-     *  @param yp  the predicted response/output vector (test/full)
+     *  @param y_   the actual response/output vector to use (test/full)
+     *  @param yp_  the predicted response/output vector (test/full)
      *  @param w   the weights on the instances (defaults to null)
      */
-    override def diagnose (y: VectorD, yp: VectorD, w: VectorD = null): VectorD =
-        super.diagnose (y, yp, w)                                 // compute `FitM` metrics
+    override def diagnose (y_ : VectorD, yp_ : VectorD, w: VectorD = null): VectorD =
+                                    // compute `FitM` metrics
+        // YousefChange
+        val (y, yp) = if scaledMatrics || yForm==null then (y_, yp_) else (yForm.fi(y_), yForm.fi(yp_))
+
+        super.diagnose (y, yp, w)
+
         val e = y - yp                                            // FIX - avoid computing twice
-//      println (s"Fit.diagnose:\n y = $y,\n yp = $yp,\n e = $e")
+        println (s"Fit.diagnose:\n y = $y,\n yp = $yp,\n e = $e")
 
         if dfm < 0 || df < 0 then
             flaw ("diagnose", s"degrees of freedom dfm = $dfm and df = $df must be non-negative")
@@ -384,15 +398,18 @@ trait Fit (protected var dfm: Double, protected var df: Double)
      *  For some models the instances may be weighted.  Include interval measures.
      *  Note: `wis` should be computed separately.
      *  @see `Regression_WLS`
-     *  @param y      the actual response/output vector to use (test/full)
-     *  @param yp     the point prediction mean/median
+     *  @param y_      the actual response/output vector to use (test/full)
+     *  @param yp_     the point prediction mean/median
      *  @param low    the predicted lower bound
      *  @param up     the predicted upper bound
      *  @param alpha  the nominal level of uncertainty (alpha) (defaults to 0.9, 90%)
      *  @param w      the weights on the instances (defaults to null)
      */
-    def diagnose_ (y: VectorD, yp: VectorD, low: VectorD, up: VectorD, alpha: Double = 0.1,
+    def diagnose_ (y_ : VectorD, yp_ : VectorD, low: VectorD, up: VectorD, alpha: Double = 0.1,
                    w: VectorD = null): VectorD =
+
+        val (y, yp) = if scaledMatrics || yForm == null then (y_, yp_) else (yForm.fi(y_), yForm.fi(yp_))
+
         diagnose (y, yp, w)
 
         picp   = picp_ (y, low, up)                            // prediction interval coverage probability
@@ -415,6 +432,8 @@ trait Fit (protected var dfm: Double, protected var df: Double)
     def diagnose_wis (y: VectorD, yp: VectorD, low: MatrixD, up: MatrixD,
                       alphas: Array [Double] =
                       Array (0.02, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)): Double =
+
+
         wis = wis_ (y, yp, low, up, alphas)
         wis
     end diagnose_wis

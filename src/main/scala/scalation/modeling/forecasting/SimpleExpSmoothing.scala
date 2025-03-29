@@ -157,7 +157,8 @@ end SimpleExpSmoothing
     mod.trainNtest ()()                                                   // train and test on full dataset
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end simpleExpSmoothingTest
@@ -202,7 +203,8 @@ end simpleExpSmoothingTest2
     mod.trainNtest ()()                                                   // train and test on full dataset
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    mod.diagnoseAll (y, mod.getYf)
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end simpleExpSmoothingTest3
