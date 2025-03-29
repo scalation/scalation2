@@ -42,7 +42,7 @@ import scalation.mathstat._
  *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
-                  hparam: HyperParameter = Regression.hp)
+                  hparam: HyperParameter = Regression.hp, tForm_y: Transform = null)  // YousefChange
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
          // if not using an intercept df = (x.dim2, x.dim-x.dim2), correct by calling 'resetDF' method from `Fit`
@@ -52,8 +52,9 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     private val algorithm = hparam("factorization")                      // factorization algorithm
     private val n         = x.dim2                                       // number of columns
 
-    modelName = "Regression"
-
+    modelName = s"Regression @dfm = $dfm"
+    yForm = tForm_y         // YousefChange
+    println(s"reg, yForm = ${yForm}")
     if n < 1 then flaw ("init", s"dim2 = $n of the 'x' matrix must be at least 1")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -66,7 +67,7 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         case "Fac_LU"       => new Fac_LU (x_.transpose * x_)            // LU Factorization
         case "Fac_Inverse"  => new Fac_Inverse (x_.transpose * x_)       // Inverse Factorization
         case "Fac_SVD"      => new Fac_SVD (x_)                          // Singular Value Decomposition
-        case _              => new Fac_QR (x_)                           // QR Factorization (default)
+        case _              => Fac_QR (x_)                               // QR/LQ Factorization (default)
         end match
     end solver
 
@@ -81,7 +82,6 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     def train (x_ : MatrixD = x, y_ : VectorD = y): Unit =
         val fac = solver (x_)
         fac.factor ()                                                    // factor the matrix, either X or X.t * X
-
         b = fac match                                                    // RECORD the parameters/coefficients (@see `Predictor`)
             case fac: Fac_QR  => fac.solve (y_)
             case fac: Fac_SVD => fac.solve (y_)
@@ -101,7 +101,7 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      */
     def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
         val yp = predict (x_)                                            // make predictions
-        e = y_ - yp                                                      // RECORD the residuals/errors (@see `Predictor`)
+//      e = y_ - yp                                                      // RECORD the residuals/errors (@see `Predictor`)
         (yp, diagnose (y_, yp))                                          // return predictions and QoF vector
     end test
 
@@ -130,7 +130,7 @@ class Regression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      */
     override def buildModel (x_cols: MatrixD): Regression =
         debug ("buildModel", s"${x_cols.dim} by ${x_cols.dim2}")
-        new Regression (x_cols, y, null, hparam)
+        new Regression (x_cols, y, null, hparam, yForm)    // YousefChange
     end buildModel
 
 end Regression
@@ -494,4 +494,78 @@ end regressionTest6
     println (mod.summary ())                                  // parameter/coefficient statistics
 
 end regressionTest7
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTest8` main function trains a regression model on the Boston House Prices
+ *  dataset.
+ *  > runMain scalation.modeling.regressionTest8
+ */
+@main def regressionTest8 (): Unit =
+
+    val xy = MatrixD.load ("boston_house_prices.csv", 1, 0)
+
+    banner ("Boston House Prices")
+    val mod = Regression (xy)()                               // create model with intercept
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+end regressionTest8
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTest9` main function trains a regression model on a simple dataset.
+ *  > runMain scalation.modeling.regressionTest9
+ */
+@main def regressionTest9 (): Unit =
+
+    // 5 data points:      one x1 x2
+    val x = MatrixD ((5, 3), 1, 0, 1,                         // x 5-by-2 matrix
+                             1, 1, 2,
+                             1, 2, 4,
+                             1, 3, 3,
+                             1, 4, 4)
+    val y = VectorD (2, 3, 5, 4, 6)                           // y vector
+
+    val sst = (y - y.mean).normSq
+    println (s"sst = $sst")
+    val eta = 0.02
+    val b = VectorD (0.2, 0.1, 0.2)
+    for epoch <- 1 to 10 do
+        val yp   = x * b
+        val e    = y - yp
+        val sse  = e.normSq
+        val grad = -x.transpose * e
+        println (s"epoch = $epoch, sse = $sse, rSq = ${1 - sse/sst}, b = $b, yp = $yp, grad = $grad")
+        b -= grad * eta
+    end for
+
+    val mod = new Regression (x, y)                           // create model with intercept
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+end regressionTest9
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTest10` main function trains a regression model small dataset.
+ *  > runMain scalation.modeling.regressionTest10
+ */
+@main def regressionTest10 (): Unit =
+
+    // 5 data points: constant term, x_1 coordinate, x_2 coordinate
+
+    val x = MatrixD ((6, 3), 1.0, 1.0,  1.0,                  // 6-by-3 matrix
+                             1.0, 2.0,  4.0,
+                             1.0, 3.0,  9.0,
+                             1.0, 4.0, 16.0,
+                             1.0, 5.0, 25.0,
+                             1.0, 6.0, 36.0)
+    val y = VectorD (1, 3, 4, 6, 4, 3)
+
+    val mod = new Regression (x, y)                           // create model with intercept
+    mod.trainNtest ()()                                       // train and test the model
+    println (mod.summary ())                                  // parameter/coefficient statistics
+
+end regressionTest10
 

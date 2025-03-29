@@ -68,10 +68,10 @@ trait Minimize:
 
     import Minimize.hp
 
-    protected val eta: Double = hp("eta").toDouble                           // default initial step size
-    protected val MAX_IT: Int = hp("maxEpochs").toInt                        // maximum number of major steps/iterations 
-    protected val EPS: Double = hp("eps").toDouble                           // epsilon, between machine epsilon and its square root
-    protected val TOL: Double = 100.0 * EPS                                  // default tolerance level more relaxed
+    protected val eta    = hp("eta").toDouble                           // default initial step size
+    protected val MAX_IT = hp("maxEpochs").toInt                        // maximum number of major steps/iterations 
+    protected val EPS    = hp("eps").toDouble                           // epsilon, between machine epsilon and its square root
+    protected val TOL    = 100.0 * EPS                                  // default tolerance level more relaxed
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Solve the Non-Linear Programming (NLP) problem by starting at x0 and

@@ -124,7 +124,7 @@ end Fourier
 
     def x (tt: Double) = (0 until 2*m+1).map (j => c(j) * four (m)(j)(tt)).sum
 
-    val z    = t.map (x _)                                      // predicted response
+    val z    = t.map (x)                                        // predicted response
     val e    = y - z                                            // residuals
     val sse  = e dot e                                          // sum of squared errors
 

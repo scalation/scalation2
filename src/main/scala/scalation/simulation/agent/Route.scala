@@ -39,6 +39,7 @@ class Route (_name: String, director: Model, k: Int, from: Vertex, to: Vertex,
     private val debug = debugf ("Route", true)         // debug function
     private val GAP   = 10.0                           // gap between lanes 
     private val delta = calcShift                      // amount of shift in x and y directions
+    debug ("init", s"delta = $delta")
 
     val lane = Array.ofDim [Transport] (k)
     for i <- lane.indices do
@@ -50,6 +51,7 @@ class Route (_name: String, director: Model, k: Int, from: Vertex, to: Vertex,
     debug ("init", s"name = $me, director = ${director.me}, k = $k, from = ${from.me} to = ${to.me}, " +
                    s"moveRV = $moveRV, prop = $prop")
 
+//    assert (1 == 2)
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Change lanes for the current lane l1 to the new lane l2 and return the
      *  agent ahead.

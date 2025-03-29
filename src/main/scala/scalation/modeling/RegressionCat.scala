@@ -6,6 +6,8 @@
  *  @see     LICENSE (MIT style license file).
  *
  *  @note    Model: Regression Containing Categorical Variables
+ *
+ *  Convert string columns into ordinal or dummy columns.
  */
 
 package scalation
@@ -66,14 +68,17 @@ class RegressionCat (x_ : MatrixD, t: MatrixI, y: VectorD, fname_ : Array [Strin
       extends Regression (x_ ++^ RegressionCat.dummyVars (t), y, fname_, hparam)
          with ExpandableVariable:
 
-    private val flaw = flawf ("RegressionCat")                              // the flaw function
-    private val m    = y.dim                                                // number of instances
+    private val debug = debugf ("RegressionCat", true)                      // the flaw function
+    private val flaw  = flawf ("RegressionCat")                             // the flaw function
+    private val m     = y.dim                                               // number of instances
     private val (shift, tmax) = RegressionCat.get_shift_tmax                // save shift and tmax
 
-    if x_.dim != m then flaw ("init", "dimensions of x_ = ${x_.dim} and y = $m are incompatible")
-    if t.dim  != m then flaw ("init", "dimensions of t  = ${t.dim}  and y = $m are incompatible")
+    if x_.dim != m then flaw ("init", s"dimensions of x_ = ${x_.dim} and y = $m are incompatible")
+    if t.dim  != m then flaw ("init", s"dimensions of t  = ${t.dim}  and y = $m are incompatible")
 
-    modelName = "RegressionCat"
+    modelName = s"RegressionCat_${t.dim2}"
+
+    debug ("init", s"$modelName on x_t = $getX, y = $y")
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Expand the vector zt into a vector of terms/columns including dummy variables.
@@ -133,7 +138,7 @@ object RegressionCat:
                  hparam: HyperParameter = Regression.hp): RegressionCat = ???      // FIX
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the shift in categorical/treatment variables to make tihem start at zero
+    /** Return the shift in categorical/treatment variables to make them start at zero
      *  as well as the maximum values after shifting.  Must call dummyVars first.
      */
     def get_shift_tmax: (VectorI, VectorI) = (shift, tmax)
@@ -142,7 +147,7 @@ object RegressionCat:
     /** Assign values for the dummy variables based on the categorical/treatment vector t.
      *  @see `Variable`
      *  Note: To maintain consistency `Variable` is the only place where values for
-     *  dummy variables should be set
+     *  dummy variables should be set.
      *  @param t  the categorical/treatment level matrix
      */
     def dummyVars (t: MatrixI): MatrixD =
@@ -158,7 +163,6 @@ object RegressionCat:
                 debug ("dummyVars", s"for (row $i, column $j) t_ij = $t_ij => td = $td")
                 for k <- td.indices do
                     xd(i, col) = td(k); col += 1
-                end for
             end for
         end for
         xd
@@ -175,16 +179,27 @@ object RegressionCat:
      *  @param tmx  the maximum vector categorical/treatment after shifting
      */
     def dummyVar (t: VectorI, shf: VectorI = shift, tmx: VectorI = tmax): VectorD =
-        val xd = new VectorD (tmx.sum)
+        val xd  = new VectorD (tmx.sum)
         var col = 0
         for j <- t.indices do
             val td = Variable.dummyVar (t(j), shift(j), tmax(j))
             for k <- td.indices do
                 xd(col) = td(k); col += 1
-            end for
         end for
         xd
     end dummyVar
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert a string vector into the corresponding dummy variable matrix columns.
+     *  Usage:  stringVec2Dummy (VectorS ("biology", "chemistry", "physics", "biology", "physics"))
+     *  @param svec  the string vector to be converted
+     */
+    def stringVec2Dummy (svec: VectorS): MatrixD =
+        val ivec = VectorS (svec).map2Int._1                         // VectorS to VectorI
+        debug ("stringVec2Dummy", s"svec = $svec -> ivec = $ivec")
+        val imat = MatrixI (ivec).transpose                          // VectorI as column in MatrixI 
+        dummyVars (imat)                                             // MatrixD of dummy columns
+    end stringVec2Dummy
 
 end RegressionCat
 
@@ -244,9 +259,7 @@ end regressionCatTest
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionCatTest2` main function tests the `RegressionCat` class using the
  *  following regression equation.
- *  <p>
  *      y  =  b dot x  =  b_0 + b_1*x_1 + b_2*x_2 + b_3*d_1 + b_4*d_2
- *  <p>
  *  This version needs the treatment levels to be shift down to zero.
  *  > runMain scalation.modeling.regressionCatTest2
  */
@@ -293,14 +306,14 @@ end regressionCatTest2
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionCatTest3` main function tests the `RegressionCat` object related
- *  to related to encoding a column x1 of strings.
+ *  to encoding a column x1 of strings.
  *  > runMain scalation.modeling.regressionCatTest3
  */
 @main def regressionCatTest3 (): Unit =
 
     val x1 = VectorS ("English", "French", "German", "Spanish")
     val (xe, map) = x1.map2Int                                        // map strings to integers
-    val xm = MatrixI (xe)                                             // form a matrix from vector
+    val xm = MatrixI (xe).transpose                                   // form a matrix from vector
     val xd = RegressionCat.dummyVars (xm)                             // make dummy variable columns
 
     println (s"encoded        xe = $xe")                              // encoded
@@ -376,4 +389,96 @@ end regressionCatTest4
     end for
 
 end regressionCatTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionCatTest6` main function tests the `RegressionCat` class
+ *  regarding conflicts between Dummy and Intercept columns (the Dummy Variable Trap).
+ *  Compare parameters/coefficients for keeping/removing columns in matrix x.
+ *  @see www.statlect.com/fundamentals-of-statistics/dummy-variable.
+ *  > runMain scalation.modeling.regressionCatTest6
+ */
+@main def regressionCatTest6 (): Unit =
+
+//                          one x1 d0 d1
+    val x = MatrixD ((5, 4), 1,  5, 0, 1,                             // x0 = one, the intercept
+                             1,  2, 0, 1,                             // x1 = years of work experience
+                             1,  2, 1, 0,                             // d0 = some college (0 => false, 1 => true))
+                             1,  3, 1, 0,                             // d1 = no college   (0 => false, 1 => true)
+                             1, 15, 0, 1)
+
+    val y = VectorD (65, 50, 70, 120, 80)                             // annual income in $1000
+
+    banner ("Regression with Cat Var - Remove One Dummy")
+    var mod = new Regression (x(?, 0 until 3), y)                     // create model with one dummy removed
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+    banner ("Regression with Cat Var - Remove Intercept")
+    mod = new Regression (x(?, 1 until 4), y)                         // create model with intercept removed
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+    println (s"[0, 1, 0]: ${mod.predict (VectorD (0, 1, 0))}") 
+    println (s"[0, 0, 1]: ${mod.predict (VectorD (0, 0, 1))}") 
+
+    banner ("Encode Dummy Variables")
+    val x_enc = VectorI (0, 0, 1, 1, 0)                               // encoded vector
+    val dm    = MatrixI (x_enc).transpose                             // form a dummy matrix (dummy columns) from encoded vector
+    val t     = RegressionCat.dummyVars (dm)
+    println (s"encoded        x_enc = $x_enc")                        // encoded vector
+    println (s"matrix encoded dm    = $dm")                           // matrix encoded column
+    println (s"matrix dummy   t     = $t")                            // matrix of dummy variables
+
+    banner ("Regression with Cat Var - Use Regression")
+    mod = new Regression (x(?, 0 until 2) ++^ dm, y)                  // create model from matrices x prefix and dm
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+    banner ("Regression with Cat Var - Use RegressionCat")
+    mod = new RegressionCat (x(?, 0 until 2), dm, y)                  // create model from matrices x prefix and dm 
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+    banner ("Regression with Cat Var - Keep Intercept and All Dummies")
+    mod = new Regression (x, y)                                       // create model with all dummies
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+end regressionCatTest6
+ 
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionCatTest7` main function tests the `RegressionCat` class' ability
+ *  to handle string columns by converting them into dummy variable columns.
+ *  Note, for larger datasets read from a CSV file using the `MatrixD.loadStr` method.
+ *  @see `SymbolicRegression`
+ *  > runMain scalation.modeling.regressionCatTest7
+ */
+@main def regressionCatTest7 (): Unit =
+
+//                                            one x1  major
+    val xs = Array [Array [ValueType]] (Array (1,  5, "biology"),
+                                        Array (1,  2, "chemistry"),
+                                        Array (1,  2, "physics"),
+                                        Array (1,  3, "biology"),
+                                        Array (1, 15, "physics")).transpose
+
+    val y = VectorD (65, 50, 70, 120, 80)                             // annual income in #1000
+    println (s"xs = ${stringOf (xs)}")                                // data containing strings
+    println (s"y  = $y")                                              // response vector
+
+    val x   = MatrixD (for j <- 0 to 1 yield VectorD.fromValueTypes (xs(j))).transpose 
+    val xs2 = VectorS.fromValueTypes (xs(2))
+    val dm  = RegressionCat.stringVec2Dummy (xs2)
+
+    println (s"x  = $x")                                              // matrix of original predictors
+    println (s"dm = $dm")                                             // matrix of dummy variable columns 
+
+    banner ("Regression with Cat Var - Use RegressionCat")
+    val mod = new RegressionCat (x, dm, y)                            // create model from matrices x prefix and dm 
+    mod.trainNtest ()()                                               // train and test the model
+    println (mod.summary ())                                          // parameter/coefficient statistics
+
+end regressionCatTest7
 

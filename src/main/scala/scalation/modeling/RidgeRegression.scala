@@ -79,7 +79,7 @@ class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
 
         algorithm match                                                  // select the factorization technique
         case "Fac_QR"       => val xx = x_ ++ (ey * sqrt (lambda))
-                               new Fac_QR (xx)                           // QR Factorization
+                               Fac_QR (xx)                               // QR/LQ Factorization
 //      case "Fac_SVD"      => new Fac_SVD (x_)                          // Singular Value Decomposition - FIX
         case "Fac_Cholesky" => new Fac_Cholesky (xtx_)                   // Cholesky Factorization
         case "Fac_LU"       => new Fac_LU (xtx_)                         // LU Factorization
@@ -133,7 +133,7 @@ class RidgeRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
             val rrg = new RidgeRegression (x, y)
             val stats = rrg.crossValidate ()
             val sse2 = stats(QoF.sse.ordinal).mean
-            banner (s"RidgeRegession with lambda = ${rrg.lambda_} has sse = $sse2")
+            banner (s"RidgeRegression with lambda = ${rrg.lambda_} has sse = $sse2")
             if sse2 < sse then { sse = sse2; l_best = l }
 //          debug ("findLambda", showQofStatTable (stats))
             l *= 2
@@ -403,7 +403,7 @@ end ridgeRegressionTest3
  */
 @main def ridgeRegressionTest4 (): Unit =
 
-    // 4 data points:             x_1  x_2    y
+    // 4 data points:         x_1  x_2    y
     val xy = MatrixD ((4, 3), 1.0, 1.0, 6.0,                           // 4-by-3 matrix
                               1.0, 2.0, 8.0,
                               2.0, 1.0, 7.0,
@@ -485,4 +485,63 @@ end ridgeRegressionTest5
     println (mod.summary ())                                           // parameter/coefficient statistics
 
 end ridgeRegressionTest6
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `ridgeRegressionTest7` main function tests the multi-collinearity method in
+ *  the `RidgeRegression` class using the following regression equation.
+ *      y  =  b dot x  =  b_1*x_1 + b_2*x_2
+ *  The determinant of the Gram Matrix X^TX as a measure of linear independence
+ *  > runMain scalation.modeling.ridgeRegressionTest7
+ */
+@main def ridgeRegressionTest7 (): Unit =
+
+    import Fac_LU.{det, inverse}
+    import MatrixD.eye
+
+    // 4 data points:        x_1   x_2
+    val x = MatrixD ((4, 2), 1.0,  1.0,                        // 4-by-2 matrix data matrix
+                             2.0,  2.0,
+                             3.0,  3.0,
+                             4.0,  3.99)
+    val y = VectorD (1.0, 3.0, 3.0, 4.0)                       // 4-dim response vector
+
+    val n   = x.dim2
+    val xt  = x.transpose
+    val xtx = xt * x
+    val b   = inverse (xtx)() * xt * y
+    val yp  = x * b
+    val sse = (y - yp).normSq
+
+    banner ("Regression")
+    println (s"Correlation Matrix: x.corr    = ${x.corr}")
+    println (s"Gram Matrix:        xtx       = $xtx")
+    println (s"Determinant:        det (xtx) = ${det (xtx)()}")
+    println (s"Parameters:         b         = $b")
+    println (s"Predictions:        yp        = $yp")
+    println (s"QoF:                sse       = $sse")
+
+// center the data
+
+    val l    = 1.0                                             // lambda - the shrinkage parameter
+    val mu_x = x.mean
+    val mu_y = y.mean
+    val x_   = x - mu_x                                        // center the data
+    val y_   = y - mu_y
+
+    val xt_  = x_.transpose
+    val xtx_ = xt_ * x_ + eye (n, n) * l
+    val b_   = inverse (xtx_)() * xt_ * y_
+    val yp_  = x_ * b_ + mu_y
+    val sse_ = (y - yp_).normSq
+
+    banner ("Ridge Regression")
+    println (s"Correlation Matrix: x_.corr    = ${x_.corr}")
+    println (s"Gram Matrix:        xtx_       = $xtx_")
+    println (s"Determinant:        det (xtx_) = ${det (xtx_)()}")
+    println (s"Parameters:         b_         = $b_")
+    println (s"Predictions:        yp_        = $yp_")
+    println (s"QoF:                sse_       = $sse_")
+
+end ridgeRegressionTest7
 

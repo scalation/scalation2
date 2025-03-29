@@ -7,7 +7,7 @@
  *
  *  @note    Model: Orthogonal Polynomial Regression (for one variable)
  *
- *  @see https://en.wikipedia.org/wiki/Legendre_polynomials
+ *  @see en.wikipedia.org/wiki/Legendre_polynomials
  */
 
 package scalation

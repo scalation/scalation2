@@ -11,10 +11,9 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
 import scalation.random.{Exponential, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runOneWayStreet` function is used to launch the `OneWayStreetModel` class.
@@ -34,20 +33,20 @@ import scalation.random.RandomSeeds.N_STREAMS
  *  @param stream     the base random number stream (0 to 999)
  */
 class OneWayStreetModel (name: String = "OneWayStreet", reps: Int = 1, animating: Boolean = true,
-                 aniRatio: Double = 8.0, nStop: Int = 100, stream: Int = 0)
+                         aniRatio: Double = 8.0, nStop: Int = 10, stream: Int = 0)
       extends Model (name, reps, animating, aniRatio):
 
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val lambda = 20.0                                 // car arrival rate (per hour)
-    val mvTime = (2900.0, 3100.0)                     // (lower, upper) on move time
+    val lambda = 20.0                                   // car arrival rate (per hour)
+    val mvTime = (2900.0, 3100.0)                       // (lower, upper) on move time
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Exponential (HOUR / lambda, stream)
-    val moveRV     = Uniform (mvTime, (stream + 1) % N_STREAMS)
+    val iArrivalRV = Exponential (HOUR / lambda, stream)    // use different random number streams for independence
+    val moveRV     = Uniform (mvTime, stream + 1)
 
     //--------------------------------------------------
     // Create Model Components
@@ -56,16 +55,16 @@ class OneWayStreetModel (name: String = "OneWayStreet", reps: Int = 1, animating
     val exit  = Sink ("exit", (600, 290))
     val lane  = Transport ("lane", entry, exit, moveRV, false, 0.25)
 
-    addComponent (entry, exit, lane)         // Caveat: must add from and to before transport!!
+    addComponent (entry, exit, lane)                    // Caveat: must add from and to before transport!!
 
     //--------------------------------------------------
     // Specify Scripts for each Type of Simulation Actor
 
     case class Car () extends SimActor ("c", this):
 
-        def act (): Unit =
-            lane.move ()
-            exit.leave ()
+        override def act (): Unit =
+            lane.move ()                                // move down the street/lane to the exit
+            exit.leave ()                               // exit the street/lane
         end act
 
     end Car

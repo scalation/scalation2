@@ -41,10 +41,10 @@ trait Topological (var elem: Element, var dist: Double)
     /** Compare two spatial objects based on their space coordinates.
      *  @param other  the other item to compare with this item
      */
-    def tryCompareTo [B >: Topological: AsPartiallyOrdered] (other: B): Option [Int] =
+    infix def tryCompareTo [B >: Topological: AsPartiallyOrdered] (other: B): Option [Int] =
         val oth = other.asInstanceOf [Topological]
         if elem == oth.elem then Option (dist compare oth.dist)
-        else oth.elem tryCompareTo oth.elem
+        else oth.elem `tryCompareTo` oth.elem
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the topological objects/tokens in the neighborhood of this token.

@@ -14,7 +14,6 @@ package process
 package example_1                                     // One-Shot
 
 import scalation.random.{Exponential, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runCallCenter` function is used to launch the `CallCenterModel` class.
@@ -26,6 +25,7 @@ import scalation.random.RandomSeeds.N_STREAMS
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `CallCenterModel` class defines a simple process-interaction model of a call
  *  center where service is provided by one or more tele-service representatives.
+ *  Simulates calls coming into a call center where phones have no call waiting.
  *  Caveat: must add 'from' and 'to' components before transport!!
  *  @param name       the name of the simulation model
  *  @param reps       the number of independent replications to run
@@ -41,16 +41,16 @@ class CallCenterModel (name: String = "CallCenter", reps: Int = 1, animating: Bo
     //--------------------------------------------------
     // Intialize Model Constants
 
-    val lambda  = 6.0                                 // customer arrival rate (per hour)
-    val mu      = 7.5                                 // customer service rate (per hour)
-    val nPhones = 1                                   // the number of Phones (servers)
+    val lambda  = 6.0                                   // customer arrival rate (per hour)
+    val mu      = 7.5                                   // customer service rate (per hour)
+    val nPhones = 1                                     // the number of Phones (servers)
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Exponential (HOUR / lambda, stream)
-    val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
-    val moveRV     = Uniform (0.4 * MINUTE, 0.6 * MINUTE, (stream + 2) % N_STREAMS)
+    val iArrivalRV = Exponential (HOUR / lambda, stream)    // use different random number streams for independence
+    val serviceRV  = Exponential (HOUR / mu, stream + 1)
+    val moveRV     = Uniform (0.4 * MINUTE, 0.6 * MINUTE, stream + 2)
 
     //--------------------------------------------------
     // Create Model Components
@@ -70,16 +70,16 @@ class CallCenterModel (name: String = "CallCenter", reps: Int = 1, animating: Bo
 
     case class Call () extends SimActor ("c", this):
 
-        def act (): Unit =
-            toPhone.jump ()
-            if phone.busy then
-                toDrop.jump ()
-                drop.leave ()
+        override def act (): Unit =
+            toPhone.jump ()                              // access (jump to) phone
+            if phone.busy then                           // busy => end/drop the call
+                toDrop.jump ()                           // indicate the call is dropped
+                drop.leave ()                            // end unsuccessful call
             else
-                phone.utilize ()
-                phone.release ()
-                toHangUp.jump ()
-                hangUp.leave ()
+                phone.utilize ()                         // successful call => talk
+                phone.release ()                         // release the call
+                toHangUp.jump ()                         // indicate normal hang up
+                hangUp.leave ()                          // normal end call
             end if
         end act
 

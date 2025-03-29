@@ -39,10 +39,10 @@ class KMeansClusterer (x: MatrixD, k: Int, val flags: Array [Boolean] = Array (f
     if k >= x.dim then        flaw ("init", "k must be less than the number of vectors")
     if flags.length != 2 then flaw ("init", "KMeansClusterer requires 2 flags")
 
-    protected val MAX_IT  = 1000                                         // the maximum number of iterations
-    protected val cent    = new MatrixD (k, x.dim2)                      // the k centroids of clusters
-    protected val sz      = new VectorI (k)                              // the cluster sizes
-    protected val to_c      = Array.ofDim [Int] (x.dim)                  // assignment of vectors to clusters
+    protected val MAX_IT = 1000                                          // the maximum number of iterations
+    protected val cent   = new MatrixD (k, x.dim2)                       // the k centroids of clusters
+    protected val sz     = new VectorI (k)                               // the cluster sizes
+    private [clustering] val to_c = Array.ofDim [Int] (x.dim)            // assignment of vectors to clusters
 
     protected val (post, immediate) = (flags(0), flags(1))               // (post processing swapping, immediate return upon change)
     protected var raniv: PermutedVecI = null                             // generator of permutations

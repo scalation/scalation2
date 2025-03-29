@@ -419,14 +419,14 @@ class TimeNum (val inst: Instant)
     /** Compare two `TimeNum` numbers (negative for <, zero for ==, positive for >).
      *  @param t  the TimeNum number to compare with this
      */
-    def compare (t: TimeNum): Int = inst compareTo t.inst
+    infix def compare (t: TimeNum): Int = inst `compareTo` t.inst
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compare two `TimeNum` numbers (negative for <, zero for ==, positive for >).
      *  @param s  the first TimeNum number
      *  @param t  the second TimeNum number
      */
-    def compare (s: TimeNum, t: TimeNum): Int = s.inst compareTo t.inst
+    def compare (s: TimeNum, t: TimeNum): Int = s.inst `compareTo` t.inst
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compare this `TimeNum` number with that date-time number t for inequality.
@@ -454,7 +454,7 @@ class TimeNum (val inst: Instant)
      */
     def in (lim: (TimeNum, TimeNum)): Boolean = lim._1 <= this && this <= lim._2
 
-    inline def ∈ (lim: (TimeNum, TimeNum)): Boolean  = this in lim
+    inline def ∈ (lim: (TimeNum, TimeNum)): Boolean  = this.in (lim)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether this is in the given set.
@@ -462,7 +462,7 @@ class TimeNum (val inst: Instant)
      */
     def in (set: Set [TimeNum]): Boolean = set contains this
 
-    inline def ∈ (set: Set [TimeNum]): Boolean  = this in set
+    inline def ∈ (set: Set [TimeNum]): Boolean  = this.in (set)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether this is not within the given bounds
@@ -470,7 +470,7 @@ class TimeNum (val inst: Instant)
      */
     def not_in (lim: (TimeNum, TimeNum)): Boolean = ! (lim._1 <= this && this <= lim._2)
 
-    inline def ∉ (lim: (TimeNum, TimeNum)): Boolean = this not_in lim
+    inline def ∉ (lim: (TimeNum, TimeNum)): Boolean = this.not_in (lim)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether this is not in the given set.
@@ -478,7 +478,7 @@ class TimeNum (val inst: Instant)
      */
     def not_in (set: Set [TimeNum]): Boolean = ! (set contains this)
 
-    inline def ∉ (set: Set [TimeNum]): Boolean = this not_in set
+    inline def ∉ (set: Set [TimeNum]): Boolean = this.not_in (set)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Get a temporal aspect (e.g., month, week, day, hour, ...).
@@ -556,10 +556,10 @@ class TimeNum (val inst: Instant)
      *  date-time t.
      *  @param t  the date-time number to compare with this
      */
-    override def equals (t: Any): Boolean =
+    override infix def equals (t: Any): Boolean =
         t match
-        case _ : Instant => inst equals t
-        case _ : TimeNum => inst equals t.asInstanceOf [TimeNum].inst
+        case _ : Instant => inst `equals` t
+        case _ : TimeNum => inst `equals` t.asInstanceOf [TimeNum].inst
         case _           => false
     end equals
 
@@ -615,9 +615,9 @@ end TimeNum
     println ("date1 ≠ date2                 = " + (date1 ≠ date2))
     println ("date1.inst.toEpoSecond        = " + date1.inst.getEpochSecond)
     println ("datezero (should print EPOCH) = " + datezero)
-    println ("date1 min date2               = " + (date1 min date2))
-    println ("date1 max date2               = " + (date1 max date2))
-    println ("date1 hashcode                = " + date1.hashCode)
+    println ("min (date1, date2)            = " + min (date1, date2))
+    println ("max (date1, date2)            = " + max (date1, date2))
+    println ("date1.hashcode                = " + date1.hashCode)
     println ("date1 equals date2            = " + (date1 equals date2))
     println ("date1 equals date3            = " + (date1 equals date3))
     println ("date1.toLong                  = " + date1.toLong)

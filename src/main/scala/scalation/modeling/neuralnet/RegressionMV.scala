@@ -44,7 +44,7 @@ import scalation.mathstat._
  *  @param hparam  the hyper-parameters (defaults to Regression.hp)
  */
 class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
-                  hparam: HyperParameter = Regression.hp)
+                  hparam: HyperParameter = Regression.hp)  // YousefChange)
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):
          // if not using an intercept df = (x.dim2, x.dim-x.dim2), correct by calling 'resetDF' method from `Fit`
@@ -55,7 +55,6 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
     private val n         = x.dim2                                       // number of columns
 
     modelName = "RegressionMV"
-
     if n < 1 then flaw ("init", s"dim2 = $n of the 'x' matrix must be at least 1")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -68,7 +67,7 @@ class RegressionMV (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
         case "Fac_LU"       => new Fac_LU (x_.transpose * x_)            // LU Factorization
         case "Fac_Inverse"  => new Fac_Inverse (x_.transpose * x_)       // Inverse Factorization
         case "Fac_SVD"      => new Fac_SVD (x_)                          // Singular Value Decomposition
-        case _              => new Fac_QR (x_)                           // QR Factorization (default)
+        case _              => Fac_QR (x_)                               // QR/LQ Factorization (default)
         end match
     end solver
 

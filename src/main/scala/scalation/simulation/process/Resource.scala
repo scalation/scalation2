@@ -12,7 +12,8 @@ package scalation
 package simulation
 package process
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
+import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.animation.CommandType._
 import scalation.random.Variate
@@ -32,15 +33,15 @@ class Resource (name: String, line: WaitQueue, private var units: Int, serviceTi
                 at: Array [Double])
       extends Component:
 
-    if units < 0 then flaw ("init", "resource may not have negative units")
-
     initComponent (name, at)
 
-    private val flaw = flawf ("Resource")                          // flaw function
+    private val debug = debugf ("Resource", true)                  // debug function
+    private val flaw  = flawf ("Resource")                         // flaw function
 
-    /** Number of service units of this Resource currently in use (0 ... units)
-     */
-    private var inUse = 0
+    private var inUse = 0        // number of service units of this Resource currently in use (0 ... units)
+
+    if units < 0 then flaw ("init", "resource may not have negative units")
+    debug ("init", s"name = $name, located at ${stringOf (at)}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor that uses defaults for width 'w' and height 'h'.
@@ -84,15 +85,18 @@ class Resource (name: String, line: WaitQueue, private var units: Int, serviceTi
      *  resource's service time distribution.
      */
     def utilize (): Unit =
-        if busy then flaw ("utilize", "no units available")
+        if busy then flaw ("utilize", "no service units available")
         val actor    = director.theActor
-        val duration = serviceTime.gen                             // randomly generate
+        val duration = serviceTime.gen                             // randomly generate service time
         tally (duration)                                           // collect sample statistics
         accum (inUse)                                              // collect persistent statistics
+
         director.log.trace (this, s"serves for $duration", actor, director.clock)
         director.animate (actor, MoveToken, null, null, Array (at(0) + DIAM, at(1) + at(3) / 2.0 - RAD))
-        if inUse < units then inUse += 1 else flaw ("utilize", "no units left")
-        actor.schedule (duration)
+
+        if inUse < units then inUse += 1                           // use one of the service units
+        else flaw ("utilize", "no service units left")
+        actor.schedule (duration)                                  // use for the service time
         actor.yieldToDirector ()
     end utilize
 
@@ -101,14 +105,17 @@ class Resource (name: String, line: WaitQueue, private var units: Int, serviceTi
      *  @param duration  the given service time
      */
     def utilize (duration: Double): Unit =
-        if busy then flaw ("utilize", "no units available")
+        if busy then flaw ("utilize", "no service units available")
         val actor = director.theActor
         tally (duration)                                           // collect sample statistics
         accum (inUse)                                              // collect persistent statistics
+
         director.log.trace (this, s"serves for $duration", actor, director.clock)
         director.animate (actor, MoveToken, null, null, Array (at(0) + DIAM, at(1) + at(3) / 2.0 - RAD))
-        if inUse < units then inUse += 1 else flaw ("utilize", "no units left")
-        actor.schedule (duration)
+
+        if inUse < units then inUse += 1                           // use one of the service units
+        else flaw ("utilize", "no service units left")
+        actor.schedule (duration)                                  // use for the service time
         actor.yieldToDirector ()
     end utilize
 
@@ -120,10 +127,11 @@ class Resource (name: String, line: WaitQueue, private var units: Int, serviceTi
         director.log.trace (this, "releases", actor, director.clock)
         if line != null && ! line.isEmpty then
             val waitingActor = line.dequeue ()
-            waitingActor.schedule (0.0)
-        end if
-        accum (inUse)                                              // collect persistent statistics
-        if inUse > 0 then inUse -= 1 else flaw ("release", "no units currently in use")
+            waitingActor.schedule (0.0)                             // schedule waiting actor
+        accum (inUse)                                               // collect persistent statistics
+
+        if inUse > 0 then inUse -= 1                                // release one serivce unit
+        else flaw ("release", "no service units currently in use")
     end release
 
 end Resource
@@ -155,7 +163,7 @@ object Resource:
      */
     def group (serviceTime: Variate, xy: (Int, Int),
                rsc: (String, WaitQueue, Int, (Int, Int))*): List [Resource] =
-        val resourceGroup = new ListBuffer [Resource] ()
+        val resourceGroup = new VEC [Resource] ()
         for r <- rsc do resourceGroup += Resource (r._1, r._2, r._3, serviceTime,
                                                   (xy._1 + r._4._1, xy._2 + r._4._2))
         resourceGroup.toList

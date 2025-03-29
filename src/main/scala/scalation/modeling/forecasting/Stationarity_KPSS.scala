@@ -259,8 +259,9 @@ end stationarity_KPSSTest2
 @main def stationarity_KPSSTest3 (): Unit =
 
     import Example_LakeLevels.y
+    import ARIMA_diff.Δ
 
-    val yd = del (y)                                                    // take first difference of y
+    val yd = Δ (y)                                                      // take first difference of y
 
     val test = new Stationarity_KPSS (yd, 0, "short", "c")              // init KPSS test with lags of type short and constant trend
     test.show ()                                                        // outputting test results

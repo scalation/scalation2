@@ -219,5 +219,7 @@ object RandomSeeds3:
                        	1390898239,	474591648,	1454852522,	643747713,	806542186,
                        	1404680288,	163722861,	1132351814,	1010607803,	1590199521)
 
+    val N_STREAMS = seeds.length                                           // number of random number streams
+
 end RandomSeeds3
 

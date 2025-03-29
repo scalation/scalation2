@@ -250,23 +250,23 @@ end simpleRegressionTest2
 
 /*
     // 5 data points:      one x1
-    val x = MatrixD ((5, 2), 1, 0,                                 // x 5-by-2 matrix
-                             1, 1,
-                             1, 2,
-                             1, 3,
-                             1, 4)
+    val ox = MatrixD ((5, 2), 1, 0,                                // x 5-by-2 matrix
+                              1, 1,
+                              1, 2,
+                              1, 3,
+                              1, 4)
     val y = VectorD (2, 3, 5, 4, 6)                                // y vector
 */
-
     // 6 data points:      one x1
-    val ox = MatrixD ((6, 2), 1, 1,                                 // x 6-by-2 matrix
-                             1, 2,
-                             1, 3,
-                             1, 4,
-                             1, 5,
-                             1, 6)
-    val x = ox(?, 1)
+    val ox = MatrixD ((6, 2), 1, 1,                                // x 6-by-2 matrix
+                              1, 2,
+                              1, 3,
+                              1, 4,
+                              1, 5,
+                              1, 6)
     val y = VectorD (1, 3, 4, 6, 4, 3)                             // y vector
+
+    val x = ox(?, 1)
 
     banner ("Test3: Simple Regression Model: y = b_0 + b_1 x + e")
     println (s"ox = $ox")

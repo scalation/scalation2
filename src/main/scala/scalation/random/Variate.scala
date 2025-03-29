@@ -22,6 +22,8 @@ import scala.runtime.ScalaRunTime.stringOf
 import scalation.mathstat.{Histogram, Plot, VectorD}
 import scalation.mathstat.Combinatorics.{betaF, choose, fac, gammaF}
 
+import RandomSeeds.N_STREAMS
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `Variate` abstract class serves as a base class for all the Random Variate
  *  (RV) generators.  They use one of the Random Number Generators (RNG's) from
@@ -31,15 +33,15 @@ import scalation.mathstat.Combinatorics.{betaF, choose, fac, gammaF}
  *  @see http://www.math.uah.edu/stat/special/index.html
  *  @see `VariateVec` for Random MultiVariate Generators (RMVG's).
  *-----------------------------------------------------------------------------
- *  @param  stream  the random number stream
+ *  @param  stream  the random number stream (0 until N_STREAMS)
  */
 abstract class Variate (stream: Int = 0):
 
     protected val flaw = flawf ("Variate")
 
-    /** Random number stream selected by the stream number
+    /** Random number stream selected by the stream number (can't be beyond last stream)
      */
-    protected val r = Random (stream)
+    protected val r = Random (stream % N_STREAMS)
 
     /** Allow (lax) calling igen on continuous distributions
      */

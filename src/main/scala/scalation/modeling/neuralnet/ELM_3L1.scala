@@ -97,7 +97,6 @@ class ELM_3L1 (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
         val yp = predict (x_)                                           // make predictions
         val yy = if itran == null then y_ else itran (y_)               // undo scaling, if used
-        e = yy - yp                                                     // RECORD the residuals/errors (@see `Predictor`)
         (yp, diagnose (yy, yp))                                         // return predictions and QoF vector
     end test
 

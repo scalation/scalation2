@@ -125,7 +125,7 @@ case class TimeInterval (t1: TimeNum, t2: TimeNum):
     /** Determine whether this time-interval is the same as time-interval y.
      *  @param y  the other time-interval
      */
-    def equals (y: TimeInterval): Boolean = t1 == y.t1 && t2 == y.t2                // eq
+    infix def equals (y: TimeInterval): Boolean = t1 == y.t1 && t2 == y.t2                // eq
     inline def == (y: TimeInterval): Boolean = this equals y
 
     // Main
@@ -134,13 +134,13 @@ case class TimeInterval (t1: TimeNum, t2: TimeNum):
     /** Determine whether this time-interval is entirely before time-interval y.
      *  @param y  the other time-interval
      */
-    def before   (y: TimeInterval): Boolean = t2 < y.t1                             // b
-    inline def < (y: TimeInterval): Boolean = this before y
-    def meets    (y: TimeInterval): Boolean = t2 == y.t1                            // m
-    def overlaps (y: TimeInterval): Boolean = t1 < y.t1 && y.t1 < t2 && t2 < y.t2   // o
-    def during   (y: TimeInterval): Boolean = y.t1 < t1 && t2 < y.t2                // d
-    def starts   (y: TimeInterval): Boolean = t1 == y.t1 && t2 < y.t2               // s
-    def finishes (y: TimeInterval): Boolean = t2 == y.t2 && y.t1 < t1               // f
+    infix def before   (y: TimeInterval): Boolean = t2 < y.t1                             // b
+    inline infix def < (y: TimeInterval): Boolean = this before y
+    infix def meets    (y: TimeInterval): Boolean = t2 == y.t1                            // m
+    infix def overlaps (y: TimeInterval): Boolean = t1 < y.t1 && y.t1 < t2 && t2 < y.t2   // o
+    infix def during   (y: TimeInterval): Boolean = y.t1 < t1 && t2 < y.t2                // d
+    infix def starts   (y: TimeInterval): Boolean = t1 == y.t1 && t2 < y.t2               // s
+    infix def finishes (y: TimeInterval): Boolean = t2 == y.t2 && y.t1 < t1               // f
 
     // Converse
 
@@ -148,13 +148,13 @@ case class TimeInterval (t1: TimeNum, t2: TimeNum):
     /** Determine whether this time-interval is entirely after time-interval y.
      *  @param y  the other time-interval
      */
-    inline def after     (y: TimeInterval): Boolean = y before this                 // bi
-    inline def >         (y: TimeInterval): Boolean = this after y
-    inline def metBy     (y: TimeInterval): Boolean = y meets this                  // mi
-    inline def overlapBy (y: TimeInterval): Boolean = y overlaps this               // oi
-    inline def contains  (y: TimeInterval): Boolean = y during this                 // di
-    inline def startBy   (y: TimeInterval): Boolean = y starts this                 // si
-    inline def finishBy  (y: TimeInterval): Boolean = y finishes this               // fi
+    inline infix def after     (y: TimeInterval): Boolean = y before this                 // bi
+    inline infix def >         (y: TimeInterval): Boolean = this after y
+    inline infix def metBy     (y: TimeInterval): Boolean = y meets this                  // mi
+    inline infix def overlapBy (y: TimeInterval): Boolean = y overlaps this               // oi
+    inline infix def contains  (y: TimeInterval): Boolean = y during this                 // di
+    inline infix def startBy   (y: TimeInterval): Boolean = y starts this                 // si
+    inline infix def finishBy  (y: TimeInterval): Boolean = y finishes this               // fi
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** If time-intervals this and y are disjoint, return null; otherwise return
@@ -181,7 +181,7 @@ case class TimeInterval (t1: TimeNum, t2: TimeNum):
     /** Determine whether time-interval this and time-interval y have a time conflict.
      *  @param y  the other time-interval
      */
-    def conflict (y: TimeInterval): Boolean = ! (before (y) || after (y))
+    infix def conflict (y: TimeInterval): Boolean = ! (before (y) || after (y))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this time-interval to a range of time-number (date-time) strings.
@@ -297,11 +297,11 @@ end timeIntervalTest
 
     banner ("Test Merge Operators:")
 
-    println (s"a merge c \t = ${a merge c}")
-    println (s"a merge b \t = ${a merge b}")
+    println (s"a.merge (c) \t = ${a.merge (c)}")
+    println (s"a.merge (b) \t = ${a.merge (b)}")
 
-    println (s"a mergeGap c \t = ${a mergeGap c}")
-    println (s"a mergeGap b \t = ${a mergeGap b}")
+    println (s"a.mergeGap (c) \t = ${a.mergeGap (c)}")
+    println (s"a.mergeGap (b) \t = ${a.mergeGap (b)}")
 
 end timeIntervalTest2
 

@@ -121,7 +121,7 @@ class EdgeType (_name: String,
     /** Union this edge-type with a second edge-type.
      *  @param et2  the second edge-type
      */
-    def unionAll (et2: EdgeType): EdgeType =
+    infix def unionAll (et2: EdgeType): EdgeType =
         new EdgeType (name + "_ua_" + et2.name, from, schema, to, edges ++ et2.edges)
     end unionAll
 
@@ -129,7 +129,7 @@ class EdgeType (_name: String,
     /** Union this edge-type with a second edge-type with no duplication.
      *  @param et2  the second edge-type
      */
-    def union (et2: EdgeType): EdgeType =
+    infix def union (et2: EdgeType): EdgeType =
         new EdgeType (name + "_u_" + et2.name, from, schema, to, (edges ++ et2.edges).distinct)
     end union
 
@@ -139,7 +139,7 @@ class EdgeType (_name: String,
     /** Intersect this edge-type with a second edge-type.
      *  @param et2  the second edge-type
      */
-    def intersect (et2: EdgeType): EdgeType =
+    infix def intersect (et2: EdgeType): EdgeType =
         new EdgeType (name + "_u_" + et2.name, from, schema, to, edges intersect et2.edges)
     end intersect
 
@@ -156,7 +156,7 @@ class EdgeType (_name: String,
     /** Subtract (minus) second edge-type from this edge-type.
      *  @param et2  the second edge-type
      */
-    def minus (et2: EdgeType): EdgeType =
+    infix def minus (et2: EdgeType): EdgeType =
         new EdgeType (name + "_m_" + et2.name, from, schema, to, edges diff et2.edges)
     end minus
 

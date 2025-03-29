@@ -60,7 +60,7 @@ end RandomGraph
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `randomGraphTest` object is used to test the `RandomGraph` class.
- *  > runMain scalation.modeling.clutering.randomGraphTest
+ *  > runMain scalation.modeling.clustering.randomGraphTest
  */
 @main def randomGraphTest (): Unit =
 

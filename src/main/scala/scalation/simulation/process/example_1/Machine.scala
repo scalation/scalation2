@@ -13,10 +13,9 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
 import scalation.random.{Exponential, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runMachine` is used to launch the `MachineModel` class.
@@ -43,17 +42,17 @@ class MachineModel (name: String = "Machine", reps: Int = 1, animating: Boolean 
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val lambda = 6.0                                  // part arrival rate (per hour)
-    val mu     = 7.5                                  // part service rate (per hour)
-    val nUnits = 1                                    // the number of machines at each stage/station
-    val qCap   = 3                                    // the capacity of the queues for holding parts
+    val lambda = 6.0                                    // part arrival rate (per hour)
+    val mu     = 7.5                                    // part service rate (per hour)
+    val nUnits = 1                                      // the number of machines at each stage/station
+    val qCap   = 3                                      // the capacity of the queues for holding parts
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Exponential (HOUR / lambda, stream)
-    val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
-    val moveRV     = Uniform (30*MINUTE-10, 30*MINUTE+10, (stream + 2) % N_STREAMS)
+    val iArrivalRV = Exponential (HOUR / lambda, stream)    // use different random number streams for independence
+    val serviceRV  = Exponential (HOUR / mu, stream + 1)
+    val moveRV     = Uniform (30*MINUTE-10, 30*MINUTE+10, stream + 2)
 
     //--------------------------------------------------
     // Create Model Components
@@ -79,35 +78,31 @@ class MachineModel (name: String = "Machine", reps: Int = 1, animating: Boolean 
 
     case class Part () extends SimActor ("p", this):
 
-        def act (): Unit =
-            toMachine1Q.move ()
-            if machine1.busy then
-                if ! machine1Q.waitIn () then
-                   toScrap1.move ()
-                   scrap.leave ()
+        override def act (): Unit =
+            toMachine1Q.move ()                          // move to queue for machine 1
+            if machine1.busy then                        // when machine 1 is busy:
+                if ! machine1Q.waitIn () then            // wait unless its queue is full
+                   toScrap1.move ()                      // move part to scrap
+                   scrap.leave ()                        // ends processing of part
                    return
-                end if
             else
-                machine1Q.noWait ()
-            end if
-            machine1.utilize ()
-            machine1.release ()
+                machine1Q.noWait ()                      // record no waiting for machine 1
+            machine1.utilize ()                          // part is processed by machine 1
+            machine1.release ()                          // release machine 1
 
-            toMachine2Q.move ()
-            if machine2.busy then
-                if ! machine2Q.waitIn () then
-                   toScrap2.move ()
-                   scrap.leave ()
+            toMachine2Q.move ()                          // move to queue for machine 2
+            if machine2.busy then                        // when machine 2 is busy:
+                if ! machine2Q.waitIn () then            // wait unless its queue is full
+                   toScrap2.move ()                      // move part scrap
+                   scrap.leave ()                        // ends processing of part
                    return
-                end if
             else
-                machine2Q.noWait ()
-            end if
-            machine2.utilize ()
-            machine2.release ()
+                machine2Q.noWait ()                      // record no waiting for machine 2
+            machine2.utilize ()                          // part id processed by machine 2
+            machine2.release ()                          // release machine 2
 
-            toShip.move ()
-            ship.leave ()
+            toShip.move ()                               // move complted part to shipping
+            ship.leave ()                                // processing done => ship part
         end act
 
     end Part

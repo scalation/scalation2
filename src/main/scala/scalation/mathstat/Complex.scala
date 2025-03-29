@@ -139,13 +139,13 @@ case class Complex (re: Double, im: Double = 0.0)
     /** Return the maximum of 'this' and 'c' complex numbers.
      *  @param c  that complex number to compare with this
      */
-    def max (c: Complex): Complex = if c > this then c else this
+    infix def max (c: Complex): Complex = if c > this then c else this
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the minimum of 'this' and 'c' complex numbers.
      *  @param c  that complex number to compare with this
      */
-    def min (c: Complex): Complex = if c < this then c else this
+    infix def min (c: Complex): Complex = if c < this then c else this
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Determine whether 'this' complex number is purely imaginary (no real part).
@@ -169,7 +169,7 @@ case class Complex (re: Double, im: Double = 0.0)
     /** Compare 'this' complex number with that complex number 'd'.
      *  @param d  that complex number
      */	
-    def compare (d: Complex): Int =
+    infix def compare (d: Complex): Int =
         if re == d.re then im compare d.im else re compare d.re
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -277,9 +277,9 @@ case class Complex (re: Double, im: Double = 0.0)
     /** Override equals to determine whether 'this' complex number equals complex 'c'.
      *  @param c  the complex number to compare with this
      */
-    override def equals (c: Any): Boolean =
-        c.isInstanceOf [Complex] && (re equals c.asInstanceOf [Complex].re) &&
-                                    (im equals c.asInstanceOf [Complex].im)
+    override infix def equals (c: Any): Boolean =
+        c.isInstanceOf [Complex] && (re `equals` c.asInstanceOf [Complex].re) &&
+                                    (im `equals` c.asInstanceOf [Complex].im)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Must also override hashCode to be be compatible with equals.
@@ -316,25 +316,19 @@ end Complex
  */
 object Complex:
 
-    /** Zero (0) as a Complex number
-     */
-    val _0  = Complex (0.0)
-
-    /** One (1) as a Complex number
-     */
-    val _1  = Complex (1.0)
-
-    /** Imaginary one (i) as a Complex number
-     */
-    val _i  = Complex (0.0, 1.0)
-
-    /** Negative one (-1) as a Complex number
-     */
-    val _1n = Complex (-1.0)
-
-    /** Negative imaginary one (-i) as a Complex number
-     */
-    val _in = Complex (0.0, -1.0)
+    val _0  = Complex (0.0)                                         // Zero (0) as a Complex number
+    val _1  = Complex (1.0)                                         // One (1) as a Complex number
+    val _2  = Complex (2.0)                                         // Two (2) as a Complex number
+    val _3  = Complex (3.0)                                         // Three (3) as a Complex number
+    val _4  = Complex (4.0)                                         // Four (3) as a Complex number
+    val _5  = Complex (5.0)                                         // Five (5) as a Complex number
+    val _6  = Complex (6.0)                                         // Six (6) as a Complex number
+    val _7  = Complex (7.0)                                         // Seven (7) as a Complex number
+    val _8  = Complex (8.0)                                         // Eight (8) as a Complex number
+    val _9  = Complex (9.0)                                         // Nine (9) as a Complex number
+    val _i  = Complex (0.0, 1.0)                                    // Imaginary one (i) as a Complex number
+    val _1n = Complex (-1.0)                                        // Negative one (-1) as a Complex number
+    val _in = Complex (0.0, -1.0)                                   // Negative imaginary one (-i) as a Complex number
 
     private val rr2 = 1.0 / math.sqrt (2.0)   // reciprocal root of 2.
 

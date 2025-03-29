@@ -1,0 +1,142 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(runMain scalation.mathstat.transformationTest, Some(333005a3-81f3-4c71-82ed-1715b283cd60), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / runMain[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\target\scala-3.5.2\classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\src\main\scala\scalation\mathstat\Transformation.scala:59:24 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m59 |[0m            fInv = fInv_(a)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m                   ^^^^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   Found:    scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     scalation.mathstat.VectorD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   Required: scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Tree: Transformation.this.fInv_.apply(a)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   ==> scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD)  <:  scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     ==> scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD)  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       ==> scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m         ==> Int => Double  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m           ==> scalation.mathstat.VectorD  <:  Int  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\src\main\scala\scalation\mathstat\Transformation.scala:60:17 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m60 |[0m            f(a)(x)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m                 ^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m                 Found:    [1m[31m([0m[1m[31mx[0m [1m[31m:[0m scalation.mathstat.VectorD[1m[31m)[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m                 Required: [1m[32mInt[0m [1m[32m&[0m scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Tree: x[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   (x : scalation.mathstat.VectorD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   Int & scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   ==> (x : scalation.mathstat.VectorD)  <:  Int & scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     ==> (x : scalation.mathstat.VectorD)  <:  Int[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       ==> scalation.mathstat.VectorD  <:  Int  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The required type comes from a parameter of the automatically[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m inserted `apply` method of `scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD)`.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\src\main\scala\scalation\mathstat\Transformation.scala:62:19 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m62 |[0m            fInv = fInv_[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m                   ^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Found:    (Transformation.this.fInv_ : scalation.mathstat.FunctionV2V |[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.FunctionV2V2V)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Required: scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Tree: Transformation.this.fInv_[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   (Transformation.this.fInv_ : scalation.mathstat.FunctionV2V |[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.FunctionV2V2V)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   ==> (Transformation.this.fInv_ : scalation.mathstat.FunctionV2V |[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.FunctionV2V2V)  <:  scalation.mathstat.FunctionV2V[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     ==> (Transformation.this.fInv_ : scalation.mathstat.FunctionV2V |[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.FunctionV2V2V)  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       ==> (scalation.mathstat.VectorD => scalation.mathstat.VectorD) | ([0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD => scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD)  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m         ==> scalation.mathstat.VectorD => scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m           ==> scalation.mathstat.VectorD => scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m       ==> scalation.mathstat.FunctionV2V | scalation.mathstat.FunctionV2V2V  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m         ==> scalation.mathstat.FunctionV2V2V  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m           ==> scalation.mathstat.VectorD => scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD => scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m             ==> scalation.mathstat.VectorD => scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E007] Type Mismatch Error: C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\src\main\scala\scalation\mathstat\Transformation.scala:63:13 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m63 |[0m            f(x)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m            ^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   Found:    scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     scalation.mathstat.VectorD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   Required: scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Tree: Transformation.this.f.apply(x)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m I tried to show that[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m conforms to[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m but none of the attempts shown below succeeded:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m   ==> scalation.mathstat.VectorD | (scalation.mathstat.VectorD =>[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m    scalation.mathstat.VectorD)  <:  scalation.mathstat.VectorD[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m     ==> scalation.mathstat.VectorD => scalation.mathstat.VectorD  <:  scalation.mathstat.VectorD  = false[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m The tests were made under the empty constraint[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E006] Not Found Error: C:\Users\youse\OneDrive - University of Georgia\Documents\New Scalation\scalation_2.0 Symb\src\main\scala\scalation\mathstat\Transformation.scala:41:114 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m41 |[0m[33mcase class[0m [35mTransformation[0m([36mf[0m: [35mFunctionV2V[0m [35m|[0m [35mFunctionV2V2V[0m, [36mfInv_[0m : [35mFunctionV2V[0m [35m|[0m [35mFunctionV2V2V[0m, [36mhasArgs[0m: [35mBoolean[0m = False):[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m   |[0m                                                                                                                  ^^^^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m                                                        Not found: False[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Each identifier in Scala needs a matching declaration. There are two kinds of[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m identifiers: type identifiers and value identifiers. Value identifiers are introduced[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m by `val`, `def`, or `object` declarations. Type identifiers are introduced by `type`,[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m `class`, `enum`, or `trait` declarations.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Identifiers refer to matching declarations in their environment, or they can be[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m imported from elsewhere.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m Possible reasons why no matching declaration was found:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m  - The declaration or the use is mis-spelt.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m   |[0m  - An import is missing.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    ----------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m5 errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 5 s, completed Mar 12, 2025, 9:34:07 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0mForcing garbage collection...[0m

@@ -5,7 +5,7 @@
  *  @date    Sat Aug 28 18:17:12 EDT 2021
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Functions to Write an Image into a Files in ScalaTion's "data" Directory
+ *  @note    Functions to Write an Image into a Files in ScalaTion's "images" Directory
  */
 
 package scalation
@@ -27,7 +27,7 @@ def writeImage (fname: String, frame: VizFrame): Unit =
     val gr   = bimg.createGraphics ()
     frame.paint (gr)
     gr.dispose ()
-    ImageIO.write (bimg, "png", new File (fname))
+    ImageIO.write (bimg, "png", new File ("images" + fname))
 end writeImage
 
 

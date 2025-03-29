@@ -87,7 +87,6 @@ class NonlinearRegression (x: MatrixD, y: VectorD, f: FunctionP2S,
      */
     def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
         val yp = predict (x_)                                            // make predictions
-        e = y_ - yp                                                      // RECORD the residuals/errors (@see `Predictor`)
         (yp, diagnose (y_, yp))                                          // return predictions and QoF vector
     end test
 

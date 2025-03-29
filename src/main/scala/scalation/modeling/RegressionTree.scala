@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  Dong Yu Yu, John Miller
+/** @author  Dong Yu Yu, John Miller, Prudhvi Chekka, Lalithya Sajja
  *  @version 2.0
  *  @date    Wed Nov  7 17:08:17 EST 2018
  *  @see     LICENSE (MIT style license file).
@@ -16,6 +16,7 @@ import scala.math.abs
 import scala.runtime.ScalaRunTime.stringOf
 
 import scalation.mathstat._
+import scalation.random.RNGStream
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTree` companion object is used to count the number of leaves
@@ -23,17 +24,19 @@ import scalation.mathstat._
  */
 object RegressionTree:
 
-    val hp = new HyperParameter                                         // default hyper-parameter values
-    hp += ("maxDepth", 5, 5)              // the maximum depth
-    hp += ("threshold", 0.1, 0.1)         // threshold for parent node
-    hp += ("cutoff",  0.01, 0.01)         // the cutoff (stop splitting) entropy threshold
-    hp += ("bRatio",  0.7, 0.7)           // the bagging ratio (fraction of data/rows to be used in building trees)
-    hp += ("fbRatio", 0.7, 0.7)           // the feature bagging ratio (fraction of features/columns to be used in building trees)
-    hp += ("nTrees",  9, 9)               // the (odd) number of trees to create for the forest (Sumpreme Court)
-    hp += ("iterations", 9, 9)            // number of iterations for gradient boosting
+    val hp = new HyperParameter              // default hyper-parameter values
+    hp += ("maxDepth",   5, 5)               // the maximum depth
+    hp += ("threshold",  0.1, 0.1)           // threshold for parent node
+    hp += ("cutoff",     0.01, 0.01)         // the cutoff (stop splitting) entropy threshold
+    hp += ("bRatio",     0.7, 0.7)           // the bagging ratio (fraction of data/rows to be used in building trees)
+    hp += ("fbRatio",    0.7, 0.7)           // the feature bagging ratio (fraction of features/columns to be used in building trees)
+//  hp += ("nTrees",     9, 9)               // the (odd) number of trees to create for the forest (min: Supreme Court)
+    hp += ("nTrees",     39, 39)             // the (odd) number of trees to create for the forest
+    hp += ("iterations", 39, 39)             // number of iterations for gradient boosting
+    hp += ("eta",        0.1, 0.1)           // learning rate for gradient boosting
 
-    private val debug    = debugf ("RegressionTree", false)             // debug function
-    private val flaw     = flawf ("RegressionTree")                     // flaw function
+    private val debug = debugf ("RegressionTree", false)                // debug function
+    private val flaw  = flawf ("RegressionTree")                        // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `RegressionTree` object from a combined data-response matrix.
@@ -55,7 +58,7 @@ object RegressionTree:
      *  @param hparam  the hyper-parameters (defaults to hp)
      */
     def rescale (x: MatrixD, y: VectorD, fname: Array [String] = null,
-               hparam: HyperParameter = hp): RegressionTree =
+                 hparam: HyperParameter = hp): RegressionTree =
         val xn = normalize ((x.mean, x.stdev)) (x)
         new RegressionTree (xn, y, fname, hparam)
     end rescale
@@ -82,7 +85,7 @@ object RegressionTree:
     /** Given column j, use fast threshold selection to find an optimal threshold/
      *  split point in O(NlogN) time.  Return the threshold and the sse total.
      *  @see people.cs.umass.edu/~domke/courses/sml/12trees.pdf
-     *  @see https://www.dcc.fc.up.pt/~ltorgo/PhD/
+     *  @see www.dcc.fc.up.pt/~ltorgo/PhD/
      *  @param xj   the the j-th column in data matrix (used for splitting)
      *  @param y    the response vector
      *  @param ssy  the sum of squares for y
@@ -104,7 +107,6 @@ object RegressionTree:
                 if newScore > hiScore then                              // want higher score
                     hiScore = newScore
                     thr     = (xa + xb) / 2                             // set threshold to the midpoint
-                end if
             end if
         end for
 
@@ -125,16 +127,14 @@ object RegressionTree:
      */
      def check (d: Int, j: Int, xj: VectorD, y: VectorD, thr: Double, ssy: Double, sse_t: Double): Boolean =
         val (xj_lo, xj_hi) = (xj.min, xj.max)
-        if thr < xj_lo || xj_hi < thr then flaw ("check", s"thr = $thr outside range of x$j")
+        if thr < xj_lo || xj_hi < thr then flaw ("check", s"thr = $thr outside range of x$j: [$xj_lo, $xj_hi]")
         val sse_t_ = sse_LR (xj, y, thr, ssy)
 
-        println ("-" * 90)
-        println (s"check (d = $d) xj = x$j with threshold $xj_lo <= thr = $thr <= $xj_hi, sse_t = $sse_t, sse_t_ = $sse_t_")
+        debug ("check", s"(d = $d) xj = x$j with threshold $xj_lo <= thr = $thr <= $xj_hi, sse_t = $sse_t, sse_t_ = $sse_t_")
 
         val okay = abs (sse_t - sse_t_) < 1E-6
         if ! okay then
-            println (s"$check:\n xj = $xj \n\t y = $y")
-        end if
+            debug ("check", s"unable to split based on column j = $j, xj = $xj")
         okay
     end check
 
@@ -197,17 +197,22 @@ end Node
  *  @param curDepth     current depth (defaults to 0)
  *  @param branchValue  the branch value for the tree node (defaults to -1)
  *  @param feature      the feature for the tree's parent node (defaults to -1)
+ *  @param use_r_fb     whether to use (by regression tree) feature bagging (fb) i.e.,
+ *                      use a subset of the features, @see `RegressionTreeRF` with parameter `use_fb`
  *  @param leaves       the leaf counter (defaults to Counter ())
  */
 class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
-                      hparam: HyperParameter = RegressionTree.hp, curDepth: Int = 0,
-                      branchValue: Int = -1, feature: Int = -1, leaves: Counter = Counter ())
+                      hparam: HyperParameter = RegressionTree.hp,
+                      curDepth: Int = 0, branchValue: Int = -1,
+                      feature: Int = -1, use_r_fb: Boolean = false,
+                      leaves: Counter = Counter ())
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):              // call resetDF once tree is built
 
-    private val debug     = debugf ("RegressionTree", true)             // debug function
+    private val debug     = debugf ("RegressionTree", false)            // debug function
     private val depth     = hparam ("maxDepth").toInt                   // the depth limit for tree
     private val thres     = hparam ("threshold").toDouble               // the threshold for the tree's parent node, @see buildTree
+    private val fbRatio   = hparam ("fbRatio").toDouble                 // the feature bagging ratio
     private val threshold = new VectorD (x.dim2)                        // store best splitting threshold for each feature
     private val score     = new VectorD (x.dim2)                        // store best splitting score for each feature
 
@@ -229,7 +234,9 @@ class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      *  @param y_  the training/full response/output vector
      */
     def train (x_ : MatrixD, y_ : VectorD): Unit =
+        if use_r_fb then return train_fb (x_, y_)                       // use the feature bagging
         val ssy = y_.normSq                                             // sum of squared y
+
         for j <- x_.indices2 do
             val xj = x_(?, j)                                           // get j-th column     
             val (thr, sse_t) = fastThreshold (xj, y_, ssy)              // get threshold and sse_t for feature j
@@ -245,6 +252,46 @@ class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         debug ("train", s"optimal (variable, score) = ($best_j, ${score(best_j)})")
         buildTree (x_, y_, best_j)
     end train
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Train the regression tree by selecting thresholds for the features/variables
+     *  in matrix x_.  This method uses feature bagging (fb), e.g., as used in Random Forest.
+     *  @param x_  the training/full data/input matrix
+     *  @param y_  the training/full response/output vector
+     */
+    def train_fb (x_ : MatrixD, y_ : VectorD): Unit =
+        val ssy        = y_.normSq                                      // sum of squared y
+        val n_features = (x_.dim2 * fbRatio).toInt                      // number of features to select (fb)
+        val strm       = RNGStream.ranStream                            // randomize the random number stream
+        val (xFeat, iFeat) = featureSubSample (x_, n_features, stream = strm)  // or let strm = constant less than 1000
+        val threshold_fb = new VectorD (xFeat.dim2)                     // threshold for selected features (fb)
+        val score_fb     = new VectorD (xFeat.dim2)                     // score for selected features (fb)
+
+        for j <- xFeat.indices2 do                                      // work with selected features
+            val xj = xFeat(?, j)                                        // get j-th column
+            val (thr, sse_t) = fastThreshold (xj, y_, ssy)              // get threshold and sse_t for feature j
+            if check (curDepth, j, xj, y_, thr, ssy, sse_t) then
+                threshold_fb(j) = thr                                   // set threshold for feature j
+                score_fb(j)     = sse_t                                 // set sse_t for feature j
+            else
+                threshold_fb(j) = -0.0                                  // set threshold for feature j to NA
+                score_fb(j)     = Double.PositiveInfinity               // set sse_t for feature j to infinity
+        end for
+
+        var k = 0
+        for j <- x_.indices2 do                                         // map back to full feature set
+            if iFeat contains j then
+                threshold(j) = threshold_fb(k)
+                score(j)     = score_fb(k)
+                k += 1
+            else
+                threshold(j) = -0.0
+                score(j)     = Double.PositiveInfinity
+
+        val best_j = score.argmin ()                                    // use best feature/variable
+        debug ("train", s"optimal (variable, score) = ($best_j, ${score(best_j)})")
+        buildTree (x_, y_, best_j)
+    end train_fb
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given the next most distinguishing feature/attribute, extend the regression tree.
@@ -266,14 +313,14 @@ class RegressionTree (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
             if yy.dim != 0 then
 
                 root.child +=
-                    (if curDepth == depth - 1 || xx.dim <= xx.dim2 then    // leaf node
-                        val b0 = yy.mean                                   // use mean
+                    (if curDepth == depth - 1 then                      // leaf node (removed || xx.dim <= xx.dim2)
+                        val b0 = yy.mean                                // use mean
                         leaves.inc ()
                         Node (j, root.child.length, VectorD (b0), threshold(j), curDepth + 1,
                               threshold(j), j, true)
                     else
                         val hp = RegressionTree.hp.updateReturn ("threshold", threshold(j))
-                        val subtree = new RegressionTree (xx, yy, fname, hp, curDepth + 1, i, j, leaves)
+                        val subtree = new RegressionTree (xx, yy, fname, hp, curDepth + 1, i, j, use_r_fb, leaves)
                         subtree.train (xx, yy)
                         subtree.root)
 
@@ -459,8 +506,8 @@ end regressionTreeTest2
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionTreeTest3` main function tests the `RegressionTree` class using the
- *  AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and stepwise
- *  selection.
+ *  AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and
+ *  stepwise selection.
  *  > runMain scalation.modeling.regressionTreeTest3
  */
 @main def regressionTreeTest3 (): Unit =
@@ -489,4 +536,27 @@ end regressionTreeTest2
     end for
 
 end regressionTreeTest3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTreeTest4` main function tests the `RegressionTree` class using the
+ *  Boston House Prices dataset.
+ *  > runMain scalation.modeling.regressionTreeTest4
+ */
+@main def regressionTreeTest4(): Unit =
+
+    val data = MatrixD.load ("boston_house_prices.csv", 1, 0)
+    val x    = data(?, 0 until data.dim2 - 1)
+    val y    = data(?, data.dim2 - 1)
+    val dmax = 5
+
+    for d <- 1 to dmax do
+        banner (s"AutoMPG Regression Tree with d = $d")
+        RegressionTree.hp("maxDepth") = d
+        val mod = new RegressionTree (x, y)                             // create model with intercept (else pass x)
+        mod.trainNtest ()()._2                                          // train and test the model
+        mod.printTree ()
+    end for
+
+end regressionTreeTest4
 

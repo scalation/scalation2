@@ -130,6 +130,12 @@ object Earth:
 
     val meters2Miles = 0.000621371                                  // meters to miles
     val miles2Meters = 1609.34                                      // meters to miles
+
+    val a0   = 6367449.146
+    val b0   = 16038.42955
+    val c0   = 16.83261333
+    val d0   = 0.021984404
+    val e0   = 0.000312705
 end Earth
 
 
@@ -146,12 +152,8 @@ object LatLong2UTM:
     private val negDegrees = Array (-90, -84, -72, -64, -56, -48, -40, -32, -24, -16, -8)
     private val posDegrees = Array (  0,   8,  16,  24,  32,  40,  48,  56,  64,  72, 84)
 
-    private var p  = 0.0                                            // r curv 2
-    private var k1 = 0.0                                            // coefficients for UTM Coordinates
-    private var k2 = 0.0
-    private var k3 = 0.0
-    private var k4 = 0.0
-    private var k5 = 0.0
+    private var p = 0.0                                             // r curv 2
+    private var k1, k2, k3, k4, k5 = 0.0                            // coefficients for UTM Coordinates
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert Latitude-Longitude to UTM coordinates as a string.
@@ -191,11 +193,6 @@ object LatLong2UTM:
      *  @param long  the longitude
      */
     private def setVariables (lat: Double, long: Double): Unit =
-        val a0   = 6367449.146
-        val b0   = 16038.42955
-        val c0   = 16.83261333
-        val d0   = 0.021984404
-        val e0   = 0.000312705
         val sin1 = 4.84814E-06
         val sin2 = sin1 * sin1
         val latR = toRadians (lat)
@@ -273,6 +270,70 @@ object LatLong2UTM:
     end getNorthing
 
 end LatLong2UTM
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The LatLong2CTM object supports conversion from latlong coordinates to CTM
+ *  (Custom Transverse Mercator) coordinates
+ */
+object LatLong2CTM:
+
+    private val flaw = flawf ("LatLong2CTM")                        // flaw function
+
+    private var p = 0.0                                             // r curv 2
+    private var k1, k2, k3, k4, k5 = 0.0                            // coefficients for UTM Coordinates
+   
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Convert Latitude-Longitude to (x, y) CTM (Custom Transverse Mercator)
+     *  coordinates.
+     *  @param ll    the Latitude-Longitude
+     *  @param cent  the central meridian of the custom TM zone
+     */
+    def latLong2CTMxy (ll: LatLong, cent: Double): (Double, Double) =
+        if ll.invalid then flaw ("latLong2CTMxy", s"invalid LatLong = $ll")
+        setVariables (ll.lat, ll.long, cent)
+        (getEasting.toInt, getNorthing (ll.lat).toInt)
+    end latLong2CTMxy
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Set variables used in calculations.
+     *  @param lat   the latitude
+     *  @param long  the longitude
+     *  @param cent  the central meridian of the custom TM zone
+     */
+    private def setVariables (lat: Double, long: Double, cent: Double): Unit =
+        val sin1 = 4.84814E-06
+        val sin2 = sin1 * sin1
+        val latR = toRadians (lat)
+        val nu   = equatorialRadius / sqrt (1 -  pow (e * sin (latR), 2))
+        val var1 = long - cent
+        p        = var1 * 0.36
+        val s    = a0 * latR - b0 * sin (2 * latR) + c0 * sin (4 * latR) - d0 * sin (6 * latR) + e0 * sin (8 * latR)
+        k1       = s * k0
+        k2       = nu * sin (latR) * cos (latR) * sin2 * k0 * 50000000
+        k3       = (nu * sin2 * sin2 * sin (latR) * pow (cos (latR), 3) / 24) *
+                   (5 - pow (tan (latR), 2) + 9 * e1sq * pow ( cos(latR), 2) + 4 * e1sq * e1sq * pow (cos (lat), 4)) *
+                   k0 * 10000000000000000L
+        k4       = nu * cos (latR) * sin1 * k0 * 10000
+        k5       = (nu / 6) * pow (sin1 * cos (latR), 3) * (1 - pow (tan (latR), 2) + e1sq * pow (cos (latR), 2)) *
+                   k0 * 1000000000000L
+    end setVariables
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Get the number of meters East of zone reference.
+     */
+    private def getEasting: Double = CENTRAL_MERIDIAN + (k4 * p + k5 * pow (p, 3))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Get the number of meters North of zone reference.
+     *  @param lat  the latitude
+     */
+    private def getNorthing (lat: Double): Double =
+        val northing = k1 + k2 * p * p + k3 * pow (p, 4)
+        if lat < 0.0 then EQUATOR + northing else northing
+    end getNorthing
+
+end LatLong2CTM
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -406,7 +467,7 @@ end latLongTest
     val atlanta_El = 320.0                                          // Atlanta elevation
     val el         = (athens_El + atlanta_El) / 2.0                 // average elevation
 
-    var d = athens distance atlanta
+    var d = athens.distance (atlanta)
     banner ("Athens to Atlanta at elevation " + 0.0)
     println (s"Distance from Athens to Atlanta = $d meters.")
     println (s"Distance from Athens to Atlanta = ${d/1000} kilometers.")
@@ -438,7 +499,7 @@ end latLongTest2
     banner ("Aspen, CO at        " + new LatLong ((39, 11, 32), (106, 49, 28)))
     banner ("Breckenridge, CO at " + new LatLong ((39, 29, 11), (106,  2, 37)))
 
-    var d = aspen distance brecken
+    var d = aspen.distance (brecken)
     banner ("Aspen to Breckenridge at elevation " + 0.0)
     println (s"Distance from Aspen to Breckenridge = $d meters.")
     println (s"Distance from Aspen to Breckenridge = ${d/1000} kilometers.")

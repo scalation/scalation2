@@ -53,7 +53,7 @@ class Model_MBM (name: String, val nBatch: Int = 10, sizeB: Int = 100,
 
         debug ("act", s"before while nBatch = $nBatch, sizeB = $sizeB, maxAct = $maxAct")
 
-        while numActors <= maxAct && ! agenda.isEmpty do           // LOOP THROUGH BATCHES
+        while numActors <= maxAct && ! agenda.isEmpty do         // LOOP THROUGH BATCHES
 
 //          debug ("act", s"start while with numActors = $numActors")
             log.trace (this, s"starts batch $bat", null, _clock)

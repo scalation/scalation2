@@ -97,9 +97,9 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
                     val rgb =
                     if frac > _2_3 then ( ((frac-_2_3) * 765).toInt, ((1-frac) * 765).toInt, 0 )
                     else if frac > _1_3 then ( 0, ((frac-_1_3) * 765).toInt, ((_2_3-frac) * 765).toInt )
-                    else ( ((_1_3-frac) * 400).toInt, 0, (frac * 765).toInt )
+                    else ( ((_1_3-frac) * 400).toInt, 0, ((frac) * 765).toInt )
 
-//                    println (s"(x, y) = $vec, lbF = $lbF, frac = $frac, rgb = $rgb")
+                    println (s"(x, y) = $vec, lbF = $lbF, frac = $frac, rgb = $rgb")
                     val color = new Color (rgb._1, rgb._2, rgb._3)
     
                     val xx    = round ((x - lb(0)) * (frameW - 2 * offset))
@@ -160,7 +160,7 @@ class PlotC (f: FunctionV2S, lb: VectorD, ub: VectorD, path: ArrayBuffer [Vector
     end Canvas
 
     if deltaF < 0.0 then resetBounds ()
-    getContentPane.add (new Canvas ())
+    getContentPane ().add (new Canvas ())
     setVisible (true)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

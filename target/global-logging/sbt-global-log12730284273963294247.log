@@ -1,0 +1,7 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(compile, Some(d21b19b0-9e73-429b-babf-c8093c490361), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / compile[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 568 Scala sources to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0 Symb\target\scala-3.6.4\classes ...[0m
+[0m[[0m[32msuccess[0m] [0m[0mTotal time: 176 s (02:56), completed Mar 20, 2025, 9:32:37 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
+[0m[[0m[0mdebug[0m] [0m[0mForcing garbage collection...[0m

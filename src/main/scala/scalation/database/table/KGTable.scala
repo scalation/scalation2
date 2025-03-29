@@ -285,11 +285,11 @@ end kGTableTest
     banner ("Example Queries")
 
     banner ("locations of students")
-    val locs = student project ("name, city")
+    val locs = student.project ("name, city")
     locs.show ()
 
     banner ("living in Athens")
-    val inAthens = student select ("city == 'Athens'")
+    val inAthens = student.select ("city == 'Athens'")
     inAthens.show ()
 
     banner ("not living in Athens")
@@ -305,19 +305,19 @@ end kGTableTest
     unio.show ()
 
     banner ("all people living in Athens")
-    val people_Athens = person.all () select ("city == 'Athens'")
+    val people_Athens = person.all ().select ("city == 'Athens'")
     people_Athens.show ()
 
     banner ("courses taken: course id")
-    val taken_id = student expand ("name, cid", ("cid", course))
+    val taken_id = student.expand ("name, cid", ("cid", course))
     taken_id.show ()
 
     banner ("courses taken: course name")
-    val taken_nm = student expand ("name, cname", ("cid", course))
+    val taken_nm = student.expand ("name, cname", ("cid", course))
     taken_nm.show ()
 
     banner ("courses taken: course name via ejoin")
-    val taken_ej = student ejoin ("cid", course, "sid") project ("name, cname")
+    val taken_ej = student.ejoin ("cid", course, "sid").project ("name, cname")
     taken_ej.show ()
 
 /*

@@ -37,8 +37,8 @@ import scalation.random.RandomSeeds.N_STREAMS
  *  @param stream     the base random number stream (0 to 999)
  */
 class Traffic4LModel (name: String = "Traffic4L", reps: Int = 1, startSim: Double = 0.0,
-                    animating: Boolean = true, aniRatio: Double = 8.0,
-                    nStop: Int = 20, stream: Int = 0)
+                      animating: Boolean = true, aniRatio: Double = 8.0,
+                      nStop: Int = 1, stream: Int = 0)
       extends Model (name, reps, startSim, animating, aniRatio):
 
     //--------------------------------------------------
@@ -56,7 +56,7 @@ class Traffic4LModel (name: String = "Traffic4L", reps: Int = 1, startSim: Doubl
     val onTimeRV   = Sharp (onTime, (stream + 1) % N_STREAMS)
     val offTimeRV  = Sharp (offTime, (stream + 2) % N_STREAMS)
     val moveRV     = Uniform (mvTime, (stream + 3) % N_STREAMS)
-    val laneRV     = Bernoulli ((stream + 4) % N_STREAMS)
+    val laneRV     = Bernoulli (stream = (stream + 4) % N_STREAMS)
 
     //--------------------------------------------------
     // Create the Graph Model: Vertices and Edges

@@ -4,56 +4,55 @@
  *  @version 2.0
  *  @note    Wed Oct 11 14:03:06 EDT 2023
  *  @see     LICENSE (MIT style license file).
- *------------------------------------------------------------------------------
- *  Case class to store the definition of a function optimization in a format
- *  that adheres to the optimization logic format used by the native
- *  implementation of the Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS)
- *  for unconstrained optimization (L-BFGS) algorithm.
+ *
+ *  @note    Definition of a Function Optimization for the L-BFGS) Algorithm.
  */
 
-// Package definition.
 package scalation
 package optimization
 package quasi_newton
 
-// Project imports.
 import scalation.calculus.Differential
 import scalation.mathstat.{FunctionV2S, FunctionV2V, VectorD}
 import scalation.optimization.functions.BenchmarkFunction
 
-// Case class.
-case class FunctionOptimization(
-    objectiveFunction: FunctionV2S,
-    gradientFunction: FunctionV2V
-) extends OptimizationLogic:
-    // Constructor definitions.
-    def this(objectiveFunction: FunctionV2S) = this(
-        objectiveFunction,
-        // Less accurate than hard-coded definition of gradient function.
-        (x: VectorD) => Differential.grad(objectiveFunction, x)
-    )
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `FunctionOptimization` case class to store the definition of a function optimization
+ *  in a format that adheres to the optimization logic format used by the implementation of the
+ *  Limited memory Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization (L-BFGS) algorithm.
+ */
+case class FunctionOptimization (objFunction: FunctionV2S, gradFunction: FunctionV2V)
+     extends OptimizationLogic:
 
-    def this(benchmarkFunction: BenchmarkFunction) = this(
-        benchmarkFunction.objectiveFunction,
-        benchmarkFunction.gradientFunction
-    )
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** This constructor uses numerical approximation for the gradient which is less
+     *  accurate than hard-coded definition of gradient function.
+     *  @param objFunction  the object finction to be optimized
+     */
+    def this (objFunction: FunctionV2S) = 
+        this (objFunction, (x: VectorD) => Differential.grad (objFunction, x))
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    def this (benchmarkFunction: BenchmarkFunction) =
+        this (benchmarkFunction.objFunction, benchmarkFunction.gradFunction)
     
-    // Public methods.
-    def evaluate(
-        instance: Any,
-        x: VectorD,
-        n: Int,
-        step: Double
-    ): LBFGSVariableEvaluationResults =
-        LBFGSVariableEvaluationResults(objectiveFunction(x), gradientFunction(x))
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    def evaluate (instance: Any, x: VectorD, n: Int, step: Double): LBFGSVarEvaluationResults =
+        LBFGSVarEvaluationResults (objFunction (x), gradFunction (x))
+
 end FunctionOptimization
 
-// Companion object.
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The FunctionOptimization` companion object provides two factory methods.
+ */
 case object FunctionOptimization:
-    // Public methods.
-    def apply(objectiveFunction: FunctionV2S) =
-        new FunctionOptimization(objectiveFunction)
+
+    def apply (objFunction: FunctionV2S) =
+        new FunctionOptimization (objFunction)
         
-    def apply(benchmarkFunction: BenchmarkFunction) =
-        new FunctionOptimization(benchmarkFunction)
+    def apply (benchmarkFunction: BenchmarkFunction) =
+        new FunctionOptimization (benchmarkFunction)
+
 end FunctionOptimization
+

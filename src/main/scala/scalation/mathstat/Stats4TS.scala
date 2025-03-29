@@ -17,17 +17,19 @@ import scala.math.min
 /** The `Stats` case class is used to hold basic statistical information:
  *  mean, variance, auto-covariance, and auto-correlation.
  *  Note gamma0 (biased) does not equal the sample variance (unbiased)
- *  @param y      the response vector (time-series data) for the training/full dataset
- *  @param lags_  the maximum number of lags
+ *  @param y         the response vector (time-series data) for the training/full dataset
+ *  @param lags_     the maximum number of lags
+ *  @param adjusted  whether to adjust to account for the number of elements in the sum Σ (or use dim-1)
+ *                   @see `VectorD.acov`
  */
-case class Stats4TS (y: VectorD, lags_ : Int):
+case class Stats4TS (y: VectorD, lags_ : Int, adjusted: Boolean = true):
 
-    val lags = min (y.dim-1, lags_)                       // lags can't exceed dataset size
-    val mu   = y.mean                                     // sample mean
-    val sig2 = y.variance                                 // sample variance
-    val acv  = new VectorD (lags + 1)                     // auto-covariance vector
-    for k <- acv.indices do acv(k) = y.acov (k, mu)       // k-th lag auto-covariance
-    val acr  = acv / acv(0)                               // auto-correlation function
+    val lags = min (y.dim-1, lags_)                             // lags can't exceed dataset size
+    val mu   = y.mean                                           // sample mean
+    val sig2 = y.variance                                       // sample variance
+    val acv  = new VectorD (lags + 1)                           // auto-covariance vector
+    for k <- acv.indices do acv(k) = y.acov (k, mu, adjusted)   // k-th lag auto-covariance
+    val acr  = acv / acv(0)                                     // auto-correlation function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert a `Stats4TS` object to a string.

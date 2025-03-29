@@ -1,563 +1,374 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** @author  John Miller, Yousef Fekri Dabanloo
  *  @version 2.0
- *  @date    Tue Feb 22 23:14:31 EST 2022
+ *  @date    Sun Jun 30 13:27:00 EDT 2024
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Quadratic AutoRegressive with eXogenous Variables (Quadratic Time Series Regression)
+ *  @note    Model: Auto-Regressive on lagged y and xe with quadratic terms (ARX_Quad) using OLS
+ *
+ *  @see `scalation.modeling.Regression`
  */
 
 package scalation
 package modeling
 package forecasting
 
-import scala.math.{max, min}
+import scala.collection.mutable.ArrayBuffer
 
 import scalation.mathstat._
 
+import MakeMatrix4TS._
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_Quad` class supports quadratic regression for Time Series data.
- *  Given a response vector y, a predictor matrix x is built that consists of
- *  lagged y vectors,
+/** The `ARX_Quad` class provides basic time series analysis capabilities for ARX quadratic models.
+ *  ARX quadratic models utilize quadratic multiple linear regression based on lagged values of y.
+ *  ARX models build on `ARY` by including one or more exogenous (xe) variables.
+ *  Given time series data stored in vector y, its next value y_t = combination of
+ *  last p values of y, y^2 and the last q values of each exogenous variable xe_j.
  *
- *      y_t = b dot x
- *      where x = [ 1, y_{t-1}, y_{t-2}, ... y_{t-lag}, y_{t-1}^2, ...].
+ *      y_t = b dot x_t + e_t
  *
- *  @param x       the input/predictor matrix built out of lags of y
- *  @param yy      the output/response vector trimmed to match x.dim
- *  @param lags    the maximum lag included (inclusive)
- *  @param fname   the feature/variable names
- *  @param hparam  the hyper-parameters (use Regression.hp for default)
+ *  where y_t is the value of y at time t and e_t is the residual/error term.
+ *  @param x        the data/input matrix (lagged columns of y, y^2 and xe) @see `ARX_Quad.apply`
+ *  @param y        the response/output vector (time series data) 
+ *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+ *  @param n_exo    the number of exogenous variables
+ *  @param fname    the feature/variable names
+ *  @param tRng     the time range, if relevant (time index may suffice)
+ *  @param hparam   the hyper-parameters (defaults to `MakeMatrix4TS.hp`)
+ *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+ *  @param tForms   the map of transformation applied
  */
-class ARX_Quad (x: MatrixD, yy: VectorD, lags: Int, fname: Array [String] = null,
-                hparam: HyperParameter = Regression.hp)
-      extends Regression (x, yy, fname, hparam)
-         with ForecasterX (lags):
+class ARX_Quad (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [String],
+                tRng: Range = null, hparam: HyperParameter = hp,
+                bakcast: Boolean = false,                               // backcast value used only `MakeMatrix4TS`
+                tForms: TransformMap = Map ("tForm_y" -> null))
+      extends ARX (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):  // no automatic backcasting
 
-    private val debug   = debugf ("ARX_Quad", true)                      // debug function
-    private val flaw    = flawf ("ARX_Quad")                             // flaw function
+    private val debug = debugf ("ARX_Quad", true)                       // debug function
 
-    modelName = s"ARX_Quad$lags"
+    modelName = s"ARX_Quad($p, $q, $n_exo)"
 
-    debug ("init", s"$modelName: x.dims = ${x.dims}, yy.dim = ${yy.dim}")
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Forecast h steps ahead using the recursive method, returning forecasts in
-     *  matrix yf with columns: [1-step, 2-steps, ... h-steps].
-     *  @param yp  the predicted response vector (horizon 1 forecasts)
-     *  @param h   the forecasting horizon
-     *
-    def forecast (yp: VectorD, h: Int): MatrixD =
-        val yf   = new MatrixD (yp.dim, h)                               // matrix to hold forecasts
-        yf(?, 0) = yp                                                    // column 0 is predicted values
-        for k <- 1 until h do                                            // forecast into future: columns 1 to h-1
-            for i <- yf.indices do
-                val xi = x(i)
-                val yi = yf(i)
-                var sum = b(0)
-                var l = 0
-                for j <- 1 until b.dim-1 by 2 do                         // add terms in an interleaved fashion
-                    if j+k+1 < b.dim then
-                        sum += b(j) * xi(j+k)                            // linear terms
-                        sum += b(j+1) * xi(j+k+1)                        // add quadratic terms
-                    else
-                        sum += b(j) * yi(l)
-                        sum += b(j+1) * yi(l)~^2
-                        l += 1
-                    end if
-                end for
-                yf(i, k) = sum                                           // record forecasted value
-            end for
-        end for
-        yf
-    end forecast
-     */
-
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a vector of size h, of 1 through h-steps ahead forecasts for the model.
-     *      forecast the following time points:  t+1, ..., t-1+h.
-     *  Note, must create the yf matrix before calling the forecast method.
-     *  Intended to work with rolling validation (analog of predict method)
-     *  Must call `forecastAll` first.
-     *  @param t   the time point from which to make forecasts
-     *  @param yf  the forecasting matrix (time x horizons)
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     */
-    def forecast (t: Int, yf: MatrixD, h: Int): VectorD =
-        if h < 1 then flaw ("forecast", s"horizon h = $h must be at least 1")
-        VectorD (for k <- 1 to h yield yf(t+k, k))                       // get yf diagonal from time t
-    end forecast 
-
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Forecast values for all y_.dim time points at horizon h (h-steps ahead).
-     *  Assign to forecasting matrix and return h-step ahead forecast.
-     *  For 1-step ahead (h = 1),
-     *      y_t = δ + φ_0 y_t-1 + φ_1 y_t-2 + ... + φ_p-1 y_t-p
-     *  When k < 0 let y_k = y_0 (i.e., assume first value repeats back in time).
-     *  @param yf  the forecasting matrix for the endogenous variable y (time x horizons)
-     *  @param yx  the matrix of endogenous y and exogenous x values
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     */
-    def forecastAt (yf: MatrixD, yx: MatrixD, h: Int): VectorD =
-        if h < 1 then flaw ("forecastAt", s"horizon h = $h must be at least 1")
-        for t <- yx.indices do                                           // make forecasts over all time points for horizon h
-            val t1 = t + h - 1                                           // time point prior to horizon
-            yf(t+h, h) = b dot yx(min (t1, yx.dim-1))                    // forecast down the diagonal ??
-        end for
-        yf(?, h)                                                         // return the h-step ahead forecast vector
-    end forecastAt
+    debug ("init", s"$modelName with with $n_exo exogenous variables and additional term spec = $spec")
+    debug ("init", s"[ x | y ] = ${x :^+ y}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Forecast values for all y_.dim time points and all horizons (1 through h-steps ahead).
-     *  Record these in the yf matrix, where
-     *      yf(t, k) = k-steps ahead forecast for y_t
-     *  Note, column 0, yf(?, 0), is set to y (the actual time-series values).
-     *  Forecast recursively down diagonals in the yf forecasting matrix.
-     *  The top right and bottom left triangles in yf matrix are not forecastable.
-     *  @param y_  the actual values to use in making forecasts
-     *  @param yx  the matrix of endogenous y and exogenous x values
-     *  @param h   the maximum forecasting horizon, number of steps ahead to produce forecasts
-     */
-    override def forecastAll (y_ : VectorD, yx: MatrixD, h: Int): MatrixD =
-        debug ("forecastAll", s"y_.dim = ${y_.dim}, yx.dims = ${yx.dims}")
-        yf = new MatrixD (y_.dim+h, h+2)                                 // forecasts for all time points t & horizons to h
-        for t <- y_.indices do yf(t, 0) = y_(t)                          // first column is the actual endogenous y values
-        for t <- yf.indices do yf(t, h+1) = t                            // last column is time (logical day)
-
-        for k <- 1 to h do
-            if k > 1 then
-                val prev = yf(?, k-1)                                    // the previous forecasted vales
-                yx.insert (1, lags, prev)                                // insert previous forecasts for endogenous variable
-                yx.insert (1+lags, lags+lags, prev~^2)                   // insert previous forecasts^2 for endogenous variable
-                                                                         // FIX - must insert at the right position; maybe rescaling
-            end if
-            forecastAt (yf, yx, k)                                       // forecast k-steps into the future
-        end for
-        yf                                                               // return matrix of forecasted values
-    end forecastAll
-
-    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of a `ARX_Quad` forecasting model y_ = f(x) + e
-     *  and return its forecasts and QoF vector.  Testing may be in-sample
-     *  (on the training set) or out-of-sample (on the testing set) as determined
-     *  by the parameters passed in.  Note: must call train and forecastAll before testF.
+    /** Forge a new vector from the first spec values of x, the last p-h+1 values
+     *  of x (past values) and recent values 1 to h-1 from the forecasts.
+     *  @param xx  the t-th row of the input matrix (lagged actual values)
+     *  @param yy  the t-th row of the forecast matrix (forecasted future values)
      *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     *  @param y_  the testing/full response/output vector
-     *  @param yx  the matrix of endogenous y and exogenous x values
      */
-    def testF (h: Int, y_ : VectorD, yx: MatrixD): (VectorD, VectorD) =
-        val (yy, yfh) = testSetupF (y_, yx, h)                           // get and align actual and forecasted values
-        val params = x.dim2
-        resetDF (params, yy.dim - params)                                // reset the degrees of freedom
-        println (s"testF: yy.dim = ${yy.dim}, yfh.dim = ${yfh.dim}")
-//      differ (yy, yfh)                                                 // uncomment for debugging
-        (yfh, diagnose (yy, yfh))                                        // return predictions and QoF vector
-    end testF
+    override def forge (xx: VectorD, yy: VectorD, h: Int): VectorD =
+        // add terms for the endogenous variable
+        val n_endo  = spec + p                                           // number of trend + endogenous values
+        val x_act   = xx(n_endo - (p+1-h) until n_endo)                  // get actual lagged y-values (endogenous)
+        val nyy     = p - x_act.dim                                      // number of forecasted values needed
+        val x_fcast = yy(h-nyy until h)                                  // get forecasted y-values
+
+        val x_act_pp = xx(n_endo+p - (p+1-h) until n_endo+p)             // get transformed lagged endogenous variable
+        val x_fcast_pp = scaleCorrection (x_fcast)
+
+        var xy = x_act ++ x_fcast ++ x_act_pp ++ x_fcast_pp              // add transformed lagged forecasted y-values
+        for j <- 0 until n_exo do                                        // for the j-th exogenous variable
+            xy = xy ++ hide (xx(n_endo+p + j*q until n_endo+p + (j+1)*q), h)
+        xx(0 until spec) ++ xy
+    end forge
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Apply scale correction to x_fcast.
+     *  @param x_fcast  the vector to apply the scale correction to
+     */
+    def scaleCorrection (x_fcast: VectorD): VectorD =
+        if tForms("tForm_y") != null then
+            val f_pp = (tForms("tForm_endo").asInstanceOf [Transform].f(_: VectorD)) ⚬
+                       (tForms("ppForm").asInstanceOf [Transform].f(_: VectorD)) ⚬
+                       (tForms("tForm_y").asInstanceOf [Transform].fi(_: VectorD))
+            f_pp (x_fcast)
+        else
+            tForms("ppForm").asInstanceOf [Transform].f(x_fcast)
+    end scaleCorrection
 
 end ARX_Quad
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_Quad` companion object provides factory methods.
+/** The `ARX_Quad` companion object provides factory methods for the `ARX_Quad` class.
  */
-object ARX_Quad:
+object ARX_Quad extends MakeMatrix4TS:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `ARX_Quad` object to fit a quadratic surface from a response vector.
-     *  The input/data matrix x is formed from the lagged y vectors as columns in matrix x.
-     *  surface to Time Series data.
-     *  @param y       the original un-expanded output/response vector
-     *  @param lags    the maximum lag included (inclusive)
-     *  @param hparam  the hyper-parameters (use Regression.hp for default)
+    /** Create an `ARX_Quad` object by building an input matrix xy and then calling the
+     *  `ARX_Quad` constructor.
+     *  @param xe       the matrix of exogenous variable values
+     *  @param y        the endogenous/response vector (main time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param fname_   the feature/variable names
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      */
-    def apply (y: VectorD, lags: Int, 
-               hparam: HyperParameter = Regression.hp): ARX_Quad =
-        val (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
-        val xx = new MatrixD (x.dim, 2*x.dim2+1) 
-        xx(?, 0) = VectorD.one (yy.dim)                                  // add first column of all ones
-        for j <- x.indices2 do                                           // add terms in an interleaved fashion
-            xx(?, 2*j+1) = x(?, j)                                       // linear terms
-            xx(?, 2*j+2) = x(?, j)~^2                                    // add quadratic terms
-        end for
+    def apply (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
+               tRng: Range = null, hparam: HyperParameter = hp,
+               bakcast: Boolean = false): ARX_Quad =
 
-        println (s"apply: xx.dims = ${xx.dims}, yy.dim = ${yy.dim}")
-//      println (s"apply: xx = $xx \n yy = $yy")
-        new ARX_Quad (xx, yy, lags, null, hparam)
+        val pp = hparam("pp").toDouble
+        val ppForm = powForm (VectorD (pp))
+        val tForms: TransformMap = Map ("tForm_y" -> null, "yForm_endo" -> null, "ppForm" -> ppForm)
+        val y_ypp = MatrixD (y, ppForm.f(y)).transpose
+        println(ppForm.f(y))
+        val xy    = buildMatrix (xe, y_ypp, hparam, bakcast)
+        val fname = if fname_ == null then formNames (xe.dim2, hparam) else fname_
+        new ARX_Quad (xy, y, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create a `ARX_Quad` object to fit a quadratic surface from a response vector.
-     *  The input/data matrix x is formed from the lagged y vectors as columns in matrix x.
-     *  In addition, lagged exogenous variables are added.
-     *  @param y       the original un-expanded output/response vector
-     *  @param lags    the maximum lag included (inclusive)
-     *  @parax ex      the input matrix for exogenous variables (one per column)
-     *  @param hparam  the hyper-parameters (use Regression.hp for default)
-     *  @param elag1   the minimum exo lag included (inclusive)
-     *  @param elag2   the maximum exo lag included (inclusive)
+    /** Create an `ARX_Quad` object by building an input matrix xy and then calling the
+     *  `ARX_Quad` constructor.  Also rescale the input data.
+     *  @param xe       the matrix of exogenous variable values
+     *  @param y        the endogenous/response vector (main time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     *  @param tForm    the z-transform (rescale to standard normal)
      */
-    def exo (y: VectorD, lags: Int, ex: MatrixD, hparam: HyperParameter = Regression.hp)
-            (elag1: Int = max (1, lags / 5),
-             elag2: Int = max (1, lags)): ARX_Quad =
-        val (x, yy) = buildMatrix4TS (y, lags)                           // column for each lag
-        var xx = new MatrixD (x.dim, 2*x.dim2+1) 
-        xx(?, 0) = VectorD.one (yy.dim)                                  // add first column of all ones
-        for j <- x.indices2 do                                           // add terms in an interleaved fashion
-            xx(?, 2*j+1) = x(?, j)                                       // linear terms
-            xx(?, 2*j+2) = x(?, j)~^2                                    // add quadratic terms
-        end for
-        val endoCols = xx.dim2
-        println (s"exo: endogenous: columns = $endoCols")
+    def rescale (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
+                 tRng: Range = null, hparam: HyperParameter = hp, bakcast: Boolean = false,
+                 tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_Quad =
+        val pp = hparam("pp").toDouble
+        val tForm_y = tForm(y)
+        if tForm_y.getClass.getSimpleName == "zForm" then hp("nneg") = 0
+        val y_scal = tForm_y.f(y)
+        val ppForm = powForm (VectorD (pp))
 
-        xx = xx ++^ ARX.makeExoCols (lags, ex, elag1, elag2)             // add columns for each lagged exo var
-        println (s"exogenous: columns = ${xx.dim2 - endoCols}")
+        var ypp = ppForm.f(y)
+        val tForm_endo = tForm (ypp)
+        ypp = tForm_endo.f(ypp)
 
-        println (s"exo: xx.dims = ${xx.dims}, yy.dim = ${yy.dim}")
-//      println (s"exo: xx = $xx \n yy = $yy")
-        new ARX_Quad (xx, yy, lags, null, hparam)
-    end exo
+        val tForms = Map ("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "ppForm" -> ppForm)
+        val y_ypp = MatrixD (y_scal, ypp).transpose
+
+        val n_exo = xe.dim2
+        val x_exo: MatrixD =
+        if n_exo > 0 then
+            val xe_bfill = new MatrixD (xe.dim, xe.dim2)
+            for j <- xe.indices2 do xe_bfill(?, j) = backfill (xe(?, j))
+            val tForm_exo = tForm (xe_bfill)
+            tForm_exo.f(xe_bfill)
+        else
+            new MatrixD (0, 0)
+
+        val xy    = buildMatrix (x_exo, y_ypp, hparam, bakcast)
+        val fname = if fname_ == null then formNames (n_exo, hparam) else fname_
+        new ARX_Quad (xy, y_scal, hh, n_exo, fname, tRng, hparam, bakcast, tForms)
+    end rescale
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Build the input matrix by combining the p + spec columns for the trend and
+     *  endogenous variable with the q * xe.dim2 columns for the exogenous variables.
+     *  @param xe       the matrix of exogenous variable values
+     *  @param y_ypp    the response vector (time series data) and raised to power pp
+     *  @param hp_      the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     */
+    def buildMatrix (xe: MatrixD, y_ypp: MatrixD, hp_ : HyperParameter, bakcast: Boolean): MatrixD =
+        val (p, q, spec, lwave) = (hp_("p").toInt, hp_("q").toInt , hp_("spec").toInt, hp_("lwave").toDouble)
+        makeMatrix4T (y_ypp(?, 0), spec, lwave, bakcast) ++^         // trend terms
+        makeMatrix4L (y_ypp, p, bakcast) ++^                         // regular lag terms for y and y^pp
+        makeMatrix4EXO (xe, q, 1, bakcast)                           // add exogenous terms
+    end buildMatrix
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Form an array of names for the features included in the model.
+     *  @param n_exo  the number of exogenous variable
+     *  @param hp_    the hyper-parameters
+     */
+    def formNames (n_exo: Int, hp_ : HyperParameter): Array [String] =
+        val (p, q, spec) = (hp_("p").toInt, hp_("q").toInt , hp_("spec").toInt)
+        val names = ArrayBuffer [String] ()
+        for j <- 0 until n_exo; k <- q to 1 by -1 do names += s"xe${j}l$k"
+        MakeMatrix4TS.formNames (spec, p, true) ++ names.toArray
+    end formNames
 
 end ARX_Quad
 
+import Example_Covid._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest` main function tests the `ARX_Quad` class.
- *  This test is used to CHECK that the buildMatrix4TS function is working correctly.
- *  May get NaN for some maximum lags (p) due to multi-collinearity.
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest
- */
-@main def ARX_QuadTest (): Unit =
-
-    val m = 30
-    val y = VectorD.range (1, m)                                         // used to CHECK the buildMatrix4TS function
-
-    for p <- 1 to 10 do                                                  // autoregressive hyper-parameter p
-        banner (s"Test: ARX_Quad with $p lags")
-        val mod = ARX_Quad (y, p)                                        // create model for time series data
-        mod.trainNtest ()()                                              // train the model on full dataset
-        println (mod.summary)
-
-        val yp = mod.predict (mod.getX)
-        new Plot (null, mod.getY, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
-    end for
-
-end ARX_QuadTest
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest2` main function tests the `ARX_Quad` class on real data:
- *  Forecasting lake levels.
+/** The `aRX_QuadTest` main function tests the `ARX_Quad` class on real data:
+ *  Forecasting Lake Levels using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest2
+ *  > runMain scalation.modeling.forecasting.aRX_QuadTest
+ *
+@main def aRX_QuadTest (): Unit =
+
+    val hh = 3                                                          // maximum forecasting horizon
+
+    val mod = ARX_Quad (y, hh)                                          // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
+
+    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+    Forecaster.evalForecasts (mod, mod.getYb, hh)
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+
+end aRX_QuadTest
  */
-@main def ARX_QuadTest2 (): Unit =
 
-    import Example_LakeLevels.y
-    val h = 2                                                            // the forecasting horizon
 
-    for p <- 1 to 8 do                                                   // autoregressive hyper-parameter p
-        banner (s"Test: ARX_Quad with $p lags")
-        val mod = ARX_Quad (y, p)                                        // create model for time series data
-        mod.trainNtest ()()                                              // train the model on full dataset
-        println (mod.summary)                                            // parameter/coefficient statistics
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRX_QuadTest2` main function tests the `ARX_Quad` class on real data:
+ *  Forecasting Lake Levels using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+ *  > runMain scalation.modeling.forecasting.aRX_QuadTest2
+ *
+@main def aRX_QuadTest2 (): Unit =
 
-        banner ("Predictions")
-        val yy = mod.getY                                                // trimmed actual response vector
-        val xx = mod.getX
-        val yp = mod.predict (xx)                                        // predicted response vector
-        new Plot (null, yy, yp, s"y vs. yp for ${mod.modelName} with $p lags", lines = true)
-        println (s"yp = $yp")
+    val hh = 3                                                          // maximum forecasting horizon
 
-        banner ("Forecasts")
-//      val yf = mod.forecast (yp, h)                                    // forecasted response matrix
-        val yf = mod.forecastAll (yy, xx, h)                             // forecasted response matrix
-        for k <- yf.indices2 do
-            new Plot (null, yy, yf(?, k), s"yy vs. yf_$k for ${mod.modelName} with $p lags", lines = true)
-        end for
-        println (s"yf = $yf")
-        println (s"yf.dims = ${yf.dims}")
-        assert (yf(?, 0) == yp)                                          // first forecast = predicted values
+    val mod = ARX_Quad (y, hh)                                          // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
 
-        banner ("Forecast QoF")
-        println (testForecast (mod, y, yf, p))                           // QoF
-//      println (Fit.fitMap (mod.testf (k, y)))                          // evaluate k-units ahead forecasts
+    mod.rollValidate ()                                                 // TnT with Rolling Validation
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+
+end aRX_QuadTest2
+ */
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRX_QuadTest3` main function tests the `ARX_Quad` class on real data:
+ *  Forecasting COVID-19 using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  > runMain scalation.modeling.forecasting.aRX_QuadTest3
+ */
+@main def aRX_QuadTest3 (): Unit =
+
+//  val exo_vars  = NO_EXO
+    val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    val (xxe, yy) = loadData (exo_vars, response)
+    println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
+
+//  val xe = xxe                                                        // full
+    val xe = xxe(0 until 116)                                           // clip the flat end
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
+    hp("pp")    = 1.9                                                   // use 1.9 for the power/exponent (default is 2)
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
+
+    for p <- 6 to 6; q <- 4 to 4; s <- 1 to 1 do                        // number of endo lags; exo lags; trend
+        hp("p")    = p                                                  // endo lags
+        hp("q")    = q                                                  // exo lags
+        hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
+        val mod = ARX_Quad.rescale (xe, y, hh)                          // create model for time series data
+        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+        mod.trainNtest_x ()()                                           // train and test on full dataset
+        println (mod.summary ())                                        // statistical summary of fit
+
+//      mod.setSkip (p)                                                 // full AR-formula available when t >= p
+        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
+        mod.diagnoseAll (mod.getY, mod.getYf)
+//      Forecaster.evalForecasts (mod, mod.getYb, hh)
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for
 
-end ARX_QuadTest2
+end aRX_QuadTest3
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest3` main function tests the `ARX_Quad` class on real data:
- *  Forecasting COVID-19.  Does In-Sample Testing on Endogenous variable.
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest3
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRX_QuadTest4` main function tests the `ARX_Quad` class on real data:
+ *  Forecasting COVID-19 using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  > runMain scalation.modeling.forecasting.aRX_QuadTest4
  */
-@main def ARX_QuadTest3 (): Unit =
+@main def aRX_QuadTest4 (): Unit =
 
-    val LAGS = 5                                                         // number of lags of y
-    val h    = 2                                                         // forecasting horizon
+    val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    val (xxe, yy) = loadData (exo_vars, response)
+    println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    val exo_vars = Array.ofDim [String] (0)                              // no exogenous variable in this case
-    val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
-    val iskip = yy.indexWhere (_ >= 6.0)                                 // find day with at least 6 deaths
-    println (s"iskip = $iskip is first day with at least 6 deaths")
+//  val xe = xxe                                                        // full
+    val xe = xxe(0 until 116)                                           // clip the flat end
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
+    hp("pp")    = 1.5                                                   // use 1.5 for the power/exponent (default is 2)
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
-    val ex = xx(iskip until xx.dim)                                      // trim away the first iskip rows
-    val y  = yy(iskip until yy.dim)
-    println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
+    for p <- 6 to 6; q <- 4 to 4; s <- 1 to 1 do                                     // number of lags; trend
+        hp("p")    = p                                                  // endo lags
+        hp("q")    = q                                                  // exo lags
+        hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
+        val mod = ARX_Quad.rescale (xe, y, hh)                          // create model for time series data
 
-    banner ("Test ARX_Quad on COVID-19 Weekly Data")
-    val mod = ARX_Quad (y, LAGS)                                         // create model for time series data
-    val (yp, qof) = mod.trainNtest ()()                                  // train the model on full dataset
-    new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)
+        banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
+        mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
-    banner (s"Multi-horizon forecasting using the recursive method")
-    val yx = mod.getX
-    val yf = mod.forecastAll (y, yx, h)                                  // forecasted response matrix
-    for k <- 0 to h do
-        new Plot (null, y, yf(?, k), s"y vs. yf_$k for ${mod.modelName} with $LAGS lags", lines = true)
-    end for
-    println (s"yf = $yf")
-    println (s"yf.dims = ${yf.dims}, y.dim = ${y.dim}, yp.dim = ${yp.dim}")
-    val yf0 = yf(?, 0)(0 until y.dim)
-    val yf1 = yf(?, 1)(1 until y.dim)
-    Forecaster.differ (yf0, y)
-    Forecaster.differ (yf1, yp)
-    assert (yf0 =~ y)                                                    // zeroth forecast = actual values
-    assert (yf1 =~ yp)                                                   // first forecast = predicted values
-
-    for k <- 1 to h do
-        val (yfh, qof) = mod.testF (k, y, yx)                            // k-steps ahead forecast and its QoF
-        println (s"Evaluate QoF for horizon $k:")
-        println (FitM.fitMap (qof, QoF.values.map (_.toString)))         // evaluate k-steps ahead forecasts
+        mod.setSkip (0)
+        mod.rollValidate ()                                             // TnT with Rolling Validation
+        println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
+        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
-    banner (s"Feature Selection Technique: stepRegression")
-    val (cols, rSq) = mod.stepRegressionAll (cross = false)              // R^2, R^2 bar, sMAPE, NA
-    val k = cols.size
-    println (s"k = $k, n = ${mod.getX.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for ARX_Quad with tech", lines = true)
-    println (mod.summary ())
-
-    banner ("Feature Importance")
-    println (s"Stepwise: rSq = $rSq")
-//  val imp = mod.importance (cols.toArray, rSq)
-//  for (c, r) <- imp do println (s"col = $c, \t ${ox_fname(c)}, \t importance = $r")
-
-end ARX_QuadTest3
+end aRX_QuadTest4
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest4` main function tests the `ARX_Quad` class on real data:
- *  Forecasting COVID-19 Weekly Data.  Does In-Sample Testing on endogenous and exogenous variables.
- *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47, 18, 9, 6 best R^2-bar
- *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47           best sMAPE
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest4
+/** The `aRX_QuadTest5` main function tests the `ARX_Quad` class on real data:
+ *  Forecasting COVID-19 using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  This version performs feature selection.
+ *  > runMain scalation.modeling.forecasting.aRX_QuadTest5
  */
-@main def ARX_QuadTest4 (): Unit =
+@main def aRX_QuadTest5 (): Unit =
 
-    val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-    val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
-    val iskip = yy.indexWhere (_ >= 6.0)                                 // find day with at least 6 deaths
-    println (s"iskip = $iskip is first day with at least 6 deaths")
+    val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    val (xxe, yy) = loadData (exo_vars, response)
+    println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    val ex = xx(iskip until xx.dim)                                      // trim away the first iskip rows
-    val y  = yy(iskip until yy.dim)
-    println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
+//  val xe = xxe                                                        // full
+    val xe = xxe(0 until 116)                                           // clip the flat end
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
+    val p  = 10
+    val q  = 10
+    hp("p")     = p                                                     // endo lags
+    hp("pp")    = 1.5                                                   // use 1.5 for the power/exponent (default is 2)
+    hp("q")     = q                                                     // exo lags
+    hp("spec")  = 5                                                     // trend specification: 0, 1, 2, 3, 5
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
-    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
-    val mod = ARX_Quad.exo (y, 10, ex)(1, 11)                            // create model for time series data with exo
-    val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
-    new Plot (null, mod.getY, yp, s"${mod.modelName}, yy vs. yp", lines = true)
+    val mod = ARX_Quad (xe, y, hh)                                      // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
+    println (mod.summary ())                                            // statistical summary of fit
 
-//  val tech = SelectionTech.Forward                                     // pick one feature selection technique
-//  val tech = SelectionTech.Backward
-    val tech = SelectionTech.Stepwise
+//  mod.setSkip (p)                                                     // full AR-formula available when t >= p
+    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+    mod.diagnoseAll (y, mod.getYf)                                      // QoF for each horizon
+//  Forecaster.evalForecasts (mod, mod.getYb, hh)
+//  println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
-    banner (s"Feature Selection Technique: $tech")
-    val (cols, rSq) = mod.selectFeatures (tech, cross = false)           // R^2, R^2 bar, sMAPE, NA
+    banner ("Feature Selection Technique: Forward")
+    val (cols, rSq) = mod.forwardSelAll ()                              // R^2, R^2 bar, sMAPE, R^2 cv
+//  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
     val k = cols.size
-    println (s"k = $k, n = ${mod.getX.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for ARX_Quad with tech", lines = true)
-    println (mod.summary ())
+    println (s"k = $k")
+    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
+               s"R^2 vs n for ${mod.modelName}", lines = true)
+    println (s"rSq = $rSq")
 
-    banner ("Feature Importance")
-    println (s"$tech: rSq = $rSq")
-//  val imp = mod.importance (cols.toArray, rSq)
-//  for (c, r) <- imp do println (s"col = $c, \t ${Example_Covid.header(c)}, \t importance = $r")
-
-end ARX_QuadTest4
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest5` main function tests the `ARX_Quad` class on real data:
- *  Forecasting COVID-19 Weekly Data.  Does TnT Testing on endogenous and exogenous variables.
- *  Determine the terms to include in the model for TnT from using Stepwise on In-Sample.
- *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47, 18, 9, 6 best R^2-bar
- *  Stepsise gives: 0, 19, 40, 37, 60, 17, 15, 53, 5, 20, 50, 49, 48, 47           best sMAPE
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest5
- */
-@main def ARX_QuadTest5 (): Unit =
-
-    val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-    val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
-    val iskip = yy.indexWhere (_ >= 6.0)                                 // find day with at least 6 deaths
-    println (s"iskip = $iskip is first day with at least 6 deaths")
-
-    val ex = xx(iskip until xx.dim)                                      // trim away the first iskip rows
-    val y  = yy(iskip until yy.dim)
-    println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
-
-    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
-    val mod = ARX_Quad.exo (y, 10, ex)(1, 11)                            // create model for time series data with exo
-    val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
-    new Plot (null, mod.getY, yp, s"${mod.modelName}, yy vs. yp", lines = true)
-
-//  val tech = SelectionTech.Forward                                     // pick one feature selection technique
-//  val tech = SelectionTech.Backward
-    val tech = SelectionTech.Stepwise
-
-    banner (s"Feature Selection Technique: $tech")
-    val (cols, rSq) = mod.selectFeatures (tech, cross = false)           // R^2, R^2 bar, sMAPE, NA
-    val k = cols.size
-    println (s"k = $k, n = ${mod.getX.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for ARX_Quad with tech", lines = true)
-    println (mod.summary ())
-
-    banner ("Feature Importance")
-    println (s"$tech: rSq = $rSq")
-//  val imp = mod.importance (cols.toArray, rSq)
-//  for (c, r) <- imp do println (s"col = $c, \t ${Example_Covid.header(c)}, \t importance = $r")
-
-    banner ("Run TnT on Best model")
-    val bmod = mod.getBest._3                                            // get the best model from feature selection
-    val (x_, y_, xtest, ytest) = ARX.split_TnT (bmod.getX, bmod.getY)
-    val (yptest, qoftest) = bmod.trainNtest (x_, y_)(xtest, ytest)       // train on (x_, y_) and test on (xtest, ytest)
-    new Plot (null, ytest, yptest, s"${mod.modelName}, ytest vs. yptest", lines = true)
-
-end ARX_QuadTest5
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `ARX_QuadTest6` main function tests the `ARX_Quad` class on real data:
- *  Forecasting COVID-19 Weekly Data.  Does Rolling Validation on endogenous and exogenous variables.
- *  Determine the terms to include in the model  HOW?
- *  > runMain scalation.modeling.forecasting.ARX_QuadTest6
- */
-@main def ARX_QuadTest6 (): Unit =
-
-    val LAGS = 7
-
-    val exo_vars = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-    val (xx, yy) = Example_Covid.loadData (exo_vars, "new_deaths")
-    val iskip = yy.indexWhere (_ >= 6.0)                                 // find day with at least 6 deaths
-    println (s"iskip = $iskip is first day with at least 6 deaths")
-
-    val ex = xx(iskip until xx.dim)                                      // trim away the first iskip rows
-    val y  = yy(iskip until yy.dim)
-    println (s"ex.dims = ${ex.dims}, y.dim = ${y.dim}")
-
-    banner ("Test In-Sample ARX_Quad.exo on COVID-19 Weekly Data")
-    val mod = ARX_Quad.exo (y, LAGS, ex)(1, LAGS+1)                      // create model for time series data with exo
-
-    val (yp, qof) = mod.trainNtest ()()                                  // train on full and test on full
-    new Plot (null, mod.getY, yp, s"${mod.modelName}, y vs. yp", lines = true)
-
-//  val tech = SelectionTech.Forward                                     // pick one feature selection technique
-//  val tech = SelectionTech.Backward
-    val tech = SelectionTech.Stepwise
-
-    banner (s"Feature Selection Technique: $tech")
-    val (cols, rSq) = mod.selectFeatures (tech, cross = false)           // R^2, R^2 bar, sMAPE, NA
-    val k = cols.size
-    println (s"k = $k, n = ${mod.getX.dim2}")
-    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "NA"),
-               s"R^2 vs n for ARX with tech", lines = true)
-    println (mod.summary ())
-
-    banner ("Feature Importance")
-    println (s"$tech: rSq = $rSq")
-//  val imp = mod.importance (cols.toArray, rSq)
-//  for (c, r) <- imp do println (s"col = $c, \t ${header(c)}, \t importance = $r")
-
-    banner ("Run Rolling Validation on ARX_Quad Best model")
-    val bmod = mod.getBest._3                                            // get the best model from feature selection
-    ARX.rollValidate (bmod, 1)
-
-end ARX_QuadTest6
-
-/*
-Results for ARX_QuadTest4
-key:
-0      intercept - forced in the model
-1..10  new_deaths
-11..20 new_deaths^2
-21..30 icu_patients
-31..40 hosp_patients
-41..50 new_tests
-51..60 people_vaccinated
---------------------------------------------------------
-Stepwise Results - stops after adding 16 terms out of 61
---------------------------------------------------------
-1.  0      intercept
-2.  19     new-deaths^2      @ lag 9      94.4965,	94.4614,	14.4024
-3.  40     new-test          @ lag 10     96.7542,	96.7126,	12.5111
-4.  37     hosp_patients     @ lag 7      97.5908,	97.5442,	10.8841,
-5.  60     people_vaccinated @ lag 10     97.7216,	97.6624,	10.7154
-6.  17     new-deaths^2      @ lag 7      97.8073,	97.7356,	10.5200
-7.  15     new-deaths^2      @ lag 5      97.9416,	97.8603,	10.3548
-8.  53     people_vaccinated @ lag 3      98.0055,	97.9130,	10.3473
-9.  5      new_deaths        @ lag 5      98.0713,	97.9685,	9.87575
-10. 20     new-deaths^2      @ lag 10     98.1416,	98.0294,	10.1097
-11. 50     new_tests         @ lag 10     98.1658,	98.0419,	9.72346
-12. 49     new_tests         @ lag 9      98.2019,	98.0673,	9.44431
-13. 48     new_tests         @ lag 8      98.2456,	98.1014,	9.28453  
-14. 47     new_tests         @ lag 7      98.2596,	98.1036,	9.24678 **
-15. 18     new-deaths^2      @ lag 8      98.2764,	98.1088,	9.30558
-16. 9      new_deaths        @ lag 9      98.2891,	98.1096,	9.40272
-17. 6      new_deaths        @ lag 6      98.2805,	98.1133,	9.53115
---------------------------------------------------------
-Backward Elimination Results - truncated
---------------------------------------------------------
-1.  0      intercept
-2.  19     new-deaths^2      @ lag 9     94.4965,	94.4614,	14.4024
-3.  30     icu-patients      @ lag 10    96.4830,	96.4379,	12.0952
-4.  29     icu-patients      @ lag 9     97.4180,	97.3680,	10.8648
-5.  39     hosp_patients     @ lag 9     97.5852,	97.5225,	10.6671
-6.  8      new-deaths        @ lag 8     97.6205,	97.5427,	10.5974
-7.  15     new-deaths^2      @ lag 5     97.7520,	97.6632,	10.5282
-8.  7      new_deaths        @ lag 7     97.8385,	97.7383,	10.7373
-9.  9      new_deaths        @ lag 9     97.9804,	97.8727,	10.4594
-10. 60     people_vaccinated @ lag 10    98.1069,	97.9925,	10.5465
-11. 56     people_vaccinated @ lag 6     98.1850,	98.0624,	10.0418
-12. 37     hosp_patients     @ lag 7     98.2482,	98.1172,	9.78951
-13. 28     icu-patients      @ lag 8     98.2995,	98.1597,	9.66914
-14. 26     icu-patients      @ lag 6     98.3131,	98.1619,	9.65001
-15. 27     icu-patients      @ lag 7     98.3450,	98.1841,	9.55611
-16. 35     hosp_patients     @ lag 5     98.3621,	98.1903,	9.48847 **
-17. 24     icu-patients      @ lag 4     98.3989,	98.2185,	9.49409    
---------------------------------------------------------
-Forward Selection Results - truncated
---------------------------------------------------------
-1.  0      intercept
-2.  19     new-deaths^2      @ lag 9      94.4965,      94.4614,        14.4024
-3.  40     new-test          @ lag 10     96.7542,      96.7126,        12.5111
-4.  37     hosp_patients     @ lag 7      97.5908,      97.5442,        10.8841,
-5.  60     people_vaccinated @ lag 10     97.7216,      97.6624,        10.7154
-6.  17     new-deaths^2      @ lag 7      97.8073,      97.7356,        10.5200
-7.  10     new_deaths        @ lag 10     97.9416,	97.8603,	10.3548
-8.  15     new-deaths^2      @ lag 5      98.0055,	97.9130,	10.3473
-9.  53     people_vaccinated @ lag 3      98.0713,	97.9685,	9.87575
-10. 5      new_deaths        @ lag 5      98.1416,	98.0294,	10.1097
-11. 20     new-deaths^2      @ lag 10     98.1658,	98.0419,	9.72346
-12. 50     new_tests         @ lag 10     98.2019,	98.0673,	9.44431
-13. 45     new_tests         @ lag 5      98.2456,	98.1014,	9.28453
-14. 49     new_tests         @ lag 9      98.2596,	98.1036,	9.24678 **
-15. 48     new_tests         @ lag 8      98.2764,	98.1088,	9.30558
-16. 47     new_tests         @ lag 7      98.2891,	98.1096,	9.40272
-17. 18     new-deaths^2      @ lag 8      98.3041,	98.1131,	9.24220
-*/
+end aRX_QuadTest5
 

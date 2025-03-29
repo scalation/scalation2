@@ -33,21 +33,22 @@ package random
 case class Random (stream: Int = 0)
      extends RNG (stream):
 
-    private val M1     = 2147483647L                   // modulus for MRG1 (2^31 - 1)
-    private val M2     = 2147462579L                   // modulus for MRG2 (2^31 - 21069)
-    private val MASK12 = 511L                          // mask to extract  9 lsb's (2^9 - 1)
-    private val MASK13 = 16777215L                     // mask to extract 24 lsb's (s^24 - 1)
-    private val MASK21 = 65535L                        // mask to extract 16 lsb's (s^16 - 1)
-    private val MULT2  = 21069L                        // multiplier
-    private val NORM   = 4.656612873077393e-10         // 1.0 / (M1 + 1.0) normalization to (0, 1)
-    private val x      = RandomSeeds.seeds (stream)    // 6-dimensional vector of seed values
+    private val M1     = 2147483647L                     // modulus for MRG1 (2^31 - 1)
+    private val M2     = 2147462579L                     // modulus for MRG2 (2^31 - 21069)
+    private val MASK12 = 511L                            // mask to extract  9 lsb's (2^9 - 1)
+    private val MASK13 = 16777215L                       // mask to extract 24 lsb's (s^24 - 1)
+    private val MASK21 = 65535L                          // mask to extract 16 lsb's (s^16 - 1)
+    private val MULT2  = 21069L                          // multiplier
+    private val NORM   = 4.656612873077393e-10           // 1.0 / (M1 + 1.0) normalization to (0, 1)
+    private val strm   = stream % RandomSeeds.N_STREAMS  // can't go beyond stream limit
+    private val x      = RandomSeeds.seeds (strm)        // 6-dimensional vector of seed values
 
-    private var x11    = x(0).toLong                   // x_i-1 for MRG1
-    private var x12    = x(1).toLong                   // x_i-2 for MRG1
-    private var x13    = x(2).toLong                   // x_i-3 for MRG1
-    private var x21    = x(3).toLong                   // x_i-1 for MRG2
-    private var x22    = x(4).toLong                   // x_i-2 for MRG2
-    private var x23    = x(5).toLong                   // x_i-3 for MRG2
+    private var x11    = x(0).toLong                     // x_i-1 for MRG1
+    private var x12    = x(1).toLong                     // x_i-2 for MRG1
+    private var x13    = x(2).toLong                     // x_i-3 for MRG1
+    private var x21    = x(3).toLong                     // x_i-1 for MRG2
+    private var x22    = x(4).toLong                     // x_i-2 for MRG2
+    private var x23    = x(5).toLong                     // x_i-3 for MRG2
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the next random number as a real (Double) in the interval (0, 1).

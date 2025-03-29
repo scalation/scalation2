@@ -14,6 +14,7 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
+import scala.collection.immutable.Set
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.runtime.ScalaRunTime.stringOf
@@ -78,12 +79,26 @@ class VectorL (val dim: Int,
     def apply (idx: IIndexedSeq [Int]): VectorL = VectorL (for i <- idx.indices yield v(idx(i)))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the elements not equal to index ix of this vector.
+     *  @param ix  the index to skip
+     */
+    def not (ix: Int): VectorL =
+        VectorL (for i <- indices if i != ix yield v(i))
+    end not
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the elements not in index sequence idx of this vector.
      *  @param idx  the index sequence of elements to skip
      */
     def not (idx: IndexedSeq [Int]): VectorL =
-        VectorL (for i <- indices if ! (idx contains i) yield v(i))
+        VectorL (for i <- indices if ! (idx `contains` i) yield v(i))
     end not
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a vector containing all but the first n elements of this vector.
+     *  @param n  the number of elements to be dropped
+     */
+    override def drop (n: Int): VectorL = new VectorL (dim - n, v.drop (n))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the elements in
@@ -91,13 +106,13 @@ class VectorL (val dim: Int,
      *  Note split and split_ produce different element orders.
      *  @param idx  the element indices to include/exclude
      */
-    def split (idx: IndexedSeq [Int]): (VectorL, VectorL) =
+    def split (idx: Set [Int]): (VectorL, VectorL) =
         val len = idx.size
         val a   = new VectorL (len)
         val b   = new VectorL (dim - len)
         var j, k = 0
         for i <- indices do
-            if idx contains i then
+            if idx `contains` i then
                 a.v(j) = v(i)
                 j += 1
             else
@@ -107,6 +122,8 @@ class VectorL (val dim: Int,
         end for
         (a, b)
     end split
+
+    inline def split (idx: IndexedSeq [Int]): (VectorL, VectorL) = split (idx.toSet [Int])
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the elements in
@@ -152,6 +169,13 @@ class VectorL (val dim: Int,
     def update (r: Range, a: Long): Unit = for i <- r do v(i) = a
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update the i-th element (or in range) of this vector.
+     *  @param i  the index of the element to update
+     *  @param y  the update vector/indexed sequence to assign
+     */
+    def update (r: Range, y: IndexedSeq [Long]): Unit = for i <- r do v(i) = y(i)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set all elements in this vector to a (or vector y.
      *  @param a  the value to be assigned
      */
@@ -175,7 +199,7 @@ class VectorL (val dim: Int,
      *  As a partial order some vectors may not be comparable.
      *  @param bb  the other vector
      */
-    def tryCompareTo [B >: VectorL: AsPartiallyOrdered] (bb: B): Option [Int] =
+    infix def tryCompareTo [B >: VectorL: AsPartiallyOrdered] (bb: B): Option [Int] =
         if ! bb.isInstanceOf [VectorL] then return None
         val b  = bb.asInstanceOf [VectorL]
         var le = true
@@ -194,11 +218,6 @@ class VectorL (val dim: Int,
     /** Return whether this vector is non-negative (contains no negative values).
      */
     def isNonnegative: Boolean = v.forall (_ >= 0L)
-/*
-        for e <- v if e < 0L do return false
-        true
-    end isNonnegative
-*/
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Concatenate this vector and vector y.
@@ -288,13 +307,13 @@ class VectorL (val dim: Int,
     /** Return the difference between this vector and vector y.
      *  @param y  the other vector/indexed sequence
      */
-    def diff (y: IndexedSeq [Long]): VectorL = { val a = v diff y; new VectorL (a.size, a) }
+    infix def diff (y: IndexedSeq [Long]): VectorL = { val a = v `diff` y; new VectorL (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the intersection of this vector and vector y.
      *  @param y  the other vector/indexed sequence
      */
-    def intersect (y: IndexedSeq [Long]): VectorL = { val a = v intersect y; new VectorL (a.size, a) }
+    infix def intersect (y: IndexedSeq [Long]): VectorL = { val a = v `intersect` y; new VectorL (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Form a new vector consisting of the unique values in this vector.
@@ -302,9 +321,23 @@ class VectorL (val dim: Int,
     override def distinct: VectorL = { val a = v.distinct; new VectorL (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Count the number of unique/distinct values in this vector.
+     */
+    def countDistinct: Int = v.distinct.size
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reverse the elements in this vector.
      */
     override def reverse: VectorL = { val a = v.reverse; new VectorL (a.size, a) }
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Determine whether this vector is sorted in ascending order.
+     */
+    def isSorted: Boolean =
+        var i = 0
+        while i < dim-1 do if v(i) > v(i+1) then return false else i += 1
+        true
+    end isSorted
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Sort the elements in this vector according to ord.lt (ascending order).
@@ -337,11 +370,27 @@ class VectorL (val dim: Int,
     /** Compute the dot (inner) product of vectors this and y.
      *  @param  the other vector/indexed sequence
      */
-    def dot (y: IndexedSeq [Long]): Long =
+    infix def dot (y: IndexedSeq [Long]): Long =
         var sum = 0L
         for i <- v.indices do sum += v(i) * y(i)
         sum
     end dot
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a new vector consisting of the maximum of this and y's corresponding elements.
+     *  @param y  the other vector/indexed sequence
+     */
+    infix def maxv (y: IndexedSeq [Long]): VectorL =
+        VectorL (for i <- indices yield if v(i) >= y(i) then v(i) else y(i))
+    end maxv
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a new vector consisting of the minimum of this and y's corresponding elements.
+     *  @param y  the other vector/indexed sequence
+     */
+    infix def minv (y: IndexedSeq [Long]): VectorL =
+        VectorL (for i <- indices yield if v(i) <= y(i) then v(i) else y(i))
+    end minv
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Find the argument maximum of this vector (index of maximum element).
@@ -392,6 +441,7 @@ class VectorL (val dim: Int,
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute three sums for the k-prefix, middle and k-suffix of this vector.
+     *  @param k  the integer specifying the size of the prefix
      */
     def sums (k: Int): (Long, Long, Long) =
         var s0, s1, s2 = 0L
@@ -405,6 +455,7 @@ class VectorL (val dim: Int,
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute three squared norms for the k-prefix, middle and k-suffix of this vector.
+     *  @param k  the integer specifying the size of the prefix
      */
     def normSqs (k: Int): (Long, Long, Long) =
         var s0, s1, s2 = 0L
@@ -451,17 +502,17 @@ class VectorL (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert to a probability vector, by normalizing so that it sums to one.
      */
-    def toProbability: VectorD = this.toDouble * (1.0 / v.sum)
+    def toProbability: VectorD = toDouble * (1.0 / v.sum)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Normalize this vector so its length is one (unit vector).
      */
-    def normalize: VectorD = this.toDouble * (1.0 / norm)
+    def normalize: VectorD = toDouble * (1.0 / norm)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Normalize this vector to have a maximum of one.
      */
-    def normalize1: VectorD = this.toDouble * (1.0 / max)
+    def normalize1: VectorD = toDouble * (1.0 / max)
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Count the number of zero elements in the this vector.
@@ -513,7 +564,21 @@ class VectorL (val dim: Int,
     /** Indirectly find the k-median (k-th smallest element) of array v.
      *  @param k  the type of median (e.g., k = (dim+1)/2 is the median)
      */
-    def median (k: Int = (dim+1)/2): Long = median (Array.range (0, dim), 0, dim-1, k)
+    def median (k: Int = (dim+1)/2): Long =
+        if dim <= 0 then flaw ("median", s"no vector to take the median of k = $k, dim = $dim")
+        median (Array.range (0, dim), 0, dim-1, k)
+    end median
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the fraction quantile.
+     *  @param fraction  the fraction/percentile to take
+     */
+    def quantile (fraction: Double): Long =
+        var k = (fraction * dim).toInt
+        if k >= dim then k = dim - 1
+        if k <= 0   then k = 1
+        median (k)
+    end quantile
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the averaged median, which is the median when dim is odd and
@@ -521,6 +586,13 @@ class VectorL (val dim: Int,
      */
     def median_ : Long = if dim % 2 == 0 then (median () + median ((dim+2)/2)) / 2
                          else median ()
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Given the rank order for this vector, return its elements in that order.
+     *  The rank order may be established using indirect sorting (e.g., iqsort).
+     *  @param rank  the rank order of elements in this vector
+     */
+    def reorder (rank: Array [Int]): VectorL = VectorL (for i <- indices yield v(rank(i)))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Recursively and indirectly sort the p to r partition of array v 
@@ -544,7 +616,7 @@ class VectorL (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort this vector using QuickSort, returning the rank order.
      */
-    def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
+    inline def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort the p to r partition of array v using SelectionSort.
@@ -565,6 +637,21 @@ class VectorL (val dim: Int,
     /** Indirectly sort this vector using SelectionSort, returning the rank order.
      */
     def iselsort: Array [Int] = iselsort (Array.range (0, dim), 0, dim-1)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Indirectly sort this vector using Selection Sort, returning the rank order
+     *  of the stop smallest elements.
+     *  @param stop  only sort stop number of smallest elements
+     */
+    def iselsort (stop: Int = dim): Array [Int] =
+        val rk = Array.range (0, dim)
+        for i <- 0 until stop do
+            var k = i
+            for j <- i+1 until dim if v(rk(j)) < v(rk(k)) do k = j
+            if i != k then iswap (rk, i, k)
+        end for
+        rk.slice (0, stop)
+    end iselsort
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly partition the array from 'p' to 'r' into a left partition
@@ -611,7 +698,16 @@ class VectorL (val dim: Int,
     /** Compute the sample mean (also the population mean, they are the same).
      *  >> E(X)
      */
-    def mean: Double = sum / nd
+    inline def mean: Double = sum / nd
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the centered norm-squared of this vector.
+     */
+    def cnormSq: Double =
+        var e, s, ss = 0.0
+        for i <- indices do { e = v(i).toDouble; s += e; ss += e * e }
+        ss - s * s / nd
+    end cnormSq
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the sample variance (and population population).
@@ -626,8 +722,8 @@ class VectorL (val dim: Int,
     /** Compute the sample covariance (or population covariance) of this vector with vector y.
      *  @param y  the other vector
      */
-    def cov (y: IndexedSeq [Long]): Double  = ((this dot y) - sum * y.sum / nd) / (nd-1)
-    def cov_ (y: IndexedSeq [Long]): Double = ((this dot y) - sum * y.sum / nd) / nd
+    infix def cov (y: IndexedSeq [Long]): Double  = ((this dot y) - sum * y.sum / nd) / (nd-1)
+    infix def cov_ (y: IndexedSeq [Long]): Double = ((this dot y) - sum * y.sum / nd) / nd
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the mean square (ms) (or root mean square (rms)) of this vector.
@@ -654,6 +750,24 @@ class VectorL (val dim: Int,
         sum / n
     end acov
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag cross-covariance of this vector and vector y for stationary
+     *  series with both means pre-computed.
+     *  @param k     the lag parameter (0 <= k < n)
+     *  @param mu    the pre-computed mean for this
+     *  @param y     the other vector
+     *  @param mu_y  the pre-computed mean for y
+     */
+    def ccov (k: Int, mu: Double, y: VectorL, mu_y: Double): Double =
+        var s  = 0.0
+        for i <- 0 until dim-k do s += (v(i) - mu) * (y.v(i+k) - mu_y)
+        s / (dim-1)
+    end ccov
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n)
+     */
     def acov_ (k: Int = 1): Double =
         val n   = dim - k
         val ss  = sums (k)
@@ -669,7 +783,7 @@ class VectorL (val dim: Int,
      *  one if the vectors are the same, or -0 (indicating undefined).
      *  @param y  the other vector
      */
-    def corr (y: VectorL): Double =
+    infix def corr (y: VectorL): Double =
         val c = cov (y) / math.sqrt (variance * y.variance)
         if c.isNaN then if this == y then 1.0 else NO_DOUBLE else c
     end corr
@@ -681,6 +795,22 @@ class VectorL (val dim: Int,
      */
     def acorr (k: Int = 1): Double  = acov (k) / variance
 
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag cross-correlation of this vector (assumes a stationary
+     *  process vector, if not its an approximation).
+     *  @param y  the other vector
+     *  @param k  the lag parameter (0 <= k < n)
+     */
+    def ccorr (y: VectorL, k: Int = 1): Double =
+        val mu   = mean
+        val mu_y = y.mean
+        ccov (k, mu, y, mu_y) / (stdev * y.stdev)
+    end ccorr
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-correlation of this vector for a non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n)
+     */
     def acorr_ (k: Int = 1): Double =
         val n   = dim - k
         val ss  = sums (k)
@@ -699,7 +829,7 @@ class VectorL (val dim: Int,
      *  @see  en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
      *  @param y  the other vector
      */
-    def scorr (y: VectorL): Double =
+    infix def scorr (y: VectorL): Double =
         val rk1 = iqsort                                       // rank order for this vector
         val rk2 = y.iqsort                                     // rank order for vector y
         var sum = 0.0
@@ -714,7 +844,7 @@ class VectorL (val dim: Int,
      *  @see www.mathworks.com/help/stats/skewness.html
      *  >> E(X - μ)^3 / σ^3
      */
-    def skew: Double   = ((this.toDouble - mean)~^3).sum / (nd * stdev_ ~^3)
+    def skew: Double   = ((toDouble - mean)~^3).sum / (nd * stdev_ ~^3)
     def skew_ : Double = skew * math.sqrt (nd * (nd-1)) / (nd-2)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -723,14 +853,15 @@ class VectorL (val dim: Int,
      *  @see www.mathworks.com/help/stats/kurtosis.html
      *  >> E(X - μ)^4 / σ^4
      */
-    def kurtosis: Double = ((this.toDouble - mean)~^4).sum / (nd * variance_ ~^2)
+    def kurtosis: Double = ((toDouble - mean)~^4).sum / (nd * variance_ ~^2)
     def kurtosis_ : Double = (nd-1) * ((nd+1) * kurtosis - 3 * (nd-1)) / ((nd-2) * (nd-3)) + 3
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a standardized version of the vector by subtracting the mean and
      *  dividing by the standard deviation (e.g., Normal -> Standard Normal).
      */
-    def standardize: VectorD = (this.toDouble - mean) / stdev
+    def standardize: VectorD = (toDouble - mean) / stdev
+    def standardize2: VectorD = (toDouble - mean) / (stdev + EPSILON)
 
 end VectorL
 
@@ -852,8 +983,8 @@ end VectorL
     println (s"x > y               = ${x > y}")                  // greater then
     println (s"x >= y              = ${x >= y}")                 // greater then or equal
 
-    println (s"x contains 2        = ${x contains 2}")           // element contained in vector
-    println (s"x contains 4        = ${x contains 4}")
+    println (s"x `contains` 2      = ${x `contains` 2}")         // element contained in vector
+    println (s"x `contains` 4      = ${x `contains` 4}")
     println (s"x.exists (_ > 2)    = ${x.exists (_ > 2)}")       // existence of element satisfying predicate
     println (s"x.groupBy (_ > 2)   = ${x.groupBy (_ > 2)}")      // group according function values
     println (s"x.indexOf (2)       = ${x.indexOf (2)}")          // index of first element equaling

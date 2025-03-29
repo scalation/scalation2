@@ -46,7 +46,7 @@ class CircularQueue [A: ClassTag] (cap: Int):
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** FIX - TBD
      */
-    protected [this] def newBuilder: Builder [A, CircularQueue [A]] = ???
+    protected [CircularQueue] def newBuilder: Builder [A, CircularQueue [A]] = ???
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return whether the queue is empty (i.e., has no element).

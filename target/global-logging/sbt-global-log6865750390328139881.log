@@ -1,0 +1,46 @@
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(runMain scalation.modeling.forecasting.aRX_QuadTest4, Some(02583b34-c424-430e-8b43-f1823cdbe712), Some(CommandSource(console0)))[0m
+[0m[[0m[0mdebug[0m] [0m[0mEvaluating tasks: Compile / runMain[0m
+[0m[[0m[0mdebug[0m] [0m[0mRunning task... Cancel: Signal, check cycles: false, forcegc: true[0m
+[0m[[0m[0minfo[0m] [0m[0mcompiling 1 Scala source to C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\target\scala-3.6.4\classes ...[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E006] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:406:59 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m406 |[0m    [33mval[0m [36mff[0m = Array(powForm(VectorD (pp)), powForm(VectorD (pr)), log1pForm, sinForm(VectorD(_2Pi / lwave)), cosForm(VectorD(_2Pi / lwave)))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                           ^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                                      Not found: pr - did you mean pp?[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Each identifier in Scala needs a matching declaration. There are two kinds of[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m identifiers: type identifiers and value identifiers. Value identifiers are introduced[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m by `val`, `def`, or `object` declarations. Type identifiers are introduced by `type`,[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m `class`, `enum`, or `trait` declarations.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Identifiers refer to matching declarations in their environment, or they can be[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m imported from elsewhere.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Possible reasons why no matching declaration was found:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  - The declaration or the use is mis-spelt.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  - An import is missing.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m     ---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m-- [E006] Not Found Error: C:\Users\youse\OneDrive\Documents\New Scalation\scalation_2.0\src\main\scala\scalation\modeling\forecasting\ARX_Symb.scala:407:59 [0m[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m407 |[0m    [33mval[0m [36mgg[0m = Array(powForm(VectorD (pp)), powForm(VectorD (pr)), log1pForm, sinForm(VectorD(_2Pi / lwave)), cosForm(VectorD(_2Pi / lwave)))[0m
+[0m[[0m[31merror[0m] [0m[0m[31m[31m    |[0m                                                           ^^[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m                                      Not found: pr - did you mean pp?[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Explanation (enabled by `-explain`)[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Each identifier in Scala needs a matching declaration. There are two kinds of[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m identifiers: type identifiers and value identifiers. Value identifiers are introduced[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m by `val`, `def`, or `object` declarations. Type identifiers are introduced by `type`,[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m `class`, `enum`, or `trait` declarations.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Identifiers refer to matching declarations in their environment, or they can be[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m imported from elsewhere.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m Possible reasons why no matching declaration was found:[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  - The declaration or the use is mis-spelt.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m    |[0m  - An import is missing.[0m
+[0m[[0m[31merror[0m] [0m[0m[31m     ---------------------------------------------------------------------------[0m[0m
+[0m[[0m[31merror[0m] [0m[0mtwo errors found[0m
+[0m[[0m[31merror[0m] [0m[0m(Compile / [31mcompileIncremental[0m) Compilation failed[0m
+[0m[[0m[31merror[0m] [0m[0mTotal time: 4 s, completed Mar 26, 2025, 11:33:40 PM[0m
+[0m[[0m[0mdebug[0m] [0m[0m> Exec(shell, None, None)[0m
