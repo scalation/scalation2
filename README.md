@@ -1,11 +1,3 @@
-
-<html>
-<head>
-<LINK href="style.css" rel="stylesheet" type="text/css">
-<title> ScalaTion </title>
-</head>
-<body>
-
 <center>
 <h1> SCALAble SimulaTION - ScalaTion </h1>
 <p>

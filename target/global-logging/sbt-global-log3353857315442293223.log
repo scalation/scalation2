@@ -1,5 +1,0 @@
-[debug] > Exec(all {file:/C:/Users/youse/OneDrive/Documents/Ubuntu/Git/scalation2/}scalation/products {file:/C:/Users/youse/OneDrive/Documents/Ubuntu/Git/scalation2/}scalation/test:products, None, None)
-[debug] Evaluating tasks: Compile / products, Test / products
-[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
-[success] Total time: 4 s, completed Mar 29, 2025, 2:42:19 PM
-[debug] > Exec(idea-shell, None, None)

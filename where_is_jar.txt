@@ -1,0 +1,8 @@
+
+How to copy the .jar file to my_scalation_2.0/lib
+
+cd my_scalation_2.0/lib
+cp <dir>/scalation_2.0/target/scala-3.1.1/scalation_3-0.1.0-SNAPSHOT.jar
+
+Note: <dir> is the directory you placed scalation_2.0 in
+
