@@ -38,20 +38,20 @@ import MakeMatrix4TS._
  *  @param tRng     the time range, if relevant (time index may suffice)
  *  @param hparam   the hyper-parameters (defaults to `MakeMatrix4TS.hp`)
  *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
- *  @param tForms   the map of transformation applied
+ *  @param tForms   the map of transformations applied
  */
 class ARX_Quad (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [String],
                 tRng: Range = null, hparam: HyperParameter = hp,
-                bakcast: Boolean = false,                               // backcast value used only `MakeMatrix4TS`
+                bakcast: Boolean = false,
                 tForms: TransformMap = Map ("tForm_y" -> null))
-      extends ARX (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):  // no automatic backcasting
+    extends ARX (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):
 
     private val debug = debugf ("ARX_Quad", true)                       // debug function
 
     modelName = s"ARX_Quad($p, $q, $n_exo)"
 
     debug ("init", s"$modelName with with $n_exo exogenous variables and additional term spec = $spec")
-    debug ("init", s"[ x | y ] = ${x :^+ y}")
+    //  debug ("init", s"[ x | y ] = ${x :^+ y}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forge a new vector from the first spec values of x, the last p-h+1 values
@@ -83,8 +83,8 @@ class ARX_Quad (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [Strin
     def scaleCorrection (x_fcast: VectorD): VectorD =
         if tForms("tForm_y") != null then
             val f_pp = (tForms("tForm_endo").asInstanceOf [Transform].f(_: VectorD)) ⚬
-                       (tForms("ppForm").asInstanceOf [Transform].f(_: VectorD)) ⚬
-                       (tForms("tForm_y").asInstanceOf [Transform].fi(_: VectorD))
+                (tForms("ppForm").asInstanceOf [Transform].f(_: VectorD)) ⚬
+                (tForms("tForm_y").asInstanceOf [Transform].fi(_: VectorD))
             f_pp (x_fcast)
         else
             tForms("ppForm").asInstanceOf [Transform].f(x_fcast)
@@ -107,18 +107,16 @@ object ARX_Quad extends MakeMatrix4TS:
      *  @param fname_   the feature/variable names
      *  @param tRng     the time range, if relevant (time index may suffice)
      *  @param hparam   the hyper-parameters
+     *  @param fEndo    the array of functions used to transform endogenous variables
+     *  @param fExo     the array of functions used to transform exogenous variables
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      */
     def apply (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
                tRng: Range = null, hparam: HyperParameter = hp,
+               fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
                bakcast: Boolean = false): ARX_Quad =
 
-        val pp = hparam("pp").toDouble
-        val ppForm = powForm (VectorD (pp))
-        val tForms: TransformMap = Map ("tForm_y" -> null, "yForm_endo" -> null, "ppForm" -> ppForm)
-        val y_ypp = MatrixD (y, ppForm.f(y)).transpose
-        println(ppForm.f(y))
-        val xy    = buildMatrix (xe, y_ypp, hparam, bakcast)
+        val (xy, tForms)    = buildMatrix (xe, y, hparam, bakcast)
         val fname = if fname_ == null then formNames (xe.dim2, hparam) else fname_
         new ARX_Quad (xy, y, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end apply
@@ -131,38 +129,22 @@ object ARX_Quad extends MakeMatrix4TS:
      *  @param hh       the maximum forecasting horizon (h = 1 to hh)
      *  @param tRng     the time range, if relevant (time index may suffice)
      *  @param hparam   the hyper-parameters
+     *  @param fEndo    the array of functions used to transform endogenous variables
+     *  @param fExo     the array of functions used to transform exogenous variables
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      *  @param tForm    the z-transform (rescale to standard normal)
      */
     def rescale (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
-                 tRng: Range = null, hparam: HyperParameter = hp, bakcast: Boolean = false,
+                 tRng: Range = null, hparam: HyperParameter = hp,
+                 fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
+                 bakcast: Boolean = false,
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_Quad =
-        val pp = hparam("pp").toDouble
-        val tForm_y = tForm(y)
-        if tForm_y.getClass.getSimpleName == "zForm" then hp("nneg") = 0
-        val y_scal = tForm_y.f(y)
-        val ppForm = powForm (VectorD (pp))
 
-        var ypp = ppForm.f(y)
-        val tForm_endo = tForm (ypp)
-        ypp = tForm_endo.f(ypp)
-
-        val tForms = Map ("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "ppForm" -> ppForm)
-        val y_ypp = MatrixD (y_scal, ypp).transpose
-
-        val n_exo = xe.dim2
-        val x_exo: MatrixD =
-        if n_exo > 0 then
-            val xe_bfill = new MatrixD (xe.dim, xe.dim2)
-            for j <- xe.indices2 do xe_bfill(?, j) = backfill (xe(?, j))
-            val tForm_exo = tForm (xe_bfill)
-            tForm_exo.f(xe_bfill)
-        else
-            new MatrixD (0, 0)
-
-        val xy    = buildMatrix (x_exo, y_ypp, hparam, bakcast)
-        val fname = if fname_ == null then formNames (n_exo, hparam) else fname_
-        new ARX_Quad (xy, y_scal, hh, n_exo, fname, tRng, hparam, bakcast, tForms)
+        val (xy, tForms) = buildMatrix(xe, y, hparam, bakcast, tForm)
+        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hp("nneg") = 0
+        val y_scl = tForms("tForm_y").f(y)
+        val fname = if fname_ == null then formNames (xe.dim2, hparam) else fname_
+        new ARX_Quad (xy, y_scl, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end rescale
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -173,19 +155,50 @@ object ARX_Quad extends MakeMatrix4TS:
      *  @param hp_      the hyper-parameters
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      */
-    def buildMatrix (xe: MatrixD, y_ypp: MatrixD, hp_ : HyperParameter, bakcast: Boolean): MatrixD =
-        val (p, q, spec, lwave) = (hp_("p").toInt, hp_("q").toInt , hp_("spec").toInt, hp_("lwave").toDouble)
-        makeMatrix4T (y_ypp(?, 0), spec, lwave, bakcast) ++^         // trend terms
-        makeMatrix4L (y_ypp, p, bakcast) ++^                         // regular lag terms for y and y^pp
-        makeMatrix4EXO (xe, q, 1, bakcast)                           // add exogenous terms
+    def buildMatrix (xe: MatrixD, y: VectorD, hp_ : HyperParameter, bakcast: Boolean,
+                     tForm: VectorD | MatrixD => Transform = null): (MatrixD, TransformMap) =
+        val (p, pp, q, spec, lwave) = (hp_("p").toInt, hp_("pp").toDouble, hp_("q").toInt , hp_("spec").toInt, hp_("lwave").toDouble)
+
+        val ppForm = powForm(VectorD(pp))
+        var y_pp = ppForm.f(y)
+        var y_scl = y
+
+        val tForms: TransformMap =
+            if tForm != null then
+                val tForm_y = tForm(y)
+                y_scl = tForm_y.f(y)
+                val tForm_endo = tForm(y_pp)
+                y_pp = tForm_endo.f(y_pp)
+                Map ("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "ppForm" -> ppForm)
+            else
+                Map("tForm_y" -> null, "ppForm" -> ppForm)
+
+        val x_endo = MatrixD (y_scl, y_pp).transpose
+
+        // add trend terms and terms for the endogenous variable
+        var xy = makeMatrix4T(y, spec, lwave, bakcast) ++^
+            makeMatrix4L(x_endo, p, bakcast) // lagged linear terms
+
+        if xe.dim2 > 0 then
+            val xe_bfill = new MatrixD (xe.dim, xe.dim2)
+            for j <- xe.indices2 do xe_bfill(?, j) = backfill (xe(?, j))
+            var x_exo = xe_bfill
+            if tForm != null then
+                val tForm_exo = tForm(x_exo)
+                x_exo = tForm_exo.f(x_exo)
+            xy = xy ++^ makeMatrix4L(x_exo, q, bakcast)
+
+        (xy, tForms)
     end buildMatrix
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Form an array of names for the features included in the model.
      *  @param n_exo  the number of exogenous variable
      *  @param hp_    the hyper-parameters
+     *  @param n_fEn  the number of functions used to map endogenous variables
+     *  @param n_fEx  the number of functions used to map exogenous variables
      */
-    def formNames (n_exo: Int, hp_ : HyperParameter): Array [String] =
+    def formNames (n_exo: Int, hp_ : HyperParameter, n_fEn: Int = 0, n_fEx: Int = 0): Array [String] =
         val (p, q, spec) = (hp_("p").toInt, hp_("q").toInt , hp_("spec").toInt)
         val names = ArrayBuffer [String] ()
         for j <- 0 until n_exo; k <- q to 1 by -1 do names += s"xe${j}l$k"
@@ -207,15 +220,15 @@ import Example_Covid._
 
     val hh = 3                                                          // maximum forecasting horizon
 
-    val mod = ARX_Quad (y, hh)                                          // create model for time series data
-    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
-    mod.trainNtest_x ()()                                               // train and test on full dataset
+      val mod = ARX_Quad (y, hh)                                          // create model for time series data
+      banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+      mod.trainNtest_x ()()                                               // train and test on full dataset
 
-    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    Forecaster.evalForecasts (mod, mod.getYb, hh)
-    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+      mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+      Forecaster.evalForecasts (mod, mod.getYb, hh)
+      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
-end aRX_QuadTest
+      end aRX_QuadTest
  */
 
 
@@ -230,14 +243,14 @@ end aRX_QuadTest
 
     val hh = 3                                                          // maximum forecasting horizon
 
-    val mod = ARX_Quad (y, hh)                                          // create model for time series data
-    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
-    mod.trainNtest_x ()()                                               // train and test on full dataset
+      val mod = ARX_Quad (y, hh)                                          // create model for time series data
+      banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+      mod.trainNtest_x ()()                                               // train and test on full dataset
 
-    mod.rollValidate ()                                                 // TnT with Rolling Validation
-    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+      mod.rollValidate ()                                                 // TnT with Rolling Validation
+      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
-end aRX_QuadTest2
+      end aRX_QuadTest2
  */
 
 
@@ -249,15 +262,15 @@ end aRX_QuadTest2
  */
 @main def aRX_QuadTest3 (): Unit =
 
-//  val exo_vars  = NO_EXO
+    //  val exo_vars  = NO_EXO
     val exo_vars  = Array ("icu_patients")
-//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-//  val xe = xxe                                                        // full
+    //  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-//  val y  = yy                                                         // full
+    //  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("pp")    = 1.9                                                   // use 1.9 for the power/exponent (default is 2)
@@ -272,12 +285,12 @@ end aRX_QuadTest2
         mod.trainNtest_x ()()                                           // train and test on full dataset
         println (mod.summary ())                                        // statistical summary of fit
 
-//      mod.setSkip (p)                                                 // full AR-formula available when t >= p
+        //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (mod.getY, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
+    //      Forecaster.evalForecasts (mod, mod.getYb, hh)
+    //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for
 
 end aRX_QuadTest3
@@ -292,13 +305,13 @@ end aRX_QuadTest3
 @main def aRX_QuadTest4 (): Unit =
 
     val exo_vars  = Array ("icu_patients")
-//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-//  val xe = xxe                                                        // full
+    //  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-//  val y  = yy                                                         // full
+    //  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("pp")    = 1.5                                                   // use 1.5 for the power/exponent (default is 2)
@@ -308,8 +321,7 @@ end aRX_QuadTest3
         hp("p")    = p                                                  // endo lags
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARX_Quad.rescale (xe, y, hh)                          // create model for time series data
-
+        val mod = ARX_Quad (xe, y, hh)                          // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
@@ -317,7 +329,7 @@ end aRX_QuadTest3
         mod.rollValidate ()                                             // TnT with Rolling Validation
         println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
         mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
-//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+    //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRX_QuadTest4
@@ -333,13 +345,13 @@ end aRX_QuadTest4
 @main def aRX_QuadTest5 (): Unit =
 
     val exo_vars  = Array ("icu_patients")
-//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-//  val xe = xxe                                                        // full
+    //  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-//  val y  = yy                                                         // full
+    //  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     val p  = 10
@@ -355,19 +367,19 @@ end aRX_QuadTest4
     mod.trainNtest_x ()()                                               // train and test on full dataset
     println (mod.summary ())                                            // statistical summary of fit
 
-//  mod.setSkip (p)                                                     // full AR-formula available when t >= p
+    //  mod.setSkip (p)                                                     // full AR-formula available when t >= p
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)                                      // QoF for each horizon
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
-//  println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    //  Forecaster.evalForecasts (mod, mod.getYb, hh)
+    //  println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
     banner ("Feature Selection Technique: Forward")
     val (cols, rSq) = mod.forwardSelAll ()                              // R^2, R^2 bar, sMAPE, R^2 cv
-//  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
+    //  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
     val k = cols.size
     println (s"k = $k")
     new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
-               s"R^2 vs n for ${mod.modelName}", lines = true)
+        s"R^2 vs n for ${mod.modelName}", lines = true)
     println (s"rSq = $rSq")
 
 end aRX_QuadTest5
