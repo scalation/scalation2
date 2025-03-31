@@ -113,7 +113,7 @@ object ARX_Symb_D extends MakeMatrix4TS:
         val (xy, tForms)      = ARX_Symb.buildMatrix (xe, y, hparam, fEndo, fExo, bakcast, tForm)
         val fname = if fname_ == null then formNames (xe.dim2, hparam, n_fEndo, n_fExo) else fname_
         val y_scl = tForms("tForm_y").f(y)
-        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hp("nneg") = 0
+        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hparam("nneg") = 0
         val yy    = makeMatrix4Y (y_scl, hh, bakcast)
         new ARX_Symb_D (xy, yy, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end rescale
@@ -205,7 +205,7 @@ end aRX_Symb_DTest3
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
 
-        val mod = ARX_Symb_D.rescale (xe, y, hh, fEndo = ff, fExo = gg)         // create model for time series data
+        val mod = ARX_Symb_D (xe, y, hh, fEndo = ff, fExo = gg)         // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
         //        println (mod.summary ())                                        // statistical summary of fit

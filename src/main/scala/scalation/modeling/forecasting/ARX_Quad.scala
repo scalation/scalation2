@@ -141,7 +141,7 @@ object ARX_Quad extends MakeMatrix4TS:
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_Quad =
 
         val (xy, tForms) = buildMatrix(xe, y, hparam, bakcast, tForm)
-        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hp("nneg") = 0
+        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hparam("nneg") = 0
         val y_scl = tForms("tForm_y").f(y)
         val fname = if fname_ == null then formNames (xe.dim2, hparam) else fname_
         new ARX_Quad (xy, y_scl, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
