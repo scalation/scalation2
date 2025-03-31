@@ -19,11 +19,13 @@ import scala.math.{cos, sin}
 
 import scalation.mathstat._
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `TransformMap` type and its extension methods provides maps of transforms.
+ */
 type TransformMap = Map [String, Transform | Array [Transform]]
 
-
 extension (tr: Transform | Array [Transform])
-    def apply(i: Int = -1): Transform =
+    def apply (i: Int = -1): Transform =
         tr match
             case t: Transform => t
             case tArr: Array [Transform] => tArr(i)
@@ -31,14 +33,13 @@ extension (tr: Transform | Array [Transform])
     def length: Int =
         tr match
             case t: Transform => 1
-            case tArr: Array[Transform] => tArr.length
+            case tArr: Array [Transform] => tArr.length
 
-    def f(x: VectorD): VectorD = apply().f(x)
-    def fi(x: VectorD): VectorD = apply().fi(x)
+    def f(x: VectorD): VectorD = apply ().f(x)
+    def fi(x: VectorD): VectorD = apply ().fi(x)
 
-    def f(x: MatrixD): MatrixD = apply().f(x)
-    def fi(x: MatrixD): MatrixD = apply().fi(x)
-
+    def f(x: MatrixD): MatrixD = apply ().f(x)
+    def fi(x: MatrixD): MatrixD = apply ().fi(x)
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -56,10 +57,13 @@ trait  MakeMatrix4TS:
      *  @param fname_   the feature/variable names
      *  @param tRng     the time range, if relevant (time index may suffice)
      *  @param hparam   the hyper-parameters
+     *  @param fEndo    the array of functions used to transform endogenous variables
+     *  @param fExo     the array of functions used to transform exogenous variables
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      */
     def apply (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
                tRng: Range = null, hparam: HyperParameter = MakeMatrix4TS.hp,
+               fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
                bakcast: Boolean = false): Forecaster_Reg | Forecaster_D
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -70,12 +74,25 @@ trait  MakeMatrix4TS:
      *  @param hh       the maximum forecasting horizon (h = 1 to hh)
      *  @param tRng     the time range, if relevant (time index may suffice)
      *  @param hparam   the hyper-parameters
+     *  @param fEndo    the array of functions used to transform endogenous variables
+     *  @param fExo     the array of functions used to transform exogenous variables
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      *  @param tForm    the z-transform (rescale to standard normal)
      */
     def rescale (xe: MatrixD, y: VectorD, hh: Int, fname_ : Array [String] = null,
-                 tRng: Range = null, hparam: HyperParameter = MakeMatrix4TS.hp, bakcast: Boolean = false,
+                 tRng: Range = null, hparam: HyperParameter = MakeMatrix4TS.hp,
+                 fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
+                 bakcast: Boolean = false,
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): Forecaster_Reg | Forecaster_D
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Form an array of names for the features included in the model.
+     *  @param n_exo  the number of exogenous variable
+     *  @param hp_    the hyper-parameters
+     *  @param n_fEn  the number of functions used to map endogenous variables
+     *  @param n_fEx  the number of functions used to map exogenous variables
+     */
+    def formNames (n_exo: Int, hp_ : HyperParameter, n_fEn: Int = 0, n_fEx: Int = 0): Array [String]
 
 end MakeMatrix4TS
 
@@ -299,3 +316,4 @@ object MakeMatrix4TS:
     end backfill
 
 end MakeMatrix4TS
+
