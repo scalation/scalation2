@@ -357,7 +357,7 @@ trait Fit (protected var dfm: Double, protected var df: Double)
         super.diagnose (y, yp, w)
 
         val e = y - yp                                            // FIX - avoid computing twice
-        println (s"Fit.diagnose:\n y = $y,\n yp = $yp,\n e = $e")
+//        println (s"Fit.diagnose, dim = ${y.dim}: ${MatrixD(y, yp).transpose}")
 
         if dfm < 0 || df < 0 then
             flaw ("diagnose", s"degrees of freedom dfm = $dfm and df = $df must be non-negative")

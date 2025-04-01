@@ -159,7 +159,7 @@ abstract class Forecaster_Reg (x: MatrixD, y: VectorD, hh: Int, fname: Array [St
         for t <- y_.indices do                                          // make forecasts over all time points for horizon h
             val xy   = forge (x(t), yf(t), h)
             val pred = rectify (reg.predict (xy), nneg)
-//          debug ("forecastAt", s"h = $h, @t = $t, xy = $xy, yp = $pred, y_ = ${y_(t)}")
+            debug ("forecastAt", s"h = $h, @t = $t, xy = $xy, yp = $pred, y_ = ${y_(t)}")
             yf(t, h) = pred                                             // record in forecast matrix
         yf(?, h)                                                        // return the h-step ahead forecast vector
     end forecastAt

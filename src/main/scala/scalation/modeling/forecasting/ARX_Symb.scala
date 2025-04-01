@@ -367,7 +367,7 @@ end ARX_Symb
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
 
-        val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
+        val mod = ARX_Symb.rescale (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 

@@ -285,7 +285,7 @@ abstract class Forecaster (y: VectorD, hh: Int, tRng: Range = null, hparam: Hype
      *  Calls forecast for h-steps ahead out-of-sample forecasts.
      *  Return the FORECAST MATRIX.
      *  @param rc       the retraining cycle (number of forecasts until retraining occurs)
-     *  @param growing  whether the training grows as it roll or kepps a fixed size
+     *  @param growing  whether the training grows as it roll or keeps a fixed size
      */
     def rollValidate (rc: Int = 2, growing: Boolean = false): MatrixD =
         val ftMat   = new MatrixD (hh, Fit.N_QoF)

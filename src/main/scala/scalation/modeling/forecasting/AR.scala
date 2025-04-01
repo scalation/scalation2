@@ -250,13 +250,14 @@ end aRTest3
     val y  = yy(0 until 116)                                              // clip the flat end
     val hh = 6                                                            // maximum forecasting horizon
 
-    for p <- 1 to 5 do
+    for p <- 6 to 6 do
         AR.hp("p") = p                                                    // number of AR terms
-        val mod = new AR (y, hh)                                          // create model for time series data
+        val mod = new AR (y, hh, adjusted=false)                                          // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
-//      mod.setSkip (p)                                                   // may wish to skip until all p past values are available
+        mod.setSkip (p)                                                   // may wish to skip until all p past values are available
         mod.trainNtest ()()
-
+        mod.forecastAll ()                                                // forecast h-steps ahead (h = 1 to hh) for all y
+        mod.diagnoseAll (y, mod.getYf)
         mod.setSkip (0)                                                   // can use values from training set to not skip any in test
         mod.rollValidate ()                                               // TnT with Rolling Validation
         println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")

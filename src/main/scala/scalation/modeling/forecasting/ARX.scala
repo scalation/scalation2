@@ -86,12 +86,23 @@ class ARX (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [String],
      *  @param h     the current horizon (number of steps ahead to forecast)
      *  @param fill  whether to backfill with the rightmost value (true) or with 0 (false)
      */
-    def hide (z: VectorD, h: Int, fill: Boolean = true): VectorD =
-        val lst = z.dim - h                                           // last available index position in z
-        val zl  = if lst >= 0 then z(lst) else 0.0                    // last available z value per horizon
-        val z_  = new VectorD (z.dim)
+//    def hide (z: VectorD, h: Int, fill: Boolean = true): VectorD =
+//        val lst = z.dim - h                                           // last available index position in z
+//        val zl  = if lst >= 0 then z(lst) else 0.0                    // last available z value per horizon
+//        val z_  = new VectorD (z.dim)
+//        for k <- z.indices do
+//            z_(k) = if k <= lst then z(k) else if fill then zl else 0.0
+//        z_
+//    end hide
+
+
+
+    def hide(z: VectorD, h: Int, fill: Boolean = true): VectorD =
+
+        val zl = if z.dim >= h then z(z.dim - 1) else 0.0   // last available z value per horizon
+        val z_ = new VectorD(z.dim)
         for k <- z.indices do
-            z_(k) = if k <= lst then z(k) else if fill then zl else 0.0
+            z_(k) = if k <= z.dim - h then z(k+h-1) else if fill then zl else 0.0
         z_
     end hide
 
@@ -294,18 +305,18 @@ end aRXTest3
     //  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
-    hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
     for p <- 6 to 6; s <- 1 to 1; q <- 4 to 4 do                        // number of lags; trend
         hp("p")    = p                                                  // number of endo lags
         hp("q")    = q                                                  // number of exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARX (xe, y, hh)                                       // create model for time series data
+        val mod = ARX.rescale (xe, y, hh)                                       // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
-
+        mod.forecastAll()                                               // forecast h-steps ahead (h = 1 to hh) for all y
+        mod.diagnoseAll(mod.getY, mod.getYf)
         mod.setSkip (0)
-        //      mod.rollValidate (rc = 200)                                     // TnT with Rolling Validation
+//        mod.rollValidate (rc = 200)                                     // TnT with Rolling Validation
         mod.rollValidate ()                                             // TnT with Rolling Validation default rc = 2
         //      println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
         mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
