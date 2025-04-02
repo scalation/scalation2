@@ -63,7 +63,7 @@ object ActivationFun:
      *  @param t  the id function argument
      */
     inline def id (t: Double): Double    = t
-    def id (t: VectorD): VectorD = t
+    def id_ (t: VectorD): VectorD = t
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the derivative vector for id function at vector yp where
@@ -72,7 +72,7 @@ object ActivationFun:
      */
     def idD (yp: VectorD): VectorD = VectorD.one (yp.dim)
 
-    val f_id = AFF ("id", id, id, idD)                                           // id family
+    val f_id = AFF ("id", id, id_, idD)                                           // id family
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // reLU: Rectified Linear Unit functions
@@ -419,7 +419,7 @@ end ActivationFun
     val t = VectorD.range (-50, 50) / 10.0
 
     // Test the vector version of activation functions
-    val idf       = id (t)
+    val idf       = id_ (t)
     val reLUf     = reLU_ (t)
     val lreLUf    = lreLU_ (t)
     val eLUf      = eLU_ (t)
@@ -454,7 +454,7 @@ end activationFunTest
     val t = VectorD.range (-50, 50) / 10.0
 
     // Test the vector version of activation functions
-    val idf       = id (t)
+    val idf       = id_ (t)
     val reLUf     = reLU_ (t)
     val lreLUf    = lreLU_ (t)
     val eLUf      = eLU_ (t)
@@ -484,7 +484,7 @@ end activationFunTest2
 
     val t = VectorD.range (-50, 50) / 10.0
 
-    val idf       = id (t)
+    val idf       = id_ (t)
     val reLUf     = reLU_ (t)
     val lreLUf    = lreLU_ (t)
     val eLUf      = eLU_ (t)

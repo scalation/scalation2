@@ -101,7 +101,6 @@ end NullModel
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest
@@ -123,6 +122,7 @@ end nullModelTest
     mod.trainNtest ()()                                                   // train and test on full dataset
 
     mod.rollValidate ()                                                   // TnT with Rolling Validation
+    mod.diagnoseAll (y, mod.getYf)
     println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest2
@@ -147,7 +147,6 @@ end nullModelTest2
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end nullModelTest3

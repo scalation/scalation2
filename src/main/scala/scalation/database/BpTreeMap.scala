@@ -46,7 +46,7 @@ class BpTreeMap [V: ClassTag] (name: String = "BpTreeMap")
          with SortedMap [ValueType, V]
          with Serializable:
 
-    private val debug  = debugf ("BpTreeMap", true)                      // debug function
+    private val debug  = debugf ("BpTreeMap", false)                     // debug function
     private val flaw   = flawf ("BpTreeMap")                             // flaw function
 
     private var kCount = 0                                               // counter for total number of keys

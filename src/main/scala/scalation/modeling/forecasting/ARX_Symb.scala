@@ -47,7 +47,7 @@ class ARX_Symb (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [Strin
                 tRng: Range = null, hparam: HyperParameter = hp,
                 bakcast: Boolean = false,
                 tForms: TransformMap = Map ("tForm_y" -> null))
-    extends ARX (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):
+      extends ARX (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):
 
     private val debug   = debugf ("ARX_Symb", true)                          // debug function
     private val n_fEndo = tForms("fEndo").length                             // number of functions used to map endogenous variables
@@ -89,7 +89,7 @@ class ARX_Symb (x: MatrixD, y: VectorD, hh: Int, n_exo: Int, fname: Array [Strin
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Make re-scaling corrections to the forecasted y-values.
-     *  @param  x_fcast  the forecasted y-values
+     *  @param  x_fcast  the forecasted y-values 
      */
     def scaleCorrection (x_fcast: VectorD): Array [VectorD] =
         val x_fEndo = Array.ofDim [VectorD] (n_fEndo)
@@ -134,11 +134,12 @@ object ARX_Symb extends MakeMatrix4TS:
                fEndo: Array [Transform] = Array (log1pForm),
                fExo: Array [Transform] = Array (log1pForm),
                bakcast: Boolean = false): ARX_Symb =
+
         val (n_fEndo, n_fExo) = (fEndo.length, fExo.length)
         val (xy, tForms)      = buildMatrix (xe, y, hparam, fEndo, fExo, bakcast)
         val fname = if fname_ == null then formNames (xe.dim2, hparam, n_fEndo, n_fExo) else fname_
         new ARX_Symb (xy, y, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
-    end apply
+    end apply 
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ARX_Symb` object by building an input matrix xy and then calling the
@@ -160,11 +161,12 @@ object ARX_Symb extends MakeMatrix4TS:
                  fExo: Array [Transform] = Array (log1pForm),
                  bakcast: Boolean = false,
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_Symb =
+
         val (n_fEndo, n_fExo) = (fEndo.length, fExo.length)
         val (xy, tForms)      = buildMatrix (xe, y, hparam, fEndo, fExo, bakcast, tForm)
-        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hparam("nneg") = 0
+        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hp("nneg") = 0
         val y_scl = tForms("tForm_y").f(y)
-        val fname = if fname_ == null then formNames(xe.dim2, hparam, n_fEndo, n_fExo) else fname_
+        val fname = if fname_ == null then formNames (xe.dim2, hparam, n_fEndo, n_fExo) else fname_
         new ARX_Symb (xy, y_scl, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end rescale
 
@@ -189,20 +191,20 @@ object ARX_Symb extends MakeMatrix4TS:
         var y_scl = y
 
         val tForms: TransformMap =
-            if tForm != null then
-                val tForm_y = tForm(y)
-                y_scl = tForm_y.f(y)
-                val tForm_endo = tForm(y_fEndo)
-                y_fEndo = tForm_endo.f(y_fEndo)
-                Map("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "fEndo" -> fEndo, "fExo" -> fExo)
-            else
-                Map("tForm_y" -> null, "fEndo" -> fEndo, "fExo" -> fExo)
+        if tForm != null then
+            val tForm_y = tForm(y)
+            y_scl = tForm_y.f(y)
+            val tForm_endo = tForm(y_fEndo)
+            y_fEndo = tForm_endo.f(y_fEndo)
+            Map("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "fEndo" -> fEndo, "fExo" -> fExo)
+        else
+            Map("tForm_y" -> null, "fEndo" -> fEndo, "fExo" -> fExo)
 
         val x_endo = y_scl +^: y_fEndo
 
         // add trend terms and terms for the endogenous variable
         var xy = makeMatrix4T (y, spec, lwave, bakcast) ++^
-            makeMatrix4L (x_endo, p, bakcast)                             // lagged linear terms
+                 makeMatrix4L (x_endo, p, bakcast)                             // lagged linear terms
 
         if xe.dim2 > 0 then
             val xe_bfill = new MatrixD(xe.dim, xe.dim2)
@@ -256,15 +258,14 @@ end ARX_Symb
 
     val hh = 3                                                          // maximum forecasting horizon
 
-      val mod = ARX_Symb (y, hh)                                          // create model for time series data
-      banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
-      mod.trainNtest_x ()()                                               // train and test on full dataset
+    val mod = ARX_Symb (y, hh)                                          // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
 
-      mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-      Forecaster.evalForecasts (mod, mod.getYb, hh)
-      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
-      end aRX_SymbTest
+end aRX_SymbTest
  */
 
 
@@ -279,14 +280,14 @@ end ARX_Symb
 
     val hh = 3                                                          // maximum forecasting horizon
 
-      val mod = ARX_Symb (y, hh)                                          // create model for time series data
-      banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
-      mod.trainNtest_x ()()                                               // train and test on full dataset
+    val mod = ARX_Symb (y, hh)                                          // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
 
-      mod.rollValidate ()                                                 // TnT with Rolling Validation
-      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+    mod.rollValidate ()                                                 // TnT with Rolling Validation
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
-      end aRX_SymbTest2
+end aRX_SymbTest2
  */
 
 
@@ -295,46 +296,38 @@ end ARX_Symb
  *  Forecasting COVID-19 using In-Sample Testing (In-ST).
  *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  > runMain scalation.modeling.forecasting.aRX_SymbTest3
- *
+ */
 @main def aRX_SymbTest3 (): Unit =
 
 //  val exo_vars  = NO_EXO
-      val exo_vars  = Array ("hosp_patients")
-      //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-      val (xxe, yy) = loadData (exo_vars, response)
-      println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
+    val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    val (xxe, yy) = loadData (exo_vars, response)
+    println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-      //  val xe = xxe                                                        // full
-      val xe = xxe(0 until 116)                                           // clip the flat end
-      //  val y  = yy                                                         // full
-      val y  = yy(0 until 116)                                            // clip the flat end
-      val hh = 6                                                          // maximum forecasting horizon
-      hp("lwave") = 20                                                    // wavelength (distance between peaks)
-      //  hp("cross") = 1                                                     // 1 => add cross terms
+//  val xe = xxe                                                        // full
+    val xe = xxe(0 until 116)                                           // clip the flat end
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
+    val pp = 1.5
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
+//  hp("cross") = 1                                                     // 1 => add cross terms
 
-      val ff = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to endo lags
-      val gg = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to exo lags
+    val ff = Array [Transform] (powForm (VectorD (pp)))
+    val gg = Array [Transform] ()
 
-      for p <- 6 to 6; s <- 1 to 1; q <- 6 to 6 do                        // number of lags; trend; number of exo lags
-      hp("p")    = p                                                  // endo lags
-      hp("q")    = q                                                  // exo lags
-      hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
+    for p <- 6 to 6; s <- 1 to 1; q <- 6 to 6 do                        // number of lags; trend; number of exo lags
+        hp("p")    = p                                                  // endo lags
+        hp("q")    = q                                                  // exo lags
+        hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
 
-      val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
-      banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-      mod.trainNtest_x ()()                                           // train and test on full dataset
-      println (mod.summary ())                                        // statistical summary of fit
+        val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
+        mod.inSampleTest ()                                             // In-sample Testing
+        println (mod.summary ())                                        // statistical summary of fit
+    end for
 
-      //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
-      mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
-      mod.diagnoseAll (y, mod.getYf)                                  // QoF for each horizon
-      //      Forecaster.evalForecasts (mod, mod.getYb, hh)
-      //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
-      //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
-      end for
-
-      end aRX_SymbTest3
- */
+end aRX_SymbTest3
 
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -346,18 +339,18 @@ end ARX_Symb
 @main def aRX_SymbTest4 (): Unit =
 
     val exo_vars  = Array ("icu_patients")
-    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    //  val xe = xxe                                                        // full
+//  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-    //  val y  = yy                                                         // full
+//  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     val pp = 1.5
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
-    hp("cross") = 0                                                     // 1 => add cross terms
+//  hp("cross") = 1                                                     // 1 => add cross terms
 
     val ff = Array [Transform] (powForm (VectorD (pp)))
     val gg = Array [Transform] ()
@@ -367,19 +360,20 @@ end ARX_Symb
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
 
-        val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
+//        val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)
+        val mod = ARX_Symb.rescale (xe, y, hh, fEndo = ff, fExo = gg)           // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
-        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
-        mod.diagnoseAll (mod.getY, mod.getYf)
+//        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
+//        mod.diagnoseAll (mod.getY, mod.getYf)
 
         banner ("rollValidate")
         mod.setSkip (0)
         mod.rollValidate ()                                             // TnT with Rolling Validation
         println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
-        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
-    //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)   // only diagnose on the testing set
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRX_SymbTest4
@@ -394,46 +388,46 @@ end aRX_SymbTest4
  *
 @main def aRX_SymbTest5 (): Unit =
 
-    val exo_vars  = Array ("icu_patients", "hosp_patients")
-      //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
-      val (xxe, yy) = loadData (exo_vars, response)
-      println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
+    val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+    val (xxe, yy) = loadData (exo_vars, response)
+    println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-      //  val xe = xxe                                                        // full
-      val xe = xxe(0 until 116)                                           // clip the flat end
-      //  val y  = yy                                                         // full
-      val y  = yy(0 until 116)                                            // clip the flat end
-      val hh = 6                                                          // maximum forecasting horizon
-      val p  = 6
-      val q  = 6
-      hp("p")     = p                                                     // endo lags
-      hp("q")     = q                                                     // exo lags
-      hp("spec")  = 5                                                     // trend specification: 0, 1, 2, 3, 5
-      hp("lwave") = 20                                                    // wavelength (distance between peaks)
-      hp("cross") = 1                                                     // 1 => add cross terms
-      hp("lambda") = 1.0                                                  // regularization/shrinkage parameter
+//  val xe = xxe                                                        // full
+    val xe = xxe(0 until 116)                                           // clip the flat end
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
+    val p  = 6 
+    val q  = 6
+    hp("p")     = p                                                     // endo lags
+    hp("q")     = q                                                     // exo lags
+    hp("spec")  = 5                                                     // trend specification: 0, 1, 2, 3, 5
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
+    hp("cross") = 1                                                     // 1 => add cross terms
+    hp("lambda") = 1.0                                                  // regularization/shrinkage parameter
 
-      val ff = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to endo lags
-      val gg = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to exo lags
+    val ff = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to endo lags 
+    val gg = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)          // functions to apply to exo lags
 
-      val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)               // create model for time series data
-      banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-      mod.trainNtest_x ()()                                               // train and test on full dataset
-      println (mod.summary ())                                            // statistical summary of fit
+    val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)               // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
+    println (mod.summary ())                                            // statistical summary of fit
 
-      mod.setSkip(0)
-      mod.rollValidate ()                                                 // TnT with Rolling Validation
-      mod.diagnoseAll (y, mod.getYf, Forecaster.teRng(y.dim), 0)
+    mod.setSkip(0)
+    mod.rollValidate ()                                                 // TnT with Rolling Validation
+    mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng(y.dim), 0)
 
-      banner ("Feature Selection Technique: Stepwise")
-      val (cols, rSq) = mod.stepwiseSelAll ()                             // R^2, R^2 bar, sMAPE, R^2 cv
+    banner ("Feature Selection Technique: Stepwise")
+    val (cols, rSq) = mod.stepwiseSelAll ()                             // R^2, R^2 bar, sMAPE, R^2 cv
 //  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
-      val k = cols.size
-      println (s"k = $k")
-      new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
+    val k = cols.size
+    println (s"k = $k")
+    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
                s"R^2 vs n for ${mod.modelName}", lines = true)
-      println (s"rSq = $rSq")
+    println (s"rSq = $rSq")
 
-      end aRX_SymbTest5
+end aRX_SymbTest5
  */
 

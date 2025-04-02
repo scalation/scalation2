@@ -202,12 +202,12 @@ object TranARY:
     /** Create an `TranARY` object by building an input matrix x and then calling the
      *  constructor.
      *  @see `scalation.modeling.TranRegression` for several options for (tran, itran) pairs
-     *  @param y       the response vector (time series data)
-     *  @param hh      the maximum forecasting horizon (h = 1 to hh)
-     *  @param tRng    the time range, if relevant (time index may suffice)
-     *  @param hparam  the hyper-parameters
-     *  @param tran    the transformation function (defaults to log1p)
-     *  @param itran   the inverse transformation function to rescale predictions to original y scale (defaults to expm1)
+     *  @param y        the response vector (time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param tran     the transformation function (defaults to log1p)
+     *  @param itran    the inverse transformation function to rescale predictions to original y scale (defaults to expm1)
      *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
      */
     def apply (y: VectorD, hh: Int, tRng: Range = null, hparam: HyperParameter = hp,
@@ -242,7 +242,6 @@ end TranARY
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end tranARYTest
@@ -293,7 +292,6 @@ end tranARYTest2
 
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
         println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
     end for
 

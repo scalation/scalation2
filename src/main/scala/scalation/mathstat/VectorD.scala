@@ -29,8 +29,6 @@ import scala.util.control.Breaks.{break, breakable}
 type FunctionS2V = Double  => VectorD                             // scalar `Double`  to vector `VectorD`
 type FunctionV2S = VectorD => Double                              // vector `VectorD` to scalar `Double`
 type FunctionV2V = VectorD => VectorD                             // vector `VectorD` to vector `VectorD`
-type FunctionV2V2V = VectorD => FunctionV2V
-type FunctionV2VV = VectorD => (VectorD, VectorD)
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Vectorize a scalar function (S2S) to create a vector function (V2V).
@@ -623,7 +621,7 @@ class VectorD (val dim: Int,
     end minv
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the range (min to max) of values in each column of this Matrix.
+    /** Return the range (min to max) of values in this vector.
      */
     def min_max: VectorD = VectorD (min, max)
 
@@ -1067,6 +1065,11 @@ class VectorD (val dim: Int,
     def stdev_ : Double = math.sqrt (variance_)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the coefficient of variations.
+     */
+    def cv: Double = stdev / mean
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute Pearson's correlation of this vector with vector y.
      *  If either variance is zero, will result in Not-a-Number (NaN), return
      *  one if the vectors are the same, or -0 (indicating undefined).
@@ -1243,7 +1246,6 @@ class VectorD (val dim: Int,
      */
     def mu_sig: VectorD = VectorD (mean, stdev)
 
-
 end VectorD
 
 
@@ -1263,6 +1265,12 @@ object VectorD:
      *  @param xs  the sequence/array of the `Double` numbers
      */
     def apply (xs: IndexedSeq [Double]): VectorD = new VectorD (xs.size, xs.toArray)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create a `VectorD` from an aeeay of `Double`s.
+     *  @param xs  the sequence/array of the `Double` numbers
+     */
+    def apply (xs: Array [Double]): VectorD = new VectorD (xs.length, xs)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `VectorD` from one or more values (repeated values `Double`*).

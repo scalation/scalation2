@@ -95,7 +95,7 @@ object ARIMA_diff:
     def transformBack (vf: MatrixD, y: VectorD, d: Int): MatrixD =
         val h    = vf.dim2 - 2                                           
         val yy   = y ++ VectorD(0)
-        val yf   = new MatrixD (vf.dim , vf.dim2)
+        val yf   = new MatrixD (vf.dim, vf.dim2)
         yf(?, 0) = yy
         for k <- 1 to h do yf(?, k) = backform (vf(?, k), yy, d)
         yf(?, h+1) = VectorD.range (0 until vf.dim)

@@ -125,11 +125,14 @@ end matrixCalc2
 
    val x1 = VectorD (81,93,80,100,100,95,77,94)                                   // original   +1 on Exam I
    val x2 = VectorD (80,93,80,120,100,95,77,94)                                   // corrected +20 on Homework
+   val x3 = VectorD (98,96,88,100,100,100,100,100,100)                            // make-up
 
    val w  = VectorD (2,2,2.5,0.25,0.25,0.75,0.75,1.5)
+   val w2 = VectorD (2,2,2.5,0.25,0.25,0.6,0.6,0.6,1.2)
 
    println (s"w * x1 = ${w dot x1}")                                              // 868
    println (s"w * x2 = ${w dot x2}")                                              // 871
+   println (s"w2 * x3 = ${w2 dot x3}")                                            // 958
 
 end matrixCalc3
 

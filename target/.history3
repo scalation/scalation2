@@ -1,19 +1,2 @@
-1731030092996:compile
-1741829300281:runMain scalation.mathstat.transformationTest
-1742519605548:compile
-1742520555274:exit
-1742520582154:compile
-1743036930020:runMain scalation.modeling.forecasting.aRX_QuadTest4
-1743040577961:compile
-1743042095943:runMain scalation.modeling.forecasting.aRX_QuadTest4
-1743042209815:compile
-1743042638853:runMain scalation.modeling.forecasting.aRX_QuadTest4
-1743043401173:runMain scalation.modeling.forecasting.aRX_SymbTest4
-1743043491061:runMain scalation.modeling.forecasting.aRXTest4
-1743044982165:runMain scalation.modeling.forecasting.aRX_SymbTest4
-1743045267169:compile
-1743045314235:runMain scalation.modeling.forecasting.aRX_QuadTest4
-1743045354973:runMain scalation.modeling.forecasting.aRX_SymbTest4
-1743045746624:runMain scalation.modeling.forecasting.aRX_QuadTest4
-1743046588760:runMain scalation.modeling.forecasting.aRX_SymbTest4
-1743048256610:compile
+1743563818937:compile
+1743564199509:doc

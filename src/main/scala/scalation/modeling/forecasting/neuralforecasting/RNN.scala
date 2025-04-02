@@ -327,19 +327,21 @@ end rNNTest2
 @main def rNNTest3 (): Unit =
 
     import Example_LakeLevels.y
-    val lags = 2                                             // number of lags to include
-    val hh   = 2                                             // forecasting horizon - FIX - currently lags == hh
+    import MakeMatrix4TS._
+    val hh  = 2                                                       // forecasting horizon - FIX - currently lags == hh
+    hp("p") = 2                                                       // number of lags to include
 
-    val y_s = scaleV (extreme(y), (-2.0, 2.0))(y)            // rescale y to active domain of sigmoid, tanh
+    val y_s = scaleV (extreme (y), (-2.0, 2.0))(y)                    // rescale y to active domain of sigmoid, tanh
 
-    val (x, yy) = ARY_D.buildMatrix4TS (y_s, lags, hh)       // column for each lag
+    val x  = ARY.buildMatrix (y_s, hp)                                // column for each lag
+    val yy = makeMatrix4Y (y_s, hh)
 
     println (s"x.dims = ${x.dims}, yy.dims = ${yy.dims}")
 
     banner ("Create a Recurrent Neural Network Unit (RNN)")
-    val mod = new RNN (x, yy)                                // call constructor
-    mod.train ()                                             // train the model
-    mod.test ()                                              // test the model
+    val mod = new RNN (x, yy)                                          // call constructor
+    mod.train ()                                                       // train the model
+    mod.test ()                                                        // test the model
 
 end rNNTest3
 
@@ -347,8 +349,9 @@ end rNNTest3
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 @main def rNNTest4 (): Unit =
 
-    val lags = 3                                             // number of lags to include
-    val hh   = 1                                             // forecasting horizon - FIX - currently lags == hh
+    import MakeMatrix4TS._
+    val hh  = 2                                                       // forecasting horizon - FIX - currently lags == hh
+    hp("p") = 2                                                       // number of lags to include
 
     var y = Example_Covid.loadData_y ("new_deaths")
 
@@ -358,15 +361,17 @@ end rNNTest3
 
     println ("original_extremes.type = " + original_extremes.getClass)
 
-    val y_s = scaleV (extreme(y), (-2.0, 2.0))(y)             // rescale y to active domain of sigmoid, tanh
+    val y_s = scaleV (extreme (y), (-2.0, 2.0))(y)                    // rescale y to active domain of sigmoid, tanh
 
-    val (x, yy) = ARY_D.buildMatrix4TS (y_s, lags, hh)        // column for each lag
+    val x  = ARY.buildMatrix (y_s, hp)                                // column for each lag
+    val yy = makeMatrix4Y (y_s, hh)
+
 
     println (s"x.dims = ${x.dims}, yy.dims = ${yy.dims}")
 
     banner ("Create a Recurrent Neural Network Unit (RNN)")
-    val mod = new RNN (x, yy)                                 // call constructor
-    mod.train ()                                              // train the model
+    val mod = new RNN (x, yy)                                         // call constructor
+    mod.train ()                                                      // train the model
     mod.test (original_extremes)
 
     print ("y(116) = " + y(115))

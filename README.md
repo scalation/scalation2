@@ -1,7 +1,11 @@
 <center>
 <h1> SCALAble SimulaTION - ScalaTion </h1>
 <p>
-<a href = "#papers">Papers</a> | <a href = "#scaladoc">Scaladoc</a> | <a href = "#source-code"> Source Code</a>
+<a href = "#papers">Papers</a> 
+
+<!--
+| <a href = "#scaladoc">Scaladoc</a> | <a href = "#source-code"> Source Code</a>
+-->
 </center>
 
 <p>
@@ -31,26 +35,29 @@ Please read the <a href = LICENSE.html> LICENSE </a> file (an MIT style license)
 <h3> Installation Instructions </h3>
 
 Version 2.0 Requires:
-<a href = "https://www.scala-lang.org/download">Scala 3.3.0</a> and
-<a href = "https://www.oracle.com/java/technologies/javase-downloads.html">Java 17 to Java 20</a>
+<a href = "https://www.scala-lang.org/download">Scala 3.6.4</a> and
+<a href = "https://www.oracle.com/java/technologies/javase-downloads.html">Java 21</a>
 (or from <a href = "https://jdk.java.net/archive">Open JDK Archive</a>)
 <br>
+https://www.scala-sbt.org/1.x/docs/Hello.html
 Recommended:
-<a href = "http://www.scala-sbt.org/">sbt</a> &nbsp;
-(see <a href = "http://www.scala-sbt.org/1.x/docs/Setup.html">Setup.html</a>)
+SBT: <a href = "https://www.scala-sbt.org/">sbt</a>
 <br>
 Getting started: <a href = "https://www.scala-sbt.org/1.x/docs/Hello.html">sbt Hello, World</a>
+<br>
 
-<h4>1. Download one of the following two files</h4>
 
+<h4>1. Download the scalation_2.0.zip file</h4>
+
+<!--
 <a href = "../scalation_2.0.tar.gz"> scalation_2.0.tar.gz </a> <br> <b>OR</b> <br>
 <a href = "../scalation_2.0.zip"> scalation_2.0.zip </a>
+-->
 
 <p>
-<h4>2. Untar or unzip the file</h4>
+<h4>2. Unzip the file</h4>
 
 <pre><code>
-$ tar xvfz scalation_2.0.tar.gz <br> <b>OR</b>
 $ unzip scalation_2.0.zip
 </code></pre>
 
@@ -84,9 +91,8 @@ ScalaTion 2.0 uses the following build specification file:
 Build Specification: <a href = "build.sbt">build.sbt</a>,
 </ol>
 
-Source packages are in the <b>src/main/scala</b> directory,
-class files are in the <b>target/scala-3.3.0/classes</b> directory, and
-documentation files are in the <b>target/scala-3.3.0/api</b> directory.
+Source packages are in the <b>src/main/scala</b> directory, and
+documentation files are in the <b>doc/api</b> directory.
 Unmanaged jar files are stored in a common library <b>lib</b> directory, <a href = "where_is_jar.txt">where_is_jar.txt</a>.
 Data file input, output or analytics are stored in subdirectories of <b>data</b>,
 while database files are stored in <b>store</b>.
@@ -98,7 +104,7 @@ $ cd your_project_dir
 $ sbt new sbt/scala-seed.g8
 $ cd hello
 $ mkdir lib
-copy jar files from <a href = "lib">lib</a>
+copy jar files from lib
 $ cd src/main/scala/example
 $ vim Hello.scala
 </code></pre>
@@ -107,6 +113,7 @@ The second time you do this, you will want to use a more appropriate name than h
 
 <p><hr><p>
 
+<!--
 <h4>6. Alternatively, you may use my_scalation_2.0</h4>
 
 Downloading and (unzip/tar xvfz) either
@@ -124,6 +131,7 @@ Check to make sure the ScalaTion .jar file is in the lib directory (ls -l lib).
 The location of ScalaTion's .jar file may be found in
 <a href = "where_is_jar.txt">where_is_jar.txt</a>.
 The sbt run command will allow you to choose any main method to run (or you may use runMain).
+-->
 
 <p><hr><p>
 
@@ -196,6 +204,7 @@ Online <a href = "../home/theses/jain_thesis/bigdata_2014/BigDataCong2014_DualIs
 
 </ol>
 
+<!--
 <A name = "scaladoc">
 
 <p><hr><p>
@@ -210,39 +219,39 @@ Online <a href = "../home/theses/jain_thesis/bigdata_2014/BigDataCong2014_DualIs
 <tr>
 <tr>
 <tr>
-<td> <a href = "target/scala-3.3.0/api/index.html"><b>scalation</b></a>
+<td> <a href = "doc/api/index.html"><b>scalation</b></a>
 <td> <b>The scalation foundational packages.</b>
 <tr>
 <tr>
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/animation.html"> animation </a>
+<td> <a href = "doc/api/scalation/animation.html"> animation </a>
 <td> The `animation` package supports the animation of models.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/calculus.html"> calculus </a>
+<td> <a href = "doc/api/scalation/calculus.html"> calculus </a>
 <td> The `calculus` package supports numerical differentiation and integration. 
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/database.html"> database </a>
+<td> <a href = "doc/api/scalation/database.html"> database </a>
 <td> The `database` package supports relational and graph databases.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/dynamics.html"> dynamics </a>
+<td> <a href = "doc/api/scalation/dynamics.html"> dynamics </a>
 <td> The `dynamics` package supports the development of ODE models.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/mathstat.html"> mathstat </a>
+<td> <a href = "doc/api/scalation/mathstat.html"> mathstat </a>
 <td> The `mathstat` package supports basic math and statistics.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/modeling.html"> modeling </a>
+<td> <a href = "doc/api/scalation/modeling.html"> modeling </a>
 <td> The `modeling` package supports the development of several type of data science models.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/optimization.html"> optimization </a>
+<td> <a href = "doc/api/scalation/optimization.html"> optimization </a>
 <td> The `optimization` package supports linear and nonlinear optimization.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/random.html"> random </a>
+<td> <a href = "doc/api/scalation/random.html"> random </a>
 <td> The `random` package supports random variate generation.
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/scala2d.html"> scala2d </a>
+<td> <a href = "doc/api/scalation/scala2d.html"> scala2d </a>
 <td> The `scala2d` package supports simple 2D graphics in scala, based upon `java.swing`, `java.awt` and `java_awt_geom`. 
 <tr>
-<td> <a href = "target/scala-3.3.0/api/scalation/simulation.html"> simulation </a>
+<td> <a href = "doc/api/scalation/simulation.html"> simulation </a>
 <td> The `simulation` package supports the development of simulation models.
 <tr>
 </table>
@@ -298,8 +307,10 @@ Online <a href = "../home/theses/jain_thesis/bigdata_2014/BigDataCong2014_DualIs
 <td> The `simulation` package supports the development of simulation models.
 <tr>
 </blockquote>
-
 <p>
+-->
+
+
 </body>
 </html>
 

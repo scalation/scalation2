@@ -48,7 +48,7 @@ trait FitM:
     protected var mae    = -1.0                              // mean absolute error (MAE or MAD)
     protected var smape  = -1.0                              // symmetric Mean Absolute Percentage Error (sMAPE)
 
-    private val flaw  = flawf ("FitM")                       // flaw function
+    private val flaw = flawf ("FitM")                        // flaw function
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the sum of the squares for error (sse).  Must call diagnose first.
@@ -73,11 +73,7 @@ trait FitM:
         var s = 0.0
         for i <- e.indices if e(i) != 0.0 do
             s += abs (e(i)) / (abs (y(i)) + abs (yp(i)))
-        val smape_ = 200 * s / e.dim
-//        banner(s"smape = ${smape_}, y.dim = ${y.dim}")
-//        println(s"${y(0 until 5)} \t ${y(y.dim-5 until y.dim)}")
-//        println(s"${yp(0 until 5)} \t ${yp(y.dim-5 until y.dim)}")
-        smape_
+        200 * s / e.dim
     end smapeF
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -91,7 +87,6 @@ trait FitM:
      *  @param w   the weights on the instances (defaults to null)
      */
     def diagnose (y: VectorD, yp: VectorD, w: VectorD = null): VectorD =
-
         m = y.dim                                            // size of response vector (test/full)
         if m < 2       then flaw ("diagnose", s"requires at least 2 responses to evaluate m = $m")
         if yp.dim != m then flaw ("diagnose", s"yp.dim = ${yp.dim} != y.dim = $m")
@@ -99,7 +94,6 @@ trait FitM:
         val mu = y.mean                                      // mean of y (may be zero)
         val e  = y - yp                                      // residual/error vector
         sse    = e.normSq                                    // sum of squares for error
-
         if w == null then
             sst = (y - mu).normSq                            // sum of squares total (ssr + sse)
             ssr = sst - sse                                  // sum of squares regression/model
@@ -115,9 +109,7 @@ trait FitM:
 
         mse0   = sse / m                                     // raw/MLE mean squared error
         rmse   = sqrt (mse0)                                 // root mean squared error (RMSE)
-
-        val e_st  = y.standardize - yp.standardize
-        mae    = e_st.norm1 / m                                 // mean absolute error
+        mae    = e.norm1 / m                                 // mean absolute error
         smape  = smapeF (y, yp, e)                           // symmetric Mean Absolute Percentage Error (sMAPE)
         fit                                                  // returns QoF
     end diagnose

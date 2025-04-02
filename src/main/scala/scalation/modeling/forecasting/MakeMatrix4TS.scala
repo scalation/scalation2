@@ -43,6 +43,45 @@ extension (tr: Transform | Array [Transform])
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `MakeMatrix4TSY` trait provides factory method templates for for invoking
+ * `ARY*` constructors.
+ */
+trait  MakeMatrix4TSY:
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create an `ARY*` object by making/building an input matrix x and then calling the
+     *  `ARY*` constructor.
+     *  @param y        the response vector (time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param fname_   the feature/variable names
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     */
+    def apply (y: VectorD, hh: Int, fname_ : Array [String] = null,
+               tRng: Range = null, hparam: HyperParameter = MakeMatrix4TS.hp,
+               bakcast: Boolean = false): Forecaster_Reg | Forecaster_D
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create an `ARY*` object by building an input matrix xy and then calling the
+     *  `ARY*` constructor.  Also rescale the input data.
+     *  @param y        the endogenous/response vector (main time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param fname_   the feature/variable names
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     *  @param tForm    the z-transform (rescale to standard normal)
+     */
+    def rescale (y: VectorD, hh: Int, fname_ : Array [String] = null,
+                 tRng: Range = null, hparam: HyperParameter = MakeMatrix4TS.hp,
+                 bakcast: Boolean = false,
+                 tForm: VectorD | MatrixD => Transform = x => zForm(x)): Forecaster_Reg | Forecaster_D
+
+end MakeMatrix4TSY
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `MakeMatrix4TS` trait provides factory method templates for for invoking
  * `ARX*` constructors.
  */
@@ -115,7 +154,7 @@ object MakeMatrix4TS:
     hp += ("qp", 2.0, 2.0)                          // the power (defaults to quadratic) to raise the lags of the exogenous variables to
     hp += ("qr", 0.5, 0.5)                          // the root (defaults to sqrt) to take of the lags of the exogenous variables
     hp += ("spec", 1, 1)                            // trend terms: 0 - none, 1 - constant, 2 - linear, 3 - quadratic,
-    //              4 - sine, 5 - cosine
+                                                    //              4 - sine, 5 - cosine
     hp += ("lwave", 7, 7)                           // wavelength for sine/cosine (distance between peaks)
     hp += ("cross", 0, 0)                           // 0 - no ENDO-EXO cross terms, 1 - include ENDO-EXO cross terms
 
@@ -154,7 +193,7 @@ object MakeMatrix4TS:
         for j <- ps to start by -1 do names += s"yl${j*sp}"             // seasonal lags terms
         for j <- p to 1 by -1 do names += s"yl$j"                       // regular lags terms
         if pwr then for j <- p to 1 by -1 do names += s"yl$j^"          // power lags terms
-        //      println (s"formNames: $names")
+//      println (s"formNames: $names")
         names.toArray
     end formNames
 
@@ -179,13 +218,13 @@ object MakeMatrix4TS:
      *  @param lwave    the wavelength (distance between peaks)
      *  @param bakcast  whether a backcasted value is prepended to the time series
      */
-    def makeMatrix4T (y: VectorD, spec: Int, lwave: Double, bakcast: Boolean): MatrixD =
+    def makeMatrix4T (y: VectorD, spec: Int, lwave: Double, bakcast: Boolean = false): MatrixD =
         val m    = y.dim
         val m2   = m / 2.0
         val w    = _2Pi / lwave                                         // 2 Pi over wavelength
         val x    = new MatrixD (m, spec)
         val t_0m = VectorD.range (0, m)                                 // vector 0, 1, ..., m-1
-
+    
         if spec >= 1 then x(?, 0) = VectorD.one (m)                     // intercept/constant term
         if spec >= 2 then x(?, 1) = t_0m / m                            // time trend (linear)
         if spec >= 3 then x(?, 2) = (t_0m-m2)~^2 / m2~^2                // time-squared trend (quadratic)
@@ -203,7 +242,7 @@ object MakeMatrix4TS:
      *  @param p        the maximum lag included (inclusive)
      *  @param bakcast  whether a backcasted value is prepended to the time series
      */
-    def makeMatrix4L (y: VectorD, p: Int, bakcast: Boolean): MatrixD =
+    def makeMatrix4L (y: VectorD, p: Int, bakcast: Boolean = false): MatrixD =
         val x  = new MatrixD (y.dim, p)
         val yb = getYb (y, bakcast)
         for t <- x.indices; j <- 1 to p do
@@ -234,7 +273,7 @@ object MakeMatrix4TS:
      *  @param ps       the number of seasonal lags
      *  @param bakcast  whether a backcasted value is prepended to the time series
      */
-    def makeMatrix4S (y: VectorD, p: Int, sp: Int, ps: Int, bakcast: Boolean): MatrixD =
+    def makeMatrix4S (y: VectorD, p: Int, sp: Int, ps: Int, bakcast: Boolean = false): MatrixD =
         val n = if sp > p then ps else ps - 1                           // number of seasonal lags to use
         if n <= 0 || 2 * sp <= p then
             flaw ("makeMatrix4S", "seasonality subsumed in regular lags, so it's ignored")
@@ -242,7 +281,7 @@ object MakeMatrix4TS:
         val x  = new MatrixD (y.dim, n)
         val yb = getYb (y, bakcast)
 
-        val start = if n < ps then 2 else 1
+        val start = if n < ps then 2 else 1 
         for t <- x.indices; j <- start to ps do
             val js = j * sp
             x(t, ps - j) = yb(max0 (t + 1 - js))
@@ -256,7 +295,7 @@ object MakeMatrix4TS:
      *  @param hh       the maximum forecasting horizon (h = 1 .. hh)
      *  @param bakcast  whether a backcasted value is prepended to the time series
      */
-    def makeMatrix4Y (y: VectorD, hh: Int, bakcast: Boolean): MatrixD =
+    def makeMatrix4Y (y: VectorD, hh: Int, bakcast: Boolean = false): MatrixD =
         val yb = getYb (y, bakcast)
         val m  = y.dim
         val yy = new MatrixD (m, hh)                                    // yy = [ y_h ] for h = 1 to hh
@@ -273,7 +312,7 @@ object MakeMatrix4TS:
      *  @param qp       the power to raise the exogensous lags to
      *  @param bakcast  whether a backcasted value is prepended to the time series
      */
-    def makeMatrix4EXO (xe: MatrixD, q: Int, qp: Double, bakcast: Boolean): MatrixD =
+    def makeMatrix4EXO (xe: MatrixD, q: Int, qp: Double, bakcast: Boolean = false): MatrixD =
         var xx: MatrixD = makeMatrix_exo_col (xe(?, 0), q, qp, bakcast)
         for j <- 1 until xe.dim2 do
             xx = xx ++^ makeMatrix_exo_col (xe(?, j), q, qp, bakcast)
@@ -293,7 +332,7 @@ object MakeMatrix4TS:
      */
     private def makeMatrix_exo_col (xej: VectorD, q: Int, qp: Double, bakcast: Boolean): MatrixD =
         if bakcast then
-            println ("FIX handle backcast")
+           println ("FIX handle backcast")
         val xe_j = backfill (xej)
         val xx   = new MatrixD (xe_j.dim, q)
         for i <- xx.indices; k <- xx.indices2 do

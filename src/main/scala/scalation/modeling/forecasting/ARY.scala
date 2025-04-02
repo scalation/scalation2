@@ -35,10 +35,12 @@ import MakeMatrix4TS._
  *  @param tRng     the time range, if relevant (time index may suffice)
  *  @param hparam   the hyper-parameters (defaults to `MakeMatrix4TS.hp`)
  *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+ *  @param tForms   the map of transformations applied
  */
 class ARY (x: MatrixD, y: VectorD, hh: Int, fname: Array [String],
            tRng: Range = null, hparam: HyperParameter = hp,
-           bakcast: Boolean = false)       // backcast value used only `MakeMatrix4TS`
+           bakcast: Boolean = false,
+           tForms: TransformMap = Map ("tForm_y" -> null))
       extends Forecaster_Reg (x, y, hh, fname, tRng, hparam, bakcast):   // no automatic backcasting, @see `ARY.apply`
 
     private val debug  = debugf ("ARY", true)                           // debug function
@@ -46,6 +48,7 @@ class ARY (x: MatrixD, y: VectorD, hh: Int, fname: Array [String],
     protected val spec = hparam("spec").toInt                           // trend terms: 0 - none, 1 - constant, 2 - linear, 3 - quadratic
                                                                         //              4 - sine, 5 cosine
     modelName = s"ARY($p)"
+    yForm = tForms("tForm_y").asInstanceOf [Transform]
 
     debug ("init", s"$modelName with additional term spec = $spec")
 //  debug ("init", s"[ x | y ] = ${x :^+ y}")
@@ -62,8 +65,8 @@ class ARY (x: MatrixD, y: VectorD, hh: Int, fname: Array [String],
         val x_trend = xx(0 until spec)                                  // get trend values
         val x_act   = xx(n_endo-(p+1-h) until n_endo)                   // get actual lagged y-values (endogenous)
         val nyy     = p - x_act.dim                                     // number of forecasted values needed
-//      println (s"forge: h = $h, n_nedo = $n_endo, [ ${x_trend.dim}, ${x_act.dim} ], nyy = $nyy")
         val x_fcast = yy(h-nyy until h)                                 // get forecasted y-values
+
         x_trend ++ x_act ++ x_fcast
     end forge
 
@@ -73,7 +76,7 @@ end ARY
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARY` companion object provides factory methods for the `ARY` class.
  */
-object ARY:
+object ARY extends MakeMatrix4TSY:
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ARY` object by making/building an input matrix x and then calling the
@@ -88,15 +91,53 @@ object ARY:
     def apply (y: VectorD, hh: Int, fname_ : Array [String] = null,
                tRng: Range = null, hparam: HyperParameter = hp,
                bakcast: Boolean = false): ARY =
+
         val p     = hparam("p").toInt                                   // use the last p values
         val spec  = hparam("spec").toInt                                // 0 - none, 1 - constant, 2 - linear, 3 -quadratic, 4 - sin, 5 = cos
-        val lwave = hparam("lwave").toDouble                            // wavelength (distance between peaks)
-        val xt    = makeMatrix4T (y, spec, lwave, bakcast)              // trend terms 
-        val xl    = makeMatrix4L (y, p, bakcast)                        // regular lag terms
-        val fname = if fname_ == null then formNames (spec, p)
-                    else fname_
-        new ARY (xt ++^ xl, y, hh, fname, tRng, hparam, bakcast)
+        val xy    = buildMatrix (y, hparam, bakcast)
+        val fname = if fname_ == null then formNames (spec, p) else fname_
+        new ARY (xy, y, hh, fname, tRng, hparam, bakcast)
     end apply
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Create an `ARY` object by building an input matrix xy and then calling the
+     *  `ARY` constructor.  Also rescale the input data.
+     *  @param y        the endogenous/response vector (main time series data)
+     *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+     *  @param tRng     the time range, if relevant (time index may suffice)
+     *  @param hparam   the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     *  @param tForm    the z-transform (rescale to standard normal)
+     */
+    def rescale (y: VectorD, hh: Int, fname_ : Array [String] = null,
+                 tRng: Range = null, hparam: HyperParameter = hp,
+                 bakcast: Boolean = false,
+                 tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARY =
+
+        val p     = hparam("p").toInt                                   // use the last p values
+        val spec  = hparam("spec").toInt                                // 0 - none, 1 - constant, 2 - linear, 3 -quadratic, 4 - sin, 5 = cos
+        val tForm_y = tForm(y)
+        if tForm_y.getClass.getSimpleName == "zForm" then hparam("nneg") = 0
+        val y_scl   = tForm_y.f(y)
+        val tForms  = Map ("tForm_y" -> tForm_y)
+
+        val xy    = buildMatrix (y_scl, hparam, bakcast)
+        val fname = if fname_ == null then formNames (spec, p) else fname_
+        new ARY (xy, y_scl, hh, fname, tRng, hparam, bakcast, tForms)
+    end rescale
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Build the input matrix by combining the p + spec columns for the trend and
+     *  endogenous variable with the q * xe.dim2 columns for the exogenous variables.
+     *  @param y        the response vector (time series data)
+     *  @param hp_      the hyper-parameters
+     *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
+     */
+    def buildMatrix (y: VectorD, hp_ : HyperParameter, bakcast: Boolean = false): MatrixD =
+        val (p, spec, lwave) = (hp_("p").toInt, hp_("spec").toInt, hp_("lwave").toDouble)
+        makeMatrix4T (y, spec, lwave, bakcast) ++^                   // trend terms
+        makeMatrix4L (y, p, bakcast)                                 // regular lag terms
+    end buildMatrix
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ARY` object for the special case of ARY(1) and use `SimpleRegression`.
@@ -123,15 +164,12 @@ import Example_LakeLevels.y
 @main def aRYTest (): Unit =
 
     val hh = 3                                                          // maximum forecasting horizon
+    hp("p")    = 3                                                      // endo lags
+    hp("spec") = 2                                                      // trend specification: 0, 1, 2, 3, 5
 
     val mod = ARY (y, hh)                                               // create model for time series data
-    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
-    mod.trainNtest_x ()()                                               // train and test on full dataset
-
-    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
-    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    mod.inSampleTest ()                                                 // In-Sample Testing
+    println (mod.summary ())                                            // statistical summary
 
 end aRYTest
 
@@ -146,6 +184,8 @@ end aRYTest
 @main def aRYTest2 (): Unit =
 
     val hh = 3                                                          // maximum forecasting horizon
+    hp("p")    = 3                                                      // endo lags
+    hp("spec") = 2                                                      // trend specification: 0, 1, 2, 3, 5
 
     val mod = ARY (y, hh)                                               // create model for time series data
     banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
@@ -171,19 +211,13 @@ end aRYTest2
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks) 
 
-    for p <- 1 to 5; s <- 1 to 2 do                                     // number of lags; trend
+    for p <- 6 to 6; s <- 1 to 1 do                                     // number of lags; trend
         hp("p")    = p                                                  // endo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARY (y, hh)                                           // create model for time series data
-        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-        mod.trainNtest_x ()()                                           // train and test on full dataset
-        println (mod.summary ())                                        // statistical summary of fit
 
-//      mod.setSkip (p)                                                 // full ARY-formula available when t >= p
-        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
-        mod.diagnoseAll (y, mod.getYf)                                  // model diagnostics for all horizons
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
+        val mod = ARY (y, hh)                                           // create model for time series data
+        mod.inSampleTest ()                                             // In-Sample Testing
+        println (mod.summary ())                                        // statistical summary of fit
     end for
 
 end aRYTest3
@@ -203,17 +237,19 @@ end aRYTest3
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") =     20                                                // wavelength (distance between peaks) 
 
-    for p <- 5 to 5; s <- 1 to 1 do                                     // number of lags; trend
+    for p <- 6 to 6; s <- 1 to 1 do                                     // number of lags; trend
         hp("p")     = p                                                 // endo lags
         hp("spec")  = s                                                 // trend specification: 0, 1, 2, 3, 5
-        val mod = ARY (y, hh)                                           // create model for time series data
+//        val mod = ARY (y, hh)                                           // create model for time series data
+        val mod = ARY.rescale (y, hh)                                 // create model for time series data
+
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
         mod.setSkip (0)
         mod.rollValidate (rc = 2)                                       // TnT with Rolling Validation
         println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
-        mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
+        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)   // only diagnose on the testing set
 //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
@@ -238,14 +274,8 @@ end aRYTest4
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
     val mod = ARY (y, hh)                                               // create model for time series data
-    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-    mod.trainNtest_x ()()                                               // train and test on full dataset
+    mod.inSampleTest ()                                                 // In-Sample Testing
     println (mod.summary ())                                            // statistical summary of fit
-
-    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-    mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
-    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
     banner ("Feature Selection Technique: Forward")
     val (cols, rSq) = mod.forwardSelAll ()                              // R^2, R^2 bar, sMAPE, R^2 cv
@@ -259,46 +289,12 @@ end aRYTest4
 end aRYTest5
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRYTest6` main function tests the `ARY` class on real data:
- *  Forecasting COVID-19 using In-Sample Testing (In-ST).
- *  Test forecasts (h = 1 to hh steps ahead forecasts).
- *  > runMain scalation.modeling.forecasting.aRYTest6
- * 
-@main def aRYTest6 (): Unit =
-
-    val yy = loadData_y ()
-//  val y  = yy                                                         // full
-    val y  = yy(0 until 116)                                            // clip the flat end
-    val hh = 6                                                          // maximum forecasting horizon
-    hp("lwave") = 20                                                    // wavelength (distance between peaks)
-
-    for p <- 1 to 5; s <- 1 to 1 do                                     // number of lags; trend
-        hp("p")    = p                                                  // endo lags
-        hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARY.quadratic (y, hh)                                 // create model for time series data
-        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-        mod.trainNtest_x ()()                                           // train and test on full dataset
-        println (mod.summary ())                                        // statistical summary of fit
-
-//      mod.setSkip (p)                                                 // full AR-formula available when t >= p
-        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
-        mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
-//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
-    end for
-
-end aRYTest6
- */
-
-
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRYTest7` main function tests the `ARY` object's ability to make/build input
+/** The `aRYTest6` main function tests the `ARY` object's ability to make/build input
  *  matrices.  Build an input/predictor data matrix for the COVID-19 dataset.
- *  > runMain scalation.modeling.forecasting.aRYTest7
+ *  > runMain scalation.modeling.forecasting.aRYTest6
  */
-@main def aRYTest7 (): Unit =
+@main def aRYTest6 (): Unit =
 
     val yy    = loadData_y ()
 //  val y     = yy                                                      // full
@@ -315,5 +311,5 @@ end aRYTest6
     banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
     mod.trainNtest ()()
 
-end aRYTest7
+end aRYTest6
 

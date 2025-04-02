@@ -33,7 +33,7 @@ import MakeMatrix4TS._
  *  residual/error term.
  *  @see `MakeMatrix4TS` for hyper-parameter specifications.
  *  @param x        the data/input matrix (lagged columns of y and xe) @see `ARX_Symb_D.apply`
- *  @param y        the response/output vector (main time series data)
+ *  @param y        the response/output vector (main time series data) 
  *  @param hh       the maximum forecasting horizon (h = 1 to hh)
  *  @param n_exo    the number of exogenous variables
  *  @param fname    the feature/variable names
@@ -46,7 +46,7 @@ class ARX_Symb_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [Str
                   tRng: Range = null, hparam: HyperParameter = hp,
                   bakcast: Boolean = false,
                   tForms: TransformMap = Map ("tForm_y" -> null))
-    extends ARX_D (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):
+      extends ARX_D (x, y, hh, n_exo, fname, tRng, hparam, bakcast, tForms):
 
     private val debug = debugf ("ARX_Symb_D", true)                          // debug function
 
@@ -57,7 +57,6 @@ class ARX_Symb_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [Str
 
 end ARX_Symb_D
 
-import Example_Covid._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARX_Symb_D` companion object provides factory methods for the `ARX_Symb_D` class.
@@ -82,12 +81,13 @@ object ARX_Symb_D extends MakeMatrix4TS:
                fEndo: Array [Transform] = Array (log1pForm),
                fExo: Array [Transform] = Array (log1pForm),
                bakcast: Boolean = false): ARX_Symb_D =
+
         val (n_fEndo, n_fExo) = (fEndo.length, fExo.length)
         val (xy, tForms)      = ARX_Symb.buildMatrix (xe, y, hparam, fEndo, fExo, bakcast)
         val yy                = makeMatrix4Y (y, hh, bakcast)
         val fname = if fname_ == null then formNames (xe.dim2, hparam, n_fEndo, n_fExo) else fname_
         new ARX_Symb_D (xy, yy, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
-    end apply
+    end apply 
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create an `ARX_Symb_D` object by building an input matrix xy and then calling the
@@ -109,11 +109,12 @@ object ARX_Symb_D extends MakeMatrix4TS:
                  fExo: Array [Transform] = Array (log1pForm),
                  bakcast: Boolean = false,
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_Symb_D =
+
         val (n_fEndo, n_fExo) = (fEndo.length, fExo.length)
         val (xy, tForms)      = ARX_Symb.buildMatrix (xe, y, hparam, fEndo, fExo, bakcast, tForm)
         val fname = if fname_ == null then formNames (xe.dim2, hparam, n_fEndo, n_fExo) else fname_
         val y_scl = tForms("tForm_y").f(y)
-        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hparam("nneg") = 0
+        if tForms("tForm_y").getClass.getSimpleName == "zForm" then hp("nneg") = 0
         val yy    = makeMatrix4Y (y_scl, hh, bakcast)
         new ARX_Symb_D (xy, yy, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end rescale
@@ -131,6 +132,7 @@ object ARX_Symb_D extends MakeMatrix4TS:
 
 end ARX_Symb_D
 
+import Example_Covid._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARX_Symb_DTest3` main function tests the `ARX_Symb_D` class on real data:
@@ -140,36 +142,27 @@ end ARX_Symb_D
  */
 @main def aRX_Symb_DTest3 (): Unit =
 
-    //  val exo_vars  = NO_EXO
+//  val exo_vars  = NO_EXO
     val exo_vars  = Array ("icu_patients")
-    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    //  val xe = xxe                                                        // full
+//  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-    //  val y  = yy                                                         // full
+//  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
     hp("cross") = 1                                                     // 1 => add cross terms
 
-    for p <- 1 to 6; s <- 1 to 5 do                                     // number of lags; trend; number of exo lags
+    for p <- 6 to 6; q <- 4 to 4; s <- 1 to 1 do                        // number of lags (endo, exo); trend
         hp("p")    = p                                                  // endo lags
         hp("q")    = 2                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-
         val mod = ARX_Symb_D (xe, y, hh)                                // create model for time series data
-        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-        mod.trainNtest_x ()()                                           // train and test on full dataset
+        mod.inSampleTest ()                                             // In-sample Testing
         println (mod.summary ())                                        // statistical summary of fit
-        println (s"Before forecastAll Matrix yf = ${mod.getYf}")
-
-        //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
-        mod.forecastAll (mod.getYy)                                     // forecast h-steps ahead (h = 1 to hh) for all y
-        mod.diagnoseAll (y, mod.getYf)                                  // QoF for each horizon
-        println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
-    //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for
 
 end aRX_Symb_DTest3
@@ -184,18 +177,18 @@ end aRX_Symb_DTest3
 @main def aRX_Symb_DTest4 (): Unit =
 
     val exo_vars  = Array ("icu_patients")
-    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    //  val xe = xxe                                                        // full
+//  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-    //  val y  = yy                                                         // full
+//  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     val pp = 1.5
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
-    //  hp("cross") = 1                                                     // 1 => add cross terms
+//  hp("cross") = 1                                                     // 1 => add cross terms
 
     val ff = Array [Transform] (powForm (VectorD (pp)))
     val gg = Array [Transform] ()
@@ -204,17 +197,17 @@ end aRX_Symb_DTest3
         hp("p")    = p                                                  // endo lags
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-
-        val mod = ARX_Symb_D (xe, y, hh, fEndo = ff, fExo = gg)         // create model for time series data
+//        val mod = ARX_Symb_D (xe, y, hh, fEndo = ff, fExo = gg)         // create model for time series data
+        val mod = ARX_Symb_D.rescale (xe, y, hh, fEndo = ff, fExo = gg)         // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
-        //        println (mod.summary ())                                        // statistical summary of fit
+//        println (mod.summary ())                                        // statistical summary of fit
 
         mod.setSkip (0)
         mod.rollValidate ()                                             // TnT with Rolling Validation
         println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
-        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
-    //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim), 0)    // only diagnose on the testing set
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRX_Symb_DTest4

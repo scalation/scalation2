@@ -93,7 +93,6 @@ import Example_LakeLevels.y
 
     mod.forecastAll (y)
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end randomWalkTest
@@ -141,7 +140,6 @@ end randomWalkTest2
 
     mod.forecastAll (y)                                                   // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
 //  println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end randomWalkTest3

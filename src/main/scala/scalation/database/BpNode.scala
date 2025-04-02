@@ -20,7 +20,7 @@ object BpNode:
 
     private var DEFAULT_DLINK = true                               // default value for DLINK
 
-    private val debug = debugf ("BpNode", true)                    // debug function
+    private val debug = debugf ("BpNode", false)                   // debug function
     private val flaw  = flawf ("BpNode")                           // flaw function
 
     private var order = 5                                          // maximum number of references (reset as needed)
