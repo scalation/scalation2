@@ -43,20 +43,20 @@ Getting started: <a href = "https://www.scala-sbt.org/1.x/docs/Hello.html">sbt H
 <br>
 
 
-<h4>1. Download one of the following two files</h4>
-
-<a href = "../scalation_2.0.tar.gz"> scalation_2.0.tar.gz </a> <br> <b>OR</b> <br>
-<a href = "../scalation_2.0.zip"> scalation_2.0.zip </a>
-
-<p>
-<h4>2. Untar or unzip the file</h4>
+<h4>1. Download the scalation_2.0.zip file</h4>
 
 <!--
+<a href = "../scalation_2.0.tar.gz"> scalation_2.0.tar.gz </a> <br> <b>OR</b> <br>
+<a href = "../scalation_2.0.zip"> scalation_2.0.zip </a>
+-->
+
+<p>
+<h4>2. Unzip the file</h4>
+
 <pre><code>
-$ tar xvfz scalation_2.0.tar.gz <br> <b>OR</b>
 $ unzip scalation_2.0.zip
 </code></pre>
--->
+
 
 <h4>3. To build all the modules, change into the ScalaTion base directory and run sbt</h4>
 
