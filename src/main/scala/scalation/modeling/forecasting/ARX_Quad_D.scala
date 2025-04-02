@@ -221,8 +221,8 @@ end aRX_Quad_DTest3
         hp("p")    = p                                                  // number of endo lags
         hp("q")    = q                                                  // try various rules
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARX_Quad_D (xe, y, hh)
-//        val mod = ARX_Quad_D.rescale (xe, y, hh)                        // create model for time series data
+//        val mod = ARX_Quad_D (xe, y, hh)
+        val mod = ARX_Quad_D.rescale (xe, y, hh)                        // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 

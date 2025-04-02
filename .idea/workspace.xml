@@ -4,7 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b2eb790b-a8b8-4ee9-a68f-5c956cb14266" name="Changes" comment="" />
+    <list default="true" id="b2eb790b-a8b8-4ee9-a68f-5c956cb14266" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.bsp/sbt.json" beforeDir="false" afterPath="$PROJECT_DIR$/.bsp/sbt.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/scalation.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/scalation.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules/scalation.scalation-build.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/scalation.scalation-build.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.html" beforeDir="false" afterPath="$PROJECT_DIR$/README.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad.scala" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad_D.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad_D.scala" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -14,6 +23,9 @@
     <projectState path="$PROJECT_DIR$">
       <ProjectState />
     </projectState>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectCodeStyleSettingsMigration">
     <option name="version" value="2" />
@@ -41,8 +53,9 @@
     "Application.aRY_DTest4.executor": "Run",
     "Application.aRY_QuadTest4.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "dev__Yousef",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/youse/OneDrive/Documents/New Scalation/scalation_2.0",
+    "last_opened_file_path": "C:/Users/youse/OneDrive/Documents/GitHub/scalation_2.0",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -123,10 +136,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Application.aRX_Quad_DTest4" />
+        <item itemvalue="Application.aRX_QuadTest4" />
+        <item itemvalue="Application.aRXTest4" />
         <item itemvalue="Application.aRX_SymbTest4" />
         <item itemvalue="Application.aRX_DTest4" />
-        <item itemvalue="Application.aRXTest4" />
-        <item itemvalue="Application.aRX_QuadTest4" />
       </list>
     </recent_temporary>
   </component>
@@ -153,6 +166,7 @@
       <workItem from="1743556431038" duration="34000" />
       <workItem from="1743556486942" duration="5623000" />
       <workItem from="1743562243849" duration="2094000" />
+      <workItem from="1743570723394" duration="1312000" />
     </task>
     <servers />
   </component>
