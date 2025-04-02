@@ -26,7 +26,7 @@ case class KeyType (key: ArrayBuffer [ValueType]):
     /** Auxiliary constructor allowing a variable number of arguments.
      *  @param ky  the values making up the key as a variable-argument list
      */
-    def this (ky: ValueType*) = this (ArrayBuffer (ky :_*))
+    def this (ky: ValueType*) = this (ArrayBuffer (ky*))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Auxiliary constructor allowing the key values to passed in as a tuple.

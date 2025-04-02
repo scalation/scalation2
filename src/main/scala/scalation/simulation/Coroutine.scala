@@ -30,13 +30,13 @@ abstract class Coroutine (label: String = "cor")
 
     import Coroutine._
 
-    private val debug   = debugf ("Coroutine", false)          // debug function
+    private val debug   = debugf ("Coroutine", true)           // debug function
     private val _sema   = new Semaphore (0)                    // waiting semaphore
     private var started = false                                // whether this coroutine has started
 
     nCreated += 1
-    private val id = label + "." + nCreated
-    debug ("init", s"$id waits to be STARTed")
+    protected val cor_id = label + "." + nCreated
+    debug ("init", s"===> $cor_id waits to be STARTed")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the Coroutine counts.
@@ -52,11 +52,11 @@ abstract class Coroutine (label: String = "cor")
         try
             act ()
         catch case ex: InterruptedException =>
-            debug ("run", s"INTERRUPTED coroutine $id")
+            debug ("run", s"INTERRUPTED coroutine $cor_id")
         end try
         nTerminated +=1
 //      pool.remove (this)
-        debug ("run", s"TERMINATE coroutine $id")
+        debug ("run", s"TERMINATE coroutine $cor_id")
     end run
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -82,19 +82,20 @@ abstract class Coroutine (label: String = "cor")
     def yyield (that: Coroutine, quit: Boolean = false): Unit =
         if that != null then
             if that.started then
-                debug ("yyield", s"$id RESUMEs that coroutine ${that.id}")
+                debug ("yyield", s"$cor_id RESUMEs that coroutine ${that.cor_id}")
                 that.resume ()
             else
-                debug ("yyield", s"$id STARTs that new coroutine ${that.id}")
+                debug ("yyield", s"$cor_id STARTs that new coroutine ${that.cor_id}")
                 that.start ()
             end if
         end if
 
         if quit then
-            debug ("yyield", s"$id TERMINATEs")
+            debug ("yyield", s"$cor_id TERMINATEs")
             return
         else
-            _sema.acquire ()                // wait until resumed
+            debug ("yyield", s"$cor_id WAITs on semaphore")
+            _sema.acquire ()                                   // wait until resumed
         end if
     end yyield
 
@@ -151,7 +152,7 @@ object Coroutine:
     private var nCreated     = 0                               // number of Coroutines created
     private var nStarted     = 0                               // number of Coroutines started
     private var nTerminated  = 0                               // number of Coroutines terminated
-    //var scope = new StructuredTaskScope[Unit]()
+//  var scope = new StructuredTaskScope[Unit]()
 
     if ! useVirtualThread then startup ()                      // automatic startup at program start
 
@@ -239,7 +240,7 @@ object CoroutineTest:                      // requires object since it needs for
     class Cor1 extends Coroutine:
         override def act (): Unit =
             println ("Cor1: phase 1")
-            println(s"inside Cor1 the id is ${Thread.currentThread ().threadId ()} " +
+            println (s"inside Cor1 the id is ${Thread.currentThread ().threadId ()} " +
                     s"isVirtual ${Thread.currentThread ().isVirtual}")
             println (Thread.currentThread ().toString ())
             yyield (cor2)
@@ -251,9 +252,9 @@ object CoroutineTest:                      // requires object since it needs for
     class Cor2 extends Coroutine:
         override def act (): Unit =
             println ("Cor2: phase 1")
-            println(s"inside Cor2 the id is ${Thread.currentThread ().threadId ()} " +
+            println (s"inside Cor2 the id is ${Thread.currentThread ().threadId ()} " +
                     s"isVirtual ${Thread.currentThread ().isVirtual}")
-            println(Thread.currentThread ().toString ())
+            println (Thread.currentThread ().toString ())
             yyield (cor1)
             println ("Cor2: phase 2")
             yyield (null, true)

@@ -55,9 +55,11 @@ end RegressionTreeMT
 
 import RegressionTree.{check, fastThreshold, split}
 
+// FIX - implemenent feature bagging
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `RegressionTreeMT` class implements a Regression Tree (MT) that selects splitting features
- *  using minimal variance in children nodes.  To avoid exponential choices in the selection,
+ *  using minimal variance in children nodes to avoid exponential choices in the selection,
  *  supporting ordinal features currently.
  *  @param x            the m-by-n input/data matrix
  *  @param y            the output/response m-vector
@@ -66,11 +68,15 @@ import RegressionTree.{check, fastThreshold, split}
  *  @param curDepth     current depth (defaults to 0)
  *  @param branchValue  the branch value for the tree node (defaults to -1)
  *  @param feature      the feature for the tree's parent node (defaults to -1)
+ *  @param feature      the feature for the tree's parent node (defaults to -1)
+ *  @param use_r_fb     whether to use (by regression tree) feature bagging (fb) i.e.,
+ *                      use a subset of the features, @see `RegressionTreeRF` with parameter `use_fb`
  *  @param leaves       the leaf counter (defaults to Counter ())
  */
 class RegressionTreeMT (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                         hparam: HyperParameter = RegressionTree.hp, curDepth: Int = 0,
-                        branchValue: Int = -1, feature: Int = -1, leaves: Counter = Counter ())
+                        branchValue: Int = -1, feature: Int = -1,
+                        use_r_fb: Boolean = false, leaves: Counter = Counter ())
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):              // call resetDF once tree is built
 
@@ -149,7 +155,7 @@ class RegressionTreeMT (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                               threshold(j), j, true)
                     else
                         val hp = RegressionTree.hp.updateReturn ("threshold", threshold(j))
-                        val subtree = new RegressionTreeMT (xx, yy, fname, hp, curDepth + 1, i, j, leaves)
+                        val subtree = new RegressionTreeMT (xx, yy, fname, hp, curDepth + 1, i, j, use_r_fb, leaves)
                         subtree.train (xx, yy)
                         subtree.root)
 

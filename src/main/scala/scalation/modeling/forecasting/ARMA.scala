@@ -1,214 +1,235 @@
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  Hao Peng, John Miller, Michael Cotterell
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** @author  John Miller
  *  @version 2.0
- *  @date    Sat Jun 13 01:27:00 EST 2017
+ *  @date    Sun Jun 30 13:27:00 EDT 2024
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Model: Auto-Regressive, Moving-Average (ARMA)
+ *  @note    Model: Auto-Regressive, Moving Average (ARMA)
  *
- *  @see     http://en.wikipedia.org/wiki/Autoregressive%E2%80%93moving-average_model
- *  @see     http://www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
- *  @see     http://www.stat.berkeley.edu/~bartlett/courses/153-fall2010
- *  @see     http://www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
+ *  Parameter Estimation: Least Squares, Maximum Likelihood
+ *  Conditional Sum-of-Squares (CSS), Negative Log-Likelihood (NLL)
+ *  @see     arxiv.org/pdf/1611.00965
+ *  @see     arxiv.org/html/2310.01198v2
+ *  @see     arxiv.org/pdf/2310.01198
+ *  @see     people.stat.sc.edu/hitchcock/stat520ch7slides.pdf
+ *  @see     www.emu.edu.tr/mbalcilar/teaching2007/econ604/lecture_notes.htm
+ *  @see     www.stat.berkeley.edu/~bartlett/courses/153-fall2010
+ *  @see     www.princeton.edu/~apapanic/ORFE_405,_Financial_Time_Series_%28Fall_2011%29_files/slides12-13.pdf
  */
 
 package scalation
 package modeling
 package forecasting
 
-import scala.math.max
-
 import scalation.mathstat._
-import scalation.optimization._
-import scalation.optimization.quasi_newton.BFGS
+//import scalation.optimization.quasi_newton.{BFGS => Optimizer}       // change import to change optimizer
+//import scalation.optimization.quasi_newton.{LBFGS => Optimizer}
+import scalation.optimization.quasi_newton.{LBFGS_B => Optimizer}
+import scalation.random.NormalVec_c
 
-import Forecaster.differ
-import ARMA.hp
-
-def pq (hpar: HyperParameter): Int = hpar("p").toInt + hpar("q").toInt
+import Forecaster.rdot
+import Example_Covid.loadData_y
+import Example_LakeLevels.y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `ARMA` class provides basic time series analysis capabilities for Auto-Regressive,
- *  Moving-Average (ARMA) models.  In an ARMA(p, q) model, p refers to the order of the
- *  Auto-Regressive  components and q refers to the Moving-Average compoenest of the model.
- *  ARMA models are often used for forecasting.
- *  Given time-series data stored in vector y, its next value y_t+1 = y(t+1)
- *  may be predicted based on prior values of y and its noise:
- *      y_t+1 = δ + Σ(φ_j y_t-j) + Σ(θ_j e_t-j) + e_t+1
- *  where δ is a constant, φ is the auto-regressive coefficient vector,
- *  θ is the moving-average vector, and e_t+1 is the noise term.
- *  @param y       the response vector (time-series data)
- *  @param tt      the time vector, if relevant (time index may suffice)
- *  @param hparam  the hyper-parameters
+ *  Moving Average (ARMA) models.  ARMA models are often used for forecasting.
+ *  Given time series data stored in vector y, its next value y_t = combination of last
+ *  p values and q shocks.
+ *
+ *      y_t = δ + Σ[φ_j y_t-j] + Σ[θ_j e_t-j] + e_t
+ *
+ *  where y_t is the value of y at time t and e_t is the residual/error term.
+ *  @param y        the response vector (time series data) 
+ *  @param hh       the maximum forecasting horizon (h = 1 to hh)
+ *  @param tRng     the time range, if relevant (time index may suffice)
+ *  @param hparam   the hyper-parameters (defaults to AR.hp)
+ *  @param bakcast  whether a backcasted value is prepended to the time series (defaults to false)
  */
-class ARMA (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp)
-      extends Forecaster (y, tt, hparam)
-         with Correlogram (y)
-         with Fit (dfm = pq (hparam), df = y.dim - pq (hparam)):
+class ARMA (y: VectorD, hh: Int, tRng: Range = null,
+            hparam: HyperParameter = AR.hp,
+            bakcast: Boolean = false)
+      extends AR (y, hh, tRng, hparam, bakcast):
 
-    private   val debug = debugf ("ARMA", true)                        // debug function
-    private   val flaw  = flawf ("ARMA")                               // flaw function
-    protected val p     = hparam("p").toInt                            // p-th order Auto-Regressive part
-    protected val q     = hparam("q").toInt                            // q-th order Moving-Average part
-    protected var φ     = new VectorD (p)                              // AR(p) parameters/coefficients
-    protected var θ     = new VectorD (q)                              // MA(q) parameters/coefficients
-    protected var δ     = NO_DOUBLE                                    // drift/intercept/constant term
-    protected val pnq   = pq (hparam)                                  // combined order
+    private   val debug = debugf ("ARMA", true)                         // debug function
+    private   val flaw  = flawf ("ARMA")                                // flaw function
+    private   val STEP  = 0.02                                          // step size for optimizer
+    protected val q     = hparam("q").toInt                             // use the last q shock/errors
+//  private   var z     = VectorD.nullv                                 // var for centered time series (used by first train)
+    private   val pnq   = p + q                                         // sum of the orders
+    private   val notHR = true                                          // don't use the HR algorithm
 
     modelName = s"ARMA($p, $q)"
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the maximum lag used by this model (its capacity to look into the past).
+    /** Initialize the model parameters b = φ ++ θ by use the inherited AR for φ and
+     *  small random numbers for θ.
+     *  @param y_  the training/full response vector (e.g., full y)
      */
-    override def cap: Int = max (p, q)                                 // max order
+    def init_params (y_ : VectorD): VectorD =
+//      super.train (null, y_)                                            // option: fit AR to initialize ARMA
+//      var bb = super.parameter(1 until p+1)                             // use AR parameters to initialize φ for ARMA
+        var bb = NormalVec_c (p, 0.1, 0.01).gen                           // randomly initialize φ with small values
+        if q > 0 then bb = bb ++ NormalVec_c (q, 0.0, 0.01).gen           // randomly initialize θ with small values
+        bb
+    end init_params
+
+// Use one of the following two train methods: swap names train0 & train and add override
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `ARMA` model to the times-series data in vector y_.
-     *  Estimate the coefficient vectors φ and θ for (p, q)-th order ARMA(p, q) model.
+     *  Estimate the coefficient vector b for a (p, q)-th order Auto-Regressive ARMA(p, q) model.
+     *  Uses a nonlinear optimizer (e.g., LBFGS_B) to determine the coefficients.
+     *  Residuals are re-estimated during optimization (may lead to instability)
+     *  NOTE: Requires the error update in `predict` to be uncommented.
      *  @param x_null  the data/input matrix (ignored, pass null)
      *  @param y_      the training/full response vector (e.g., full y)
      */
-    def train (x_null: MatrixD, y_ : VectorD): Unit = 
-        m = y_.dim                                                       // length of relevant time-series
-        println (s"e.dim = ${e.dim}")
-        resetDF (pnq, m - pnq)                                           // reset the degrees of freedom
-        makeCorrelogram (y_)                                             // correlogram computes psi matrix, gives ACF and PACF
+    def train0 (x_null: MatrixD, y_ : VectorD): Unit =
+        banner (s"T R A I N 0  --  for p = $p, q = $q")
+        val mu = y_.mean                                                // sample mean of y_
+        b = init_params (y_)                                            // initialize parameter vector b = φ ++ θ
+//      e.clear ()                                                      // set errors to zero (and uncomment) or try
+//      e.set (super.residual)                                          // set errors to AR residuals
+        δ = mu * (1 - b(0 until p).sum)                                 // determine intercept before optimization
+//      z = y_ - mu                                                     // optimization works better using zero-centered data
 
-        val mu = y_.mean                                                 // sample mean of y_
-        val z  = y_ - mu                                                 // optimization works better using zero-centered data
-        δ = 0.0                                                          // drift/intercept for z (should end up close to zero)
-        val b = φ ++ θ :+ δ                                              // combine all parameters -> vector to optimize
+        def css (b_ : VectorD): Double =
+            b = b_.copy                                                 // copy parameters from b vector
+            δ = mu * (1 - b(0 until p).sum)                             // determine updated intercept
+            val yp = predictAll (y_)                                    // predicted value for z
+            val yy = y_(1 until y_.dim)                                 // skip first (backcasted) value
+            val loss = ssef (yy, yp)                                    // compute loss function
+//          println (s"css loss = $loss, δ = $δ, b = $b")
+            loss
+        end css
 
-        def csse (b: VectorD): Double =                                  // objective function - conditional sum of squared errors
-            φ = b(0 until p); θ = b(p until p+q); δ = b(b.dim-1)         // pull parameters out of b vector 
-            ssef (z, predictAll (z))                                     // compute loss function
-        end csse
+        debug ("train0", s"before optimization: p = $p, q = $q, δ = $δ, b = $b")
+        val optimizer = Optimizer (css, b.dim)                          // apply Quasi-Newton optimizer
+        val (fb, bb)  = optimizer.solve (b, STEP)                       // optimal solution for loss function and parameters
+        b = bb                                                          // assign optimized parameters to vector b
+        δ = mu * (1 - b(0 until p).sum)                                 // determine intercept after optimization
+        debug ("train0", s"after optimization: p = $p, q = $q, δ = $δ, b = $b")
+//      println (s"train0: error e = $e")
 
-/*
-        def nll (b: VectorD): Double =                                   // objective function - negative log-likelihood (MLE)
-            0.0                                                          // FIX - implement
-        end nll
-*/
+    end train0
 
-        val optimizer = new BFGS (csse)                                  // apply Quasi-Newton BFGS optimizer
-//      val optimizer = new ConjugateGradient (csse)                     // apply Conjugate Gradient optimizer - fails
-//      val optimizer = new CoordinateDescent (csse)                     // apply Coordinate Descent optimizer
-//      val optimizer = new NelderMeadSimplex (csse, 3)                  // apply Nelder-Mead Simplex optimizer
-//      val optimizer = new GridSearch (csse, 3); optimizer.setAxes ()   // apply GridSearch BFGS optimizer - close
-        val (fb, bb) = optimizer.solve (b)                               // optimal solution for the objective function and parameters
-
-        φ = bb(0 until p); θ = bb(p until p+q); δ = bb(b.dim-1)          // recover parameters for z
-        δ += mu * (1 - φ.sum)                                            // uncenter  
-        debug ("train", s"parameters for ARMA($p, $q) model: φ = $φ, θ = $θ, δ = $δ")
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Train/fit an `ARMA` model to the times-series data in vector y_.
+     *  Estimate the coefficient vector b for a (p, q)-th order Auto-Regressive ARMA(p, q) model.
+     *  Uses a nonlinear optimizer (e.g., LBFGS_B) to determine the coefficients.
+     *  Residuals are estimated before optimization using the Hannan-Rissanen Algorithm.
+     *  NOTE: Requires the error update in `predict` to be commented out.
+     *  @see faculty.washington.edu/dbp/s519/PDFs/13-overheads-2020.pdf
+     *  @param x_null  the data/input matrix (ignored, pass null)
+     *  @param y_      the training/full response vector (e.g., full y)
+     */
+    override def train (x_null: MatrixD, y_ : VectorD): Unit =
+        if notHR then
+            train0 (x_null, y_)
+        else
+            e.clear ()
+            δ = 0.0                                                     // intercept for y_
+            resid (y_)                                                  // set the residuals using high order AR
+            val optimizer = Optimizer (ss, b.dim)                       // apply Quasi-Newton optimizer
+            val (fb, bb)  = optimizer.solve (b, STEP)                   // optimal solution for loss function and parameters
+            b = bb                                                      // recover parameters for z
+            δ = y.mean * (1 - b(0 until p).sum)                         // determine intercept after optimization
+            debug ("train", s"optimized: p = $p, q - $q, δ = $δ, b = $b")
+            println (s"train: error e = $e")
     end train
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test PREDICTIONS of an ARMA forecasting model y_ = f(lags (y_)) + e
-     *  and return its predictions and  QoF vector.  Testing may be in-sample
-     *  (on the training set) or out-of-sample (on the testing set) as determined
-     *  by the parameters passed in.  Note: must call train before test.
-     *  @param x_null  the data/input matrix (ignored, pass null)
-     *  @param y_      the testing/full response/output vector
+    /** Use a higher order AR model to estimate the residuals (unobserved data).
+     *  Set the residual/error vector e defined in `Forecaster`.
+     *  @param y_      the training/full response vector (e.g., full y)
      */
-    def test (x_null: MatrixD, y_ : VectorD): (VectorD, VectorD) =
-        val (yy, yp) = testSetup (y_)                                    // get and align actual and predicted values
-        resetDF (pnq, yy.dim - pnq)                                      // reset the degrees of freedom
-        println (s"test: yy.dim = ${yy.dim}, yp.dim = ${yp.dim}")
-//      differ (yy, yp)                                                  // uncomment for debugging
-        (yp, diagnose (yy, yp))                                          // return predictions and QoF vector
-    end test
+    def resid (y_ : VectorD): Unit =
+        val hp2 = new HyperParameter
+        hp2 += ("p", pnq + 3, pnq + 3)                                  // Set the AR order to p + 1 + 3
+        val ar = new AR (y, hh, tRng, hp2)                              // create an AR model
+        ar.train (null, y_)                                             // train the AR model
+        e += ar.residual                                                // use residuals from the AR model
+    end resid
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Test FORECASTS of an ARMA forecasting model y_ = f(lags (y_)) + e
-     *  and return its forecasts and QoF vector.  Testing may be in-sample
-     *  (on the training set) or out-of-sample (on the testing set) as determined
-     *  by the parameters passed in.  Note: must call train and forecastAll before testF.
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
-     *  @param y_  the testing/full response/output vector
+    /** Return the sum of squared errors (loss function).
+     *  @param b_ the combined parameters (δ, b) where b = (φ, θ).
      */
-    def testF (h: Int, y_ : VectorD): (VectorD, VectorD) =
-        val (yy, yfh) = testSetupF (y_, h)                               // get and align actual and forecasted values
-        resetDF (pnq, yy.dim - pnq)                                      // reset the degrees of freedom
-        println (s"testF: yy.dim = ${yy.dim}, yfh.dim = ${yfh.dim}")
-//      differ (yy, yfh)                                                 // uncomment for debugging
-        (yfh, diagnose (yy, yfh))                                        // return predictions and QoF vector
-    end testF
+    def ss (b_ : VectorD): Double =
+        b = b_.copy                                                     // copy parameters from b vector
+        val yy  = yb(1 until yb.dim)                                    // skip first (backcasted) value
+        δ = yy.mean * (1 - b(0 until p).sum)                                 // determine updated intercept
+        val yyp = predictAll (yb)                                       // predicted value for yb
+//      debug ("ss", s"yy.dim = ${yy.dim}, yyp.dim = ${yyp.dim}")
+        ssef (yy, yyp)                                                  // compute loss function
+    end ss
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the parameter vector for the ARMA(p, q) model.
-     */
-    override def parameter: VectorD = φ ++ θ :+ δ
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Predict a value for y_t+1 using 1-step ahead forecasts (p' = p-1).
-     *      y_t+1 = δ + φ_0 y_t + φ_1 y_t-1 + ... + φ_p' y_t-p' +
-     *                  θ_0 e_t + θ_1 e_t-1 + ... + θ_q' e_t-q'
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Predict a value for y_t using the 1-step ahead forecast.
+     *
+     *      y_t = δ +  φ_0 y_t-1 + φ_1 y_t-2 + ... + φ_p-1 y_t-p
+     *                 θ_0 e_t-1 + θ_1 e_t-2 + ... + θ_q-1 e_t-q
+     *
+     *  where φ = b(0 until p) and θ = b(p until p_q).
      *  When k < 0 let y_k = y_0 (i.e., assume first value repeats back in time),
-     *  but do not assume errors repeat.
-     *  @see predictAll method in `Forecaster` trait
-     *  @param t   the time point/index to be predicted
+     *  but do not assume errors repeat.  Note, column 1 of yf (yf(?, 1) holds yp.
+     *  Must be executed in time order, so errors are properly recorded in vector e
+     *  @see `predictAll` method in `Forecaster` trait.
+     *  @see `rdot` in Forecaster.scala for reverse dot product implementation.
+     *  @param t   the time point being predicted
      *  @param y_  the actual values to use in making predictions
      */
     override def predict (t: Int, y_ : VectorD): Double =
-        var sum = δ                                                      // intercept
-        for j <- 0 until p do             sum += φ(j) * y_(max (0, t-j))
-        for j <- 0 until q if t-j >= 0 do sum += θ(j) * e(t-j)
-        if t < y_.dim-1 then e(t+1) = y_(t+1) - sum                      // update the error vector
-        sum                                                              // prediction for y_t, yp_t
+        if t == 0 then e(0) = 0                                         // from backcast: assume no error
+        if t == 1 then e(1) = y_(1) - yf(0, 1)                          // first real point
+
+        var sum = δ + rdot (b(0 until p), y_, t-1)                        // intercept + AR terms (use y); b(0 until p) = φ
+        for j <- 0 until q do                                           // add MA terms (shocks)
+            if t-1-j >= 0 then sum += b(p+j) * e(t-1-j)                     // e(t-j = -1) does not exists; b(p+j) = θ(j)
+
+        if t < y_.dim-1 then e(t) = y_(t) - sum                     // update the error vector (uncomment for first train)
+        sum                                                             // prediction yp
     end predict
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Produce a vector of size h, of 1 through h-steps ahead forecasts for the model.
-     *      forecast the following time points:  t+1, ..., t-1+h.
-     *  Note, must create the yf matrix before calling the forecast method.
-     *  Intended to work with rolling validation (analog of predict method)
+    /** Produce a vector of size hh, h = 1 to hh-steps ahead forecasts for the model,
+     *  i.e., forecast the following time points:  t+1, ..., t+h.
+     *  Intended to work with rolling validation (analog of predict method).
+     *  Note, must include [ y_i, e_i ] before horizon and [ yp_i ] after horizon
      *  @param t   the time point from which to make forecasts
-     *  @param yf  the forecasting matrix (time x horizons)
      *  @param y_  the actual values to use in making predictions
-     *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
      */
-    override def forecast (t: Int, yf: MatrixD, y_ : VectorD, h: Int): VectorD =
-        if h < 1 then flaw ("forecast", s"horizon h = $h must be at least 1")
-        val m1 = y_.dim - 1
-        val yd = new VectorD (h)                                       // hold forecasts for each horizon
-        for k <- 1 to h do
-            val t1  = t + k - 1                                        // time point prior to horizon
-            var sum = δ
-            for j <- 0 until p do sum += φ(j) * yf(max (0, t1-j), max (0, k-1-j))
-            for j <- 0 until q do
-                if t1-j in (0, m1) then sum += θ(j) * e(t1-j)
-            end for
-            yf(t+k, k) = sum                                           // forecast down the diagonal
-            yd (k-1)   = sum                                           // record diagonal values
-            if h == 1 && t < m1 then e(t+1) = y_(t+1) - sum            // update the next element in the error vector
-        end for
-        yd                                                             // return forecasts for each horizon
+    override def forecast (t: Int, y_ : VectorD = yb): VectorD =
+        val yh = new VectorD (hh)                                       // hold forecasts for each horizon
+        for h <- 1 to hh do
+            var sum = δ + rdot (b(0 until p), yf, t, h-1)               // intercept + AR terms (use y and yp); b(0 until p) = φ
+            for j <- h-1 until q do                                     // add MA terms (shocks) from before horizon
+                if t-j >= 0 then sum += b(p+j) * e(t-j)                 // e(t-j = -1) does not exists; b(p+j) = θ(j)
+            yf(t, h) = sum                                              // record in forecast matrix
+            yh(h-1)  = sum                                              // record forecasts for each horizon
+        yh                                                              // return forecasts for all horizons
     end forecast
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Forecast values for all y_.dim time points at horizon h (h-steps ahead).
-     *  Assign to forecasting matrix and return h-step ahead forecast.
-     *  @see forecastAll method in `Forecaster` trait
-     *  @param yf  the forecasting matrix (time x horizons)
-     *  @param y_  the actual values to use in making forecasts
+     *  Assign into FORECAST MATRIX and return the h-steps ahead forecast.
+     *  Note, `predictAll` provides predictions for h = 1.
+     *  @see `forecastAll` method in `Forecaster` trait.
+     *  Note, must include [ y_i, e_i ] before horizon and [ yp_i ] after horizon
      *  @param h   the forecasting horizon, number of steps ahead to produce forecasts
+     *  @param y_  the actual values to use in making forecasts
      */
-    override def forecastAt (yf: MatrixD, y_ : VectorD, h: Int): VectorD =
-        if h < 1 then flaw ("forecastAt", s"horizon h = $h must be at least 1")
-        e(0)                                                           // assume error at time 0 is 0
-        val m1 = y_.dim - 1
-        for t <- y_.indices do                                         // make forecasts over all time points for horizon k
-            val t1  = t + h - 1                                        // time point prior to horizon
-            var sum = δ
-            for j <- 0 until p do sum += φ(j) * yf(max (0, t1-j), max (0, h-1-j))
-            for j <- 0 until q do
-                if t1-j in (0, m1) then sum += θ(j) * e(t1-j)
-            end for
-            yf(t+h, h) = sum                                           // forecast down the diagonal
-            if h == 1 && t < m1 then e(t+1) = y_(t+1) - sum            // update the next element in the error vector
-        end for
-        yf(?, h)                                                       // return the h-step ahead forecast vector
+    override def forecastAt (h: Int, y_ : VectorD = yb): VectorD =
+        if h < 2 then flaw ("forecastAt", s"horizon h = $h must be at least 2")
+
+        for t <- y_.indices do                                          // make forecasts over all time points for horizon h
+            var sum = δ + rdot (b(0 until p), yf, t, h-1)               // intercept + AR terms (use y and yp); b(0 until p) = φ
+            for j <- h-1 until q do                                     // add MA terms (shocks) from before horizon
+                if t-j >= 0 then sum += b(p+j) * e(t-j)                 // e(t-j = -1) does not exists; b(p+j) = θ(j)
+            yf(t, h) = sum                                              // record in forecast matrix
+        yf(?, h)                                                        // return the h-step ahead forecast vector
     end forecastAt
 
 end ARMA
@@ -219,224 +240,268 @@ end ARMA
  */
 object ARMA:
 
-    /** Base hyper-parameter specification for the `AR` and `ARMA` classes
-     */
-    val hp = new HyperParameter
-    hp += ("p", 1, 1)                                                  // AR order AR(p)
-    hp += ("q", 0, 0)                                                  // MA order MA(q)
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Create an `ARMA` object.
+    /** Create a `ARMA` object.
      *  @param y       the response vector (time series data)
-     *  @param tt      the time vector, if relevant (time index may suffice)
+     *  @param hh      the maximum forecasting horizon (h = 1 to hh)
+     *  @param tRng    the time range, if relevant (time index may suffice)
      *  @param hparam  the hyper-parameters
      */
-    def apply (y: VectorD, tt: VectorD = null, hparam: HyperParameter = ARMA.hp): ARMA = 
-        new ARMA (y, tt, hparam)
+    def apply (y: VectorD, hh: Int, tRng: Range = null, hparam: HyperParameter = AR.hp): ARMA =
+        new ARMA (y, hh, tRng, hparam)
     end apply
 
 end ARMA
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest` main function tests the `ARMA` class on simulated data.
- *  Test predictions (one step ahead forecasts).
+/** The `aRMATest` main function tests the `ARMA` class on real data:
+ *  Forecasting Lake Levels using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
- *  > runMain scalation.modeling.forecasting.aRTest
+ *  > runMain scalation.modeling.forecasting.aRMATest
  */
 @main def aRMATest (): Unit =
 
-    val y = makeTSeries ()                                             // create simulated time-series (see `Stationary`)
+    val hh = 3                                                          // maximum forecasting horizon
 
-    banner (s"Test Predictions: ARMA(1, 0) on simulated time-series")
-    val mod = new ARMA (y)                                             // create model for time series data ARMA(1, 0)
-    mod.trainNtest ()()                                                // train and test on full dataset
+    val mod = new ARMA (y, hh)                                          // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest ()()                                                 // train and test on full dataset
 
-    banner ("Select model based on ACF and PACF")
-    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
-    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
+    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+    mod.diagnoseAll (y, mod.getYf)
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end aRMATest
 
-import Example_LakeLevels.y
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest2` main function tests the `ARMA` class on real data:  Forecasting lake levels.
- *  Test predictions (one step ahead forecasts).
+/** The `aRMATest2` main function tests the `ARMA` class on real data:
+ *  Forecasting Lake Levels using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
  *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
  *  > runMain scalation.modeling.forecasting.aRMATest2
  */
 @main def aRMATest2 (): Unit =
 
-    banner (s"Test Predictions: ARMA(1, 0) on LakeLevels Dataset")
-    var mod = new ARMA (y)                                             // create model for time series data ARMA(1, 0)
-    mod.trainNtest ()()                                                // train and test the model on full dataset
+    val hh = 3                                                          // maximum forecasting horizon
 
-    banner (s"Test Predictions: ARMA(1, 1) on LakeLevels Dataset")
-    hp("q") = 1                                                        // set moving-average hyper-parameter q to 1
-    mod = new ARMA (y)                                                 // create model for time series data ARMA(1, 1)
-    mod.trainNtest ()()                                                // train and test the model on full dataset
+    val mod = new ARMA (y, hh)                                          // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest ()()                                                 // train and test on full dataset
 
-    banner ("Select model based on ACF and PACF")
-    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
-    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
+    mod.setSkip (0)
+    mod.rollValidate ()                                                 // TnT with Rolling Validation
+    mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim))            // only diagnose on the testing set
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
 end aRMATest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest3` main function tests the `ARMA` class on real data:  Forecasting lake levels.
- *  Test forecasts (1 to h steps ahead forecasts).
- *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+/** The `aRMATest3` main function tests the `ARMA` class on real data:
+ *  Forecasting COVID-19 using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  Comparison of sMAPE for AR(p), ARY(p), ARY_D(p), ARMA(p, 0), and ARMA(p, 1).
+ *  Note ARX (p, 1, 0), where 0 => no exo vars, duplicates results of ARY(p)
+ *
+ *  19.0371,    29.5797,    39.0740,    47.4638,    55.1785,    62.1818  RW
+ *
+ *  18.7298,    28.4908,    37.0997,    45.6487,    51.7248,    56.3708  AR(1)
+ *  18.5808,    28.3362,    37.2485,    45.7846,    52.0362,    56.9114  ARY(1)
+ *  18.5808,    28.8144,    37.7469,    44.8006,    49.8166,    52.3205  ARY_D(1)
+ *  18.5788,    28.3364,    37.2530,    45.7883,    52.0403,    56.9181  ARY_Quad(1)
+ *  18.7095,    28.4690,    37.1203,    45.6688,    51.7687,    56.4467  ARMA(1, 0)
+ *  17.0508,    26.4669,    35.4906,    43.5707,    49.4949,    54.2347  ARMA(1, 1)
+ *
+ *  16.3579,    24.7155,    33.0480,    40.0707,    46.0049,    50.8265  AR(2)
+ *  16.2270,    23.3708,    31.6615,    38.7385,    44.7630,    50.0814  ARY(2)
+ *  16.2270,    22.9698,    30.0933,    35.4960,    40.7977,    46.2700  ARY_D(2)
+ *  16.2663,    22.6643,    31.0768,    37.7388,    44.2476,    50.0283  ARY_Quad(2)
+ *  19.0826,    29.2723,    37.2914,    44.2636,    49.8307,    53.6992  ARMA(2, 0)
+ *  17.0445,    26.6538,    35.5239,    42.9937,    48.7679,    53.3489  ARMA(2, 1)
+ *
+ *  16.0114,    22.7408,    29.5631,    35.2773,    40.9870,    45.8408  AR(3)
+ *  15.7509,    21.9972,    28.8976,    34.6815,    40.7375,    46.1590  ARY(3)
+ *  15.7509,    21.8745,    28.2745,    32.9840,    39.1694,    43.9673  ARY_D(3)
+ *  15.7262,    21.2578,    28.4101,    34.1532,    40.6659    	46.1492  ARY_Quad(3)
+ *  16.7027,    23.4111,    30.5995,    36.7396,    42.6680,    47.1189  ARMA(3, 0)
+ *  16.1750,    23.1243,    30.8535,    37.1636,    43.0417,    48.2946  ARMA(3, 1)
+ *
+ *  15.8988,    22.5738,    28.5298,    33.3360,    39.1586,    43.1606  AR(4)
+ *  15.6423,    21.7982,    27.9006,    33.1000,    39.0543,    43.9748  ARY(5)
+ *  15.6423,    21.8663,    28.0034,    32.9898,    38.9927,    43.6218  ARY_D(4)
+ *  15.5814,    21.2352,    28.5489,    34.4369,    40.3618,    45.2605  ARY_Quad(4)
+ *  16.6457,    22.9684,    29.0629,    34.6601,    40.1521,    44.0896  ARMA(4, 0)
+ *  15.3290,    21.9965,    27.8397,    34.3507,    40.0857,    45.8402  ARMA(4, 1)
+ *
+ *  15.9279,    22.5769,    28.5035,    33.3019,    39.1381,    43.0520  AR(5)
+ *  15.6349,    21.8003,    27.9084,    33.1127,    39.0628,    44.0175  ARY(5)
+ *  15.6349,    21.7885,    28.0114,    33.0117,    39.1418,    43.7715  ARY_D(5)
+ *  15.3209,    21.3541,    28.9325,    35.1359,    41.0300,    45.8558  ARY_Quad(5)
+ *  16.3720,    22.8047,    28.7702,    33.9232,    39.5677,    43.2628  ARMA(5, 0)
+ *  15.3361,    21.9121,    27.6568,    34.0218,    39.6254,    45.2994  ARMA(5, 1)
+ *
  *  > runMain scalation.modeling.forecasting.aRMATest3
  */
 @main def aRMATest3 (): Unit =
 
-    val m  = y.dim                                                     // number of data points
-    val hh = 2                                                         // maximum forecasting horizon
+    val yy = loadData_y ()
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
 
-    banner (s"Test Forecasts: ARMA(1, 0) on LakeLevels Dataset")
-    val mod = new ARMA (y)                                             // create model for time series data ARMA(1, 0)
-    val (yp, qof) = mod.trainNtest ()()                                // train and test the model on full dataset
+    for p <- 1 to 5; q <- 0 to 1 do
+        AR.hp("p") = p                                                  // number of AR terms
+        AR.hp("q") = q                                                  // number of MA terms
+        val mod = new ARMA (y, hh)                                      // create model for time series data
+        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+        mod.trainNtest ()()                                             // train and test on full dataset
 
-    val yf = mod.forecastAll (y, hh)                                   // forecast h-steps ahead (h = 1 to hh) for all y
-    println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
-    assert (yf(?, 0)(0 until m) == y)                                  // column 0 must agree with actual values
-    differ (yf(?, 1)(1 until m), yp)
-    assert (yf(?, 1)(1 until m) == yp)                                 // column 1 must agree with one step-ahead predictions
-
-    for h <- 1 to hh do
-        val (yfh, qof) = mod.testF (h, y)                              // h-steps ahead forecast and its QoF
-        println (s"Evaluate QoF for horizon $h:")
-        println (FitM.fitMap (qof, QoF.values.map (_.toString)))       // evaluate h-steps ahead forecasts
+        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
+        mod.diagnoseAll (y, mod.getYf)                                  // use showYf = false to not print forecast matrix Yf
     end for
 
 end aRMATest3
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest4` main function tests the `ARMA` class on real data:  Forecasting lake levels.
- *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRMATest4` main function tests the `ARMA` class on real data:
+ *  Forecasting COVID-19 using Train-n-Test Split (TnT) with Rolling Validation.
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  Comparison of sMAPE for AR(p), ARY(p), ARY_D(p), ARMA(p, 0), and ARMA(p, 1).
+ *
+ *  19.1334,    31.1906,    44.3787,    55.1576,    65.1810,    74.0524  AR(1)
+ *  19.0397,    30.4570,    43.9113,    54.9642,    65.3163,    74.2124  ARY(1)
+ *  19.1718,    30.7038,    44.5265,    55.7794,    66.3876,    75.6566  ARMA(1, 0)
+ *  18.3012,    29.3224,    43.0369,    54.5719,    64.9230,    74.2520  ARMA(1, 1)
+ *
+ *  16.6447,    26.9109,    39.8106,    50.8595,    60.2176,    68.6317  AR(2)
+ *  16.8833,    26.4824,    39.2329,    50.8677,    61.0624,    70.3218  ARY(2)
+ *  19.4256,    32.8815,    46.4279,    57.2199,    66.8651,    75.3077  ARMA(2, 0)
+ *  18.3009,    30.0443,    43.6634,    54.9669,    64.8541,    73.7911  ARMA(2, 1)
+ *
+ *  15.9232,    23.5929,    34.3577,    44.1784,    53.6513,    62.0129  AR(3)
+ *  15.7190,    21.7959,    32.1395,    42.0074,    52.6874,    62.7276  ARY(3)
+ *  16.4547,    24.4668,    36.8597,    46.7958,    58.3539,    67.6623  ARMA(3, 0)
+ *  17.0353,    24.0309,    36.6585,    46.1961,    57.6348,    67.2332  ARMA(3, 1)
+ *
+ *  15.3256,    22.6893,    30.7558,    39.6274,    48.6646,    56.7375  AR(4)
+ *  14.6791,    19.9940,    26.5644,    35.4590,    41.4955,    50.8660  ARY(4)
+ *  14.9687,    22.2599,    29.6359,    39.6018,    48.2853,    56.9797  ARMA(4, 0)
+ *  15.2243,    21.4976,    27.7929,    37.9923,    45.0999,    54.3417  ARMA(4, 1)
+ *
+ *  15.9166,    21.5246,    28.0675,    36.8669,    43.3785,    51.1786  AR(5)
+ *  15.0232,    19.4222,    27.1981,    35.4744,    40.3466,    48.4066  ARY(5)
+ *  15.5426,    21.0405,    29.1731,    37.8006,    43.3590,    52.6387  ARMA(5, 0)
+ *  15.7641,    21.0723,    28.7463,    37.7968,    42.8480,    52.8277  ARMA(5, 1)
+ *
  *  > runMain scalation.modeling.forecasting.aRMATest4
  */
 @main def aRMATest4 (): Unit =
 
-    val m  = y.dim                                                     // number of data points
-    val hh = 2                                                         // maximum forecasting horizon
- 
-    for p <- 1 to 7; q <- 0 to 2 do
-        hp("p") = p; hp("q") = q                                       // set p (AR) and q (MA) hyper-parameters
-        val mod = new ARMA (y)                                         // create model for time series datsk
-        banner (s"Test: ${mod.modelName} on LakeLevels Dataset")
-        val (yp, qof) = mod.trainNtest ()()                            // train and test the model on full dataset
+    val yy = loadData_y ()
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
 
-        val yf = mod.forecastAll (y, hh)                               // forecast h-steps ahead for all y
-        println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
-        assert (yf(?, 0)(0 until m) == y)                              // column 0 must agree with actual values
-        differ (yf(?, 1)(1 until m), yp)
-        assert (yf(?, 1)(1 until m) == yp)                             // column 1 must agree with one step-ahead predictions
+    for p <- 1 to 5; q <- 0 to 1 do
+        AR.hp("p") = p                                                  // number of AR terms
+        AR.hp("q") = q                                                  // number of MA terms
+        val mod = new ARMA (y, hh)                                      // create model for time series data
+        banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
+        mod.trainNtest ()()
 
-        for h <- 1 to hh do
-            val (yfh, qof) = mod.testF (h, y)                          // h-steps ahead forecast and its QoF
-            println (s"Evaluate QoF for horizon $h:")
-            println (FitM.fitMap (qof, QoF.values.map (_.toString)))   // evaluate h-steps ahead forecasts
-        end for
+        mod.setSkip (0)                                                 // using data from training can forecast first in test
+        mod.rollValidate ()                                             // TnT with Rolling Validation
+        mod.diagnoseAll (y, mod.getYf, Forecaster.teRng (y.dim))        // only diagnose on the testing set
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRMATest4
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest5` main function tests the `ARMA` class on real data:  Forecasting lake levels.
- *  This test looks at the velocity series (first differences).
- *  Test predictions (one step ahead forecasts).
- *  @see cran.r-project.org/web/packages/fpp/fpp.pdf
+/** The `aRMATest5` main function tests the `ARMA` class on real data:
+ *  Forecasting COVID-19 using In-Sample Testing (In-ST).
+ *  Test forecasts (h = 1 to hh steps ahead forecasts).
+ *  Comparison of sMAPE for ARMA(p, 1) (i.e., q = 1) for different p orders.
  *  > runMain scalation.modeling.forecasting.aRMATest5
  */
 @main def aRMATest5 (): Unit =
 
-    val v = Δ (y)                                                      // velocity series (first differences)
+    val yy = loadData_y ()
+//  val y  = yy                                                         // full
+    val y  = yy(0 until 116)                                            // clip the flat end
+    val hh = 6                                                          // maximum forecasting horizon
 
-    var mod: ARMA = null
-    for p <- 0 to 8; q <- 0 to 8 if p + q > 0 do
-        hp("p") = p; hp("q") = q
-        banner (s"Test Predictions: ARMA($p, $q) on LakeLevels Dataset")
-        mod = new ARMA (v)                                             // create model for time series data ARMA(1, 0)
-        mod.trainNtest ()()                                            // train the model on full dataset
+    AR.hp("q") = 1                                                      // number of MA terms
+    for p <- 1 to 5 do
+        AR.hp("p") = p                                                  // number of AR terms
+        val mod = new ARMA (y, hh)                                      // create model for time series data
+        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+        mod.trainNtest ()()                                             // train and test on full dataset
+
+        mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
+        mod.diagnoseAll (y, mod.getYf)
+        println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
     end for
-
-    banner ("Select model based on ACF and PACF")
-    mod.plotFunc (mod.acF, "ACF")                                      // Auto-Correlation Function (ACF)
-    mod.plotFunc (mod.pacF, "PACF")                                    // Partial Auto-Correlation Function (PACF)
 
 end aRMATest5
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest6` main function tests the `ARMA` class on real data:
- *  Forecasting COVID-19.
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRMATest6` main function tests the `ARMA` class on small dataset.
+ *  Test forecasts (h = 1 step ahead forecasts).
  *  > runMain scalation.modeling.forecasting.aRMATest6
  */
 @main def aRMATest6 (): Unit =
 
-    import ARMA.hp
+    val y  = VectorD (1, 3, 4, 2, 5, 7, 9, 8, 6, 3)
 
-    val data = MatrixD.load ("covid_19.csv", 1, 1)                     // skip first row (header) and first column
-    val yy   = data(?, 4)                                              // column 4 is daily deaths
-//  val yy   = data(?, 5)                                              // column 5 is daily deaths smoothed
-    val is   = yy.indexWhere (_ >= 2.0)                                // find day of first death with at least 2 deaths
-    println (s"is = $is is first day with at least 2 deaths")
-    val y    = yy(is until yy.dim)                                     // slice out days before is
+    AR.hp ("q") = 0
+    var mod = new ARMA (y, 1)                                             // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on a Small Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    new Baseline (y, "AR1")
 
-//  val h = 1                                                          // forecasting horizon
-    for p <- 1 to 4; q <- 0 to 2 do                                    // ARMA hyper-parameter settings
-        hp("p") = p; hp("q") = q
-        val mod = new ARMA (y)                                         // create an ARMA model
-        val (yp, qof) = mod.trainNtest ()()                            // train and the model on full dataset
-
-/*
-        val yfa = mod.forecastAll (y, h)
-        val yf  = yfa(?, h)                                            // forecasted values - h steps ahead
-        new Plot (null, y, yf, s"Plot of y & yf, forecasted (h = $h) ${mod.modelName} vs. t", true)
-*/
-
-    end for
+    AR.hp ("p") = 2
+    mod = new ARMA (y, 1)                                                 // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on a Small Dataset")
+    mod.trainNtest ()()                                                   // train and test on full dataset
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    new Baseline (y, "AR2")
 
 end aRMATest6
 
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `aRMATest6` main function tests the `AR` class on real data:  Forecasting Weekly Covid-19.
- *  Test forecasts (1 to h steps ahead forecasts).  Try multiple values for p.
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `aRMATest7` main function tests the `ARMA` class on small dataset.
+ *  Test the generation of ARMA sequences for various p and q values.
  *  > runMain scalation.modeling.forecasting.aRMATest7
  */
 @main def aRMATest7 (): Unit =
 
-    val y  = Example_Covid.loadData_y ("new_deaths")
-    val m  = y.dim                                                     // number of data points
-    val hh = 2                                                         // maximum forecasting horizon
+    val nrg = random.Normal (0.0, 1.0)
 
-    println (s"y.dim = ${y.dim}")
+    val m = 100
+    val y = new VectorD (m)
+    val e = new VectorD (m)
+    val φ = VectorD (0.8, 0.7)
+    val θ = VectorD (0.8, 0.7)
 
-    var mod: ARMA = null
-    for p <- 1 to 12 do                                                // autoregressive hyper-parameter p
-        ARMA.hp("p") = p                                               // set p hyper-parameter
-        banner (s"Test: ARMA($p) on Covid-19 Weekly Dataset")
-        mod = new ARMA (y)                                             // create model for time series data
-        val (yp, qof) = mod.trainNtest ()()                            // train and test on full dataset
-
-        val yf = mod.forecastAll (y, hh)                               // forecast h-steps ahead for all y
-//      println (s"yf = $yf")
-        println (s"y.dim = ${y.dim}, yp.dim = ${yp.dim}, yf.dims = ${yf.dims}")
-        assert (yf(?, 0)(0 until m) == y)                              // column 0 must agree with actual values
-        differ (yf(?, 1)(1 until m), yp)
-        assert (yf(?, 1)(1 until m) == yp)                             // column 1 must agree with one step-ahead predictions
-
-        for h <- 1 to hh do
-            val (yfh, qof) = mod.testF (h, y)                          // h-steps ahead forecast and its QoF
-            println (s"Evaluate QoF for horizon $h:")
-            println (FitM.fitMap (qof, QoF.values.map (_.toString)))   // evaluate h-steps ahead forecasts
+    for p <- 0 to 2; q <- 0 to 2 if p + q > 0 do
+        val (rp, rq) = ((0 until p), (0 until q))
+        for t <- y.indices do
+            e(t) = nrg.gen
+            y(t) = rdot (φ(rp), y, t) + rdot (θ(rq), e, t) + e(t)
         end for
+        new Plot (null, y, null, s"Plot of y vs. t for p = $p, q = $q", lines = true)
+        object CG extends Correlogram (y)
+        CG.makeCorrelogram ()
+        CG.plotCorrelogram ()
     end for
 
 end aRMATest7

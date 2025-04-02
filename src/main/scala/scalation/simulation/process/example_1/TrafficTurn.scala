@@ -11,12 +11,11 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer => VEC}
 
 import scalation.random.{Bernoulli, Sharp, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runTrafficTurn` function is used to launch the `TrafficModelTurn` class.
@@ -28,7 +27,7 @@ import scalation.random.RandomSeeds.N_STREAMS
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `TrafficModelTurn` class simulates an intersection with four traffic lights
  *  `Gates` and four roads.  Each road consists of two routes with one in each
- *  direction.  Each `Route` has two lanes (`Transport`s).
+ *  direction.  Each `Path` has two lanes (`Transport`s).
  *  @param name       the name of the simulation model
  *  @param reps       the number of independent replications to run
  *  @param animating  whether to animate the model
@@ -43,21 +42,21 @@ class TrafficModelTurn (name: String = "TrafficTurn", reps: Int = 1, animating: 
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val iaTime  = (4000.0, 6000.0)                    // (lower, upper) on inter-arrival time
-    val onTime  = 8000.0                              // on (green-light) time for North-South traffic
-    val offTime = 6000.0                              // off (red-light) time for North-South traffic
-    val mvTime  = (2900.0, 3100.0)                    // (lower, upper) on move time
-    val pTurn   = 0.25                                // probability of making a right turn vs. going straight
+    val iaTime  = (4000.0, 6000.0)                      // (lower, upper) on inter-arrival time
+    val onTime  = 8000.0                                // on (green-light) time for North-South traffic
+    val offTime = 6000.0                                // off (red-light) time for North-South traffic
+    val mvTime  = (2900.0, 3100.0)                      // (lower, upper) on move time
+    val pTurn   = 0.25                                  // probability of making a right turn vs. going straight
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Uniform (iaTime, stream)
-    val onTimeRV   = Sharp (onTime, (stream + 1) % N_STREAMS)
-    val offTimeRV  = Sharp (offTime, (stream + 2) % N_STREAMS)
-    val moveRV     = Uniform (mvTime, (stream + 3) % N_STREAMS)
-    val laneRV     = Bernoulli ((stream + 4) % N_STREAMS)
-    val turnRV     = Bernoulli (pTurn, (stream + 5) % N_STREAMS)
+    val iArrivalRV = Uniform (iaTime, stream)           // use different random number streams for independence
+    val onTimeRV   = Sharp (onTime, stream + 1)
+    val offTimeRV  = Sharp (offTime, stream + 2)
+    val moveRV     = Uniform (mvTime, stream + 3)
+    val laneRV     = Bernoulli (stream = stream + 4)
+    val turnRV     = Bernoulli (pTurn, stream + 5)
 
     //--------------------------------------------------
     // Create Model Components
@@ -84,13 +83,11 @@ class TrafficModelTurn (name: String = "TrafficTurn", reps: Int = 1, animating: 
                                        ("k1S", (-30, 400)),              // end for North traffic
                                        ("k1W", (-230, 200)))
 
-    val road = ListBuffer [Route] ()
+    val road = VEC [Path] ()
     for i <- source.indices do
-        road += Route ("ra" + i, 2, source(i), queue(i), moveRV)
-    end for
+        road += Path ("ra" + i, 2, source(i), queue(i), moveRV)
     for i <- source.indices do
-        road += Route ("rb" + i, 2, light(i),  sink((i + 2) % 4), moveRV)
-    end for
+        road += Path ("rb" + i, 2, light(i),  sink((i + 2) % 4), moveRV)
 
     addComponents (source, queue, light, sink, road.toList)
 
@@ -99,12 +96,13 @@ class TrafficModelTurn (name: String = "TrafficTurn", reps: Int = 1, animating: 
 
     case class Car () extends SimActor ("c", this):
 
-        def act (): Unit =
+        override def act (): Unit =
             val i  = subtype                            // from North (0), East (1), South (2), West (3)
             val l  = laneRV.igen                        // randomly select lane l
             val tn = turnRV.igen                        // 1 => turn right, 0 => go straight
             road(i).lane(l).move ()
             if light(i).shut then queue(i).waitIn ()    // not implementing turn right on red
+            else queue(i).noWait ()                     // record there was no waiting
            
             if tn == 1 then
                 road((i + 5) % 8).lane(l).move ()       // add 5 for next segment (turn right)

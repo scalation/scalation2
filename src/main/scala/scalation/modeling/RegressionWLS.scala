@@ -100,7 +100,6 @@ class RegressionWLS (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
      */
     override def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
         val yp = predict (x_)                                                // make predictions
-        e = y_ - yp                                                          // RECORD the residuals/errors (@see `Predictor`)
         (yp, diagnose (y_, yp))                                              // return predictions and QoF vector
     end test
 
@@ -266,8 +265,6 @@ object RegressionWLS:
         val mod = new RegressionWLS (x, y)
         mod.trainNtest ()()                                            // train and test the model
         println (mod.summary ())                                       // parameter/coeffient statistics
-        println ("w = " + mod.weights)
-        println ("e = " + mod.residual)
 
         val yp = mod.predict (z)                                       // predict y for one point
         println (s"predict ($z) = $yp")
@@ -275,7 +272,7 @@ object RegressionWLS:
         val yyp = mod.predict (x)                                      // predict y for several points
         println (s"predict ($x) = $yyp")
 
-        // new Plot (y, yyp, null)
+//      new Plot (y, yyp, null)
     end test
 
 end RegressionWLS

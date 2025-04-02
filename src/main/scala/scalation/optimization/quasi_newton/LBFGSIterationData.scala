@@ -4,35 +4,30 @@
  *  @version 2.0
  *  @note    Fri Sep 1 11:40:55 EDT 2023
  *  @see     LICENSE (MIT style license file).
- *------------------------------------------------------------------------------
- *  Iteration data used in the native implementation of the Limited memory
- *  Broyden–Fletcher–Goldfarb–Shanno (BFGS) for unconstrained optimization
- *  (L-BFGS) algorithm.
+ *
+ *  @note    Holds Data about Previous Iterations of the L-BFGS Algorithm.
  */
 
-// Package definition.
 package scalation
 package optimization
 package quasi_newton
 
-// Project imports.
 import scalation.mathstat.VectorD
 
-// Case class.
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `LBFGSIterationData` class stores relevant data regarding the changes
+/** The `LBFGSIterationData` case class stores relevant data regarding the changes
  *  made to the variable and gradient values in a single iteration of the native
  *  implementation of the L-BFGS algorithm. This data is used in future
  *  iterations of the algorithm to improve the search direction used to minimize
  *  the function value.
  *
- *  @param s        [[VectorD]] containing the difference between the estimates
- *                  of the variable values (`x`), each stored in a [[VectorD]],
+ *  @param s        `VectorD` containing the difference between the estimates
+ *                  of the variable values (`x`), each stored in a `VectorD`
  *                  of the last 2 iterations of the algorithm. For the ''k''-th
  *                  iteration of the algorithm, the resulting s,,k,, will be:
  *                  s,,k,, = x,,k+1,, - x,,k,,.
- *  @param y        [[VectorD]] containing the difference between the gradient
- *                  vectors (`g`), each stored in a [[VectorD]], of the last 2
+ *  @param y        `VectorD` containing the difference between the gradient
+ *                  vectors (`g`), each stored in a `VectorD` of the last 2
  *                  iterations of the algorithm. For the ''k''-th iteration of
  *                  the algorithm, the resulting y,,k,, will be:
  *                  y,,k,, = g,,k+1,, - g,,k,,.
@@ -49,9 +44,5 @@ import scalation.mathstat.VectorD
  *                  iteration of the algorithm, the resulting α,,k,, will be:
  *                  α,,k,, = ρ,,k,, * (`s`,,k,,^t^ &bull; `q`,,k+1,,).
  */
-case class LBFGSIterationData(
-    s: VectorD,
-    y: VectorD,
-    ys: Double,
-    var alpha: Double
-)
+case class LBFGSIterationData (s: VectorD, y: VectorD, ys: Double, var alpha: Double)
+

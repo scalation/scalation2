@@ -382,61 +382,61 @@ end ImputeNormalWin
      val x3 = x.copy
      var iv = (-1, NO_DOUBLE)
 
-     banner("ImputeRegression.impute")
+     banner ("ImputeRegression.impute")
      iv = ImputeRegression.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeForward.impute")
+     banner ("ImputeForward.impute")
      iv = ImputeForward.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeBackward.impute")
+     banner ("ImputeBackward.impute")
      iv = ImputeBackward.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeMean.impute")
+     banner ("ImputeMean.impute")
      iv = ImputeMean.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeNormal.impute")
+     banner ("ImputeNormal.impute")
      iv = ImputeNormal.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeMovingAvg.impute")
+     banner ("ImputeMovingAvg.impute")
      iv = ImputeMovingAvg.impute (x)
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeRegression.imputeAll")
+     banner ("ImputeRegression.imputeAll")
      println ("x3 = " + ImputeRegression.imputeAll (x3.copy))
 
-     banner("ImputeForward.imputeAll")
+     banner ("ImputeForward.imputeAll")
      println ("x3 = " + ImputeForward.imputeAll (x3.copy))
 
-     banner("ImputeBackward.imputeAll")
+     banner ("ImputeBackward.imputeAll")
      println ("x3 = " + ImputeBackward.imputeAll (x3.copy))
 
-     banner("ImputeMean.imputeAll")
+     banner ("ImputeMean.imputeAll")
      println ("x3 = " + ImputeMean.imputeAll (x3.copy))
 
-     banner("ImputeNormal.imputeAll")
+     banner ("ImputeNormal.imputeAll")
      println ("x3 = " + ImputeNormal.imputeAll (x3.copy))
 
-     banner("ImputeMovingAvg.imputeAll")
+     banner ("ImputeMovingAvg.imputeAll")
      println ("x3 = " + ImputeMovingAvg.imputeAll (x3.copy))
 
-     banner("ImputeNormalWin.imputeAll")
+     banner ("ImputeNormalWin.imputeAll")
      println ("x3 = " + ImputeNormalWin.imputeAll (x3.copy))
 
 end imputationTest
@@ -454,67 +454,67 @@ end imputationTest
      val x3 = x.copy
      var iv = (-1, NO_DOUBLE)
 
-     banner("ImputeRegression.impute")
+     banner ("ImputeRegression.impute")
      iv = ImputeRegression.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeForward.impute")
+     banner ("ImputeForward.impute")
      iv = ImputeForward.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeBackward.impute")
+     banner ("ImputeBackward.impute")
      iv = ImputeBackward.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeMean.impute")
+     banner ("ImputeMean.impute")
      iv = ImputeMean.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeNormal.impute")
+     banner ("ImputeNormal.impute")
      iv = ImputeNormal.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeMovingAvg.impute")
+     banner ("ImputeMovingAvg.impute")
      iv = ImputeMovingAvg.impute (x)
      x2 = x.copy
      x2(iv._1) = iv._2
      println (s"x  = $x")
      println (s"x2 = $x2")
 
-     banner("ImputeRegression.imputeAll")
+     banner ("ImputeRegression.imputeAll")
      println ("x3 = " + ImputeRegression.imputeAll (x3.copy))
 
-     banner("ImputeForward.imputeAll")
+     banner ("ImputeForward.imputeAll")
      println ("x3 = " + ImputeForward.imputeAll (x3.copy))
 
-     banner("ImputeBackward.imputeAll")
+     banner ("ImputeBackward.imputeAll")
      println ("x3 = " + ImputeBackward.imputeAll (x3.copy))
 
-     banner("ImputeMean.imputeAll")
+     banner ("ImputeMean.imputeAll")
      println ("x3 = " + ImputeMean.imputeAll (x3.copy))
 
-     banner("ImputeNormal.imputeAll")
+     banner ("ImputeNormal.imputeAll")
      println ("x3 = " + ImputeNormal.imputeAll (x3.copy))
 
-     banner("ImputeMovingAvg.imputeAll")
+     banner ("ImputeMovingAvg.imputeAll")
      println ("x3 = " + ImputeMovingAvg.imputeAll (x3.copy))
 
-     banner("ImputeNormalWin.imputeAll")
+     banner ("ImputeNormalWin.imputeAll")
      println ("x3 = " + ImputeNormalWin.imputeAll (x3.copy))
 
 end imputationTest2

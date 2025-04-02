@@ -25,7 +25,7 @@ import scalation.mathstat._
  */
 class NullModel (y: VectorD)
       extends Predictor (MatrixD.one (y.dim), y, Array ("one"), null)
-         with Fit (dfm = 1, df = y.dim)
+         with Fit (dfm = 0, df = y.dim-1)
          with NoSubModels:
 
     modelName = "NullModel"

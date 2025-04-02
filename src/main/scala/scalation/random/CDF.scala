@@ -536,7 +536,7 @@ object CDF:
      */
     def fisherCDF (x: Double, df1: Int, df2: Int): Double =
         if x < 0.0 then
-            flaw ("fisherCDF", "coordinate x should be nonnegative")
+            flaw ("fisherCDF", s"F(x) requires coordinate x = $x to be nonnegative")
             return 0.0
         end if
         if df1 <= 0 || df2 <= 0 then

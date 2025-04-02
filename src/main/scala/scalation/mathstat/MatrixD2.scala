@@ -43,7 +43,7 @@ class MatrixD2 (val dim:  Int,
     /** Add this matrix and matrix y (requires y to have at least the dimensions of this).
      *  @param y  the other matrix
      */
-    def add1 (y: MatrixD2): MatrixD2 =
+    infix def add1 (y: MatrixD2): MatrixD2 =
         if y.dim < dim || y.dim2 < dim2 then flaw ("+", "matrix + matrix - incompatible dimensions")
 
         val a = Array.ofDim [Double] (dim, y.dim2)
@@ -53,7 +53,7 @@ class MatrixD2 (val dim:  Int,
 
 // alias rows to avoid double subscripting
 
-    def add2 (y: MatrixD2): MatrixD2 =
+    infix def add2 (y: MatrixD2): MatrixD2 =
         if y.dim < dim || y.dim2 < dim2 then flaw ("+", "matrix + matrix - incompatible dimensions")
 
         val a = Array.ofDim [Double] (dim, y.dim2)
@@ -66,14 +66,13 @@ class MatrixD2 (val dim:  Int,
 
 // replace for with cfor
 
-    def add3 (y: MatrixD2): MatrixD2 =
+    infix def add3 (y: MatrixD2): MatrixD2 =
         if y.dim < dim || y.dim2 < dim2 then flaw ("+", "matrix + matrix - incompatible dimensions")
 
-        var i, j = 0
         val a = Array.ofDim [Double] (dim, y.dim2)
-        cfor ({i = 0}, i < dim, i += 1) {
+        cfor (0, dim) { i =>
             val v_i = v(i); val y_i = y.v(i); val a_i = a(i)
-            cfor ({j = 0}, j < dim2, j += 1) { a_i(j) = v_i(j) + y_i(j) }
+            cfor (0, dim2) { j => a_i(j) = v_i(j) + y_i(j) }
         } // for
         new MatrixD2 (dim, dim2, a) 
     end add3
@@ -85,7 +84,7 @@ class MatrixD2 (val dim:  Int,
     val species = DoubleVector.SPECIES_512
     val vsz = 8
 
-    def add3 (y: MatrixD2): MatrixD2 =
+    infix def add3 (y: MatrixD2): MatrixD2 =
         if y.dim < dim || y.dim2 < dim2 then flaw ("+", "matrix + matrix - incompatible dimensions")
 
         val a = Array.ofDim [Double] (dim, y.dim2)
@@ -107,7 +106,7 @@ class MatrixD2 (val dim:  Int,
     /** Multiply this matrix by matrix y.
      *  @param y  the other matrix
      */
-    def mul1 (y: MatrixD2): MatrixD2 =
+    infix def mul1 (y: MatrixD2): MatrixD2 =
         if dim2 != y.dim then flaw ("*", "matrix * matrix - incompatible cross dimensions")
 
         val z = new MatrixD2 (dim, y.dim2)
@@ -121,7 +120,7 @@ class MatrixD2 (val dim:  Int,
 
 // transpose y first
 
-    def mul2 (y: MatrixD2): MatrixD2 =
+    infix def mul2 (y: MatrixD2): MatrixD2 =
         if dim2 != y.dim then flaw ("*", "matrix * matrix - incompatible cross dimensions")
 
         val z  = new MatrixD2 (dim, y.dim2)
@@ -137,7 +136,7 @@ class MatrixD2 (val dim:  Int,
 
 // transpose y first and use array ops
 
-    def mul3 (y: MatrixD2): MatrixD2 =
+    infix def mul3 (y: MatrixD2): MatrixD2 =
         if dim2 != y.dim then flaw ("*", "matrix * matrix - incompatible cross dimensions")
 
         val a  = Array.ofDim [Double] (dim, y.dim2)
@@ -162,7 +161,7 @@ class MatrixD2 (val dim:  Int,
 // @see https://en.wikipedia.org/wiki/Matrix_multiplication_algorithm
 // n - dim, m - dim2, p - y.dim2
 
-    def mul4 (y: MatrixD2): MatrixD2 =
+    infix def mul4 (y: MatrixD2): MatrixD2 =
         if dim2 != y.dim then flaw ("*", "matrix * matrix - incompatible cross dimensions")
 
         val a  = Array.ofDim [Double] (dim, y.dim2)
@@ -192,7 +191,7 @@ class MatrixD2 (val dim:  Int,
 
 // @see  https://software.intel.com/content/www/us/en/develop/documentation/advisor-cookbook/top/optimize-memory-access-patterns-using-loop-interchange-and-cache-blocking-techniques.html
 
-    def mul5 (y: MatrixD2): MatrixD2 =
+    infix def mul5 (y: MatrixD2): MatrixD2 =
         if dim2 != y.dim then flaw ("*", "matrix * matrix - incompatible cross dimensions")
 
         val a = Array.ofDim [Double] (dim, y.dim2)
@@ -204,17 +203,14 @@ class MatrixD2 (val dim:  Int,
                 for jj <- 0 until y.dim2 by TSZ do
                     val j2 = min (jj + TSZ, y.dim2)
 
-                    var i, k, j = 0
 //                  for i <- ii until i2 do
-                    cfor ({i = ii}, i < i2, i += 1) {
+                    cfor (ii, i2) { i =>
                         val v_i = v(i); val a_i = a(i)
 //                      for k <- kk until k2 do
-                        cfor ({k = kk}, k < k2, k += 1) {
+                        cfor (kk, k2) { k =>
                             val y_k = y.v(k); val v_ik = v_i(k)
 //                          for j <- jj until j2 do
-                            cfor ({j = jj}, j < j2, j += 1) {
-                                a_i(j) += v_ik * y_k(j)
-                            } // cfor
+                            cfor (jj, j2) { j => a_i(j) += v_ik * y_k(j) }
                         } // cfor
                     } // cfor
 

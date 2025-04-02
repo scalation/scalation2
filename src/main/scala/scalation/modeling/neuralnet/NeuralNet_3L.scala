@@ -23,6 +23,10 @@ import ActivationFun._
 import Initializer._
 import Optimizer._
 
+//import neuralnet.{Optimizer_SGD  => OPTIMIZER}
+import neuralnet.{Optimizer_SGDM => OPTIMIZER}
+//import neuralnet.{Optimizer_Adam => OPTIMIZER}
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `NeuralNet_3L` class supports multi-output, 3-layer (input, hidden and output)
  *  Neural-Networks.  It can be used for both classification and prediction,
@@ -50,9 +54,8 @@ class NeuralNet_3L (x: MatrixD, y: MatrixD, fname_ : Array [String] = null,
       extends PredictorMV (x, y, fname_, hparam)
          with Fit (dfm = x.dim2, df = x.dim - x.dim2):                    // under-estimate of degrees of freedom
 
-    private val eta       = hp("eta").toDouble                            // learning rate
-//          val opti      = new Optimizer_SGD ()                          // parameter optimizer SGD
-            val opti      = new Optimizer_SGDM ()                         // parameter optimizer SGDM
+    private val eta  = hp("eta").toDouble                                 // learning rate
+            val opti = new OPTIMIZER ()                                   // parameter optimizer
 
     // Guidelines for setting the number of nodes in hidden layer:
     if nz < 1 then nz = 2 * x.dim2 + 1                                    // [1] default number of nodes for hidden layer
@@ -334,20 +337,20 @@ end neuralNet_3LTest2
 //  println (s"yy = $yy")
     println (s"x_fname = ${stringOf (x_fname)}")
 
-    Optimizer.hp("eta") = 5.0
+    Optimizer.hp("eta") = 0.25                                   // try 0.25 for SGDM, 0.8 for Adam
 //  val mod = new NeuralNet_3L (x, yy, x_fname)                  // create model without intercept
     val mod = NeuralNet_3L.rescale (x, yy, x_fname)              // create model without intercept - rescales
 
-    banner ("AutoMPG - NeuralNet_3L: trainNtest")
+    banner ("AutoMPG - NeuralNet_3L: In-Sample trainNtest")
     mod.trainNtest ()()                                          // train and test the model
     mod.opti.plotLoss ("NeuralNet_3L")                           // loss function vs epochs
 
-    banner ("AutoMPG - NeuralNet_3L: trainNtest2")
+    banner ("AutoMPG - NeuralNet_3L: In-Sample trainNtest2 - auto-tunes")
     mod.trainNtest2 ()()                                         // train and test the model - with auto-tuning
 //  println (mod.summary2 ())                                    // parameter/coefficient statistics
     mod.opti.plotLoss ("NeuralNet_3L")                           // loss function vs epochs
 
-    banner ("AutoMPG - NeuralNet_3L: validate")
+    banner ("AutoMPG - NeuralNet_3L: TNT validate")
     println (FitM.showFitMap (mod.validate ()(), QoF.values.map (_.toString)))
 
 /*
@@ -706,17 +709,17 @@ end neuralNet_3LTest9
 
     for epoch <- 1 to 2 do
         banner (s"forward propagation for step $epoch")
-        u  = x * aa                                                 // hidden pre-activation vector pre-bias
-        u_ = u + a_                                                 // hidden pre-activation vector
-        z  = f0.fM (u_)                                             // hidden vector
-        v  = z * bb                                                 // output pre-activation vector pre-bias
-        v_ = v + b_                                                 // output pre-activation vector
-        yp = f1.fM (v_)                                             // output vector (predicted)
+        u  = x * aa                                                 // hidden pre-activation matrix pre-bias
+        u_ = u + a_                                                 // hidden pre-activation matrix
+        z  = f0.fM (u_)                                             // hidden matrix
+        v  = z * bb                                                 // output pre-activation matrix pre-bias
+        v_ = v + b_                                                 // output pre-activation matrix
+        yp = f1.fM (v_)                                             // output matrix (predicted)
 
         println (s"$u <- u $u_ <- u $z <- z $v <- v $v_ <- v_ $yp <- yp")
 
         banner (s"backward propagation for step $epoch")
-        e  = yp - y                                                 // negative error
+        e  = yp - y                                                 // negative error matrix
         d1 = e *~ f1.dM (yp)                                        // delta1 @ output layer
         d0 = d1 * bb.transpose *~ f0.dM (z)                         // delta0 @ hidden layer
 
@@ -742,11 +745,85 @@ end neuralNet_3LTest10
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `neuralNet_3LTest11` main function is used to test the `NeuralNet_3L` class.
- *  Tests 9 instances for comparison with `AutoDiff`.
- *  @see `scalation.calculus.AutoDiff`
+ *  It test the basic matrix equations for gradient descent.
+ *  Note, there is no bias for the hidden layer, so may add a bias vector for the hidden layer.
  *  > runMain scalation.modeling.neuralnet.neuralNet_3LTest11
  */
 @main def neuralNet_3LTest11 (): Unit =
+
+    // 9 data points:    Constant    x1    x2    y0    y1
+    val xy = MatrixD ((9, 5), 1.0,  0.0,  0.0,  0.5,  0.4,          // dataset
+                              1.0,  0.0,  0.5,  0.3,  0.3,
+                              1.0,  0.0,  1.0,  0.2,  0.2,
+
+                              1.0,  0.5,  0.0,  0.8,  0.7,
+                              1.0,  0.5,  0.5,  0.5,  0.5,
+                              1.0,  0.5,  1.0,  0.3,  0.4,
+
+                              1.0,  1.0,  0.0,  1.0,  0.9,
+                              1.0,  1.0,  0.5,  0.8,  0.7,
+                              1.0,  1.0,  1.0,  0.5,  0.5)
+    val x    = xy(?, 0 until 3)                                     // matrix for predictor variables
+    val y    = xy(?, 3 until 5)                                     // matrix for response variables
+    val sst0 = (y(?, 0) - y(?, 0).mean).normSq                      // sum of squares total for y_:0
+    val sst1 = (y(?, 1) - y(?, 1).mean).normSq                      // sum of squares total for y_:1
+
+//  val η = 0.4                                                     // learning rate
+    val η = 0.15                                                    // learning rate
+    val a = MatrixD ((3, 2), 0.1, 0.1,                              // weights/parameters X -> Z
+                             0.2, 0.1,
+                             0.1, 0.1)
+    val b = MatrixD ((2, 2), 0.1, 0.1,                              // weights/parameters Z -> Y
+                             0.1, 0.1)
+
+//  val f0 = f_sigmoid                                              // hidden layer activation function
+    val f0 = f_tanh                                                 // hidden layer activation function
+    val f1 = f_id                                                   // output layer activation function
+
+    for epoch <- 1 to 10 do
+        banner (s"improvement step $epoch")
+        // forward
+        val u  = x * a                                              // pre-activation vector
+        val z  = f0.fM (u)                                          // hidden matrix
+        val v  = z * b                                              // output pre-activation matrix
+        val yp = f1.fM (v)                                          // predicted response from calculation for sigmoid
+        // backward
+        val ε  = y - yp                                             // error matrix
+        val δ1 = ε *~ f1.dM (yp)                                    // delta1 @ output layer
+        val δ0 = δ1 * b.𝐓 *~ f0.dM (z)                              // delta0 @ hidden layer (transpose (𝐓))
+        b     += z.𝐓 * δ1 * η                                       // parameter update Z -> Y
+        a     += x.𝐓 * δ0 * η                                       // parameter update X -> Z
+
+        val sse0 = ε(?, 0).normSq                                   // sum of squared errors for column 0
+        val sse1 = ε(?, 1).normSq                                   // sum of squared errors for column 1
+
+        banner ("forward")
+        println (s"u     = $u")
+        println (s"z     = $z")
+        println (s"v     = $v")
+        println (s"yp    = $yp")
+        banner ("backward")
+        println (s"ε     = $ε")
+        println (s"δ1    = $δ1")
+        println (s"δ0    = $δ0")
+        println (s"b     = $b")
+        println (s"a     = $a")
+        banner ("metrics")
+        println (s"sse0  = $sse0")
+        println (s"sse1  = $sse1")
+        println (s"R^2_0 = ${1 - sse0/sst0}")
+        println (s"R^2_1 = ${1 - sse1/sst1}")
+
+end neuralNet_3LTest11
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `neuralNet_3LTest12` main function is used to test the `NeuralNet_3L` class.
+ *  Tests 9 instances for comparison with `AutoDiff`.
+ *  @see `scalation.calculus.AutoDiff`
+ *  > runMain scalation.modeling.neuralnet.neuralNet_3LTest12
+ */
+@main def neuralNet_3LTest12 (): Unit =
 
     val x1 = VectorD (1, 2, 3, 4, 5, 6, 7, 8, 9)
     val x2 = VectorD (8, 7, 6, 5, 5, 4, 4, 3, 2)
@@ -810,5 +887,5 @@ end neuralNet_3LTest10
         println (s"sse = $sse, rSq = $rSq")
     end for
 
-end neuralNet_3LTest11
+end neuralNet_3LTest12
 

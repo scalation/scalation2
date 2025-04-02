@@ -13,7 +13,6 @@ package simulation
 package process
 
 import scala.collection.mutable.{ArrayBuffer => VEC}
-//import scala.collection.mutable.{ListBuffer => VEC}
 import scala.collection.mutable.{LinkedHashMap, PriorityQueue}
 import scala.runtime.ScalaRunTime.stringOf
 
@@ -38,44 +37,29 @@ import scalation.scala2d.Shape
  */
 class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRatio: Double = 1.0,
              val full: Boolean = true, weight: Int = 1200, height: Int = 800)
-      extends Coroutine (name) with Completion with Modelable with Component:
+      extends Coroutine (name)
+         with Completion
+         with Modelable
+         with Component:
 
     initComponent (name, Array ())
 
-    private val debug = debugf ("Model", false)                    // debug function
-    private val flaw  = flawf ("Model")                            // flaw function
-    private [process] val log  = Monitor ("simulation")            // log for model execution
+    private val debug = debugf ("Model", true)                      // debug function
+    private val flaw  = flawf ("Model")                             // flaw function
+
+    private [process] val log       = Monitor ("simulation")        // log for model execution
+    private [process] var numActors = 0                             // number of actors created so far
+
+    protected var startTime = 0.0                                   // time at which the simulation is to begin
+    protected val agenda    = PriorityQueue.empty [SimActor]        // agenda of things to be done (time-ordered activation list)
+    protected var _theActor: SimActor = null                        // currently acting actor (act one at a time)
 
     director = this
-    debug ("init", s"make ${director.name} the director")
+    debug ("init", s"make ${director.name} with cor_id $cor_id the director")
 
-    /** The map of statistics vectors records the means of each replication
-     */
-    val statV = LinkedHashMap [String, VectorD] ()
-
-    /** The stop time for the model
-     */
-    var stopTime = MAX_VALUE
-
-    /** The number of actors created so far
-     */
-    var numActors: Int = 0
-
-    /** The time at which the simulation is to begin
-     */
-    protected var startTime = 0.0
-
-    /** The agenda of things to be done (time-ordered activation list)
-     */
-    protected val agenda = PriorityQueue.empty [SimActor]
-
-    /** The currently acting actor (act one at a time)
-     */
-    protected var _theActor: SimActor = null
-
-    /** List of Components making up the model
-     */
-    private val parts = VEC [Component] ()
+    private val statV    = LinkedHashMap [String, VectorD] ()       // map of stat-vectors recording means of each rep
+    private val stopTime = MAX_VALUE                                // max stop time for the model
+    private val parts    = VEC [Component] ()                       // List (VEC) of Components making up the model
 
     /** The animation engine
      */
@@ -96,7 +80,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Add lists of component parts to the model.
-     *  @param _parts  the lists of component parts
+     *  @param _parts  the lists of component parts (need List rather than VEC)
      */
     def addComponents (_parts: List [Component]*): Unit = for p <- _parts; q <- p do parts += q
 
@@ -117,35 +101,18 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
         banner ("Model.reset in progress")
 
         // reset the agenda - activation priority queue
-        while ! agenda.isEmpty do agenda.dequeue ()             // clean out actors from agenda
+        while ! agenda.isEmpty do agenda.dequeue ()                 // clean out actors from agenda
 
         // reset stateful components
         for p <- parts do
-            if p.isInstanceOf [Source] then                     // reset sources
+            if p.isInstanceOf [Source] then                         // reset sources
                 val s = p.asInstanceOf [Source]
                 reschedule (s)
-            end if
-            if p.isInstanceOf [WaitQueue] then                  // reset wait queues
+            if p.isInstanceOf [WaitQueue] then                      // reset wait queues
                 val w = p.asInstanceOf [WaitQueue]
                 while ! w.isEmpty do w.dequeue ()
-            end if
         end for
     end reset
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Reset and aggregate all statistics.
-     *  @param rep   the current replication (1, ... reps)
-     *  @param rmax  the maximum number of replications/batches
-     */
-    def resetStats (rep: Int, rmax: Int = reps): Unit =
-        if rep == 1 then
-            for stat <- getStatistics do statV += stat.name -> new VectorD (rmax)
-        end if 
-        for stat <- getStatistics do
-            statV (stat.name)(rep - 1) = stat.mean
-            stat.reset ()
-        end for
-    end resetStats
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Execute the simulation (includes scheduling all Sources) returning summary
@@ -163,7 +130,7 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
             if p.isInstanceOf [Source] then reschedule (p.asInstanceOf [Source]) 
         end for
 
-        start ()                                                // start the director thread/actor -> act ()
+        start ()                                                    // start the director thread/actor -> act ()
     end simulate
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -175,24 +142,21 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
         banner ("Model.cleanup in progress")
 
         println ("cleanup: agenda")
-        while ! agenda.isEmpty do                               // cleanup actors left on agenda
+        while ! agenda.isEmpty do                                   // cleanup actors left on agenda
             val a = agenda.dequeue ()
             if a != this then
                 println (s"cleanup: terminate actor $a in agenda")
-                a.interrupt ()                                  // terminate all actors, except director
-            end if
+                a.interrupt ()                                      // terminate all actors, except director
         end while
 
         println ("cleanup: wait queues")
         for p <- parts do
-            if p.isInstanceOf [WaitQueue] then                  // cleanup wait queues
+            if p.isInstanceOf [WaitQueue] then                      // cleanup wait queues
                 val w = p.asInstanceOf [WaitQueue]
                 while ! w.isEmpty do
                     val a = w.dequeue ()
                     println (s"cleanup: terminate actor $a in $w")
-                    a.interrupt ()                              // terminate all actors in queue
-                end while
-            end if
+                    a.interrupt ()                                  // terminate all actors in queue
         end for
     end cleanup
 
@@ -208,65 +172,46 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
      *  and the agenda of actors until the simulation flag becomes false
      *  or the agenda (priority queue) becomes empty.
      */
-    def act (): Unit =
+    override def act (): Unit =
         log.trace (this, s"starts model for $reps replications", null, _clock)
 
-        for rep <- 1 to reps do                                 // LOOP THROUGH REPLICATIONS
+        for rep <- 1 to reps do                                     // LOOP THROUGH REPLICATIONS
             _clock = startTime
-            if rep == 1 && animating then display ()            // turn animation on (true) off (false)
+            if rep == 1 && animating then display ()                // turn animation on (true) off (false)
 
             log.trace (this, s"starts rep $rep", null, _clock)
-            simulating = _clock <= stopTime                     // simulate unless past stop time
+            simulating = _clock <= stopTime                         // simulate unless past stop time
 
-            while simulating && ! agenda.isEmpty do             // INNER SCHEDULING LOOP
-                _theActor = agenda.dequeue ()                   // next from priority queue
-                if _theActor.actTime < clock then               // out of order execution => QUIT
+            while simulating && ! agenda.isEmpty do                 // INNER SCHEDULING LOOP
+                _theActor = agenda.dequeue ()                       // next from priority queue
+                if _theActor.actTime < clock then                   // out of order execution => QUIT
                     flaw ("act", s"actor $_theActor activation time < $_clock")
                     println ("QUIT")
                     simulating = false
                 else
                     _clock    = _theActor.actTime                   // advance the time
-                    debug ("act", s"${this.me} resumes ${_theActor.me} at $clock")
+                    debug ("act", s"${this.me} resumes ${_theActor} at $clock")
                     log.trace (this, "resumes", _theActor, _clock)
+                    debug ("act", s"before yyield at $clock")
                     yyield (_theActor)                              // director yields to actor
-                end if
+                    debug ("act", s"after yyield at $clock")
             end while
 
             simulating = false
             log.trace (this, s"ends rep $rep", null, _clock)
 
-            fini (rep)                                          // post-run results
-            if rep < reps then reset ()                         // reset for next replication
-            resetStats (rep)                                    // reset and aggregate statistics
+            fini (rep)                                              // post-run results
+            if rep < reps then reset ()                             // reset for next replication
+            resetStats (rep)                                        // reset and aggregate statistics
         end for
 
         cleanup ()
         if reps > 1 then reportV ()
         println (s"coroutine counts = $counts")
         log.trace (this, "terminates model", null, _clock)
-        hasFinished ()                                          // signal via semaphore that simulation is finished
-        yyield (null, true)                                     // yield and terminate the director
+        hasFinished ()                                              // signal via semaphore that simulation is finished
+        yyield (null, true)                                         // yield and terminate the director
     end act
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the statistical results of the simulation (statistics for each part).
-     *  This includes the sample/duration statistics and if 'full', time persistent
-     *  statistics as well.
-     */
-    def getStatistics: VEC [Statistic] =
-        val stats = new VEC [Statistic] ()
-        for p <- parts do
-            if p.composite then p.aggregate ()
-            stats += p.durationStat
-        end for
-        if full then
-            for p <- parts if p.persistentStat != null do
-                stats += p.persistentStat
-            end for
-        end if
-//      for st <- stats do println (s"getStatistics: ${st.show}")
-        stats
-    end getStatistics
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Put the components on the animation engine's queue.
@@ -321,19 +266,53 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
     end orderedActor
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    // Methods for Reporting Results
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Finish by producing statistical reports and optionally animation.
      *  Typically animation and reports in pop up window turned off for high
      *  replications and/or simulation optimization.
      *  @param rep  the replication number (1, ... reps)
      */
     protected def fini (rep: Int): Unit =
-        report ()                                               // report in terminal
+        report ()                                                   // report in terminal
         if animating then
-            reportF ()                                          // report in new window/frame
-            if rep == 1 then dgAni.animate (0, 100000)          // only animate first rep
-            dgAni.saveImage (DATA_DIR + name + ".png")
+            reportF ()                                              // report in new window/frame
+            if rep == 1 then dgAni.animate (0, 100000)              // only animate first rep
+//          dgAni.saveImage (DATA_DIR + name + ".png")
         end if
     end fini
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Reset and aggregate all statistics.
+     *  @param rep   the current replication (1, ... reps)
+     *  @param rmax  the maximum number of replications/batches
+     */
+    def resetStats (rep: Int, rmax: Int = reps): Unit =
+        if rep == 1 then
+            for stat <- getStatistics do statV += stat.name -> new VectorD (rmax)
+        for stat <- getStatistics do
+            statV (stat.name)(rep - 1) = stat.mean
+            stat.reset ()
+    end resetStats
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the statistical results of the simulation (statistics for each part).
+     *  This includes the sample/duration statistics and if 'full', time persistent
+     *  statistics as well.
+     */
+    def getStatistics: VEC [Statistic] =
+        val stats = new VEC [Statistic] ()
+        for p <- parts do
+            if p.composite then p.aggregate ()
+            stats += p.durationStat
+        if full then
+            for p <- parts if p.persistentStat != null do
+                stats += p.persistentStat
+//      for st <- stats do println (s"getStatistics: ${st.show}")
+        stats
+    end getStatistics
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Report on the statistical results of a simulation run.
@@ -361,7 +340,6 @@ class Model (name: String, val reps: Int = 1, animating: Boolean = true, aniRati
             val aStat = new Statistic (k)
             aStat.tallyVec (v)
             println (aStat)
-        end for
         println (Statistic.line)
     end reportV
 

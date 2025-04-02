@@ -60,10 +60,10 @@ trait Minimizer:
      *  iteratively moving down in the search space to a minimal point.
      *  Return the optimal point/vector x and its objective function value.
      *  @param x0     the starting point 
-     *  @param step   the initial step size
-     *  @param toler  the tolerance
+     *  @param step   the initial step size (may default to STEP)
+     *  @param toler  the tolerance (may default to EPSILON)
      */
-    def solve (x0: VectorD, step: Double = STEP, toler: Double = EPSILON): FuncVec
+    def solve (x0: VectorD, step: Double, toler: Double): FuncVec
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Solve the following Non-Linear Programming (NLP) problem:
@@ -80,7 +80,7 @@ trait Minimizer:
         for i <- 0 until 2*n do
             val x0 = rvg.gen
             println (s"==> resolve: random restart $i at x0 = $x0")
-            opt = better (solve (x0), opt)
+            opt = better (solve (x0, STEP, EPSILON), opt)
         end for
         opt
     end resolve
@@ -93,6 +93,9 @@ end Minimizer
  */
 object Minimizer:
 
+    val EPSILON = 1E-10                 // number close to zero
+    val STEP    = 0.6                   // step size
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Test the optimizer's solve method with the given objective function and
      *  and starting point.
@@ -100,7 +103,7 @@ object Minimizer:
      *  @param x0         the starting point for the optimzer
      */
     def test (optimizer: Minimizer, x0: VectorD): FuncVec =
-        val opt = optimizer.solve (x0)
+        val opt = optimizer.solve (x0, STEP, EPSILON)
         banner (s"** solve: optimal solution (f(x), x) = $opt **")
         opt
     end test

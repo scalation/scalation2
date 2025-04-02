@@ -12,6 +12,8 @@ package scalation
 package database
 package table
 
+import Tabular._
+
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `bankDB` main function uses the `Table` class for simple database application.
  *  > runMain scalation.database.table.bankDB
@@ -48,7 +50,7 @@ package table
         .add ("Alps",     1002, "Peter", 2000.0)
         .add ("Main",     1003, "Paul",  1000.0)
         .add ("Alps",     1004, "Paul",  2000.0)
-        .add ("Main",     1005, "Mary",  1000.0)
+        .add ("Main",     1005, "Mary",  1500.0)
         .add ("Downtown", 1006, "Mary",  2000.0)
         .show ()
 
@@ -59,13 +61,16 @@ package table
 
 //  a) List the names and cities of customers who have at least one loan covered by one of their accounts (Silver Members).
 
+/*
     banner ("""Q1: (customer ⋈ deposit ⋈ loan).π("cname, ccity")""")
     val q1 = (customer ⋈ deposit ⋈ loan).π("cname, ccity")
     q1.create_index ()
     q1.show ()
+*/
 
 //  b) List the names and cities of customers who have accounts at all the branches located in the city they live in.
 
+/*
     banner ("my_branches: cname, ccity and their branches")
     val my_branches = (customer ⋈ deposit ⋈ branch).π("cname, ccity, bname")
     my_branches.show ()
@@ -81,6 +86,52 @@ package table
     val q2_ = customer.π("cname, ccity") - ( (customer × branch).σ ("ccity == bcity").π("cname, ccity, bname") -
                                            (customer ⋈ deposit ⋈ branch).π("cname, ccity, bname") ).π("cname, ccity")
     q2_.show ()
+*/
+
+
+//  c) List the names and cities of customers who have a deposit account over $1000 in a branch located in Athens.
+
+    banner ("Q1: deposit over $1000 in Athens")
+
+    (customer ⋈ deposit).show ()
+
+    val q1 = (customer ⋈ deposit.σ("balance > 1000") ⋈ branch.σ("bcity == 'Athens'")).π("cname, ccity")
+    q1.show ()
+
+    val q1_ = π("cname, ccity")(customer ⋈ σ("balance > 1000")(deposit) ⋈ σ("bcity == 'Athens'")(branch))
+    q1_.show ()
+
+//  d) List the names and cities of customers who have a deposit account and loan at a branch where the loan amount exceeds the balance.
+
+    banner ("Q2: deposit balance less then laon amount")
+
+    val q2 = (customer ⋈ deposit ⋈ loan).σ("balance < amount").π("cname, ccity")
+    q2.show ()
+
+    val q2_ = π("cname, ccity")(σ("balance < amount")(customer ⋈ deposit ⋈ loan))
+    q2_.show ()
+
+    println (2 < 11)
+    println ("2" < "11")
+
+// (c) List the names of customers (and the two cities) who have a deposit account in a branch
+//     located in a city preceding (alphabetically) the city they live in.
+
+    banner ("Q3: cname and bcity preceding ccity")
+
+    (customer ⋈  deposit ⋈  branch).show ()
+
+    val q3 = π("cname, ccity, bcity")(σ("bcity < ccity")(customer ⋈  deposit ⋈  branch))
+    q3.show ()
+
+// (b) List the names and cities (ccity) of customers who have deposit accounts in at least
+//     two branches located in the city of Athens.
+
+    val a = σ("bcity == 'Athens'")(deposit ⋈  branch)
+    a.show ()
+
+    val q4 = π("cname, ccity")(customer ⋈ (σ("bname != bname2")(a ⋈ ("cname == cname", a))))
+    q4.show ()
 
 end bankDB
 

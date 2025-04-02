@@ -29,12 +29,12 @@ package random
 case class Random3 (stream: Int = 0)
      extends RNG (stream):
 
-//  private val A     = 48271L                 // alternative multiplier for a popular 32-bit generator
-    private val A     = 16807L                 // multiplier for a popular 32-bit generator (7^5)
-    private val M     = 2147483647L            // modulus for a popular 32-bit generator (2^31 - 1)
-    private val NORM  = 1.0 / M.toDouble       // normalization to (0, 1)
-
-    private var x     = RandomSeeds3.seeds(stream).toLong   // set the stream value to its seed
+//  private val A     = 48271L                           // alternative multiplier for a popular 32-bit generator
+    private val A     = 16807L                           // multiplier for a popular 32-bit generator (7^5)
+    private val M     = 2147483647L                      // modulus for a popular 32-bit generator (2^31 - 1)
+    private val NORM  = 1.0 / M.toDouble                 // normalization to (0, 1)
+    private val strm  = stream % RandomSeeds3.N_STREAMS  // can't go beyond stream limit
+    private var x     = RandomSeeds3.seeds(strm).toLong  // set the stream value to its seed
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the modulus used by this random number generator.

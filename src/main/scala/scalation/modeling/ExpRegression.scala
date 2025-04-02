@@ -71,7 +71,6 @@ class ExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         for i <- y.indices do
             val bx = b(0)                                                // only use intercept
             sum += -bx - y(i) / exp (bx)
-        end for
         -2.0 * sum
     end ll_null
 
@@ -87,9 +86,6 @@ class ExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         val b0   = new VectorD (x_.dim2)                                 // use b_0 = 0 for starting guess for parameters
         val bfgs = new BFGS (ll)                                         // minimizer for -2LL
         b        = bfgs.solve (b0)._2                                    // find optimal solution for parameters
-
-//      e = y_ / (x_ * b)                                                // residual/error vector e
-        e = y_ - (x_ * b).map (exp _)                                    // residual/error vector e
     end train
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -215,7 +211,7 @@ end ExpRegression
     println (s"y  = $y")
     println (s"yp = $yp")
 
-    new Plot (null, y, yp, "expRegressionTest")
+    new Plot (null, y, yp, "expRegressionTest", lines = true)
 
     val yp2 = mod.predict (z)
     println (s"predict ($z) = $yp2")
@@ -260,4 +256,43 @@ end expRegressionTest
     for k <- 1 to 10 do test (1000, k)
 
 end expRegressionTest2
+
+
+//:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `expRegressionTest3` main function tests the `SimpleExpRegression` class.
+ *  @see www.cnachtsheim-text.csom.umn.edu/kut86916_ch13.pdf
+ *      y = 58.6065 exp (-.03959 x) + e
+ *  > runMain scalation.modeling.expRegressionTest3
+ */
+@main def expRegressionTest3 (): Unit =
+
+    val xy = MatrixD ((15, 2), 2, 54,
+                               5, 50,
+                               7, 45,
+                              10, 37,
+                              14, 35,
+                              19, 25,
+                              26, 20,
+                              31, 16,
+                              34, 18,
+                              38, 13,
+                              45, 8,
+                              52, 11,
+                              53, 8,
+                              60, 4,
+                              65, 6)
+
+    println (s"xy = $xy")
+
+    val mod = ExpRegression (xy)()                                       // create a model
+    mod.trainNtest ()()                                                  // train and test the model
+
+    val y  = xy(?, 1)                                                    // vector column 1
+    val yp = mod.predict (xy.not(?, 1))                                  // matrix excluding column 1
+    println ("y  = " + y)
+    println ("yp = " + yp)
+
+    new Plot (null, y, yp, "ExpRegressionTest", lines = true)
+
+end expRegressionTest3
 

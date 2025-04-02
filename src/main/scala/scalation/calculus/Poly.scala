@@ -71,17 +71,17 @@ case class Poly (c: VectorD, x: String = "x"):
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Take the derivative of 'this' polynomial, returning the result as a polynomial.
      */
-    def derivative: Poly = Poly ((for (i <- 1 to deg) yield i * c(i)) :_*)
+    def derivative: Poly = Poly ((for (i <- 1 to deg) yield i * c(i))*)
 
-    def Ⅾ : Poly = Poly ((for i <- 1 to deg yield i * c(i)) :_*)
+    def Ⅾ : Poly = Poly ((for i <- 1 to deg yield i * c(i))*)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Integrate 'this' polynomial, returning the result as a polynomial.
      *  Note, the arbitrary constant 'c' for the indefinite integral is set to 1.
      */
-    def integrate: Poly = Poly (1.0 +: (for i <- 0 to deg yield c(i) / (i+1.0)) :_*)
+    def integrate: Poly = Poly (1.0 +: (for i <- 0 to deg yield c(i) / (i+1.0))*)
 
-    def ∫ : Poly = Poly (1.0 +: (for i <- 0 to deg yield c(i) / (i+1.0)) :_*)
+    def ∫ : Poly = Poly (1.0 +: (for i <- 0 to deg yield c(i) / (i+1.0))*)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Integrate 'this' polynomial on the interval 'on', returning its value as
@@ -89,12 +89,12 @@ case class Poly (c: VectorD, x: String = "x"):
      *  @param on  the interval of integration
      */
     def integrate (on: Interval): Double =
-        val pl = Poly (1.0 +: (for (i <- 0 to deg) yield c(i) / (i+1.0)) :_*)
+        val pl = Poly (1.0 +: (for (i <- 0 to deg) yield c(i) / (i+1.0))*)
         pl (on._2) - pl (on._1)
     end integrate
 
     def ∫ (on: Interval): Double =
-        val pl = Poly (1.0 +: (for (i <- 0 to deg) yield c(i) / (i+1.0)) :_*)
+        val pl = Poly (1.0 +: (for (i <- 0 to deg) yield c(i) / (i+1.0))*)
         pl (on._2) - pl (on._1)
     end ∫
 

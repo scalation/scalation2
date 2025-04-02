@@ -29,14 +29,14 @@ import scalation.mathstat._
 class SimpleExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
                            hparam: HyperParameter = null, nonneg: Boolean = true)
       extends Predictor (x, y, fname_, hparam)
-         with Fit (1, df = x.dim - 1)
+         with Fit (dfm = 1, df = x.dim - 2)
          with NoSubModels:
 
     private val debug     = debugf ("SimpleExpRegression", true)         // debug function
     private val flaw      = flawf ("SimpleExpRegression")                // flaw function
-    private val cutoff    = 1E-4                                         // cutoff threshold
-    private val eta       = 0.00001                                      // the learning/convergence rate (requires adjustment)
-    private val maxEpochs = 100                                          // the maximum number of training epcochs/iterations
+    private val cutoff    = 1E-5                                         // cutoff threshold
+    private val eta       = 0.00005                                      // the learning/convergence rate (requires adjustment)
+    private val maxEpochs = 1000                                         // the maximum number of training epcochs/iterations
 //  private val eta       = hparam ("eta")                               // the learning/convergence rate (requires adjustment)
 //  private val maxEpochs = hparam ("maxEpochs").toInt                   // the maximum number of training epcochs/iterations
 
@@ -59,18 +59,20 @@ class SimpleExpRegression (x: MatrixD, y: VectorD, fname_ : Array [String] = nul
      */
     def train (x_ : MatrixD = x, y_ : VectorD = y): Unit =
         val xx = x_(?, 0)
-        b = VectorD (50.0, -0.03)                                        // FIX - generalize initial guess
+//      b = VectorD (50.0, -0.03)                                        // FIX - generalize initial guess
+        b = VectorD (1.0, 0.3)
 
         var (go, epoch) = (true, 1)
         cfor (go && epoch <= maxEpochs, epoch += 1) {                    // iterate over the learning epochs
             val yp = VectorD (for i <- xx.indices yield f (xx(i), b))    // y-predicted vector
-            e      = y_ - yp                                             // error vector
-            val d0 = (e dot yp) / b(0)                                   // delta 0
-            val d1 = e dot yp * xx                                       // delta 1
-            b(0)  += eta * d0                                            // update to first parameter
-            b(1)  += eta * d1                                            // update to second parameter
+//          val yp = xx.map (f (_, b))                                   // y-predicted vector
+            val e  = y_ - yp                                             // error vector
+            val g0 = (e dot yp) / b(0)                                   // gradient 0 - partial of loss w.r.t. b0
+            val g1 = e dot yp * xx                                       // gradient 1 - partial of loss w.r.t. b1
+            b(0)  += eta/x_.dim * g0                                     // update to first parameter
+            b(1)  += eta/x_.dim * g1                                     // update to second parameter
             debug ("train", s"parameters for $epoch th epoch: b = $b \n yp = $yp")
-            if VectorD (d0, d1).norm < cutoff then go = false            // stopping rule, may refine
+            if VectorD (g0, g1).norm < cutoff then go = false            // stopping rule, may refine
         } // cfor
     end train
 
@@ -144,6 +146,7 @@ end SimpleExpRegression
  */
 @main def simpleExpRegressionTest (): Unit =
 
+/*
     val x = MatrixD ((5, 3), 1.0, 36.0,  66.0,                           // 5-by-3 matrix
                              1.0, 37.0,  68.0,
                              1.0, 47.0,  64.0,
@@ -151,20 +154,46 @@ end SimpleExpRegression
                              1.0,  1.0, 101.0)
     val y = VectorD (745.0, 895.0, 442.0, 440.0, 1598.0)
     val z = VectorD (1.0, 20.0, 80.0)
+*/
 
-    println (s"x = $x")
+    val x = MatrixD ((10, 2), 1.0, 1.0,
+                              1.0, 2.0,
+                              1.0, 3.0,
+                              1.0, 4.0,
+                              1.0, 5.0,
+                              1.0, 6.0,
+                              1.0, 7.0,
+                              1.0, 8.0,
+                              1.0, 9.0,
+                              1.0, 10.0)
+  
+    val y = VectorD (2.70,  // approximate 2 * exp(0.3*1)
+                     3.64,  // approximate 2 * exp(0.3*2)
+                     4.93,
+                     6.64,
+                     8.96,
+                     12.10,
+                     16.33,
+                     22.05,
+                     29.76,
+                     40.17)
 
-    val mod = new SimpleExpRegression (x, y)                             // create a model
+    val x_ = x(?, 1 until x.dim2)
+    println (s"x_ = $x_")
+
+    val mod = new SimpleExpRegression (x_, y)                            // create a model
     mod.trainNtest ()()                                                  // train and test the model
 
-    val yp = mod.predict (x)
+    val yp = mod.predict (x_)
     println (s"y  = $y")
     println (s"yp = $yp")
 
-    new Plot (null, y, yp, "SimpleExpRegressionTest")
+    new Plot (null, y, yp, "SimpleExpRegressionTest", lines = true)
 
+/*
     val yp2 = mod.predict (z)
     println (s"predict ($z) = $yp2")
+*/
 
 end simpleExpRegressionTest
 
@@ -209,7 +238,7 @@ end simpleExpRegressionTest2
 
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `simpleExpRegressionTest3` main function tests the `SimpleExpRegression` class.
- *  @see http://www.cnachtsheim-text.csom.umn.edu/kut86916_ch13.pdf
+ *  @see www.cnachtsheim-text.csom.umn.edu/kut86916_ch13.pdf
  *      y = 58.6065 exp (-.03959 x) + e
  *  > runMain scalation.modeling.simpleExpRegressionTest3
  */

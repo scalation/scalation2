@@ -13,21 +13,23 @@ package random
 
 import scalation.mathstat._
 
+import RandomSeeds.N_STREAMS
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `VariateMat` abstract class serves as a base class for all the Random
  *  Variate Matrix (RVM) generators. They use one of the Random Number Generators
  *  (RNG's) from Random.scala to generate numbers following their particular
  *  multivariate distribution.
  *-----------------------------------------------------------------------------
- *  @param stream  the random number stream
+ *  @param stream  the random number stream (0 until N_STREAMS)
  */
 abstract class VariateMat (stream: Int = 0):
 
     protected val flaw = flawf ("VariateMat")
 
-    /** Random number stream selected by the stream number
+    /** Random number stream selected by the stream number (can't be beyond last stream)
      */
-    protected val r = Random (stream)
+    protected val r = Random (stream % N_STREAMS)
 
     /** Indicates whether the distribution is discrete or continuous (default)
      */

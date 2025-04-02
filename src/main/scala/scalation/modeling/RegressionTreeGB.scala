@@ -19,7 +19,7 @@ import modeling.{RegressionTree  => REG_TREE}                                 //
 //import modeling.{RegressionTreeMT => REG_TREE}                              // swap Model Tree
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `RegressionTreeGB` class uses Gradient Boosting on `RegressionTree`s.
+/** The `RegressionTreeGB` class uses Gradient Boosting using `RegressionTree`s.
  *  @param x       the input/data matrix
  *  @param y       the output/response vector
  *  @param fname_  the feature/variable names (defaults to null)
@@ -30,28 +30,32 @@ class RegressionTreeGB (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
       extends Predictor (x, y, fname_, hparam)
          with Fit (dfm = x.dim2 - 1, df = x.dim - x.dim2):                    // call resetDF once tree is built
 
-    private val depth   = hparam("maxDepth").toInt                            // the max depth for the base regression trees
-    private val iter    = hparam("iterations").toInt                          // the iterations for training
-    private val forest  = new ArrayBuffer [REG_TREE] ()                       // forest is a list of regression trees
+    private val debug  = debugf ("RegressionTreeGB", false)                   // debug function
+    private val depth  = hparam("maxDepth").toInt                             // the max depth for the base regression trees
+    private val iter   = hparam("iterations").toInt                           // the iterations/stages for training
+    private val eta    = hparam("eta").toDouble                               // the learning rate
+    private val forest = new ArrayBuffer [REG_TREE] ()                        // forest is a list of regression trees
 
     modelName = s"RegressionTreeGB ($depth, $iter)"
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Using Gradient Boosting on Training, for every iteration, we evaluate the residual
-     *  and form a Regression Tree where the residual is the depedent value (equal to the
-     *  gradient if using SSE as loss function).
+    /** Use Gradient Boosting for Training.  For every iteration, evaluate the residual
+     *  and form a Regression Tree where the residual is the dependent value (equal to
+     *  the gradient if using SSE as the loss function).
+     *  @author Prudhvi Chekka, Lalithya Sajja
      *  @param x_  the training/full data/input matrix
      *  @param y_  the training/full response/output vector
      */
     def train (x_ : MatrixD, y_ : VectorD): Unit =
-        val yp = VectorD.fill (y_.dim)(y_.mean)                               // initial value for y-predicted
+        val yp = VectorD.fill (y_.dim)(y_.mean)                               // initial value for y-predicted (y's mean)
 
         for i <- 0 until iter do
             val yres = y_ - yp                                                // y-residual
             val tree = new REG_TREE (x_, yres, fname, hparam)                 // i-th tree in forest (mean/regression)
             forest  += tree                                                   // add to forest
             tree.train (x_, yres)                                             // train the i-th tree
-            yp += tree.predict (x_)                                           // add to cumulative prediction
+            yp += tree.predict (x_) * eta                                     // add to cumulative prediction
+            debug ("train", s"tree $i ===> \n ${tree.printTree ()}")
         end for
     end train
 
@@ -72,12 +76,13 @@ class RegressionTreeGB (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     end test
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Given a data vector z, predict the value by summing the predict for each tree.
+    /** Given a data vector z, predict a value by summing the predicted values
+     *  for each tree moderated by the learning rate `eta`.
      *  @param z  the data vector to predict
      */
     override def predict (z: VectorD): Double =
         var yp = y.mean
-        for i <- forest.indices do yp += forest(i).predict (z)
+        for i <- forest.indices do yp += forest(i).predict (z) * eta
         yp
     end predict
 
@@ -211,22 +216,22 @@ end regressionTreeGBTest
 //  println (s"x = $o")
 //  println (s"y = $y")
 
-    val dmax = 6                                                        // range of depths 1 to dmax
+    val dmax = 6                                                      // range of depths 1 to dmax
     val qual = new MatrixD (dmax, 3)
 
     for d <- 1 to dmax do
         banner ("AutoMPG Regression Tree GB with depth d = $d")
-        RegressionTree.hp("maxDepth") = d                               // depth of tree
-        RegressionTree.hp("nTrees")   = 3                               // number of iterations
-        val mod = new RegressionTreeGB (x, y, x_fname)                  // create model with intercept (else pass x)
-        val qof = mod.trainNtest ()()._2                                // train and test the model
-//      mod.printTree ()                                                // print the regression tree
-//      println (mod.summary ())                                        // parameter/coefficient statistics
+        RegressionTree.hp("maxDepth") = d                             // depth of tree
+        RegressionTree.hp("nTrees")   = 3                             // number of iterations
+        val mod = new RegressionTreeGB (x, y, x_fname)                // create model with intercept (else pass x)
+        val qof = mod.trainNtest ()()._2                              // train and test the model
+//      mod.printTree ()                                              // print the regression tree
+//      println (mod.summary ())                                      // parameter/coefficient statistics
 
         banner (s"AutoMPG Regression Tree GB with d = $d Validation")
-        val qof2 = mod.validate ()()                                    // out-of-sampling testing
-        val iq = QoF.rSq.ordinal                                        // index for rSq
-        qual (d-1) = VectorD (qof(iq), qof(iq+1), qof2(iq))             // R^2, R^2 bar, R^2 os
+        val qof2 = mod.validate ()()                                  // out-of-sampling testing
+        val iq = QoF.rSq.ordinal                                      // index for rSq
+        qual (d-1) = VectorD (qof(iq), qof(iq+1), qof2(iq))           // R^2, R^2 bar, R^2 os
     end for
 
     new PlotM (VectorD.range (1, dmax+1), qual.transpose, Array ("R^2", "R^2 bar", "R^2 os"),
@@ -237,29 +242,29 @@ end regressionTreeGBTest2
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `regressionTreeGBTest3` main function tests the `RegressionTreeGB` class using the
- *  AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and stepwise
- *  selection.
+/** The `regressionTreeGBTest3` main function tests the `RegressionTreeGB` class using
+ *  the AutoMPG dataset.  Assumes no missing values.  It tests forward, backward and
+ *  stepwise selection.
  *  > runMain scalation.modeling.regressionTreeGBTest3
  */
 @main def regressionTreeGBTest3 (): Unit =
 
     import Example_AutoMPG._
 
-    val d = 5                                                           // depth of tree
+    val d = 5                                                         // depth of tree
 
 //  println (s"x = $x")
 //  println (s"y = $y")
 
     banner (s"AutoMPG Regression Tree GB with d = $d")
     RegressionTree.hp("maxDepth") = d
-    val mod = new RegressionTreeGB (x, y, x_fname)                      // create model with intercept (else pass x)
-    mod.trainNtest ()()                                                 // train and test the model
-//  mod.printTree ()                                                    // print the regression tree
+    val mod = new RegressionTreeGB (x, y, x_fname)                    // create model with intercept (else pass x)
+    mod.trainNtest ()()                                               // train and test the model
+//  mod.printTree ()                                                  // print the regression tree
 
     for tech <- SelectionTech.values do
         banner (s"Feature Selection Technique: $tech")
-        val (cols, rSq) = mod.selectFeatures (tech)                     // R^2, R^2 bar, R^2 cv
+        val (cols, rSq) = mod.selectFeatures (tech)                   // R^2, R^2 bar, R^2 cv
         val k = cols.size
         println (s"k = $k, n = ${x.dim2}")
         new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "R^2 cv"),
@@ -272,9 +277,64 @@ end regressionTreeGBTest3
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `regressionTreeGBTest4` main function is used to test the `RegressionTreeGB` class.
+ *  on the Boston House Prices dataset.  Use in-sample training testing.
  *  > runMain scalation.modeling.regressionTreeGBTest4
  */
 @main def regressionTreeGBTest4 (): Unit =
+
+    val data = MatrixD.load ("boston_house_prices.csv", 1, 0)
+    val x    = data(?, 0 until data.dim2 - 1)
+    val y    = data(?, data.dim2 - 1)
+    println (s"Dimensions of x and y: ${x.dims}, ${y.dim}")
+
+    banner ("Boston House Prices (In-Sample): Regression Tree GB with depth d = $d")
+    RegressionTree.hp("nTrees")     = 9                               // number of trees
+    RegressionTree.hp("iterations") = 100                             // number iterations
+    RegressionTree.hp("maxDepth")   = 5                               // maximum tree depth
+    RegressionTree.hp("eta")        = 0.1                             // learning rate
+
+    val mod = new RegressionTreeGB (x, y)                             // create model with intercept (else pass x)
+    mod.trainNtest ()()
+//  mod.printTree ()                                                  // print the regression tree
+//  println (mod.summary ())                                          // parameter/coefficient statistics
+
+end regressionTreeGBTest4
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTreeGBTest5` main function is used to test the `RegressionTreeGB` class.
+ *  on the Boston House Prices dataset.  Use train and test split.
+ *  > runMain scalation.modeling.regressionTreeGBTest5
+ */
+@main def regressionTreeGBTest5 (): Unit =
+
+    val data = MatrixD.load ("boston_house_prices.csv", 1, 0)
+    val x    = data(?, 0 until data.dim2 - 1)
+    val y    = data(?, data.dim2 - 1)
+    println (s"Dimensions of x and y: ${x.dims}, ${y.dim}")
+
+    banner ("Boston House Prices (TnT-Split): Regression Tree GB with depth d = $d")
+    RegressionTree.hp("nTrees")     = 9                               // number of trees
+    RegressionTree.hp("iterations") = 100                             // number iterations
+    RegressionTree.hp("maxDepth")   = 5                               // maximum tree depth
+    RegressionTree.hp("eta")        = 0.1                             // learning rate
+
+    val n_test = (0.2 * x.dim).toInt                                  // determine the size of the test-set (20%)
+    val ran    = (x.dim - n_test - 1 until x.dim).toSet               // test range
+    val (xtest, xtrain, ytest, ytrain) = TnT_Split (x, y, ran)        // use train and test split
+    val mod = new RegressionTreeGB (xtrain, ytrain)                   // create model with intercept (else pass x)
+    mod.trainNtest (xtrain, ytrain)(xtest, ytest)
+//  mod.printTree ()                                                  // print the regression tree
+//  println (mod.summary ())                                          // parameter/coefficient statistics
+
+end regressionTreeGBTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `regressionTreeGBTest6` main function is used to test the `RegressionTreeGB` class.
+ *  > runMain scalation.modeling.regressionTreeGBTest6
+ */
+@main def regressionTreeGBTest6 (): Unit =
 
     val x = MatrixD ((5, 1), 750, 800, 850, 900, 950)
     val y = VectorD (1160, 1200, 1280, 1450, 2000)
@@ -284,5 +344,5 @@ end regressionTreeGBTest3
 //  mod.printTree ()                                                 // print the regression tree
 //  println (mod.summary ())                                         // parameter/coefficient statistics
 
-end regressionTreeGBTest4
+end regressionTreeGBTest6
 

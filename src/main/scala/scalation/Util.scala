@@ -5,25 +5,28 @@
  *  @date    Thu Jul  9 17:40:18 EDT 2015
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    Util Contains Basic Utilities: generally useful top-level constants and methods.
+ *  @note    Util Contains Basic Utilities: Generally Useful Top-Level Constants and Methods.
+ *
+ *  Supports multiple cfor loops that are much faster than Scala's for-comprehensions.
  */
 
 package scalation
 
 import java.io.File
-import java.lang.System.nanoTime
 import java.net.{MalformedURLException, URI} // URL
 
 import scala.collection.mutable.ArrayBuffer
 import scala.math.{max, min}
 import scala.io.Source.{fromFile, fromURL}
+//import scala.runtime.ScalaRunTime.stringOf
 import scala.util.Properties.envOrElse
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/*  Top-level definitions of values/constants and functions of utilities for files, timing
- *  and language extensions such as cfor.
+/*  Top-level definitions of values/constants and functions of utilities for files and
+ *  language extensions such as cfor.
  *  @see ValueType.scala for top-level definitions related to basic datatypes.
  *  @see CommonFunctions.scala for top-level definitions related to common scalar functions.
+ *  @see Timer.scala for top-level defination related to recording run-times and memory usage.
  */
 
 /** Type definition for an interval [a, b]
@@ -84,89 +87,11 @@ val SRC_SCALA_DIR = SRC_DIR + ⁄ + "main" + ⁄ + "scala" + ⁄
  */
 val STORE_DIR = envOrElse ("SCALATION_HOME", BASE) + ⁄ + "store" + ⁄
 
-/** The number of units in one second
- *  Use 1.0 to make SECOND the base unit, 1.0 / 60.0 to make MINUTE the base unit, etc.
- *  @see `TimeNum` for alternative definitions
- */
-val SECOND = 1.0 / 60.0
-
-/** The number of seconds in one minute
- */
-val MINUTE = 60.0 * SECOND
-
-/** The number of minutes in one hour
- */
-val HOUR = 60.0 * MINUTE
-
-/** The number of hours in one day
- */
-val DAY = 24.0 * HOUR
-
-/** The number of days in one week
- */
-val WEEK = 7.0 * DAY
-
-/** The number of nanoseconds per millisecond
- */
-val NS_PER_MS = 1E-6
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Remove the last path element from the file/directory pathname.
  *  @param s  the string to be so truncated
  */
 def removeLast (s: String): String = s.substring (0, s.lastIndexOf (SEP))
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Print the elapsed time in milliseconds (ms) for the execution of an
- *  arbitrary block of code:  'time { block }'.  Return any result produced
- *  by the block of code.
- *  @see http://stackoverflow.com/questions/9160001/how-to-profile-methods-in-scala
- *  @param block  the block of code to be executed
- */
-def time [R] (block: => R): R =
-    val t0 = nanoTime ()
-    val result = block                                     // call-by-name
-    val t1 = nanoTime ()
-    println ("Elapsed time: " + (t1 - t0) * NS_PER_MS + " ms")
-    result
-end time
-    
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Calculate the elapsed time in milliseconds (ms) for the execution of an
- *  arbitrary block of code:  'timed { block }'.  Return any result produced
- *  by the block of code and its elapsed time.
- *  @see http://stackoverflow.com/questions/9160001/how-to-profile-methods-in-scala
- *  @param block  the block of code to be executed
- */
-def timed [R] (block: => R): (R, Double) = 
-    val t0 = nanoTime ()
-    val result = block                                     // call-by-name
-    val t1 = nanoTime ()
-    (result, (t1 - t0) * NS_PER_MS)
-end timed
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Calculate the elapsed time in milliseconds (ms) for the execution of an
- *  arbitrary block of code:  'gauge { block }'.  Return the block of code's
- *  elapsed time.
- *  @see http://stackoverflow.com/questions/9160001/how-to-profile-methods-in-scala
- *  @param block  the block of code to be executed
- */
-def gauge [R] (block: => R): Double = 
-    val t0 = nanoTime ()
-    block                                                  // call-by-name
-    val t1 = nanoTime ()
-    (t1 - t0) * NS_PER_MS
-end gauge
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** Return the free, total, and max memory in MiB.
- */
-def memoryUsed: Array [Long] =
-    val MB = 1024 * 1024
-    val runtime = Runtime.getRuntime
-    Array (runtime.freeMemory / MB, runtime.totalMemory / MB, runtime.maxMemory / MB)
-end memoryUsed
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return a line iterator for a line-oriented data source (e.g., CSV file).
@@ -177,7 +102,7 @@ end memoryUsed
  */
 def getFromURL_File (path: String): Iterator [String] =
     val urlPat = "(?i)((https?|ftp|file)://|file:/).*"     // (?i) => case insensitive
-    if path matches urlPat then
+    if path.matches (urlPat) then
         try
 //          return fromURL (new URL (path)).getLines ()
             return fromURL (new URI (path).toURL).getLines ()
@@ -220,8 +145,9 @@ end banner
  *  @param method   the method where the error occurred
  *  @param message  the error message
  */
-def flawf (clsName: String)(method: String, message: String): Boolean =
-    println (s"ERROR @ $clsName.$method: $message")
+inline def flawf (clsName: String)(method: String, message: String): Boolean =
+    import scala.Console.{RED, RESET}
+    println (s"${RED}ERROR @ $clsName.$method: $message ${RESET}")
     false
 end flawf
 
@@ -234,7 +160,7 @@ end flawf
  *  @param method   the method where the error occurred
  *  @param message  the error message
  */
-def debugf (clsName: String, enabled: Boolean)(method: String, message: String): Unit =
+inline def debugf (clsName: String, enabled: Boolean)(method: String, message: String): Unit =
     if enabled then
         println (s"DEBUG @ $clsName.$method: $message")
 end debugf
@@ -262,38 +188,116 @@ end removeAt
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** C/Java style for loop provides improved performance.
- *  usage: cfor (i < 10, i += 1) { a(i) = 2 * i }
+ *  usage: var i = 0; cfor (i < 10, i += 1) { a(i) = 2 * i }
  *  @see www.reddit.com/r/scala/comments/4m2qgb/will_the_new_optimizer_in_scala_212_help_optimize/
- *  @param pred  loop continuation predicate
+ *  @see `cforTest` main function at the end of this file
+ *  @param pred  loop continuation predicate/condition
  *  @param step  increment step
  *  @param body  main body of the loop
  */
-inline def cfor (pred: => Boolean, step: => Unit) (body: => Unit): Unit =
+inline def cfor (pred: => Boolean, step: => Unit) (inline body: => Unit): Unit =
     while pred do { body; step }
 end cfor
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** C/Java style for loop provides improved performance.
+/** C/Java style for loop provides improved performance (assumes i is already defined).
  *  usage: cfor ({i = 0}, i < 10, i += 1) { a(i) = 2 * i }
  *  @see www.reddit.com/r/scala/comments/4m2qgb/will_the_new_optimizer_in_scala_212_help_optimize/
  *  @param init  initialization part
- *  @param pred  loop continuation predicate
+ *  @param pred  loop continuation predicate/condition
  *  @param step  increment step
  *  @param body  main body of the loop
- */
-inline def cfor (init: => Unit, pred: => Boolean, step: => Unit) (body: => Unit): Unit =
+ *
+inline def cfor (init: => Unit, pred: => Boolean, step: => Unit) (inline body: => Unit): Unit =
     init; while pred do { body; step }
 end cfor
+ */
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** C/Java style for loop (over a range) provides improved performance.
+ *  usage: cfor (0, 10) { i => a(i) = 2 * i }
+ *  usage: cfor (0, 10, 2) { i => a(i) = 2 * i }
+ *  @see august.nagro.us/scala-for-loop.html
+ *  @param start  initialization value (i = start)
+ *  @param end    ending value (i < end)
+ *  @param inc    increment value (i += c)
+ *  @param body   main body of the loop
+ */
+inline def cfor (start: Int, end: Int, inc: Int = 1) (inline body: Int => Unit): Unit =
+    var i = start; while i < end do { body (i); i += inc }
+end cfor
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** C/Java style for loop (over a range) provides improved performance.
+ *  usage: cfor (0 until 10) { i => a(i) = 2 * i }
+ *  usage: cfor (0 until 10 by 2) { i => a(i) = 2 * i }
+ *  @see august.nagro.us/scala-for-loop.html
+ *  @param r     the loop range
+ *  @param body  main body of the loop
+ */
+inline def cfor (r: Range) (inline body: Int => Unit): Unit =
+    var i = r.start; while i < r.end do { body (i); i += r.step }
+end cfor
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** C/Java style for loop (0 until n) collecting results in an array provides improved performance.
+ *  Faster replacement: for ... yield 
+ *  usage: cfor (10) { i => 2 * i }
+ *  @param n        the number of elements/results
+ *  @param formula  the formula to apply, repeatedly
+ */
+inline def cfor (n: Int) (inline formula: Int => Double): Array [Double] =
+    val a = Array.ofDim [Double] (n)
+    cfor (0, n) { i => a(i) = formula (i) }
+    a
+end cfor
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Summation of the formula applied n times over a range of values.
+ *  usage: sumAll (0, 10) { i => 2 * i }
+ *  @param start    initialization value (i = start)
+ *  @param end      ending value (i < end)
+ *  @param formula  the formula to apply, repeatedly
+ */
+inline def sumAll (start: Int, end: Int)(inline formula: Int => Double): Double =
+    var sum_ = 0.0
+    var i = start; while i < end do { sum_ += formula (i); i += 1 }
+    sum_
+end sumAll
+
+inline def Σ (start: Int, end: Int)(inline formula: Int => Double): Double =
+    var sum_ = 0.0
+    var i = start; while i < end do { sum_ += formula (i); i += 1 }
+    sum_
+end Σ
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Summation of the formula applied n times over a range of values.
+ *  usage: sumAll (0 until 10) { i => 2 * i }
+ *  @param r        the loop range
+ *  @param formula  the formula to apply, repeatedly
+ */
+inline def sumAll (r: Range)(inline formula: Int => Double): Double =
+    var sum_ = 0.0
+    var i = r.start; while i < r.end do { sum_ += formula (i); i += r.step }
+    sum_
+end sumAll
+
+inline def Σ (r: Range)(inline formula: Int => Double): Double =
+    var sum_ = 0.0
+    var i = r.start; while i < r.end do { sum_ += formula (i); i += r.step }
+    sum_
+end Σ 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Summation of the formula applied n times.
  *  @param n        the number of iterations
- *  @param formula  the formula to apply, repeatedly
+ *  @param formula  the formula (taking no arguments) to apply, repeatedly
  */
-inline def summation (n: Int)(formula: => Double): Double =
-    var sum = 0.0
-    for i <- 0 until n do sum += formula
-    sum
+inline def summation (n: Int)(inline formula: => Double): Double =
+    var sum_ = 0.0
+    cfor (0, n) { i => sum_ += formula }
+    sum_
 end summation
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -330,4 +334,183 @@ end swap
 @inline def median3 (a1: Double, a2: Double, a3: Double): Double =
     max (min (a1, a2), min (max (a1, a2), a3))
 end median3
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `cforTest` test the cfor loops that are faster replacements for Scala's for-comprehension.
+ *  Run this code for performance results.  Note, due to JIT, reordering the code may change
+ *  the relative performance.  Generally, case 4 "cfor (0, 100000) { ... }" is the fastest.
+ *  @see Timer.scala
+ *  > runMain scalation.cforTest
+ */
+@main def cforTest (): Unit =
+
+    import scala.math.sqrt
+
+    val n    = 1                          // number of repeats to get average time (gauge's amplify parameter)
+    val skip = false                      // whether to skip timing the first time through code (slow due to JIT)
+
+    val tims = Array.ofDim [Double] (9)
+    val sums = Array.ofDim [Double] (9)
+    var sum  = 0.0
+
+// Collect results
+
+    tims(0) = gauge (n, skip) {
+        sum = 0.0
+        var i = 0; while i < 100000 do { sum += sqrt (i); i += 1 } }
+    sums(0) = sum
+
+    tims(1) = gauge (n, skip) {
+        sum = 0.0
+        for i <- 0 until 100000 do sum += sqrt (i) }
+    sums(1) = sum
+
+    tims(2) = gauge (n, skip) {
+        sum = 0.0
+        (0 until 100000).foreach { i => sum += sqrt (i) } }
+    sums(2) = sum
+
+    tims(3) = gauge (n, skip) {
+        sum = 0.0
+        var i = 0; cfor (i < 100000, i += 1) { sum += sqrt (i) } }
+    sums(3) = sum
+
+    tims(4) = gauge (n, skip) {
+        sum = 0.0
+        cfor (0, 100000) { i => sum += sqrt (i) } }
+    sums(4) = sum
+
+    tims(5) = gauge (n, skip) {
+        sum = 0.0
+        cfor (0 until 100000) { i => sum += sqrt (i) } }
+    sums(5) = sum
+
+    tims(6) = gauge (n, skip) {
+        sum = sumAll (0, 100000) { i => sqrt (i) } }
+    sums(6) = sum
+    
+    tims(7) = gauge (n, skip) {
+        sum = Σ (0, 100000) { i => sum + sqrt (i) } }
+    sums(7) = sum
+
+    tims(8) = gauge (n, skip) {
+        sum = (0 until 100000).foldLeft (0.0) { (sum, i) => sum + sqrt (i) } }
+    sums(8) = sum
+
+// Show results
+
+    banner ("var i = 0; while i < 100000 do { sum += sqrt (i); i += 1 }")
+    println (s"case 0: sum  = ${sums(0)}")
+    println (s"case 0: time = ${tims(0)}")
+    
+    banner ("for i <- 0 until 100000 do sum += sqrt (i)")
+    println (s"case 1: sum  = ${sums(1)}")
+    println (s"case 1: time = ${tims(1)}")
+
+    banner ("(0 until 100000).foreach { i => sum += sqrt (i) }")
+    println (s"case 2: sum  = ${sums(2)}")
+    println (s"case 2: time = ${tims(2)}")
+
+    banner ("var i = 0; cfor (i < 100000, i += 1) { sum += sqrt (i) ")
+    println (s"case 3: sum  = ${sums(3)}")
+    println (s"case 3: time = ${tims(3)}")
+
+    banner ("cfor (0, 100000) { i => sum += sqrt (i) }")
+    println (s"case 4: sum  = ${sums(4)}")
+    println (s"case 4: time = ${tims(4)}")
+
+    banner ("cfor (0 until 100000) { i => sum += sqrt (i) }")
+    println (s"case 5: sum  = ${sums(5)}")
+    println (s"case 5: time = ${tims(5)}")
+
+    banner ("sum = sumAll (0, 100000) { i => sqrt (i) }")
+    println (s"case 6: sum  = ${sums(6)}")
+    println (s"case 6: time = ${tims(6)}")
+
+    banner ("sum = Σ (0, 100000) { i => sqrt (i) }")
+    println (s"case 7: sum  = ${sums(7)}")
+    println (s"case 7: time = ${tims(7)}")
+
+    banner ("sum = (0 until 100000).foldLeft (0.0) { (sum, i) => sum + sqrt (i) } }")
+    println (s"case 8: sum  = ${sums(8)}")
+    println (s"case 8: time = ${tims(8)}")
+
+end cforTest
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `cforTest2` test the cfor loops that are faster replacements for Scala's for-yield.
+ *  Run this code for performance results.  Note, due to JIT, reordering the code may change
+ *  the relative performance.  Generally, case 4 "cfor (0, 100000) { ... }" is the fastest.
+ *  @see Timer.scala
+ *  Note, uncomment to compile and run.  Commented as there is a reverse dependency on mathstat (VectorD).
+ *  > runMain scalation.cforTest2
+ *
+@main def cforTest2 (): Unit =
+
+    import scala.math.sqrt
+    import scalation.mathstat.VectorD
+
+    val n    = 1                          // number of repeats to get average time (gauge's amplify parameter)
+    val skip = false                      // whether to skip timing the first time through code (slow due to JIT)
+
+    val tims = Array.ofDim [Double] (6)
+    val sums = Array.ofDim [Double] (6)
+    var x: VectorD = null
+
+// Collect results
+
+    tims(0) = gauge (n, skip) {
+        x = new VectorD (10000); var i = 0; while i < 10000 do { x(i) = sqrt (i); i += 1 } }
+    sums(0) = x.sum
+
+    tims(1) = gauge (n, skip) {
+        x = VectorD ((0 until 10000).map { i => sqrt (i) }) }
+    sums(1) = x.sum
+
+    tims(2) = gauge (n, skip) {
+        x = VectorD (for i <- 0 until 10000 yield sqrt (i)) }
+    sums(2) = x.sum
+
+    tims(3) = gauge (n, skip) {
+        val a = Array.ofDim [Double] (10000); cfor (0, 10000) { i => a(i) = sqrt (i) }; x = new VectorD (10000, a) }
+    sums(3) = x.sum
+
+    tims(4) = gauge (n, skip) {
+        x = new VectorD (10000); cfor (0, 10000) { i => x(i) = sqrt (i) } }
+    sums(4) = x.sum
+
+    tims(5) = gauge (n, skip) {
+        x = new VectorD (10000, cfor (10000) { i => sqrt (i) }) }
+    sums(5) = x.sum
+
+// Show results
+
+    banner ("x = new VectorD (10000); var i = 0; while i < 10000 do { x(i) = sqrt (i); i += 1 } }")
+    println (s"case 0: sum  = ${sums(0)}")
+    println (s"case 0: time = ${tims(0)}")
+
+    banner ("x = VectorD ((0 until 10000).map { i => sqrt (i) }) }")
+    println (s"case 1: sum  = ${sums(1)}")
+    println (s"case 1: time = ${tims(1)}")
+
+    banner ("x = VectorD (for i <- 0 until 10000 yield sqrt (i)) }")
+    println (s"case 2: sum  = ${sums(2)}")
+    println (s"case 2: time = ${tims(2)}")
+
+    banner ("val a = Array.ofDim [Double] (10000); cfor (0, 10000) { i => a(i) = sqrt (i) }; x = new VectorD (10000, a) }")
+    println (s"case 3: sum  = ${sums(3)}")
+    println (s"case 3: time = ${tims(3)}")
+
+    banner ("x = new VectorD (10000); cfor (0, 10000) { i => x(i) = sqrt (i) } }")
+    println (s"case 4: sum  = ${sums(4)}")
+    println (s"case 4: time = ${tims(4)}")
+
+    banner ("x = new VectorD (10000, cfor (10000) { i => sqrt (i) })")
+    println (s"case 5: sum  = ${sums(5)}")
+    println (s"case 5: time = ${tims(5)}")
+
+end cforTest2
+ */
 

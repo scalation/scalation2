@@ -19,7 +19,7 @@ import scala.math.sqrt
  *      l   - an n-by-n left lower triangular matrix
  *      l.t - an n-by-n right upper triangular matrix - transpose of l
  *  such that a = l * l.t.
- *  @param a  the symmetric, positive definite matrix to be factor
+ *  @param a  the symmetric, positive definite matrix to be factored
  */
 class Fac_Cholesky (a: MatrixD)
       extends Factorization:

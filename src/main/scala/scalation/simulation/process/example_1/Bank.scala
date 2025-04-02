@@ -11,16 +11,16 @@
 package scalation
 package simulation
 package process
-package example_1                                     // One-Shot
+package example_1                                       // One-Shot
 
 import scalation.random.{Exponential, Uniform}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runBank` function is used to launch the `BankModel` class.
  *  > runMain scalation.simulation.process.example_1.runBank
  */
 @main def runBank (): Unit = new BankModel ()
+
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `BankModel` class defines a simple process-interaction model of a bank
@@ -40,16 +40,16 @@ class BankModel (name: String = "Bank", reps: Int = 1, animating: Boolean = true
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val lambda   = 12.0  // 6.0                       // customer arrival rate (per hour)
-    val mu       = 7.5                                // customer service rate (per hour)
-    val nTellers = 2     // 1                         // the number of bank tellers (servers)
+    val lambda   = 12.0  // 6.0                         // customer arrival rate (per hour)
+    val mu       = 7.5                                  // customer service rate (per hour)
+    val nTellers = 2     // 1                           // the number of bank tellers (servers)
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
-    val iArrivalRV = Exponential (HOUR / lambda, stream)
-    val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
-    val moveRV     = Uniform (4 * MINUTE, 6 * MINUTE, (stream + 2) % N_STREAMS)
+    val iArrivalRV = Exponential (HOUR / lambda, stream)    // use different random number streams for independence
+    val serviceRV  = Exponential (HOUR / mu, stream + 1)
+    val moveRV     = Uniform (4 * MINUTE, 6 * MINUTE, stream + 2)
 
     //--------------------------------------------------
     // Create Model Components
@@ -68,13 +68,14 @@ class BankModel (name: String = "Bank", reps: Int = 1, animating: Boolean = true
 
     case class Customer () extends SimActor ("c", this):
 
-        def act (): Unit =
-            toTellerQ.move ()
-            if teller.busy then tellerQ.waitIn () else tellerQ.noWait ()
-            teller.utilize ()
-            teller.release ()
-            toDoor.move ()
-            door.leave ()
+        override def act (): Unit =
+            toTellerQ.move ()                           // move to teller queue
+            if teller.busy then tellerQ.waitIn ()       // wait in queue if busy
+            else tellerQ.noWait ()                      // record there is no wait
+            teller.utilize ()                           // utilize the teller for thr transcation
+            teller.release ()                           // release the teller when done
+            toDoor.move ()                              // move to the door
+            door.leave ()                               // exit the bank
         end act
 
     end Customer

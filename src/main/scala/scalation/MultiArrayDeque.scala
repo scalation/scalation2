@@ -71,7 +71,7 @@ end MultiArrayDeques
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `multiArrayDequesTest` main function test the `MultiArrayDeques` class.
+/** The `multiArrayDequesTest` main function tests the `MultiArrayDeques` class.
  *  > runMain scalation.multiArrayDequesTest	
  */
 @main def multiArrayDequesTest (): Unit =

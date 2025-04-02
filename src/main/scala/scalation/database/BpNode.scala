@@ -5,283 +5,307 @@
  *  @date    Wed Aug  9 01:25:50 EDT 2023
  *  @see     LICENSE (MIT style license file).
  *
- *  @note    B+Trees Node
+ *  @note    B+Tree Node with find, add, split, remove, and merge Operations
  */
 
 package scalation
 package database
 
-import scala.reflect.ClassTag
 import scala.runtime.ScalaRunTime.stringOf
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `BpTreeMap` class provides sorted maps that use the B+Tree Data Structure.
- *  Inserts may cause the splitting of nodes.
- *  @tparam V      the type of the values assigned to keys in this sorted map
- *  @param  order  the order (maximum number of children per node)
+/** The `BpNode` companion object provides settings for node sizes.
  */
 object BpNode:
 
-    private val debug = debugf ("BpNode", true)                    // debug function
+    private var DEFAULT_DLINK = true                               // default value for DLINK
+
+    private val debug = debugf ("BpNode", false)                   // debug function
     private val flaw  = flawf ("BpNode")                           // flaw function
 
     private var order = 5                                          // maximum number of references (reset as needed)
-    private var maxk  = order - 1                                  // maximum number of keys (before overflow)
-    private var half  = maxk / 2                                   // half of max keys (floor)
-    private var halfp = maxk - half                                // half (plus) of max keys (ceiling)
+    private var half  = order / 2                                  // half of order keys (floor)
+    private var halfp = order - half                               // rest of the overflowed keys
     private var mink  = halfp - 1                                  // minimum number of keys (before underflow)
 
-    debug ("init", s"order = $order, maxk = $maxk, half = $half, halfp = $halfp, mink = $mink")
+    debug ("init", s"order = $order, half = $half, halfp = $halfp, mink = $mink")
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Set the leaf node DEFAULT_DLINK to dlink (false => forward links only via ref(0),
+     *  true => both forward links via ref(0) and backward links via pre).
+     *  @see `BpNode` class for specification of ref(0) and pre
+     *  @param dlink  whether to support unidirectionsl (false) or bidirections (true) linkage
+     */
+    def set_DEFAULT_DLINK (dlink: Boolean): Unit = DEFAULT_DLINK = dlink
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the order of BpNodes to order_.
      *  @param order_  the new order for BpNodes (must be at least 4)
      */
-    def setOrder (order_ : Int): Unit = 
-        if order < 4 then flaw ("object", s"order_ = $order_ must be at least 4")
+    def setOrder (order_ : Int): Unit =
+        if order < 3 then flaw ("setOrder", s"order_ = $order_ must be at least 3")
         else
             order = order_
-            maxk  = order - 1
-            half  = maxk / 2
-            halfp = maxk - half
+            half  = order / 2
+            //          half  = (order - 1) / 2
+            halfp = order - half
             mink  = half - 1
-        end if
     end setOrder
 
 end BpNode
 
 import BpNode._
 
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `BpNode` class defines nodes of size order that that may be stored in a B+tree.
  *  Keys have type `ValueType` and may reference values of `Any` type.
+ *  @param  keys    number of active keys
  *  @param  isLeaf  whether this node is a leaf
+ *  @param  DLINK   whether the leaf nodes support linkage in both directions (ref(0) & pre)
  */
-class BpNode (val isLeaf: Boolean = true)
-      extends Serializable:
+class BpNode (private [database] var keys: Int, val isLeaf: Boolean, DLINK: Boolean = DEFAULT_DLINK)
+    extends Serializable:
 
-    private [database] var nKeys = 0                               // number of active keys (initialize to 0) 
-    private            val key   = Array.ofDim [ValueType] (maxk)  // array to hold keys
-    private [database] val ref   = Array.ofDim [Any] (order)       // array to hold values or reference nodes
+    private [database] val key = Array.ofDim [ValueType] (order)    // array to hold keys
+    private [database] val ref = Array.ofDim [Any] (order + 1)      // array to hold values or reference nodes
+    private [database] var pre: BpNode = null                       // reference to previous LEAF node (if needed)
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Construct a new root node with one key (and two references) in it.
-     *  @param left   the left node (<= dkey)
+     *  @param left   the left node (< dkey)
      *  @param dkey   the divider key
-     *  @param right  the right node (> dkey)
+     *  @param right  the right node (>= dkey)
      */
     def this (left: BpNode, dkey: ValueType, right: BpNode) =
-        this (false)
-        nKeys  = 1
-        key(0) = dkey                                              // divider key
-        ref(0) = left; ref(1) = right                              // left and right references
+        this (1, false)
+        key(0) = dkey                                               // divider key
+        ref(0) = left; ref(1) = right                               // left and right references
     end this
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return whether this node has underflowed.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return whether this node has overflowed (too many keys).
      */
-    def underflow: Boolean = nKeys < mink
+    inline def overflow: Boolean = keys >= order
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return whether this node has underflowed (too few keys).
+     */
+    inline def underflow: Boolean = keys < mink
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return whether this node is rich (i.e., has surplus keys).
      */
-    def rich: Boolean = nKeys > mink
+    inline def rich: Boolean = keys > mink
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the key at index position i.
      *  @param i  the index position in this node
      */
-    def apply (i: Int): ValueType =
-        if i >= nKeys then flaw ("apply", s"index i = $i must be less than nKeys = $nKeys")
+    inline def apply (i: Int): ValueType =
+        if i >= keys then flaw ("apply", s"index i = $i must be less than keys = $keys")
         key(i)
     end apply
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Update the key at index position i.
      *  @param i  the index position in this node
      *  @param k  the new value for key(i)
      */
-    def update (i: Int, k: ValueType): Unit =
-        if i >= nKeys then flaw ("update", s"index i = $i must be less than nKeys = $nKeys")
+    inline def update (i: Int, k: ValueType): Unit =
+        if i >= keys then flaw ("update", s"index i = $i must be less than keys = $keys")
         key(i) = k
     end update
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return whether the key at index i equals k.
-     *  @param k  the key to check
-     *  @param i  the index position in this node
-     */
-    def eqAt (k: ValueType, i: Int): Boolean = i < nKeys && k == key(i)
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Find and return the first position where 'k <= key(i)' in this node.
-     *  If k is at least as large as all keys in this node, return nkeys.
-     *  @param k  the key whose position is sought
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Find and return the first position where 'k < key_i' in this node.
+     *  If none, return keys (corresponds to last ref).
+     *  @param k  the key whose index position is sought
      */
     def find (k: ValueType): Int =
-        val i = key.indexWhere (k <= _)
-        if i < 0 then nKeys else i
+        var (found, i) = (false, 0)
+        while ! found && i < keys do
+            if k < key(i) then found = true
+            else i += 1
+        i
     end find
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Add the new key k and value v into this LEAF node at insertion position ip.
-     *  Return whether this node needs to be split as the node is already full.
-     *  @param k   the new key
-     *  @param v   the new value
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Find and return the first position where 'k == key_i' in this node.
+     *  If none, return -1 meaning not found.
+     *  @param k  the key whose index position is sought
      */
-    def add (k: ValueType, v: Any): Boolean =
-        if nKeys >= maxk then true                                 // leaf node needs to be split first
+    def findEq (k: ValueType): Int =
+        var (found, i) = (false, 0)
+        while ! found && i < keys do
+            if k == key(i) then found = true
+            else i += 1
+        if i < keys then i else -1
+    end findEq
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Shift keys from ip to keys one position to the RIGHT (make room for insertion).
+     *  Also shift all references to the right of key ip.
+     *  @param ip  the future insertion position
+     */
+    def shiftR (ip: Int): Unit =
+        for i <- keys until ip by -1 do                             // make room by shifting keys right
+            key(i)   = key(i-1)                                     // move key right
+            ref(i+1) = ref(i)                                       // ref to the right of key
+    end shiftR
+
+    def shiftIR(ip: Int): Unit =
+        ref(keys + 1) = ref(keys)
+        for i <- keys until ip by -1 do // make room by shifting keys right
+            key(i) = key(i - 1) // move key right
+            ref(i) = ref(i - 1) // ref to the right of key
+    end shiftIR
+
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Add the new key k and value v into this node at the to be found insertion
+     *  position (ip).  If a duplicate key is entered, return the OLD VALUE stored
+     *  with the key, otherwise return None (meaning no duplicate was found)..
+     *  @param k  the new key
+     *  @param v  the new value (or node for internal nodes)
+     */
+    def add (k: ValueType, v: Any): Option [Any] =
+        val ip = find (k)                                           // find insertion position (ip)
+        val duplicate = ip != 0 && k == key(ip-1)                   // determine whether the new key is a duplicate
+        debug ("add", s"(k = $k, v = $v) pair at ip = $ip")
+
+        if duplicate then
+            val old = ref(ip)                                       // save the OLD VALUE for duplicate key
+            ref(ip) = v                                             // replace OLD VALUE with new value
+            Some (old)                                              // return the OLD VALUE, indicates duplicate
         else
-            val ip = find (k)                                      // insertion position
-            for i <- nKeys until ip by -1 do                       // make room
-                key(i) = key(i-1)
-                ref(i) = ref(i-1)
-            end for
-            key(ip) = k                                            // insert key and value
-            ref(ip) = v
-            nKeys  += 1
-            false                                                  // split not needed
-        end if
+            shiftR (ip)                                             // make room by shifting keys right
+            key(ip)   = k                                           // insert new key
+            ref(ip+1) = v                                           // insert new value (right of key)
+            keys     += 1                                           // increment the number of active keys
+            None                                                    // indicates no duplicate found
     end add
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Add the new key k and value v into this INTERNAL node at insertion position ip.
-     *  Return whether this node needs to be split as the node is already full.
-     *  @param k   the new key
-     *  @param v   the new value
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Split this LEAF node by creating a right sibling node (rt) and moving
+     *  half the keys and references to that new node, leaving halfp.
+     *  Return the divider key and the right sibling node.
      */
-    def addI (k: ValueType, v: BpNode): Boolean = 
-        if nKeys >= maxk then true                                 // internal node needs to be split first
-        else
-            val ip = find (k)                                      // insertion position
-            for i <- nKeys until ip by -1 do                       // make room
-                key(i) = key(i-1)
-                ref(i+1) = ref(i)                                  // refs on right of key
-            end for
-            key(ip)   = k                                          // insert key and value
-            ref(ip+1) = v
-            nKeys    += 1
-            false                                                  // split not needed
-        end if
-    end addI
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Split this LEAF node by creating a right sibling rt and moving half
-     *  the keys and references to that new node.  Return the divider key and
-     *  right sibling node.
-     *  @param h_l  the number of keys to remain in this (the left) node
-     *  @param h_r  the number of keys to move to the new right node
-     */
-    def split (h_l: Int = halfp, h_r: Int = half): (ValueType, BpNode) =
-        val rt = new BpNode ()
-        for i <- 0 until h_r do                                    // move largest h_r to rt
-            rt.key(i) = key(h_l + i)
-            rt.ref(i) = ref(h_l + i)
-        end for
-        rt.ref(h_r) = ref(maxk)                                    // move the last ref
-        ref(h_l)    = rt                                           // link the leaf nodes
-        rt.nKeys    = h_r
-        nKeys       = h_l
-        (key(nKeys-1), rt)
+    def split (): (ValueType, BpNode) =
+        val rt = new BpNode (half, true)                            // allocate leaf right sibling node (rt)
+        for i <- 0 until half do                                    // move largest half of keys (with refs) to rt
+            rt.key(i)   = key(halfp + i)
+            rt.ref(i+1) = ref(halfp + i + 1)                        // refs are right of keys
+        rt.ref(0) = ref(0)                                          // update LINKED LIST of nodes
+        if DLINK then rt.pre = this                                 // reverse link
+        ref(0)    = rt                                              // this -> rt -> old-right
+        keys      = halfp                                           // reset number of active keys to help plus
+        (rt.key(0), rt)                                             // (divider key (smallest right) and right sibling
     end split
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split this INTERNAL node by creating a right sibling rt and moving half
-     *  the keys and references to that new node.  Return the divider key and
-     *  right sibling node.
-     *  @param h_l  the number of keys to remain in this (the left) node
-     *  @param h_r  the number of keys to move to the new right node
+     *  the keys and references to that new node, leaving halfp - 1.
+     *  Return the divider key and the right sibling node.
      */
-    def splitI (h_l: Int = halfp+1, h_r: Int = half-1): (ValueType, BpNode) =
-        val rt = new BpNode (false)
-        for i <- 0 until h_r do                                    // move largest h_r to rt
-            rt.key(i) = key(h_l + i)
-            rt.ref(i) = ref(h_l + i)
-        end for
-        rt.ref(h_r) = ref(maxk)                                    // move the last ref
-        ref(maxk)   = rt                                           // link the leaf nodes
-        rt.nKeys    = h_r
-        nKeys       = h_l
-        (key(nKeys-1), rt)
+    def splitI (): (ValueType, BpNode) =
+        val rt = new BpNode (half, false)                           // allocate internal right sibling node (rt)
+        for i <- 0 until half do                                    // move largest half of keys (with refs) to rt
+            rt.key(i)   = key(halfp + i)
+            rt.ref(i) = ref(halfp + i)
+        rt.ref(half) = ref(keys)                                    // copy over the last ref
+        keys = halfp - 1                                            // reset number of active keys to help plus - 1
+        (key(keys), rt)                                             // divider key (middle key) and right sibling
     end splitI
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Promote the divider key, so that it is only in the parent node.
-     *  Called after split and should only be used for internal node splits.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Remove key at dp and its reference from this node and check for underflow.
+     *  @param dp  the deletion index position (may use findEq to find it)
      */
-    def promote (): Unit = nKeys -= 1
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Remove key k and its reference from this node and check for underflow.
-     *  @param k   the key to be removed from this node
-     *  @param dp  the deletion index position
-     */
-    def remove (k: ValueType, dp: Int): Boolean =
-        if key(dp) == k then                                       // make sure it really is the key
-            nKeys -= 1                                             // decrement the number of keys
-            for i <- dp until nKeys do
-                key(i) = key(i+1)                                  // shift keys left
-                ref(i) = ref(i+1)
-            end for
-            underflow                                              // if true, node underflows
-        else
-            println (s"remove: key $k not found")
-            false
-        end if
+    def remove (dp: Int): Boolean =
+        debug ("remove", s"dp = $dp, key = ${key(dp)} ")
+        for i <- dp until keys do                                   // remove at dp by shifting keys left
+            key(i)   = key(i+1)
+            ref(i+1) = ref(i+2)                                     // case: ref on right
+        keys -= 1                                                   // decrement the number of keys
+        underflow                                                   // if true, node underflows
     end remove
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Remove the divider key in this parant node at the dp index position and
-     *  the reference to the right sibling (\) in [. / kdp \ .].  Check for underflow.
-     *  @param dp  the deletion index position
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Remove key at dp and its reference from this INTERNAL node and check for underflow.
+     *  @param dp  the deletion index position (may use findEq to find it)
      */
-    def removeRight (dp: Int): Boolean =
-        nKeys -= 1                                                 // decrement the number of keys
-        for i <- dp until nKeys do
-            key(i)   = key(i+1)                                    // shift keys left
-            ref(i+1) = ref(i+2)
-        end for
-        underflow                                                  // if true, node underflows
-    end removeRight
+    def removeI (dp: Int): Boolean =
+        debug("remove", s"dp = $dp, key = ${key(dp)}")
+        for i <- dp until keys do                                   // remove at dp by shifting keys left
+            key(i) = key(i + 1)
+            ref(i) = ref(i + 1)                                     // case: ref on left
+        keys -= 1                                                   // decrement the number of keys
+        underflow                                                   // if true, node underflows
+    end removeI
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Merge this node with its right sibling.
-     *  @param right  the right sibling node
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Merge this LEAF node with its right sibling node (rt).
+     *  @param rt  the right sibling node
      */
-    def merge (right: BpNode): Unit =
-        for i <- 0 until right.nKeys do
-            key(nKeys + i) = right.key(i)
-            ref(nKeys + i) = right.ref(i)
-        end for
-        nKeys += right.nKeys
-        ref(nKeys) = right.ref(right.nKeys)
+    def merge (rt: BpNode): Unit =
+        for i <- 0 until rt.keys do                                 // move keys from rt into this node
+            key(keys + i)     = rt.key(i)
+            ref(keys + i + 1) = rt.ref(i + 1)
+        keys   += rt.keys                                           // add the number of keys from rt
+        rt.keys = 0                                                 // make rt empty
+        val rt_next = rt.ref(0).asInstanceOf [BpNode]               // the node to the right of rt
+        ref(0) = rt_next                                            // unlink node rt in the forward (ref(0)) direction
+        if DLINK && rt_next != null then rt_next.pre = this         // unlink node rt in the backward (pre) direction
     end merge
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Merge this INTERNAL node with its right sibling node (rt).
+     *  @param dk  the divider key from parent
+     *  @param rt  the right sibling node
+     */
+    def mergeI (dk: ValueType, rt: BpNode): Unit =
+        key(keys)     = dk                                          // move divider key
+        ref(keys + 1) = rt.ref(0)                                   // node corresponding to divider key
+        for i <- 0 until rt.keys do                                 // move keys from rt into this node
+            key(keys + i + 1) = rt.key(i)
+            ref(keys + i + 2) = rt.ref(i + 1)
+        keys   += rt.keys + 1                                       // add the number of keys from rt
+        rt.keys = 0                                                 // make rt empty
+    end mergeI
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this node to a string.
      */
     override def toString: String =
         val sb = StringBuilder ("[ . " )
-        for i <- 0 until nKeys do sb ++= (s"${key(i)} . ")
+        for i <- 0 until keys do sb ++= (s"${key(i)} . ")
         sb ++= ("]" )
         sb.toString
     end toString
 
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Show the node data structure.
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Show the node's data structure.
      */
     def show (): Unit =
         println (s"isLeaf = $isLeaf")
-        println (s"nKeys  = $nKeys")
+        println (s"keys   = $keys")
         println (s"key    = ${stringOf (key)}")
         println (s"ref    = ${stringOf (ref)}")
+        if DLINK then println (s"pre    = $pre")
     end show
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Show the node's references.
+     */
+    def showRef (): Unit =
+        println (s"ref = ${stringOf (ref)}")
+    end showRef
 
 end BpNode
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `bpNodeTest2` main function tests the `BpNode` class by inserting random
+/** The `bpNodeTest` main function tests the `BpNode` class by inserting random
  *  key values and testing a leaf node split.
  *  > runMain scalation.database.bpNodeTest
  */
@@ -295,23 +319,30 @@ end BpNode
     val mx      = 10 * totKeys
     val seed    = 1
     val rng     = new Random (seed)
-
-    val node    = new BpNode ()
-    var k_n: (ValueType, BpNode) = null                // divider key, new right node
+    val node    = new BpNode (0, true)                              // empty leaf node
+    var right: BpNode = null
 
     for i <- 1 to totKeys do
         val key = rng.nextInt (mx)
         banner (s"put key = $key")
-        val split = node.add (key, 2 * key)
-        println (s"split = $split, node = $node")
-        if split then
-            k_n = node.split ()                        // split keys between node (2) and right (2)
-            node.add (key, 2 * key)                    // try again after split
-        end if
-        if k_n != null then println (s"node = $node, right = ${k_n._2}, divider = ${k_n._1}")
+        node.add (key, 2 * key)
+        println (s"node = $node")
+        if node.overflow then
+            println (s"BEFORE split: node = $node")
+            node.showRef ()
+            val (dk, rt) = node.split ()                            // split keys between node (3) and right (2)
+            right = rt
+            println (s"AFTER split:  node = $node, dk = $dk, rt = $rt")
+            node.showRef (); rt.showRef ()
     end for
 
     banner ("Show Arrays")
+    node.show ()
+
+    banner ("Example of an Leaf Node Merge")
+    node.remove (2)
+    node.merge (right)
+    println (s"AFTER merge:  node = $node, right = $right")
     node.show ()
 
 end bpNodeTest
@@ -332,21 +363,19 @@ end bpNodeTest
     val mx      = 10 * totKeys
     val seed    = 1
     val rng     = new Random (seed)
-
-    val node    = new BpNode (false)                   // false => not isLeaf
-    var k_n: (ValueType, BpNode) = null                // tuple: (divider key, new right node)
+    val node    = new BpNode (0, false)                             // empty internal node: false => not isLeaf
 
     for i <- 1 to totKeys do
         val key = rng.nextInt (mx)
         banner (s"put key = $key")
-        val split = node.add (key, 2 * key)
-        println (s"split = $split, node = $node")
-        if split then
-            k_n = node.split ()                        // split keys between node (2) and right (2)
-            node.promote ()                            // promote the divider key
-            node.add (key, 2 * key)                    // try again after split
-        end if
-        if k_n != null then println (s"node = $node, right = ${k_n._2}, divider = ${k_n._1}")
+        node.add (key, 2 * key)
+        println (s"node = $node")
+        if node.overflow then
+            println (s"BEFORE split: node = $node")
+            node.showRef ()
+            val (dk, rt) = node.splitI ()                           // splitI keys between node (2) and right (2)
+            println (s"AFTER split:  node = $node, dk = $dk, rt = $rt")
+            node.showRef (); rt.showRef ()
     end for
 
     banner ("Show Arrays")
@@ -354,3 +383,34 @@ end bpNodeTest
 
 end bpNodeTest2
 
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `bpNodeTest3` main function tests the `BpNode` class by inserting random
+ *  and removing key values.
+ *  > runMain scalation.database.bpNodeTest3
+ */
+@main def bpNodeTest3 (): Unit =
+
+    banner ("Example of key insertion and removal")
+
+    val keyArr = Array (35, 47, 4, 38)
+    val node   = new BpNode (0, true)                               // empty internal node: false => not isLeaf
+
+    for k <- keyArr do
+        banner (s"put key = $k")
+        node.add (k, 2 * k)
+        println (s"node = $node")
+    end for
+
+    for k <- keyArr do
+        banner (s"remove key = $k")
+        val dp = node.findEq (k)                                    // find the deletion position (dp)
+        node.remove (dp)                                            // remove the key and its reference
+        println (s"AFTER remove: node = $node")
+        node.showRef ()
+    end for
+
+    banner ("Show Arrays")
+    node.show ()
+
+end bpNodeTest3

@@ -80,9 +80,9 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
         var (go, epoch) = (true, 1)
         cfor (go && epoch <= maxEpochs, epoch += 1) {                   // epoch learning phase
             val yp = f.f_ (x_ * b)                                      // predicted output vector yp = f(Xb)
-            e      = y_ - yp                                            // error vector for y (protected var from `Predictor)
+            val e  = y_ - yp                                            // error vector for y (protected var from `Predictor)
             val δ  = -f.d (yp) * e                                      // delta vector for y (protected var from `Predictor)
-            b     -= x_.Ƭ * δ * η                                       // update the parameters/weights (Ƭ for transpose)
+            b     -= x_.𝐓 * δ * η                                       // update the parameters/weights (𝐓 for transpose)
 
             val sse = (y_ - f.f_ (x_ * b)).normSq                       // recompute sum of squared errors
             collectLoss (sse)                                           // collect loss per epoch
@@ -103,7 +103,6 @@ class Perceptron (x: MatrixD, y: VectorD, fname_ : Array [String] = null,
     def test (x_ : MatrixD = x, y_ : VectorD = y): (VectorD, VectorD) =
         val yp = predict (x_)                                           // make predictions
         val yy = if itran == null then y_ else itran (y_)               // undo scaling, if used
-        e = yy - yp                                                     // RECORD the residuals/errors (@see `Predictor`)
         (yp, diagnose (yy, yp))                                         // return predictions and QoF vector
     end test
 
@@ -270,31 +269,31 @@ import Perceptron.hp
     val sst = (y - y.mean).normSq                                   // sum of squares total
     println (s"sst = $sst")
 
-    val eta   = 0.5 
-    hp("eta") = eta                                                 // try several values for eta
-    val nn = new Perceptron (x, y, null, hp, f_reLU)                // create a perceptron, user control
-//  val nn = new Perceptron (x, y, null, hp)                        // create a perceptron, user control
+    val η   = 0.5 
+    hp("eta") = η                                                   // try several values for eta
+//  val nn = new Perceptron (x, y, null, hp, f_reLU)                // create a perceptron, user control
+    val nn = new Perceptron (x, y, null, hp)                        // create a perceptron, user control
 //  val nn = Perceptron (xy, null, hp)                              // create a perceptron, automatic scaling
 
     banner ("initialize")
 
     nn.setWeights (b)                                               // set the parameters/weights
  
-    for epoch <- 1 to 2 do
+    for epoch <- 1 to 5 do
         banner (s"improvement step $epoch")
         val u   = x * b                                             // pre-activation value
         val yp  = nn.predict ()                                     // predicted response from nn
-//      val yp2 = sigmoid_ (u)                                      // predicted response from calculation for sigmoid
-        val yp2 = reLU_ (u)                                         // predicted response from calculation for reLU
+        val yp2 = sigmoid_ (u)                                      // predicted response from calculation for sigmoid
+//      val yp2 = reLU_ (u)                                         // predicted response from calculation for reLU
         assert (yp == yp2)
         val e   = y - yp                                            // error
         val fp  = yp * (_1 - yp)                                    // derivative (f') for sigmoid
 //      val fp  = u.map (z => is_ (z >= 0.0))                       // derivative (f') for reLU
         val d   = - e * fp                                          // delta
         val g   = x.transpose * d                                   // gradient
-        val bup = g * eta                                           // parameter update
+        val bup = g * η                                             // parameter update
         b      -= bup                                               // new parameter vector
-        val sse = e dot e                                           // sum of squared errors
+        val sse = e.normSq                                          // sum of squared errors
 
         println (s"b   = $b")
         println (s"u   = $u")                                 
@@ -463,4 +462,59 @@ end perceptronTest4
     end for
 
 end perceptronTest5
+
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The `perceptronTest6` main function tests the basic Perceptron equations with
+ *  a Gradient Descent algorithm.
+ *  > runMain scalation.modeling.perceptronTest6
+ */
+@main def perceptronTest6 (): Unit =
+
+    // 9 data points:    Constant    x1    x2     y
+    val xy = MatrixD ((9, 4), 1.0,  0.0,  0.0,  0.5,               // dataset
+                              1.0,  0.0,  0.5,  0.3,
+                              1.0,  0.0,  1.0,  0.2,
+
+                              1.0,  0.5,  0.0,  0.8,
+                              1.0,  0.5,  0.5,  0.5,
+                              1.0,  0.5,  1.0,  0.3,
+
+                              1.0,  1.0,  0.0,  1.0,
+                              1.0,  1.0,  0.5,  0.8,
+                              1.0,  1.0,  1.0,  0.5)
+    val x   = xy.not (?, 3)                                        // matrix for predictor variables
+    val y   = xy(?, 3)                                             // vector for response variable
+    val sst = (y - y.mean).normSq                                  // sum of squares total
+
+    val mod = new Regression (x, y)
+    mod.trainNtest ()()
+
+    val η = 1.0                                                    // learning rate
+    val b = VectorD (0.1, 0.2, 0.1)
+    val g = new VectorD (b.dim)
+    for epoch <- 1 to 10 do
+        banner (s"improvement step $epoch")
+        val u  = x * b                                             // pre-activation vector
+        val yp = sigmoid_ (u)                                      // predicted response from calculation for sigmoid
+        val e  = y - yp                                            // error
+        val fp = yp * (-yp + 1)                                    // derivative (f') for sigmoid
+        for j <- x.indices2 do
+            g(j)  = -e dot (x(?, j) * fp)                          // gradient in direction j
+            b(j) -= η * g(j)                                       // update j-th parameter
+        val sse = e.normSq                                         // sum of squared errors
+
+        println (s"b   = $b")
+        println (s"u   = $u")
+        println (s"y   = $y")
+        println (s"yp  = $yp")
+        println (s"e   = $e")
+        println (s"fp  = $fp")
+        println (s"g   = $g")
+        println (s"b   = $b")
+        println (s"sse = $sse")
+        println (s"R^2 = ${1 - sse/sst}")
+    end for
+
+end perceptronTest6
 

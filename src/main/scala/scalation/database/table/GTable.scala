@@ -12,12 +12,11 @@ package scalation
 package database
 package table 
 
-import com.google.gson.Gson
+//import com.google.gson.Gson
 
-import java.io.PrintWriter
+//import java.io.PrintWriter
 
 import scala.collection.mutable.{ArrayBuffer => Bag, Map}
-import scala.math.min
 import scala.runtime.ScalaRunTime.stringOf
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -394,7 +393,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
      *  Acts like union-all, so to remove duplicates call create_index after union.
      *  @param r2  the second table (may be a Table or GTable)
      */
-    override def union (r2: Table): GTable =
+    override infix def union (r2: Table): GTable =
         if incompatible (r2) then return this
 
         val s = new GTable (s"${name}_u_${cntr.inc ()}", schema, domain, key)
@@ -410,7 +409,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
      *  Check that the two tables are compatible.  If they are not, return the first table.
      *  @param r2  the second table (may be a Table or GTable)
      */
-    override def minus (r2: Table): GTable =
+    override infix def minus (r2: Table): GTable =
         if incompatible (r2) then return this
 
         val s = new GTable (s"${name}_m_${cntr.inc ()}", schema, domain, key)
@@ -426,7 +425,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
      *  If they are not, return the first table.
      *  @param r2  the second table (may be a Table or GTable)
      */
-    override def intersect (r2: Table): GTable =
+    override infix def intersect (r2: Table): GTable =
         if incompatible (r2) then return this
 
         val s = new GTable (s"${name}_i_${cntr.inc ()}", schema, domain, key)
@@ -614,7 +613,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** WRITE this graph-table into a JavaScript Object Notation (JSON) file.
      *  @param fileName  the file name of the data file
-     */
+     *
     override def writeJSON (fileName: String = name + ".json"): Unit =
         val gson    = new Gson ()
         val jsonStr = gson.toJson (this)
@@ -623,6 +622,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
         out.println (jsonStr)
         out.close ()
     end writeJSON
+     */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the basic statistics for each column of this table.
@@ -634,7 +634,7 @@ class GTable (name_ : String, schema_ : Schema, domain_ : Domain, key_ : Schema)
 
         val t = Bag [Tuple] ()
         for j <- colIndices do t += vertices(j).tuple
-        for j <- colIndices do s add Table.stats (schema(j), col(j, t))
+        for j <- colIndices do s.add (Table.stats (schema(j), col(j, t)))
         s
     end stats
 
@@ -801,11 +801,11 @@ end gTableTest
     banner ("Example Queries")
 
     banner ("locations of students")
-    val locs = student project ("sname, city")
+    val locs = student.project ("sname, city")
     locs.show ()
 
     banner ("living in Athens")
-    val inAthens = student select ("city == 'Athens'")
+    val inAthens = student.select ("city == 'Athens'")
     inAthens.show ()
 
     banner ("not living in Athens")
@@ -821,15 +821,15 @@ end gTableTest
     unio.show ()    
 
     banner ("courses taken: course id")
-    val taken_id = student expand ("sname, cid", ("cid", course))
+    val taken_id = student.expand ("sname, cid", ("cid", course))
     taken_id.show ()
 
     banner ("courses taken: course name")
-    val taken_nm = student expand ("sname, cname", ("cid", course))
+    val taken_nm = student.expand ("sname, cname", ("cid", course))
     taken_nm.show ()
 
     banner ("courses taken: course name via ejoin")
-    val taken_ej = student ejoin ("cid", course, "sid") project ("sname, cname")
+    val taken_ej = student.ejoin ("cid", course, "sid").project ("sname, cname")
     taken_ej.show ()
 
 /*
@@ -920,7 +920,7 @@ end gTableTest2
     // Serialize and output the data into a JSON file (covid.json) in DATA_DIR
     //--------------------------------------------------------------------------
 
-    covid.writeJSON ()
+//  covid.writeJSON ()
 
 end gTableTest3
 

@@ -11,11 +11,10 @@
 package scalation
 package simulation
 package process
-package example_MBM                                   // Method of Batch Means (MBM)
+package example_MBM                                     // Method of Batch Means (MBM)
 
 import scalation.mathstat.VectorD
 import scalation.random.{Exponential, Sharp}
-import scalation.random.RandomSeeds.N_STREAMS
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `runBank` function is used to launch the `BankModel` class.
@@ -59,21 +58,21 @@ class BankModel (name: String = "Bank", nBatch: Int = 50, sizeB: Int = 1000,
                  animating: Boolean = false, aniRatio: Double = 8.0, stream: Int = 0)
       extends Model_MBM (name, nBatch, sizeB, animating, aniRatio):
 
-    val nStop = nBatch * sizeB                        // the number arrivals before stopping the Source
+    val nStop = nBatch * sizeB                          // the number arrivals before stopping the Source
 
     //--------------------------------------------------
     // Initialize Model Constants
 
-    val lambda   = 12.0  // 6.0                       // customer arrival rate (per hour)
-    val mu       = 7.5                                // customer service rate (per hour)
-    val nTellers = 2     // 1                         // the number of bank tellers (servers)
+    val lambda   = 12.0  // 6.0                         // customer arrival rate (per hour)
+    val mu       = 7.5                                  // customer service rate (per hour)
+    val nTellers = 2     // 1                           // the number of bank tellers (servers)
 
     //--------------------------------------------------
     // Create Random Variables (RVs)
 
     val iArrivalRV = Exponential (HOUR / lambda, stream)
-    val serviceRV  = Exponential (HOUR / mu, (stream + 1) % N_STREAMS)
-    val moveRV     = Sharp (SECOND, (stream + 2) % N_STREAMS)
+    val serviceRV  = Exponential (HOUR / mu, stream + 1)
+    val moveRV     = Sharp (SECOND, stream + 2)
 
     //--------------------------------------------------
     // Create Model Components
@@ -92,13 +91,14 @@ class BankModel (name: String = "Bank", nBatch: Int = 50, sizeB: Int = 1000,
 
     case class Customer () extends SimActor ("c", this):
 
-        def act (): Unit =
-            toTellerQ.jump ()
-            if teller.busy then tellerQ.waitIn () else tellerQ.noWait ()
-            teller.utilize ()
-            teller.release ()
-            toDoor.jump ()
-            door.leave ()
+        override def act (): Unit =
+            toTellerQ.jump ()                           // jump (one step) to teller queue
+            if teller.busy then tellerQ.waitIn ()       // wait when all tellers are busy
+            else tellerQ.noWait ()                      // record no waiting time
+            teller.utilize ()                           // process transaction with teller
+            teller.release ()                           // release the teller
+            toDoor.jump ()                              // jump to the door
+            door.leave ()                               // exit the bank
         end act
 
     end Customer

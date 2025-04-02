@@ -183,11 +183,13 @@ class PGraph (val name: String,
 //              val at  = e.calcEndPoints                                    // logic replaced by move2Boundary
                 val at  = (e.from.pos(0 to 2), e.to.pos(0 to 2))
                 val att = (at._1 ++ at._2).toArray
+//              banner (s"PGraph: e = $e, at = $at")
                 aniQ.add (AnimateCommand (CreateEdge, e.id, et_j.newShapeObj, e.name, true, et_j.color, att, 0,
                                           e.from.id, e.to.id, e.shift))      // shift for bundle of edges
             end for
         end for
 
+//        assert (1 == 2)
         dgAni.animate (0, stop)
     end display
 
@@ -297,25 +299,25 @@ end pGraphTest
     query3.show ()
 
     banner ("query4: project")
-    val query4 =  person project ("name")
+    val query4 =  person.project ("name")
     println (query4)
     query4.print ()
     query4.show ()
 
     banner ("query4b: project")
-    val query4b = person project ("name")
+    val query4b = person.project ("name")
     println (query4b)
     query4b.print ()
     query4b.show ()
 
     banner ("query5: select")
-    val query5 = person select ((p: Property) => p("name") == "Sue")
+    val query5 = person.select ((p: Property) => p("name") == "Sue")
     println (query5)
     query5.print ()
     query5.show ()
 
     banner ("query5b: select")
-    val query5b = person select (_("name") == "Sue")
+    val query5b = person.select (_("name") == "Sue")
     println (query5b)
     query5b.print ()
     query5b.show ()
@@ -363,7 +365,7 @@ end pGraphTest
     query12.show ()
 
     banner ("query13: rename")
-    val query13 = person rename ("salary", "earnings")
+    val query13 = person.rename ("salary", "earnings")
     println (query13)
     query13.print ()
     query13.show ()
@@ -371,31 +373,31 @@ end pGraphTest
     banner ("query14: insert")
 //  val v_new = Vertex (Map ("name" -> "Alice", "salary" -> 30000.0))
     val v_new = Vertex (Map ("name" -> "Alice", "state" -> "SC", "salary" -> 30000.0))
-    val query14 = person insert (v_new)
+    val query14 = person.insert (v_new)
     println (query14)
     query14.print ()
     query14.show ()
 
     banner ("query15: limit")
-    val query15 = person limit (1, 3)
+    val query15 = person.limit (1, 3)
     println (query15)
     query15.print ()
     query15.show ()
 
     banner ("query16: find")
-    val query16 = person find ("Sue")
+    val query16 = person.find ("Sue")
     println (query16)
     // query16.print ()  -- only returns a single vertex
     query16.show ()
 
     banner ("query17: orderBy")
-    val query17 = person orderBy ("name")
+    val query17 = person.orderBy ("name")
     println (query17)
     query17.print ()
     query17.show ()
 
     banner ("query18: groupBy")
-    val query18 = person groupBy ("state", "salary", (sal: Double) => sal * sal)
+    val query18 = person.groupBy ("state", "salary", (sal: Double) => sal * sal)
     println (query18)
     query18.print ()
     query18.show ()
@@ -404,31 +406,31 @@ end pGraphTest
 
     banner ("query19: EdgeType insert")
     val e_new = Edge (v(0), Map ("type" -> "knows", "since" -> 6), v(2))
-    val query19 = et0 insert (e_new)
+    val query19 = et0.insert (e_new)
     println (query19)
     query19.print ()
     query19.show ()
 
     banner ("query20: EdgeType project")
-    val query20 =  knows project ("type")
+    val query20 =  knows.project ("type")
     println (query20)
     query20.print ()
     query20.show ()
 
     banner ("query20b: EdgeType project")
-    val query20b = knows project ("type")
+    val query20b = knows.project ("type")
     println (query20b)
     query20b.print ()
     query20b.show ()
 
     banner ("query21: EdgeType select")
-    val query21 = knows select ((p: Property) => p("since") >= 4)
+    val query21 = knows.select ((p: Property) => p("since") >= 4)
     println (query21)
     query21.print ()
     query21.show ()
 
     banner ("query21b: EdgeType select")
-    val query21b = knows select (_("since") >= 4)
+    val query21b = knows.select (_("since") >= 4)
     println (query21b)
     query21b.print ()
     query21b.show ()
@@ -458,19 +460,19 @@ end pGraphTest
     query25.show ()
 
     banner ("query26: EdgeType rename")
-    val query26 = knows rename ("type", "kind")
+    val query26 = knows.rename ("type", "kind")
     println (query26)
     query26.print ()
     query26.show ()
 
     banner ("query27: EdgeType limit")
-    val query27 = knows limit (1, 2)
+    val query27 = knows.limit (1, 2)
     println (query27)
     query27.print ()
     query27.show ()
 
     banner ("query28: EdgeType orderBy")
-    val query28 = knows orderBy ("since")
+    val query28 = knows.orderBy ("since")
     println (query28)
     query28.print ()
     query28.show ()
@@ -483,25 +485,25 @@ end pGraphTest
     g.show ()
 
     banner ("query29: PGraph expandOut")
-    val query29 = g expandOut (person, VEC (et0), VEC(person), "expand_out")
+    val query29 = g.expandOut (person, VEC (et0), VEC(person), "expand_out")
     println (query29)
     query29.print ()
     query29.show ()
 
     banner ("query30: PGraph expandIn")
-    val query30 = g expandIn (VEC (person), VEC (et0), person, "expand_in")
+    val query30 = g.expandIn (VEC (person), VEC (et0), person, "expand_in")
     println (query30)
     query30.print ()
     query30.show ()
 
     banner ("query31: PGraph expandBoth")
-    val query31 = g expandBoth (VEC (person), VEC (et0), VEC (person), "expand_both")
+    val query31 = g.expandBoth (VEC (person), VEC (et0), VEC (person), "expand_both")
     println (query31)
     query31.print ()
     query31.show ()
 
     banner ("query32: PGraph join")
-    val query32 = g join (g, person, person, "joined_graph")
+    val query32 = g.join (g, person, person, "joined_graph")
     println (query32)
     query32.print ()
     query32.show ()

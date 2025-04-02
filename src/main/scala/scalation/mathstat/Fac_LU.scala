@@ -58,20 +58,22 @@ class Fac_LU (a: MatrixD)
     def factor (): Fac_LU =
         if u != null then return this                           // matrix a already factored          
 
-        for j <- l.indices2 do                                  // for each column j
+        cfor (0, l.dim2) { j =>                                 // for each column j
             val col_j = l(?, j)                                 // vector (copied from lu) holding column j
 
-            for i <- l.indices do                               // for each row i
+            cfor (0, l.dim) { i =>                              // for each row i
                 val row_i = l(i)                                // vector (in l) holding row i
                 val kmax  = min (i, j)
                 var sum   = 0.0                                 // compute dot product truncated at kmax
-                for k <- 0 until kmax do sum += row_i(k) * col_j(k)
+                cfor (0, kmax) { k => sum += row_i(k) * col_j(k) }
                 col_j(i) -= sum                                 // decrement by dot product
                 row_i(j)  = col_j(i)                            // row i col j = col j row i
-            end for
+            } // cfor
 
             var p = j                                           // find pivot for column j
-            for i <- j+1 until m; if abs (col_j(i)) > abs (col_j(p)) do p = i
+            cfor (j+1, m) { i =>
+                if abs (col_j(i)) > abs (col_j(p)) then p = i
+            } // cfor
 
             if p != j then
                 debug ("factor", s"swap rows $j and $p")
@@ -81,9 +83,8 @@ class Fac_LU (a: MatrixD)
             end if
 
             if l(j, j) != 0.0 then                              // compute multipliers for l
-                for i <- j+1 until m do l(i, j) /= l(j, j)
-            end if
-        end for
+                cfor (j+1, m) { i => l(i, j) /= l(j, j) }
+        } // cfor
 
         factored = true
         split ()                                                // split l into l proper and u
@@ -96,9 +97,9 @@ class Fac_LU (a: MatrixD)
      */
     def split (): Unit =
         u = l.upper                                             // extract upper triangle including main diagonal
-        for i <- 0 until n; j <- i until n do                   // set main diagonal to one and
-            l(i, j) = is (i == j)                               // clear entries above main diagonal
-        end for
+        cfor (0, n) { i =>
+            cfor (i, n) { j => l(i, j) = is (i == j) }          // clear entries above main diagonal and set main diagonal to one
+        } // cfor
     end split
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -113,12 +114,13 @@ class Fac_LU (a: MatrixD)
      */
     def permute (c: MatrixD): MatrixD =
         val swapped = Set [Int] ()
-        for j <- 0 until n if j != piv(j) && ! (swapped contains j) do
-            val pj = piv(j)
-            debug ("permute", s"swap rows $j and $pj")
-            swapped += pj
-            c.swap (j, pj)
-        end for
+        cfor (0, n) { j =>
+            if j != piv(j) && ! (swapped contains j) then
+                val pj = piv(j)
+                debug ("permute", s"swap rows $j and $pj")
+                swapped += pj
+                c.swap (j, pj)
+        } // cfor
         c
     end permute
 
@@ -128,12 +130,13 @@ class Fac_LU (a: MatrixD)
      */
     def permute (d: VectorD): VectorD =
         val swapped = Set [Int] ()
-        for j <- 0 until n if j != piv(j) && ! (swapped contains j) do
-            val pj = piv(j)
-            debug ("permute", s"swap elements $j and $pj")
-            swapped += pj
-            d.swap (j, pj)
-        end for
+        cfor (0, n) { j =>
+            if j != piv(j) && ! (swapped contains j) then
+                val pj = piv(j)
+                debug ("permute", s"swap elements $j and $pj")
+                swapped += pj
+                d.swap (j, pj)
+        } // cfor
         d
     end permute
 
@@ -148,12 +151,12 @@ class Fac_LU (a: MatrixD)
 //      val bb = b.copy; permute (bb)                           // make a copy of b and permute by piv
         val bb = b(piv)                                         // permute b the same way as l 
         val y = new VectorD (l.dim2)                            // forward substitution
-        for k <- 0 until y.dim do                               // solve for y in l*y = bb
+        cfor (0, y.dim) { k =>                                  // solve for y in l*y = bb
             val l_k = l(k)
             var sum = 0.0
-            for j <- 0 until k do sum += l_k(j) * y(j)
+            cfor (0, k) { j => sum += l_k(j) * y(j) }
             y(k) = bb(k) - sum
-        end for
+        } // cfor
         debug ("solve", s"y = $y")
         bsolve (y)
     end solve
@@ -169,7 +172,7 @@ class Fac_LU (a: MatrixD)
         for k <- x.dim - 1 to 0 by -1 do                        // solve for x in u*x = y
             val u_k = u(k)
             var sum = 0.0
-            for j <- k + 1 until u.dim2 do sum += u_k(j) * x(j)
+            cfor (k+1, u.dim2) { j => sum += u_k(j) * x(j) }
             x(k) = (y(k) - sum) / u(k, k)
         end for
         debug ("bsolve", s"x = $x")
@@ -184,7 +187,7 @@ class Fac_LU (a: MatrixD)
 
         factor ()
         val inv = MatrixD.eye (n, n)                            // inverse matrix - starts as identity
-        for j <- a.indices2 do inv(?, j) = solve (inv(?, j))
+        cfor (0, a.dim2) { j => inv(?, j) = solve (inv(?, j)) }
         inv
     end inverse
 
@@ -197,7 +200,7 @@ class Fac_LU (a: MatrixD)
         if m != n then throw new IllegalArgumentException ("det: matrix must be square");
 
         var dt = pivsign.toDouble
-        for j <- l.indices2 do dt *= u(j, j)
+        cfor (0, l.dim2) { j => dt *= u(j, j) }
         dt
     end det
 
@@ -307,14 +310,14 @@ object Fac_LU:
 
         while ! done do
             val j = x.abs.argmax ()
-            for k <- e.indices do e(k) = is (k == j)            // one in jth position
+            cfor (0, e.dim) { k => e(k) = is (k == j) }         // one in jth position
             v     = if inv then a_lu.solve (e) else a(?, j)
             val g = γ
             γ     = v.norm1
 
             if v.map (signum (_)) == ξ || γ <= g then
-                for i <- x.indices do
-                    x(i) = (if i % 2 == 0 then -1.0 else 1.0) * (1.0 + ((i - 1.0) / (x.dim - 1)))
+                cfor (0, x.dim) { i =>
+                    x(i) = (if i % 2 == 0 then -1.0 else 1.0) * (1.0 + ((i - 1.0) / (x.dim - 1))) }
                 x = if inv then a_lu.solve (x) else a * x
                 if (2.0 * x.norm1) / (3.0 * x.dim) > γ then { v = x; γ = (2.0 * x.norm1) / (3.0 * x.dim) }
             end if
@@ -472,7 +475,7 @@ object Fac_LU:
         println (s"a.corr = ${a.corr}")
 
         banner ("diagnoseMat: Variance of Matrix Columns")
-        for j <- a.indices2 do println (s"a(?, $j).variance = ${a(?, j).variance}")
+        cfor (0, a.dim2) { j => println (s"a(?, $j).variance = ${a(?, j).variance}") }
     end diagnoseMat
 
 end Fac_LU

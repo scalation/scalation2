@@ -65,6 +65,11 @@ case class MuGraph (ch: Array [SET [Int]],
     def size: Int = ch.length
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the size of graph in terms of the number of edges.
+     */
+    def nEdges: Int = elabel.size
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Given an array of labels, return an index from labels to the sets of
      *  vertices containing those labels.
      *  @param label  the array of vertex labels
@@ -163,15 +168,15 @@ case class MuGraph (ch: Array [SET [Int]],
 //                      (indexMap.getOrElse ((label(k._1), e.asInstanceOf [ValueType]), SET()) + k._2)
 
         println ("count of triples")
-        for (k, v) <- count do println((k, v))
+        for (k, v) <- count do println ((k, v))
         println ("-" * 50)
         println ("indexMap")
-        for (k, v) <- indexMap do println((k, v))
+        for (k, v) <- indexMap do println ((k, v))
         println ("-" * 60)
     end buildIndex
 
     // ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Build and index from edge -> (Vertex pair).
+    /** Build an index from edge -> (Vertex pair).
      */
     def indexEdges (): Unit =
         for k <- elabel.keys; e <- elabel(k) do
@@ -192,6 +197,12 @@ case class MuGraph (ch: Array [SET [Int]],
         for (u, v) <- edges do elabel += (v, u) -> elabel(u, v)
         this
     end makeUndirected
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Determine whether this digraph is (weakly) connected.
+     *  FIX - to be implemented
+     */
+    def isConnected: Boolean = true // (new GraphDFS (this)).weakComps == 1
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert this multi-digraph to a string in a shallow sense.

@@ -20,6 +20,18 @@ import scala.collection.mutable.IndexedSeq
 import scala.math.round
 import scala.runtime.ScalaRunTime.stringOf
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** Tensorize a vector function (V2V) by applying it to each (row, column) of a tensor.
+ *  @param f  the vector function to tensorize
+ *  @param x  the tensor to apply the function to
+ */
+def tensorize(f: FunctionV2V)(x: TensorD): TensorD =
+    val t = new TensorD(x.dim)
+    cfor(x.indices)(i => cfor(x.indices2)(j => t(i, j) = f(x(i, j))))
+    t
+end tensorize
+
+
 //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** Return the complement of index positions idx, e.g.,
  *  comple (Array (1, 3), 5) = Array (0, 2, 4).
@@ -29,12 +41,14 @@ import scala.runtime.ScalaRunTime.stringOf
 def comple (idx: Array [Int], dim: Int): Array [Int] =
     val a = Array.ofDim [Int] (dim - idx.size)
     var j, l = 0
-    for i <- idx do
-        while j < i do
-            a(l) = j; j += 1; l += 1
+    cfor (0, idx.length) { i =>
+        while j < idx(i) do
+            a(l) = j
+            j += 1
+            l += 1
         end while
-        j += 1;
-    end for
+        j += 1
+    } // cfor
     a
 end comple
 
@@ -118,7 +132,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def apply (i: Int, all: Char, k: Int): VectorD = 
         val a = Array.ofDim [Double] (dim2)
-        for j <- 0 until dim2 do a(j) = v(i)(j)(k)
+        cfor (0, dim2) {j => a(j) = v(i)(j)(k)}
         new VectorD (dim2, a)
     end apply
 
@@ -130,7 +144,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def apply (all: Char, j: Int, k: Int): VectorD = 
         val a = Array.ofDim [Double] (dim)
-        for i <- 0 until dim do a(i) = v(i)(j)(k)
+        cfor (0, dim) {i => a(i) = v(i)(j)(k)}
         new VectorD (dim, a)
     end apply
 
@@ -149,7 +163,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def apply (all: Char, j: Int): MatrixD =
         val a = Array.ofDim [Double] (dim, dim3)
-        for i <- 0 until dim; k <- 0 until dim3 do a(i)(k) = v(i)(j)(k)
+        cfor (0, dim) { i => cfor (0, dim3) { k => a(i)(k) = v(i)(j)(k) }}
         new MatrixD (dim, dim3, a)
     end apply
 
@@ -162,7 +176,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     inline def apply (all: Char, all2: Char, k: Int): MatrixD =
         val a = Array.ofDim [Double] (dim, dim2)
-        for i <- 0 until dim; j <- 0 until dim2 do a(i)(j) = v(i)(j)(k)
+        cfor (0, dim) { i => cfor (0, dim2) { j => a(i)(j) = v(i)(j)(k) }}
         new MatrixD (dim, dim2, a)
     end apply
 
@@ -180,7 +194,7 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     def apply (ii: (Int, Int), jj: (Int, Int)): TensorD =
         val (i1, i2) = if ii == null then (0, dim) else ii
         val u = v.slice (i1, i2)
-        for i <- u.indices do u(i) = u(i).slice (jj._1, jj._2)
+        cfor (u.indices) { i => u(i) = u(i).slice (jj._1, jj._2)}
         new TensorD (u)
     end apply
 
@@ -195,8 +209,10 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
         val (i1, i2) = if ii == null then (0, dim) else ii
         val (j1, j2) = if jj == null then (0, dim2) else jj
         val u = v.slice (i1, i2)
-        for i <- u.indices do u(i) = u(i).slice (j1, j2)
-        for i <- u.indices; j <- u(i).indices do u(i)(j) = u(i)(j).slice (kk._1, kk._2)
+        cfor (u.indices) { i => u(i) = u(i).slice (j1, j2) }
+        cfor (u.indices) { i =>
+            cfor (u(i).indices) { j => u(i)(j) = u(i)(j).slice (kk._1, kk._2) }
+        } // cfor
         new TensorD (u)
     end apply
 
@@ -206,7 +222,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def apply (is: Array [Int]): TensorD = 
         val u = Array.ofDim [Double] (is.size, dim2, dim3)
-        for i <- is.indices; j <- indices2; k <- indices3 do u(i)(j)(k) = v(is(i))(j)(k)
+        cfor (is.indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => u(i)(j)(k) = v(is(i))(j)(k) }
+            } // cfor
+        } // cfor
         new TensorD (u)
     end apply
 
@@ -215,14 +235,22 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      *  @param is  1st dimension (row) indices of the tensor (null => all)
      *  @param js  2nd dimension (column) indices of the tensor
      */
-    def apply (is: Array [Int], js: Array [Int]): TensorD = 
+    def apply (is: Array [Int], js: Array [Int]): TensorD =
         if is == null then
-            val u = Array.ofDim [Double] (dim, js.size, dim3)
-            for i <- indices; j <- js.indices; k <- indices3 do u(i)(j)(k) = v(i)(js(j))(k)
+            val u = Array.ofDim [Double] (dim, js.length, dim3)
+            cfor (indices) { i =>
+                cfor (js.indices) { j =>
+                    cfor (indices3) { k => u(i)(j)(k) = v(i)(js(j))(k) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         else
-            val u = Array.ofDim [Double] (is.size, js.size, dim3)
-            for i <- is.indices; j <- js.indices; k <- indices3 do u(i)(j)(k) = v(is(i))(js(j))(k)
+            val u = Array.ofDim [Double] (is.length, js.length, dim3)
+            cfor (is.indices) { i =>
+                cfor (js.indices) { j =>
+                    cfor (indices3) { k => u(i)(j)(k) = v(is(i))(js(j))(k) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         end if
     end apply
@@ -235,22 +263,72 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def apply (is: Array [Int], js: Array [Int], ks: Array [Int]): TensorD = 
         if is == null && js == null then
-            val u = Array.ofDim [Double] (dim, dim2, ks.size)
-            for i <- indices; j <- indices2; k <- ks.indices do u(i)(j)(k) = v(i)(j)(ks(k))
+            val u = Array.ofDim [Double] (dim, dim2, ks.length)
+            cfor (indices) { i =>
+                cfor (indices2) { j =>
+                    cfor (ks.indices) { k => u(i)(j)(k) = v(i)(j)(ks(k)) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         else if is == null then
             val u = Array.ofDim [Double] (dim, js.size, ks.size)
-            for i <- indices; j <- js.indices; k <- ks.indices do u(i)(j)(k) = v(i)(js(j))(ks(k))
+            cfor (indices) { i =>
+                cfor (js.indices) { j =>
+                    cfor (ks.indices) { k => u(i)(j)(k) = v(i)(js(j))(ks(k)) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         else if js == null then
             val u = Array.ofDim [Double] (is.size, dim2, ks.size)
-            for i <- is.indices; j <- indices2; k <- ks.indices do u(i)(j)(k) = v(is(i))(j)(ks(k))
+            cfor (is.indices) { i =>
+                cfor (indices2) { j =>
+                    cfor (ks.indices) { k => u(i)(j)(k) = v(is(i))(j)(ks(k)) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         else
             val u = Array.ofDim [Double] (is.size, js.size, ks.size)
-            for i <- is.indices; j <- js.indices; k <- ks.indices do u(i)(j)(k) = v(is(i))(js(j))(ks(k))
+            cfor (is.indices) { i =>
+                cfor (js.indices) { j =>
+                    cfor (ks.indices) { k => u(i)(j)(k) = v(is(i))(js(j))(ks(k)) }
+                } // cfor
+            } // cfor
             new TensorD (u)
         end if
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Retrieve a slice of the tensor as a MatrixD, based on a row range and specified sheet.
+     *  @param ir     the range of rows to include in the slice.
+     *  @param all2   a character indicating all columns should be included (typically '?').
+     *  @param sheet  the index of the sheet to extract from.
+     */
+    def apply (ir: Range, all2: Char, sheet: Int): MatrixD =
+        val slicedArray = v.slice (ir.start, ir.end).map (_.map (_(sheet)))
+        new MatrixD (ir.size, dim2, slicedArray)
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Retrieve a sub-tensor based on the three ranges.
+     *  @param ir  the range of rows to include in the slice.
+     *  @param jr  the range of columns to include in the slice.
+     *  @param kr  the range of sheet to include in the slice.
+     */
+    def apply (ir: Range, jr: Range, kr: Range): TensorD =
+        val i1 = ir.start;
+        val j1 = jr.start;
+        val k1 = kr.start
+        val slicedArray = Array.ofDim [Double] (ir.size, jr.size, kr.size)
+        cfor (ir) { i =>
+            val v_i = v(i);
+            val a_i = slicedArray (i - i1)
+            cfor (jr) { j =>
+                val v_ij = v_i(j);
+                val a_ij = a_i(j - j1)
+                cfor (kr) { k => a_ij(k - k1) = v_ij(k) }
+            } // cfor
+        } // cfor
+        new TensorD (slicedArray)
     end apply
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -264,7 +342,9 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      *  @param is  1st dimension (row) indices of the tensor
      *  @param js  2nd dimension (column) indices of the tensor
      */
-    def not (is: Array [Int], js: Array [Int]): TensorD = apply (comple (is, dim), comple (js, dim2))
+    def not (is: Array [Int], js: Array [Int]): TensorD =
+        apply (comple (is, dim), comple (js, dim2))
+    end not
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Retrieve the complement of the is row selections from the tensor.
@@ -277,29 +357,117 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     end not
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update a single element of the tensor to the given value.
+    /** Update a single SCALAR element of the tensor to the given value.
+     *  Usage: z(i, j, k) = x
      *  @param i  1st dimension (row) index of the tensor
      *  @param j  2nd dimension (column) index of the tensor
      *  @param k  3rd dimension (sheet) index of the tensor
-     *  @param x  the value to be updated at the above position in the tensor
+     *  @param x  the value for updating the tensor at the above position
      */
     def update (i: Int, j: Int, k: Int, x: Double): Unit = v(i)(j)(k) = x
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update a single vector of the tensor to the given vector.
+    /** Update a single VECTOR of the tensor to the given vector.
+     *  Usage: z(i, j) = x
      *  @param i  1st dimension (row) index of the tensor
      *  @param j  2nd dimension (column) index of the tensor
-     *  @param x  the vector to be updated at the above position in the tensor
+     *  @param x  the vector for updating the tensor at the above position
      */
     def update (i: Int, j: Int, x: VectorD): Unit = v(i)(j) = x.toArray
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Update a single matrix of the tensor to the given matrix.
+    /** Update a single VECTOR of the tensor to the given vector.
+     *  Usage: z(i, ?, k) = x
+     *  @param i    1st dimension (row) index of the tensor
+     *  @param all  use the all columns indicator ?
+     *  @param k    3rd dimension (sheet) index of the tensor
+     *  @param x    the vector for updating the tensor at the above position
+     */
+    def update (i: Int, all: Char, k: Int, x: VectorD): Unit =
+        cfor (indices2) { j => v(i)(j)(k) = x(j)}
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a single VECTOR of the tensor to the given vector.
+     *  Usage: z(?, j, k) = x
+     *  @param all  use the all rows indicator ?
+     *  @param j    2nd dimension (column) index of the tensor
+     *  @param k    3rd dimension (sheet) index of the tensor
+     *  @param x    the vector for updating the tensor at the above position
+     */
+    def update (all: Char, j: Int, k: Int, x: VectorD): Unit =
+        cfor (indices) { i => v(i)(j)(k) = x(i)}
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a single MATRIX of the tensor (for ROW i) to the given matrix.
+     *  Usage: z(i) = x
      *  @param i  1st dimension (row) index of the tensor
-     *  @param x  the matrix to be updated at the above position in the tensor
+     *  @param x  the matrix for updating the tensor at the above position
      */
     def update (i: Int, x: MatrixD): Unit =
-        for j <- indices2 do v(i)(j) = x(j).toArray
+        cfor (indices2) { j => v(i)(j) = x(j).toArray}
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a single MATRIX of the tensor (for COLUMN j) to the given matrix.
+     *  Usage: z(?, j) = x
+     *  @param all  use the all rows indicator ?
+     *  @param j    2nd dimension (column) index of the tensor
+     *  @param x    the matrix for updating the tensor at the above position 
+     */
+    def update (all: Char, j: Int, x: MatrixD): Unit =
+        cfor (indices) { i => cfor (indices3) { k => v(i)(j)(k) = x(i, k)}}
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a single MATRIX of the tensor (for SHEET k) to the given matrix.
+     *  Usage: z(?, ?, k) = x
+     *  @param all   use the all rows indicator ?
+     *  @param all2  use the all columns indicator ?
+     *  @param k     the 3rd dimension (sheet) index of the tensor
+     *  @param x     the matrix for updating the tensor at the above position
+     */
+    def update (all: Char, all2: Char, k: Int, x: MatrixD): Unit =
+        cfor (indices) { i => cfor (indices2) { j => v(i)(j)(k) = x(i, j)}}
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a slice of the tensor with values from a given matrix.
+     *  @param ir n    the range of rows in the tensor to update.
+     *  @param all2    a character indicating all columns should be updated (typically '?').
+     *  @param sheet   the index of the sheet in the tensor to update.
+     *  @param matrix  the matrix containing the values to update the tensor with.
+     *  @throws IllegalArgumentException if the dimensions of the row range and matrix do not match.
+     */
+    def update (ir: Range, all2: Char, sheet: Int, matrix: MatrixD): Unit =
+        require (ir.size == matrix.dim && dim2 == matrix.dim2,
+                 "Dimensions do not match the specified range and matrix.")
+
+        cfor (ir.indices) { i =>
+            cfor (indices2) { j => v(ir.start + i)(j)(sheet) = matrix(i, j) }
+        } // cfor
+    end update
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update a slice of the tensor with values from a given 3D block (matrix over multiple sheets).
+     *  @param all1       a character indicating all rows should be updated (typically '?').
+     *  @param all2       a character indicating all columns should be updated (typically '?').
+     *  @param kr         the range of sheets in the tensor to update.
+     *  @param tensorBlk  the 3D block (rows x columns x sheets) containing the values to update the tensor with.
+     *  @throws IllegalArgumentException if the dimensions of the tensor block do not match the tensor's dimensions.
+     */
+    def update (all1: Char, all2: Char, kr: Range, tensorBlk: TensorD): Unit =
+        require (dim == tensorBlk.dim && dim2 == tensorBlk.dim2,
+                 s"Row and column dimensions do not match: tensor.dim = $dim, $dim2; tensorBlk.dim = ${tensorBlk.dim}, ${tensorBlk.dim2}.")
+        require (kr.size == tensorBlk.dim3,
+                 s"Sheet dimensions do not match: kr.size = ${kr.size}, tensorBlk.dim3 = ${tensorBlk.dim3}.")
+
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (kr.indices) { k => v(i)(j)(kr.start + k) = tensorBlk(i, j, k) }
+            } // cfor
+        } // cfor
     end update
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -307,7 +475,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      *  @param x  the value to set all elements to
      */
     def set (x: Double): Unit = 
-        for i <-indices; j <- indices2; k <- indices3 do v(i)(j)(k) = x
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => v(i)(j)(k) = x }
+            } // cfor
+        } // cfor
     end set
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -316,9 +488,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def + (b: TensorD): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) + b.v(i)(j)(k)
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) + b.v(i)(j)(k) }
+            } // cfor
+        } // cfor
         c
     end +
 
@@ -328,9 +502,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def + (s: Double): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) + s
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) + s }
+            } // cfor
+        } // cfor
         c
     end +
 
@@ -340,9 +516,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def - (b: TensorD): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) - b.v(i)(j)(k)
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) - b.v(i)(j)(k) }
+            } // cfor
+        } // cfor
         c
     end -
 
@@ -352,9 +530,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def - (s: Double): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) - s
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) - s }
+            } // cfor
+        } // cfor
         c
     end -
 
@@ -364,9 +544,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def * (s: Double): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) * s
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) * s }
+            } // cfor
+        } // cfor
         c
     end *
 
@@ -385,13 +567,19 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
         if n1 > dim2 || n2 > dim2 || n3 > dim3 then flaw ("*", "dimensions don't match")
 
         val e = new TensorD (m1, m2, m3)
-        for i <- b.indices; j <- c.indices; k <- d.indices do
-            var sum = 0.0
-            for l1 <- b.indices2; l2 <- c.indices2; l3 <- d.indices2 do
-                sum += b(i, l1) * c(j, l2) * d(k, l3) * v(l1)(l2)(l3)
-            end for
-            e.v(i)(j)(k) = sum
-        end for
+        cfor (b.indices) { i =>
+            cfor (c.indices) { j =>
+                cfor (d.indices) { k =>
+                    var sum = 0.0
+                    cfor (b.indices2) { l1 =>
+                        cfor (c.indices2) { l2 =>
+                            cfor (d.indices2) { l3 => sum += b(i, l1) * c(j, l2) * d(k, l3) * v(l1)(l2)(l3) }
+                        } // cfor
+                    } // cfor
+                    e.v(i)(j)(k) = sum
+                } // cfor
+            } // cfor
+        } // cfor
         e
     end *
 
@@ -401,11 +589,65 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def *~ (b: TensorD): TensorD =
         val c = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do
-            c.v(i)(j)(k) = v(i)(j)(k) * b.v(i)(j)(k)
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => c.v(i)(j)(k) = v(i)(j)(k) * b.v(i)(j)(k) }
+            } // cfor
+        } // cfor
         c
     end *~ 
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Map each row of this tensor by applying function f to each row matrix and
+     *  returning the collected result as a matrix.
+     *  @param f  the matrix to vector function to apply
+     */
+    def map (f: FunctionM2V): MatrixD =
+        val a = Array.ofDim [VectorD] (dim)
+        cfor (0, dim) { i => a(i) = f(apply(i)) }
+        MatrixD (a.toIndexedSeq)
+    end map
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Map each row of this tensor by applying function f to each row matrix and
+     *  returning the collected result as a tensor.
+     *  @param f  the matrix to matrix function to apply
+     */
+    def mmap (f: FunctionM2M): TensorD =
+        val a = Array.ofDim [MatrixD] (dim)
+        cfor (0, dim) { i => a(i) = f(apply(i)) }
+        TensorD (a.toIndexedSeq)
+    end mmap
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Map each element of this tensor by applying function f to each element and
+     *  returning the collected result as a tensor.
+     *  @param f  the scalar to scalar function to apply
+     */
+    def map_ (f: FunctionS2S): TensorD =
+        val x = new TensorD (dim, dim2, dim3)
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => x.v(i)(j)(k) =  f(v(i)(j)(k)) }
+            } // cfor
+        } // cfor
+        x
+    end map_
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Flatten this tensor in row-major fashion, returning a matrix containing
+     *  all the elements from the tensor.
+     */
+    def flatten: MatrixD =
+        val a = Array.ofDim [Double] (dim * dim2, dim3)
+        var k = 0
+        cfor (indices) { i =>
+            val v_i = v(i)
+            var j = 0
+            cfor (j < dim2, j += 1) { a(k) = v_i(j); k += 1 }
+        } // cfor
+        new MatrixD (a.length, a(0).length, a)
+    end flatten
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Check whether the dimensions of this tensor are less than or equal to
@@ -421,7 +663,11 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
      */
     def toInt: TensorD =
         val x = new TensorD (dim, dim2, dim3)
-        for i <- indices; j <- indices2; k <- indices3 do x.v(i)(j)(k) = round (v(i)(j)(k)).toDouble
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                cfor (indices3) { k => x.v(i)(j)(k) = round (v(i)(j)(k)).toDouble }
+            } // cfor
+        } // cfor
         x
     end toInt
 
@@ -432,13 +678,13 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     override def toString: String = 
         val sb = new StringBuilder ("\nTensorD (")
         if dim == 0 then return sb.append (")").mkString
-        for k <- indices3 do
-            for i <- indices do
-                for j <- indices2 do sb.append (s"${v(i)(j)(k)}, ")
+        cfor (indices3) { k =>
+            cfor (indices) { i =>
+                cfor (indices2) { j => sb.append (s"${v(i)(j)(k)}, ") }
                 sb.append ("\n" + TAB)
-            end for
+            } // cfor
             sb.append ("\n" + TAB)
-        end for
+        } // cfor
         sb.replace (sb.length-5, sb.length, ")").mkString
     end toString
 
@@ -448,10 +694,12 @@ class TensorD (val dim: Int, val dim2: Int, val dim3: Int,
     def toString2: String = 
         val sb = new StringBuilder ("\nTensorD( ")
         if dim == 0 then return sb.append (")").mkString
-        for i <- indices; j <- indices2 do
-            sb.append (stringOf (v(i)(j)) + ", ")
-            if j == dim2-1 then sb.replace (sb.length-1, sb.length, "\n\t")
-        end for
+        cfor (indices) { i =>
+            cfor (indices2) { j =>
+                sb.append (stringOf (v(i)(j)) + ", ")
+                if j == dim2 - 1 then sb.replace (sb.length - 1, sb.length, "\n\t")
+            } // cfor
+        } // cfor
         sb.replace (sb.length-3, sb.length, ")").mkString
     end toString2
 
@@ -466,20 +714,66 @@ object TensorD:
 //  private val flaw = flawf ("TensorD")                               // flaw function
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Build a tensor from the argument list x.
+    /** Build a tensor from the scaler argument list x.
      *  @param n1  the first dimension
      *  @param n2  the second dimension
      *  @param n3  the third dimension
+     *  @param x   the list/vararg of scacollection.immutable.IndexedSeq [MatrixD]lars
      */
     def apply (n: (Int, Int, Int), x: Double*): TensorD =
         val t = new TensorD (n._1, n._2, n._3)
         var l = 0
-        for k <- 0 until n._3; i <- 0 until n._1; j <- 0 until n._2 do
+        cfor (0, n._3) { k => cfor (0, n._1) { i => cfor (0, n._2) { j =>
             t(i, j, k) = x(l)
             l += 1
-        end for
+        }}} // cfor
         t
     end apply 
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Build a tensor from the vector argument list x.
+     *  @param n   the first dimension
+     *  @param vs  the list/vararg of vectors
+     */
+    def apply (n: Int, vs: VectorD*): TensorD =
+        val t = new TensorD (n, vs.length, vs(0).dim)
+        var l = 0
+        cfor (t.indices) { i => cfor (t.indices2) { j =>
+            t(i, j) = vs(l)
+            l += 1
+        }} // cfor
+        t
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Build a tensor from the vector argument list x.
+     *  @param n   the first dimension
+     *  @param vs  the indexed sequence of vectors
+     */
+    def apply (n: Int, vs: IndexedSeq [VectorD]): TensorD =
+        val t = new TensorD (n, vs.length, vs(0).dim)
+        var l = 0
+        cfor (t.indices) { i => cfor (t.indices2) { j =>
+            t(i, j) = vs(l)
+            l += 1
+        }} // cfor
+        t
+    end apply
+
+    //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Build a tensor from the vector argument list x.
+     *  @param n   the first dimension
+     *  @param vs  the indexed sequence of vectors
+     */
+    def apply (n: Int, vs: collection.immutable.IndexedSeq [VectorD]): TensorD =
+        val t = new TensorD (n, vs.length, vs(0).dim)
+        var l = 0
+        cfor (t.indices) { i => cfor (t.indices2) { j =>
+            t(i, j) = vs(l)
+            l += 1
+        }} // cfor
+        t
+    end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a tensor from a variable argument list of matrices (row-wise).
@@ -489,7 +783,7 @@ object TensorD:
     def apply (vs: MatrixD*): TensorD =
         val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
         val a = Array.ofDim [Array [Array [Double]]] (m)
-        for i <- vs.indices do a(i) = vs(i).v
+        cfor (vs.indices) { i => a(i) = vs(i).v}
         new TensorD (m, n, p, a)
     end apply
 
@@ -501,7 +795,7 @@ object TensorD:
     def apply (vs: IndexedSeq [MatrixD]): TensorD =
         val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
         val a = Array.ofDim [Array [Array [Double]]] (m)
-        for i <- vs.indices do a(i) = vs(i).v
+        cfor (vs.indices) { i => a(i) = vs(i).v}
         new TensorD (m, n, p, a)
     end apply
 
@@ -513,7 +807,7 @@ object TensorD:
     def apply (vs: collection.immutable.IndexedSeq [MatrixD]): TensorD =
         val (m, n, p) = (vs.length, vs(0).dim, vs(0).dim2)
         val a = Array.ofDim [Array [Array [Double]]] (m)
-        for i <- vs.indices do a(i) = vs(i).v
+        cfor (vs.indices) { i => a(i) = vs(i).v}
         new TensorD (m, n, p, a)
     end apply
 
@@ -669,6 +963,8 @@ end tensorDTest
      println ("x(?, 0)    = " + x(?, 0))                         // x_:0:  - matrix with column j fixed
      banner ("Matrix from tensor with sheet k fixed at 0")
      println ("x(?, ?, 0) = " + x(?, ?, 0))                      // x_::0  - matrix with sheet k fixed
+     banner ("Ranged matrix from tensor with sheet k fixed at 0")
+     println ("x(1 until 3,?, 0) = " + x(1 until 3,?, 0))                      // x_::1  - matrix with sheet k fixed
 
 end tensorDTest2
 

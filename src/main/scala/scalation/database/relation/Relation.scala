@@ -375,7 +375,7 @@ object Relation:
      *  relation r.
      *  @param r  the given relation
      */
-    def count (r: Relation): IndexedSeq [Int] = VEC (r.col.map (_.size) :_*)
+    def count (r: Relation): IndexedSeq [Int] = VEC (r.col.map (_.size)*)
 
     def count1 (r: Relation, c: String): VectorI =
         val newcol_vals = VEC [Int] ()
@@ -765,7 +765,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     /** Determine whether this relation contains a row matching the given tuple.
      *  @param tuple  an aggregation of columns values (potential row)
      */
-    def contains (tuple: Row): Boolean =
+    infix def contains (tuple: Row): Boolean =
         var found = false
         breakable {
             for i <- 0 until rows if row(i) sameElements tuple do
@@ -811,7 +811,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     /** Project onto the columns with the given column names.
      *  @param cName  the names of the columns to project onto
      */
-    def project (x: Schema): Relation = project (Array (x.map (on (_)) :_*))
+    def project (x: Schema): Relation = project (Array (x.map (on (_))*))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Project onto the columns with the given column positions.
@@ -899,7 +899,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  are compatible.  If they are not, return the first this relation.
      *  @param r2  the second relation
      */
-    def unionAll (r2: Relation): Relation =
+    infix def unionAll (r2: Relation): Relation =
         if incompatible (r2) then return this                                   // take only this relation
 
         val newCol = (for j <- col.indices yield col(j) ++ r2.columns(j)).toVector.asInstanceOf [Vector [Vectr]]
@@ -911,7 +911,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  If they are not, return the first this relation.
      *  @param r2  the second relation
      */
-    def union (r2: Relation): Relation =
+    infix def union (r2: Relation): Relation =
         if incompatible (r2) then return this                                   // take only this relation
         val newCol  = (for j <- col.indices yield (col(j) ++ r2.columns(j)).asInstanceOf [Vectr])
         val newCols = newCol.transpose.distinct.transpose
@@ -935,7 +935,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  Slower and only to be used if there is no index.
      *  @param r2  the second relation
      */
-    def intersect (r2: Relation): Relation =
+    infix def intersect (r2: Relation): Relation =
         if hasIndex && r2.hasIndex then return intersect2 (r2)
         if incompatible (r2) then return null
 
@@ -950,7 +950,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  Use index to finish intersect operation.
      *  @param r2  the second relation
      */
-    def intersect2 (r2: Relation): Relation =
+    infix def intersect2 (r2: Relation): Relation =
         if incompatible (r2) then return null
 
         val newCol = Vector.fill [Vectr] (schema.length) (null)
@@ -969,7 +969,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  the two relations are compatible.
      *  @param r2  the second relation
      */
-    def minus (r2: Relation): Relation =
+    infix def minus (r2: Relation): Relation =
         if incompatible (r2) then return null
 
         val newCol = Vector.fill [Vectr] (schema.length)(null)
@@ -983,7 +983,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  the two relations are compatible.  Indexed based minus.
      *  @param r2  the second relation
      */
-    def minus2 (r2: Relation): Relation =
+    infix def minus2 (r2: Relation): Relation =
         if incompatible (r2) then return null
 
         val newCol = Vector.fill [Vectr] (schema.length)(null)
@@ -1009,7 +1009,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
     /** Compute the Cartesian product of this relation and r2 (this × r2).
      *  @param r2  the second relation
      */
-    def product (r2: Relation): Relation =
+    infix def product (r2: Relation): Relation =
         val ncols     = cols + r2.cols
         val newCName  = disambiguate (schema, r2.schema)
         val newCol    = Vector.fill [Vectr] (ncols) (null)
@@ -1106,12 +1106,24 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
 
     def join (ref: (String, Relation)): Relation = ???
 
+    def _join (ref: (String, Relation)): Relation = ???
+
+    def _join_ (ref: (String, Relation)): Relation = ???
+
+    def _join (r2: Relation): Relation = ???
+
+    def _join_ (r2: Relation): Relation = ???
+
+    def join_ (r2: Relation): Relation = ???
+
+    def limit (n: Int): Relation = ???
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Join this relation and r2 by performing a "natural-join".  Rows from both
      *  relations are compared requiring cName values to be equal.
      *  @param r2     the rhs relation in the join operation
      */
-    def join (r2: Relation): Relation =
+    infix def join (r2: Relation): Relation =
         val cName = schema intersect r2.schema
         val ncols = cols + r2.cols - cName.length
         val cp1   = VEC.from (cName.map (on (_)))                                // get column positions in this
@@ -1333,7 +1345,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
      *  this table to be paired with all tuples in table r2.
      *  @param r2  the second table
      */
-    def divide (r2: Relation): Relation = ???
+    infix def divide (r2: Relation): Relation = ???
 
     // ================================================================ GROUP BY
 
@@ -1450,7 +1462,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
         val newCol = Vector.fill [Vectr] (cols)(null)
         val r2 = new Relation (name + "_o_" + ucount.inc (), schema, domain, key, newCol)
 
-        val perm = orderByHelper (VEC (cName.map (on (_)) :_*))
+        val perm = orderByHelper (VEC (cName.map (on (_))*))
         for i <- perm do r2.add (row(i))
         r2.materialize ()
     end orderBy
@@ -1469,7 +1481,7 @@ class Relation (name: String, schema: Schema, domain: Domain, key: Schema,
         val newCol = Vector.fill [Vectr] (cols) (null)
         val r2 = new Relation (name + "_r_" + ucount.inc (), schema, domain, key, newCol)
 
-        val perm = orderByHelper (VEC (cName.map (on (_)) :_*))
+        val perm = orderByHelper (VEC (cName.map (on (_))*))
         for i <- perm.reverse do r2.add (row(i))
         r2.materialize ()
     end orderByDesc
@@ -2158,7 +2170,7 @@ end Ex_Days
     test ("week intersect weekend", week intersect weekend)
 
     println (">>>>> addm")
-    test ("weekend addm (\"Zday\", 1.00)", weekend addm Vector ("Zday", 1.00))
+    test ("weekend.addm (\"Zday\", 1.00)", weekend.addm (Vector ("Zday", 1.00)))
 
     println (">>>>> minus")
     test ("week minus weekend", week minus weekend)
@@ -2218,7 +2230,7 @@ end relationTest
     test ("week ⋂ weekend", week ⋂ weekend)
 
     println (">>>>> addm")
-    test ("weekend addm (\"Zday\", 1.00)", weekend addm Vector ("Zday", 1.00))
+    test ("weekend.addm (\"Zday\", 1.00)", weekend.addm (Vector ("Zday", 1.00)))
 
     println (">>>>> minus")
     test ("week - weekend", week - weekend)

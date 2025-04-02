@@ -15,6 +15,7 @@ package classifying
 import scala.collection.mutable.Set
 
 import scalation.mathstat.{MatrixD, MatrixI}
+import scalation.modeling.neuralnet.NeuralNet_3L_C2
 
 import ActivationFun._
 
@@ -45,7 +46,7 @@ end Example_Diabetes
  *
  *  BaggingTrees, DecisionTree_C45, DecisionTree_C45wp, DecisionTree_ID3, DecisionTree_ID3wp,
  *  HiddenMarkov, KNN_Classifier, LinDiscAnalyis, LogisticRegression, NaiveBayes,
- *  NaiveBayesR, NeuralNet_Class_3L, NullModel, RandomForest, SupportVectorMachine, TANBayes.
+ *  NaiveBayesR, NeuralNet_3L_C2, NullModel, RandomForest, SupportVectorMachine, TANBayes.
  *
  *  Require having only a single feature: SimpleLDA, SimpleLogisticRegression => SKIP
  *
@@ -152,9 +153,9 @@ end Example_Diabetes
 
 // Neural Network Classifiers (1)
 
-    banner ("Example_Diabetes: NeuralNet_Class_3L")
-    NeuralNet_Class_3L.hp("cThresh") = 0.45
-    mod = NeuralNet_Class_3L (xy, fname, f = f_id)()
+    banner ("Example_Diabetes: NeuralNet_3L_C2")
+    NeuralNet_3L_C2.hp("cThresh") = 0.45
+    mod = NeuralNet_3L_C2 (xy, fname, f = f_id)()
     mod.trainNtest ()()
     println (mod.summary ())
 

@@ -14,6 +14,7 @@ package mathstat
 import java.util.Arrays.copyOf
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq}
+import scala.collection.immutable.Set
 import scala.collection.generic._
 import scala.collection.mutable._
 import scala.runtime.ScalaRunTime.stringOf
@@ -78,12 +79,26 @@ class VectorS (val dim: Int,
     def apply (idx: IIndexedSeq [Int]): VectorS = VectorS (for i <- idx.indices yield v(idx(i)))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return the elements not equal to index ix of this vector.
+     *  @param ix  the index to skip
+     */
+    def not (ix: Int): VectorS =
+        VectorS (for i <- indices if i != ix yield v(i))
+    end not
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the elements not in index sequence idx of this vector.
      *  @param idx  the index sequence of elements to skip
      */
     def not (idx: IndexedSeq [Int]): VectorS =
-        VectorS (for i <- indices if ! (idx contains i) yield v(i))
+        VectorS (for i <- indices if ! (idx `contains` i) yield v(i))
     end not
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a vector containing all but the first n elements of this vector.
+     *  @param n  the number of elements to be dropped
+     */
+    override def drop (n: Int): VectorS = new VectorS (dim - n, v.drop (n))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the elements in
@@ -91,13 +106,13 @@ class VectorS (val dim: Int,
      *  Note split and split_ produce different element orders.
      *  @param idx  the element indices to include/exclude
      */
-    def split (idx: IndexedSeq [Int]): (VectorS, VectorS) =
+    def split (idx: Set [Int]): (VectorS, VectorS) =
         val len = idx.size
         val a   = new VectorS (len)
         val b   = new VectorS (dim - len)
         var j, k = 0
         for i <- indices do
-            if idx contains i then
+            if idx `contains` i then
                 a.v(j) = v(i)
                 j += 1
             else
@@ -107,6 +122,8 @@ class VectorS (val dim: Int,
         end for
         (a, b)
     end split
+
+    inline def split (idx: IndexedSeq [Int]): (VectorS, VectorS) = split (idx.toSet [Int])
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Split the elements from this vector to form two vectors:  one from the elements in
@@ -152,6 +169,13 @@ class VectorS (val dim: Int,
     def update (r: Range, a: String): Unit = for i <- r do v(i) = a
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Update the i-th element (or in range) of this vector.
+     *  @param i  the index of the element to update
+     *  @param y  the update vector/indexed sequence to assign
+     */
+    def update (r: Range, y: IndexedSeq [String]): Unit = for i <- r do v(i) = y(i)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set all elements in this vector to a (or vector y.
      *  @param a  the value to be assigned
      */
@@ -175,7 +199,7 @@ class VectorS (val dim: Int,
      *  As a partial order some vectors may not be comparable.
      *  @param bb  the other vector
      */
-    def tryCompareTo [B >: VectorS: AsPartiallyOrdered] (bb: B): Option [Int] =
+    infix def tryCompareTo [B >: VectorS: AsPartiallyOrdered] (bb: B): Option [Int] =
         if ! bb.isInstanceOf [VectorS] then return None
         val b  = bb.asInstanceOf [VectorS]
         var le = true
@@ -284,13 +308,13 @@ class VectorS (val dim: Int,
     /** Return the difference between this vector and vector y.
      *  @param y  the other vector/indexed sequence
      */
-    def diff (y: IndexedSeq [String]): VectorS = { val a = v diff y; new VectorS (a.size, a) }
+    infix def diff (y: IndexedSeq [String]): VectorS = { val a = v `diff` y; new VectorS (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the intersection of this vector and vector y.
      *  @param y  the other vector/indexed sequence
      */
-    def intersect (y: IndexedSeq [String]): VectorS = { val a = v intersect y; new VectorS (a.size, a) }
+    infix def intersect (y: IndexedSeq [String]): VectorS = { val a = v `intersect` y; new VectorS (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Form a new vector consisting of the unique values in this vector.
@@ -298,9 +322,23 @@ class VectorS (val dim: Int,
     override def distinct: VectorS = { val a = v.distinct; new VectorS (a.size, a) }
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Count the number of unique/distinct values in this vector.
+     */
+    def countDistinct: Int = v.distinct.size
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Reverse the elements in this vector.
      */
     override def reverse: VectorS = { val a = v.reverse; new VectorS (a.size, a) }
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Determine whether this vector is sorted in ascending order.
+     */
+    def isSorted: Boolean =
+        var i = 0
+        while i < dim-1 do if v(i) > v(i+1) then return false else i += 1
+        true
+    end isSorted
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Sort the elements in this vector according to ord.lt (ascending order).
@@ -332,12 +370,28 @@ class VectorS (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the dot (inner) product of vectors this and y.
      *  @param  the other vector/indexed sequence
-    def dot (y: IndexedSeq [String]): String =
+    infix def dot (y: IndexedSeq [String]): String =
         var sum = ""
         for i <- v.indices do sum += v(i) * y(i)
         sum
     end dot
      */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a new vector consisting of the maximum of this and y's corresponding elements.
+     *  @param y  the other vector/indexed sequence
+     */
+    infix def maxv (y: IndexedSeq [String]): VectorS =
+        VectorS (for i <- indices yield if v(i) >= y(i) then v(i) else y(i))
+    end maxv
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Return a new vector consisting of the minimum of this and y's corresponding elements.
+     *  @param y  the other vector/indexed sequence
+     */
+    infix def minv (y: IndexedSeq [String]): VectorS =
+        VectorS (for i <- indices yield if v(i) <= y(i) then v(i) else y(i))
+    end minv
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Find the argument maximum of this vector (index of maximum element).
@@ -397,6 +451,7 @@ class VectorS (val dim: Int,
         
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute three sums for the k-prefix, middle and k-suffix of this vector.
+     *  @param k  the integer specifying the size of the prefix
      */
     def sums (k: Int): (String, String, String) =
         var s0, s1, s2 = ""
@@ -410,6 +465,7 @@ class VectorS (val dim: Int,
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute three squared norms for the k-prefix, middle and k-suffix of this vector.
+     *  @param k  the integer specifying the size of the prefix
     def normSqs (k: Int): (String, String, String) =
         var s0, s1, s2 = ""
         for i <- v.indices do
@@ -458,7 +514,7 @@ class VectorS (val dim: Int,
     def map2Int: (VectorI, BiMap [String, Int]) =
         val map   = new BiMap [String, Int] ()
         var count = 0
-        for i <- indices if ! (map contains (v(i))) do
+        for i <- indices if ! (map `contains` (v(i))) do
             map   += v(i) -> count
             count += 1
         end for
@@ -474,16 +530,16 @@ class VectorS (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Convert to a probability vector, by normalizing so that it sums to one.
      */
-    def toProbability: VectorD = this.toDouble.toProbability
+    def toProbability: VectorD = toDouble.toProbability
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Normalize this vector so its length is one (unit vector).
-    def normalize: VectorD = this.toDouble.normalize
+    def normalize: VectorD = toDouble.normalize
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Normalize this vector to have a maximum of one.
-    def normalize1: VectorD = this.toDouble.normalize1
+    def normalize1: VectorD = toDouble.normalize1
      */
 
     //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -531,13 +587,34 @@ class VectorS (val dim: Int,
     /** Indirectly find the k-median (k-th smallest element) of array v.
      *  @param k  the type of median (e.g., k = (dim+1)/2 is the median)
      */
-    def median (k: Int = (dim+1)/2): String = median (Array.range (0, dim), 0, dim-1, k)
+    def median (k: Int = (dim+1)/2): String =
+        if dim <= 0 then flaw ("median", s"no vector to take the median of k = $k, dim = $dim")
+        median (Array.range (0, dim), 0, dim-1, k)
+    end median
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the fraction quantile.
+     *  @param fraction  the fraction/percentile to take
+     */
+    def quantile (fraction: Double): String =
+        var k = (fraction * dim).toInt
+        if k >= dim then k = dim - 1
+        if k <= 0   then k = 1
+        median (k)
+    end quantile
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the averaged median, which is the median when dim is odd and
      *  the average of the median and the next k-median when dim is even.
      */
     def median_ : String = median ()
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Given the rank order for this vector, return its elements in that order.
+     *  The rank order may be established using indirect sorting (e.g., iqsort).
+     *  @param rank  the rank order of elements in this vector
+     */
+    def reorder (rank: Array [Int]): VectorS = VectorS (for i <- indices yield v(rank(i)))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Recursively and indirectly sort the p to r partition of array v 
@@ -561,7 +638,7 @@ class VectorS (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort this vector using QuickSort, returning the rank order.
      */
-    def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
+    inline def iqsort: Array [Int] = iqsort (Array.range (0, dim), 0, dim-1)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly sort the p to r partition of array v using SelectionSort.
@@ -582,6 +659,21 @@ class VectorS (val dim: Int,
     /** Indirectly sort this vector using SelectionSort, returning the rank order.
      */
     def iselsort: Array [Int] = iselsort (Array.range (0, dim), 0, dim-1)
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Indirectly sort this vector using Selection Sort, returning the rank order
+     *  of the stop smallest elements.
+     *  @param stop  only sort stop number of smallest elements
+     */
+    def iselsort (stop: Int = dim): Array [Int] =
+        val rk = Array.range (0, dim)
+        for i <- 0 until stop do
+            var k = i
+            for j <- i+1 until dim if v(rk(j)) < v(rk(k)) do k = j
+            if i != k then iswap (rk, i, k)
+        end for
+        rk.slice (0, stop)
+    end iselsort
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Indirectly partition the array from 'p' to 'r' into a left partition
@@ -627,23 +719,32 @@ class VectorS (val dim: Int,
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the sample mean (also the population mean, they are the same).
      *  >> E(X)
-    def mean: Double = this.toDouble.mean
+    inline def mean: Double = toDouble.mean
+     */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the centered norm-squared of this vector.
+    def cnormSq: Double =
+        var e, s, ss = 0.0
+        for i <- indices do { e = v(i); s += e; ss += e * e }
+        ss - s * s / nd
+    end cnormSq
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the sample variance (and population population).
      *  >> E(X - μ)^2
-    def variance: Double   = this.toDouble.variance
-    def variance_ : Double = this.toDouble.variance_
-    def variance (mu: Double): Double  = this.toDouble.variance (mu)
-    def variance_ (mu: Double): Double = this.toDouble.variance_ (mu)
+    def variance: Double   = toDouble.variance
+    def variance_ : Double = toDouble.variance_
+    def variance (mu: Double): Double  = toDouble.variance (mu)
+    def variance_ (mu: Double): Double = toDouble.variance_ (mu)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the sample covariance (or population covariance) of this vector with vector y.
      *  @param y  the other vector
-    def cov (y: IndexedSeq [String]): Double  = this.toDouble cov VectorD.fromStrings (y)
-    def cov_ (y: IndexedSeq [String]): Double = this.toDouble cov_ VectorD.fromStrings (y)
+    inifix def cov (y: IndexedSeq [String]): Double  = toDouble cov VectorD.fromStrings (y)
+    inifix def cov_ (y: IndexedSeq [String]): Double = toDouble cov_ VectorD.fromStrings (y)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -662,8 +763,26 @@ class VectorS (val dim: Int,
     /** Compute the 'k'-lag auto-covariance of this vector for stationary and
      *  non-stationary series (acov_).
      *  @param k  the lag parameter
-    def acov (k: Int = 1): Double = this.toDouble.acov (k)
-    def acov_ (k: Int = 1): Double = this.toDouble.acov_ (k)
+    def acov (k: Int = 1): Double = toDouble.acov (k)
+     */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for stationary series.
+     *  This follows an intuitive defintion that divides by the number of elements summed dim-k.
+     *  @param k  the lag parameter (0 <= k < n)
+    def acov2 (k: Int = 1): Double =
+        val n  = dim - k
+        val mu = mean
+        var s  = 0.0
+        for i <- 0 until n do s += (v(i) - mu) * (v(i+k) - mu)
+        s / n
+    end acov2
+     */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-covariance of this vector for non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n)
+    def acov_ (k: Int = 1): Double = toDouble.acov_ (k)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -671,15 +790,32 @@ class VectorS (val dim: Int,
      *  If either variance is zero, will result in Not-a-Number (NaN), return
      *  one if the vectors are the same, or -0 (indicating undefined).
      *  @param y  the other vector
-    def corr (y: VectorS): Double = this.toDouble.corr (y.toDouble)
+    infix def corr (y: VectorS): Double = toDouble.corr (y.toDouble)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the 'k'-lag auto-correlation of this vector.
      *  Assumes a stationary process vector, if not its an approximation.
      *  @param k  the lag parameter
-    def acorr (k: Int = 1): Double  = this.toDouble.acorr (k)
-    def acorr_ (k: Int = 1): Double = this.toDouble.acorr_ (k)
+    def acorr (k: Int = 1): Double  = toDouble.acorr (k)
+     */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag cross-correlation of this vector (assumes a stationary
+     *  process vector, if not its an approximation).
+     *  @param y  the other vector
+     *  @param k  the lag parameter (0 <= k < n)
+    def ccorr (y: VectorS, k: Int = 1): Double =
+        val mu   = mean
+        val mu_y = y.mean
+        ccov (k, mu, y, mu_y) / (stdev * y.stdev)
+    end ccorr
+     */
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the 'k'-lag auto-correlation of this vector for a non-stationary series.
+     *  @param k  the lag parameter (0 <= k < n)
+    def acorr_ (k: Int = 1): Double = toDouble.acorr_ (k)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -687,7 +823,7 @@ class VectorS (val dim: Int,
      *  The `iqsort` method gives the rank order of a vector.
      *  @see  en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
      *  @param y  the other vector
-    def scorr (y: VectorS): Double = this.toDouble.scorr (y.toDouble)
+    infix def scorr (y: VectorS): Double = toDouble.scorr (y.toDouble)
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -696,8 +832,8 @@ class VectorS (val dim: Int,
      *  symmetric, and positive skewness indicates it is elongated on the right.
      *  @see www.mathworks.com/help/stats/skewness.html
      *  >> E(X - μ)^3 / σ^3
-    def skew: Double   = this.toDouble.skew
-    def skew_ : Double = this.toDouble.skew_
+    def skew: Double   = toDouble.skew
+    def skew_ : Double = toDouble.skew_
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -705,14 +841,15 @@ class VectorS (val dim: Int,
      *  distribution with heavier tails than a Normal distribution.
      *  @see www.mathworks.com/help/stats/kurtosis.html
      *  >> E(X - μ)^4 / σ^4
-    def kurtosis: Double   = this.toDouble.kurtosis
-    def kurtosis_ : Double = this.toDouble.kurtosis_
+    def kurtosis: Double   = toDouble.kurtosis
+    def kurtosis_ : Double = toDouble.kurtosis_
      */
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Produce a standardized version of the vector by subtracting the mean and
      *  dividing by the standard deviation (e.g., Normal -> Standard Normal).
-    def standardize: VectorD = this.toDouble.standardize
+    def standardize: VectorD =toDouble.standardize
+    def standardize2: VectorD = (this - mean) / (stdev + EPSILON)
      */
 
 end VectorS
@@ -735,6 +872,7 @@ object VectorS:
      */
     def apply (xs: IndexedSeq [String]): VectorS = new VectorS (xs.size, xs.toArray)
 
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Create a `VectorS` from one or more values (repeated values `String`*).
      *  @param x   the first `String` number
@@ -748,6 +886,7 @@ object VectorS:
      *  @param xs  the sequence/array of the `String` numbers
      */
     def fromStrings (xs: IndexedSeq [String]): VectorS = VectorS (xs.map (_.toString))
+    def fromValueTypes (xs: IndexedSeq [ValueType]): VectorS = VectorS (xs.map (_.toString))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return a `VectorS` consisting of a sequence of integers in a range.
@@ -796,7 +935,7 @@ object VectorS:
     def map2Int (a: Array [String]): (Array [Int], BiMap [String, Int]) =
         val map   = new BiMap [String, Int] ()
         var count = 0
-        for i <- a.indices if ! (map contains (a(i))) do
+        for i <- a.indices if ! (map `contains` (a(i))) do
             map   += a(i) -> count
             count += 1
         end for
@@ -841,8 +980,8 @@ end VectorS
     println (s"x > y               = ${x > y}")                  // greater then
     println (s"x >= y              = ${x >= y}")                 // greater then or equal
 
-    println (s"x contains a        = ${x contains a}")           // element contained in vector
-    println (s"x contains 4        = ${x contains "4"}")
+    println (s"x `contains` a      = ${x `contains` a}")         // element contained in vector
+    println (s"x `contains` 4      = ${x `contains` "4"}")
     println (s"x.exists (_ > a)    = ${x.exists (_ > a)}")       // existence of element satisfying predicate
     println (s"x.groupBy (_ > a)   = ${x.groupBy (_ > a)}")      // group according function values
     println (s"x.indexOf (a)       = ${x.indexOf (a)}")          // index of first element equaling

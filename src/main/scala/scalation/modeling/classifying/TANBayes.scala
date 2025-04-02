@@ -447,7 +447,7 @@ end tANBayesTest3
     // x2. Astigmatic:     (1) no, (2) yes
     // x3. Tear production rate:  (1) reduced, (2) normal
     // features:              x0  x1  x2  x3   y
-    var xy = MatrixI ((24, 5), 1,  1,  1,  1,  3,           // 1
+    val xy = MatrixI ((24, 5), 1,  1,  1,  1,  3,           // 1
                                1,  1,  1,  2,  2,           // 2
                                1,  1,  2,  1,  3,           // 3
                                1,  1,  2,  2,  1,           // 4

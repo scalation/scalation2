@@ -12,7 +12,7 @@ package scalation
 package modeling
 package classifying
 
-import scala.collection.mutable.{ArrayBuffer, IndexedSeq, LinkedHashSet, Set}
+import scala.collection.mutable.{ArrayBuffer, IndexedSeq, LinkedHashSet => LSET, Set}
 import scala.runtime.ScalaRunTime.stringOf
 import scala.util.control.Breaks.{break, breakable}
 
@@ -71,7 +71,8 @@ trait Classifier (x: MatrixD, y: VectorI, protected var fname: Array [String],
     /** Return the used response vector y.  Mainly for derived classes where y is
      *  transformed, e.g., `TranRegression`, `Regression4TS`.
      */
-    def getY: VectorI = y
+    def getYi: VectorI = y
+    def getY: VectorD = y.toDouble
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return the feature/variable names.
@@ -270,6 +271,10 @@ REPORT
         """
     end report
 
+//  F E A T U R E   S E L E C T I O N
+
+// FIX - try to merge code with `modeling.FeatureSelection`
+
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Build a sub-model that is restricted to the given columns of the data matrix.
      *  Override for models that support feature selection.
@@ -312,7 +317,7 @@ REPORT
      *  @param cross  whether to include the cross-validation QoF measure
      */
     def selectFeatures (tech: SelectionTech, idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
-                       (LinkedHashSet [Int], MatrixD) =
+                       (LSET [Int], MatrixD) =
         tech match
         case SelectionTech.Forward  => forwardSelAll (idx_q, cross)
         case SelectionTech.Backward => backwardElimAll (idx_q, 1, cross)
@@ -328,12 +333,12 @@ REPORT
      *  @param cols   the columns of matrix x currently included in the existing model
      *  @param idx_q  index of Quality of Fit (QoF) to use for comparing quality
      */
-    def forwardSel (cols: LinkedHashSet [Int], idx_q: Int = QoF.rSqBar.ordinal): BestStep =
+    def forwardSel (cols: LSET [Int], idx_q: Int = QoF.rSqBar.ordinal): BestStep =
         var best  = BestStep ()                                              // best step so far
         var bestq = -MAX_VALUE                                               // best score so far
 
         for j <- x.indices2 if ! (cols contains j) do
-            val cols_j = cols union LinkedHashSet (j)                        // try adding variable/column x_j
+            val cols_j = cols union LSET (j)                                 // try adding variable/column x_j
             val x_cols = x(?, cols_j)                                        // x projected onto cols_j columns
             val mod_j  = buildModel (x_cols)                                 // regress with x_j added
             mod_j.train ()                                                   // train model
@@ -356,9 +361,9 @@ REPORT
      *  @param cross  whether to include the cross-validation QoF measure
      */
     def forwardSelAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
-                      (LinkedHashSet [Int], MatrixD) =
+                      (LSET [Int], MatrixD) =
         val rSq  = new MatrixD (x.dim2 - 1, 3)                               // QoF: R^2, R^2 Bar, R^2 cv
-        val cols = LinkedHashSet (0)                                         // start with x_0 in model
+        val cols = LSET (0)                                                  // start with x_0 in model
 
         banner (s"forwardSelAll: (l = 0) INITIAL variable (0, ${fname(0)}) => cols = $cols")
 
@@ -386,12 +391,12 @@ REPORT
      *  @param first  first variable to consider for elimination
      *                      (default (1) assume intercept x_0 will be in any model)
      */
-    def backwardElim (cols: LinkedHashSet [Int], idx_q: Int = QoF.rSqBar.ordinal, first: Int = 1): BestStep =
+    def backwardElim (cols: LSET [Int], idx_q: Int = QoF.rSqBar.ordinal, first: Int = 1): BestStep =
         var best  = BestStep ()                                              // best step so far
         var bestq = -MAX_VALUE                                               // best score so far
 
         for j <- first until x.dim2 if cols contains j do
-            val cols_j = cols diff LinkedHashSet (j)                         // try removing variable/column x_j
+            val cols_j = cols diff LSET (j)                                  // try removing variable/column x_j
             val x_cols = x(?, cols_j)                                        // x projected onto cols_j columns
             val mod_j  = buildModel (x_cols)                                 // regress with x_j added
             mod_j.train ()                                                   // train model
@@ -425,9 +430,9 @@ REPORT
      *  @param cross  whether to include the cross-validation QoF measure
      */
     def backwardElimAll (idx_q: Int = QoF.rSqBar.ordinal, first: Int = 1, cross: Boolean = true):
-                        (LinkedHashSet [Int], MatrixD) =
+                        (LSET [Int], MatrixD) =
         val rSq  = new MatrixD (x.dim2 - 1, 3)                               // R^2, R^2 Bar, R^2 cv
-        val cols = LinkedHashSet.range (0, x.dim2)                           // start with all x_j in model
+        val cols = LSET.range (0, x.dim2)                                    // start with all x_j in model
 
         val best0 = fullModel
         updateQoF (rSq, 0, cross, best0)                                     // update QoF results for full model
@@ -458,10 +463,10 @@ REPORT
      *  @param cross  whether to include the cross-validation QoF measure
      */
     def stepRegressionAll (idx_q: Int = QoF.rSqBar.ordinal, cross: Boolean = true):
-                          (LinkedHashSet [Int], MatrixD) =
+                          (LSET [Int], MatrixD) =
         val SWAP   = false                                                   // whether to include swapping
         val rSq    = new MatrixD (x.dim2 - 1, 3)                             // QoF: R^2, R^2 Bar, R^2 cv
-        val cols   = LinkedHashSet (0)                                       // start with x_0 in model
+        val cols   = LSET (0)                                                // start with x_0 in model
         var last_q = -MAX_VALUE                                              // current best QoF
         val vars   = ArrayBuffer [Int]()
 
@@ -524,8 +529,8 @@ REPORT
      *  @param out   the variable to swap out
      *  @param in    the variable to swap in
      */
-    private def swapVars (cols: LinkedHashSet [Int], out: Int, in: Int): BestStep =
-        val cols_  = cols diff LinkedHashSet (out) union LinkedHashSet (in)  // swap out var with in var
+    private def swapVars (cols: LSET [Int], out: Int, in: Int): BestStep =
+        val cols_  = cols diff LSET (out) union LSET (in)  // swap out var with in var
         val x_cols = x(?, cols_)                                             // x projected onto cols_j columns
         val mod_j  = buildModel (x_cols)                                     // regress with x_out removed and x_in added
         mod_j.train ()                                                       // train model
@@ -614,15 +619,6 @@ REPORT
     end crossValidate
 
 end Classifier
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `SelectionTech` enumeration indicates the available feature selection
- *  techniques.
- */
-enum SelectionTech:
-     case Forward, Backward, Stepwise
-end SelectionTech
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

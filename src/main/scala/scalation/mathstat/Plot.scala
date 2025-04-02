@@ -14,7 +14,7 @@ package mathstat
 import scala.math.{ceil, floor, min, pow, round}
 
 import scalation.scala2d._
-import scalation.scala2d.BorderLayout._
+//import scalation.scala2d.BorderLayout._
 import scalation.scala2d.Colors._
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
