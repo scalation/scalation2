@@ -1,7 +1,11 @@
 <center>
 <h1> SCALAble SimulaTION - ScalaTion </h1>
 <p>
-<a href = "#papers">Papers</a> | <a href = "#scaladoc">Scaladoc</a> | <a href = "#source-code"> Source Code</a>
+<a href = "#papers">Papers</a> 
+
+<!--
+| <a href = "#scaladoc">Scaladoc</a> | <a href = "#source-code"> Source Code</a>
+-->
 </center>
 
 <p>
