@@ -47,29 +47,29 @@ Getting started: <a href = "https://www.scala-sbt.org/1.x/docs/Hello.html">sbt H
 <br>
 
 
-<h4>1. Download the scalation_2.0.zip file</h4>
-
 <!--
+<h4>1. Download the scalation_2.0.zip file</h4>
 <a href = "../scalation_2.0.tar.gz"> scalation_2.0.tar.gz </a> <br> <b>OR</b> <br>
 <a href = "../scalation_2.0.zip"> scalation_2.0.zip </a>
 -->
 
+
 <p>
-<h4>2. Unzip the file</h4>
+<h4>1. Git clone the repository</h4>
 
 <pre><code>
-$ unzip scalation_2.0.zip
+$ git clone https://github.com/scalation/scalation_2.0.git
 </code></pre>
 
 
-<h4>3. To build all the modules, change into the ScalaTion base directory and run sbt</h4>
+<h4>2. To build all the modules, change into the ScalaTion base directory and run sbt</h4>
 
 <pre><code>
 $ cd scalation_2.0
 $ sbt compile
 </code></pre>
 
-<h4>4. To compile code or run apps, enter sbt and type compile, runMain or exit </h4>
+<h4>3. To compile code or run apps, enter sbt and type compile, runMain or exit </h4>
 
 <pre><code>
 $ sbt
