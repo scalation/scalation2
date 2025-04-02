@@ -1,6 +1,6 @@
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** @author  John Miller
+/** @author  John Miller, Yousef Fekri Dabanloo
  *  @version 2.0
  *  @date    Thu Mar 13 14:06:11 EDT 2025
  *  @see     LICENSE (MIT style license file).
@@ -44,7 +44,7 @@ trait Transform (x: VectorD | MatrixD = null):
             case xV: VectorD => setB (MatrixD (xV).transpose)
 
     def setLU (_lu: VectorD): Unit = lu = _lu                            // set the default bounds
-    def setB (x: MatrixD): Unit = b = x                                  // set the argument matrix
+    def setB (x: MatrixD): Unit = b = x                                  // set the argument matrix 
     def f  (x: MatrixD): MatrixD                                         // transformation function
     def fi (y: MatrixD): MatrixD                                         // inverse transformation function
     val f:  FunctionV2V = (x: VectorD) => f(MatrixD(x).transpose)(?, 0)
@@ -115,13 +115,13 @@ class powForm (x: VectorD) extends Transform (x):
     println (s"x = $x")
 
     banner ("zForm Transformation")
-    val zForm1 = zForm (x)                                                            // set the argument vector
+    val zForm1 = zForm (x)                                                    // set the argument vector
     var y = zForm1.f (x)
     var z = zForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("rangeForm Transformation")
-    val rangeForm1 = rangeForm (x)                                                        // set the argument vector
+    val rangeForm1 = rangeForm (x)                                            // set the argument vector
     y = rangeForm1.f (x)
     z = rangeForm1.fi (y)
     println (s"y = $y, z = $z")
@@ -137,19 +137,19 @@ class powForm (x: VectorD) extends Transform (x):
     println (s"y = $y, z = $z")
 
     banner ("cosForm Transformation")
-    val cosForm1 = cosForm (VectorD (0.25))                                             // set the argument vector
+    val cosForm1 = cosForm (VectorD (0.25))                                   // set the argument vector
     y = cosForm1.f (x)
     z = cosForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("sinForm Transformation")
-    val sinForm1 = sinForm (VectorD (0.25))                                             // set the argument vector
+    val sinForm1 = sinForm (VectorD (0.25))                                   // set the argument vector
     y = sinForm1.f (x)
     z = sinForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("powForm Transformation")
-    val powForm1 = powForm (VectorD (1.5))                                              // set the argument vector
+    val powForm1 = powForm (VectorD (1.5))                                    // set the argument vector
     y = powForm1.f (x)
     z = powForm1.fi (y)
     println (s"y = $y, z = $z")
@@ -169,13 +169,13 @@ end transformTest
     println (s"x = $x")
 
     banner ("zForm Transformation")
-    val zForm1 = zForm (x)                                                            // set the argument vector
+    val zForm1 = zForm (x)                                                    // set the argument vector
     var y = zForm1.f (x)
     var z = zForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("rangeForm Transformation")
-    val rangeForm1 = rangeForm (x)                                                      // set the argument vector
+    val rangeForm1 = rangeForm (x)                                            // set the argument vector
     y = rangeForm1.f (x)
     z = rangeForm1.fi (y)
     println (s"y = $y, z = $z")
@@ -191,19 +191,19 @@ end transformTest
     println (s"y = $y, z = $z")
 
     banner ("cosForm Transformation")
-    val cosForm1 = cosForm (VectorD (0.25))                                             // set the argument vector
+    val cosForm1 = cosForm (VectorD (0.25))                                   // set the argument vector
     y = cosForm1.f (x)
     z = cosForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("sinForm Transformation")
-    val sinForm1 = sinForm (VectorD (0.25))                                             // set the argument vector
+    val sinForm1 = sinForm (VectorD (0.25))                                   // set the argument vector
     y = sinForm1.f (x)
     z = sinForm1.fi (y)
     println (s"y = $y, z = $z")
 
     banner ("powForm Transformation")
-    val powForm1 = powForm (VectorD (1.5))                                              // set the argument vector
+    val powForm1 = powForm (VectorD (1.5))                                    // set the argument vector
     y = powForm1.f (x)
     z = powForm1.fi (y)
     println (s"y = $y, z = $z")
@@ -221,13 +221,13 @@ end transformTest2
     println (s"x = $x")
 
     banner ("zForm Transformation")
-    val zForm1 = zForm (x)                                                            // set the argument vector
+    val zForm1 = zForm (x)                                                    // set the argument vector
     var y = zForm1.f (x)
     var z = zForm1.fi (y)
     println (s"y = $y, \nz = $z")
 
     banner ("powForm Transformation")
-    val powForm1 = powForm (VectorD (1.5))                                              // set the argument vector
+    val powForm1 = powForm (VectorD (1.5))                                    // set the argument vector
     y = powForm1.f (x)
     z = powForm1.fi (y)
     println (s"y = $y, \nz = $z")
@@ -240,3 +240,4 @@ end transformTest2
     println(s"ysc = ${ysc2}")
 
 end transformTest3
+

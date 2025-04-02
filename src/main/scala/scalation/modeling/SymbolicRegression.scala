@@ -738,8 +738,15 @@ end symbolicRegressionTest12
     import scala.math.tanh
 
     val x  = VectorD (1, 2, 3, 4, 5, 6, 7, 8, 9)
-    val y  = VectorD (8, 6, 4, 2, 1, 3, 5, 9, 7)
+//  val y  = VectorD (8, 6, 4, 2, 1, 3, 5, 9, 7)
+    val y  = VectorD (7, 8, 5, 3, 2, 1, 4, 6, 9)
     val ox = MatrixD.one (x.dim) :^+ x
+
+    banner ("SimpleRegression")
+    val mod0 = SimpleRegression (x, y, null)
+    mod0.trainNtest ()()
+    println (mod0.summary ())
+    new Plot (null, y, mod0.predict (mod0.getX), s"${mod0.modelName} y vs yp", lines = true)
 
     banner ("Regression")
     var mod = new Regression (ox, y)

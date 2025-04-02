@@ -16,7 +16,7 @@ import java.io.PrintWriter
 
 import scala.collection.immutable.{IndexedSeq => IIndexedSeq, Set => ISet}
 import scala.collection.mutable.{ArrayBuffer, IndexedSeq, Set}
-import scala.math.{round, sqrt}
+import scala.math.round
 import scala.util.control.Breaks.{break, breakable}
 
 /** Top-level type definition for functions mapping:
@@ -510,6 +510,18 @@ class MatrixD (val dim:  Int,
     end set
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Get the k-th DIAGONAL of this matrix.
+     *  @param k  how far above the main diagonal, e.g., (-1, 0, 1) for (sub, main, super)
+     */
+    def getDiag (k: Int = 0): VectorD =
+        val dm = math.min (dim, dim2)
+        val d  = new VectorD (dm - math.abs (k))
+        val (j, l) = (math.max (-k, 0), math.min (dm-k, dm))
+        cfor (j, l) { i => d(i-j) = v(i)(i+k) }
+        d
+    end getDiag
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Set the k-th DIAGONAL of this matrix to the elements in vector u.
      *  @param u  the vector to set the diagonal to
      *  @param k  how far above the main diagonal, e.g., (-1, 0, 1) for (sub, main, super)
@@ -593,21 +605,17 @@ class MatrixD (val dim:  Int,
      *  @param y  the other matrix
      */
     def ++^ (y: MatrixD): MatrixD =
+        if dim != y.dim then
+            flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = ${y.dim}")
 
-        if y.dim == 0 then            // YousefChange
-            this
-        else
-            if dim != y.dim then
-                flaw ("++^", s"requires same row dimensions: dim = $dim != y.dim = ${y.dim}")
-
-            val n = dim2 + y.dim2
-            val a = Array.ofDim [Double] (dim, n)
-            cfor (0, dim) { i =>
-                val a_i = a(i)
-                cfor (0, dim2) { j => a_i(j) = v(i)(j) }
-                cfor (dim2, n) { j => a_i(j) = y.v(i)(j-dim2) }
-            } // cfor
-            new MatrixD (dim, n, a)
+        val n = dim2 + y.dim2
+        val a = Array.ofDim [Double] (dim, n)
+        cfor (0, dim) { i =>
+            val a_i = a(i)
+            cfor (0, dim2) { j => a_i(j) = v(i)(j) }
+            cfor (dim2, n) { j => a_i(j) = y.v(i)(j-dim2) }
+        } // cfor
+        new MatrixD (dim, n, a)
     end ++^
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1367,17 +1375,14 @@ class MatrixD (val dim:  Int,
         MatrixD (indices.map { i => f(apply(i)) })
     end mmap
 
-
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Map each column of this matrix by applying function f to each column vector and
-     * returning the collected result as a matrix.
-     * MatrixD (for j <- indices2 yield f(apply(?, j)))
-     *
-     * @param f the vector to vector function to apply
+     *  returning the collected result as a matrix.
+     *  MatrixD (for j <- indices2 yield f(apply(?, j)))
+     *  @param  f the vector to vector function to apply
      */
-    def mmap_(f: FunctionV2V): MatrixD =
-        MatrixD(indices2.map { j => f(apply(?, j)) }).transpose
+    def mmap_ (f: FunctionV2V): MatrixD =
+        MatrixD (indices2.map { j => f(apply(?, j)) }).transpose
     end mmap_
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -1392,30 +1397,27 @@ class MatrixD (val dim:  Int,
     end map_
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the matrix consisting of the square root of each element of this vector.
+    /** Log transform this matrix by using math.sqrt.
      */
-    def sqrtM: MatrixD = map_ (math.sqrt(_))
+    def sqrt: MatrixD = map_ (math.sqrt (_))
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Log transform this matrix by using math.log (avoiding the log (0) problem).
+    /** Log transform this matrix by using math.log.
      */
     def log: MatrixD = map_ (math.log (_))
 
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Log transform this matrix by using math.log1p (avoiding the log (0) problem).
+    /** Log (1 plus) transform this matrix by using math.log1p (avoiding the log (0) problem).
      */
     def log1p: MatrixD = map_ (math.log1p (_))
-
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Exp transform this matrix by using math.exp (the inverse of log).
      */
     def exp: MatrixD = map_ (math.exp (_))
 
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Exp transform this matrix by using math.expm1 (the inverse of log1p).
+    /** Exp transform (minus 1) this matrix by using math.expm1 (the inverse of log1p).
      */
     def expm1: MatrixD = map_ (math.expm1 (_))
 
@@ -1485,12 +1487,10 @@ class MatrixD (val dim:  Int,
         new VectorD (a.size, a)
     end min
 
-
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the range (min to max) of values in this vector.
+    /** Return the minimum and maxinum value for each column in the matrix.
      */
-    def min_max: MatrixD = MatrixD(min, max)
-
+    def min_max: MatrixD = MatrixD (min, max)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the trace of this matrix, i.e., the sum of the elements on the
@@ -1534,7 +1534,7 @@ class MatrixD (val dim:  Int,
      *  the sum of the squared values over all the elements (sqrt (sse)).
      *  @see en.wikipedia.org/wiki/Matrix_norm#Frobenius_norm
      */
-    inline def normF: Double = sqrt (normFSq)
+    inline def normF: Double = math.sqrt (normFSq)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Compute the column means of this matrix.
@@ -1564,6 +1564,11 @@ class MatrixD (val dim:  Int,
     /** Compute the column standard deviations of this matrix.
      */
     def stdev: VectorD = variance.sqrt
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Compute the column maean and standard deviations of this matrix.
+     */
+    def mu_sig: MatrixD = MatrixD (mean, stdev)
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Return a matrix that is in the reverse row order of this matrix.
@@ -1665,7 +1670,7 @@ class MatrixD (val dim:  Int,
         cfor (0, covv.dim) { i =>
             val var_i = covv (i, i)                            // variance of column i
             cfor (0, i) { j =>
-                cor(i, j) = covv (i, j) / sqrt (var_i * covv (j, j))
+                cor(i, j) = covv (i, j) / math.sqrt (var_i * covv (j, j))
                 if cor(i, j).isNaN then cor(i, j) = if v(i) == v(j) then 1.0 else -0.0
                 cor(j, i) = cor (i, j)
         }} // cfor
@@ -1745,31 +1750,6 @@ class MatrixD (val dim:  Int,
         } // cfor
         out.close
     end write
-
-    /** Produce a standardized version of the matrix by apply the standardize method to each column
-     */
-    def standardizeCol: MatrixD =
-        val xe_std = new MatrixD(this.dim, this.dim2)           // Create a new MatrixD with the same dimensions
-        for (j <- 0 until this.dim2) {
-            xe_std(?, j) = this(?, j).standardize               // Standardize each column and set it back
-        }
-        xe_std
-    end standardizeCol
-
-    def standardize2Col: MatrixD =
-        val xe_std = new MatrixD(this.dim, this.dim2)           // Create a new MatrixD with the same dimensions
-        println(s"dimdim: ${xe_std.dims}")
-        for (j <- 0 until this.dim2) {
-            xe_std(?, j) = this(?, j).standardize2               // Standardize each column and set it back
-        }
-        xe_std
-    end standardize2Col
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Return the first 2 moments (mean mu and standard deviation sig).
-     */
-    def mu_sig: MatrixD = MatrixD(mean, stdev)
-
 
 end MatrixD
 

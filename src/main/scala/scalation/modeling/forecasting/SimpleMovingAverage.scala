@@ -131,7 +131,6 @@ end SimpleMovingAverage
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end simpleMovingAverageTest
@@ -177,7 +176,6 @@ end simpleMovingAverageTest2
 
     mod.forecastAll ()                                                    // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end simpleMovingAverageTest3

@@ -40,7 +40,7 @@ abstract class Forecaster_Reg (x: MatrixD, y: VectorD, hh: Int, fname: Array [St
       extends Forecaster (y, hh, tRng, hparam, bakcast)
          with FeatureSelection:
 
-    private   val debug = debugf ("Forecaster_Reg", false)                // debug function
+    private   val debug = debugf ("Forecaster_Reg", true)                // debug function
     private   val flaw  = flawf ("Forecaster_Reg")                        // debug function
     protected val reg   = new REGRESSION (x, y, fname, hparam)            // delegate training to regression
     protected val nneg  = hparam("nneg").toInt == 1                       // 0 => unrestricted, 1 => predictions must be non-negative
@@ -186,6 +186,21 @@ abstract class Forecaster_Reg (x: MatrixD, y: VectorD, hh: Int, fname: Array [St
                           b_ : VectorD = b, vifs: VectorD = reg.vif ()): String =
         super.summary (x_, fname_, b_, vifs)                             // summary from `Fit`
     end summary
+
+    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    /** Perform In-Sample Testing (In-ST), i.e. train and test on the full data set.
+     *  @param skip    the number of initial time points to skip (due to insufficient past)
+     *  @param showYf  whether to show the forecast matrix
+     */
+    override def inSampleTest (skip: Int = 2, showYf: Boolean = false): Unit =
+        banner (s"In-ST Test: $modelName")
+        trainNtest_x ()()                                                   // train on full and test on full
+        forecastAll ()                                                    // forecast over all horizons
+        setSkip (skip)                                                    // diagnose: skip the first 'skip' rows
+        diagnoseAll (getY, getYf)                                         // compute metrics for all horizons
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
+    end inSampleTest
 
 //  F E A T U R E   S E L E C T I O N
 

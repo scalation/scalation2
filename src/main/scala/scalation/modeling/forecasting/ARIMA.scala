@@ -244,7 +244,6 @@ end aRIMATest3
         new Plot (null, y, yh2, "y, yh2 vs. t", lines = true)
 
 //      Forecaster.checkForecastMatrix (yf, y, yp)                    // FIX - differences & un-differenced
-//      Forecaster.evalForecasts (mod, y, hh)
     end for
 
 end aRIMATest4

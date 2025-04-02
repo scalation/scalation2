@@ -388,8 +388,7 @@ end example_CovidTest6
         mod.trainNtest ()()
 
         mod.forecastAll ()
-        mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
+        mod.diagnoseAll (mod.getY, mod.getYf)
     end for
 
 end example_CovidTest7
@@ -469,8 +468,7 @@ end example_CovidTest8
         mod.trainNtest_x ()()                                           // needs x matrix => use _x version
 
         mod.forecastAll ()
-        mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
+        mod.diagnoseAll (mod.getY, mod.getYf)
     end for
 
 end example_CovidTest9
@@ -551,9 +549,7 @@ end example_CovidTest10
         mod.trainNtest_x ()()                                           // note: suffix "_x" currently required
 
         mod.forecastAll (mod.getYy)                                     // forecast h-steps ahead (h = 1 to hh) for all y
-        ARY_D.evalForecasts (mod, mod.getYy, hh)                        // FIX - compatible with diagnoseAll ?
-        mod.setSkip (0)                                                 // so evalForecast and diagnoseAll start at same place
-        mod.diagnoseAll (y, mod.getYf)
+        mod.diagnoseAll (mod.getY, mod.getYf)
     end for
 
 end example_CovidTest11
@@ -624,8 +620,7 @@ end example_CovidTest12
         mod.trainNtest ()()
 
         mod.forecastAll ()
-        mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
+        mod.diagnoseAll (mod.getY, mod.getYf)
     end for
 
 end example_CovidTest13
@@ -707,9 +702,7 @@ end example_CovidTest14
         mod.trainNtest_x ()()                                           // train and test on full dataset
  
         mod.forecastAll ()
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
-        mod.setSkip (0)                                                 // so evalForecast and diagnoseAll start at same place
-        mod.diagnoseAll (y, mod.getYf)
+        mod.diagnoseAll (mod.getY, mod.getYf)
     end for
 
 end example_CovidTest15

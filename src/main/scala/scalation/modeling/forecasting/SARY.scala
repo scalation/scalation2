@@ -129,7 +129,6 @@ import Example_LakeLevels.y
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
 end sARYTest
@@ -181,7 +180,6 @@ end sARYTest2
 //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for
@@ -244,7 +242,6 @@ end sARYTest4
 
     mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
     mod.diagnoseAll (y, mod.getYf)
-//  Forecaster.evalForecasts (mod, mod.getYb, hh)
     println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
     banner ("Feature Selection Technique: Forward")
@@ -284,7 +281,6 @@ end sARYTest5
 //      mod.setSkip (p)                                                 // full AR-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf)
-//      Forecaster.evalForecasts (mod, mod.getYb, hh)
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 //      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end for

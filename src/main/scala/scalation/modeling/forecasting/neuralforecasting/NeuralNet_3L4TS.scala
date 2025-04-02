@@ -48,8 +48,8 @@ import MakeMatrix4TS._
 class NeuralNet_3L4TS (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String] = null,
                        tRng: Range = null, nz: Int = -1,
                        hparam: HyperParameter = hp ++ Optimizer.hp,
-                       f: AFF = f_tanh, f1: AFF = f_id, bakcast: Boolean = false,
-                       tForms: TransformMap = Map ("tForm_y" -> null))
+                       f: AFF = f_tanh, f1: AFF = f_id, val itran: FunctionV2V = null,
+                       bakcast: Boolean = false)
       extends Forecaster_D (x, y, hh, tRng, hparam, bakcast):           // no automatic backcasting, @see `NeuralNet_3L4TS.apply`
 
     private val debug = debugf ("NeuralNet_3L4TS", true)                // debug function
@@ -63,7 +63,6 @@ class NeuralNet_3L4TS (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array
                                                                         // delegate training to neural network
 
     modelName = s"NeuralNet_3L4TS_${p}_${q}_${f.name}_${f1.name}"
-    yForm = tForms("tForm_y").asInstanceOf [Transform]
 
     debug ("init", s"$modelName with $n_exo exogenous variables and additional term spec = $spec with nneg = $nneg")
 //  debug ("init", s"[ x | y ] = ${x ++^ y}")
@@ -165,10 +164,11 @@ object NeuralNet_3L4TS extends Scaling:
                hparam: HyperParameter = hp ++ Optimizer.hp,
                f: AFF = f_tanh, f1: AFF = f_id, itran: FunctionV2V = null,
                bakcast: Boolean = false): NeuralNet_3L4TS =
+        val xy    = ARX.buildMatrix (xe, y, hparam, bakcast)
+        val yy    = makeMatrix4Y (y, hh, bakcast)
+        val n_exo = if xe == null then 0 else xe.dim2
 
-        val xy = ARX.buildMatrix(xe, y, hparam, bakcast)
-        val yy = makeMatrix4Y(y, hh, bakcast)
-        new NeuralNet_3L4TS (xy, yy, hh, xe.dim2, fname, tRng, nz, hparam, f, f1, bakcast)
+        new NeuralNet_3L4TS (xy, yy, hh, n_exo, fname, tRng, nz, hparam, f, f1, itran, bakcast)
     end apply
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
@@ -188,18 +188,16 @@ object NeuralNet_3L4TS extends Scaling:
                  tRng: Range = null, nz: Int = -1,
                  hparam: HyperParameter = hp ++ Optimizer.hp,
                  f: AFF = f_tanh, f1: AFF = f_id,
-                 bakcast: Boolean = false,
-                 tForm: VectorD | MatrixD => Transform = x => zForm(x)): NeuralNet_3L4TS =
+                 bakcast: Boolean = false): NeuralNet_3L4TS =
+        var itran: FunctionV2V = null                                        // inverse transform -> original scale (V2V or M2M)
 
-        val tForm_y = tForm(y)
-        if tForm_y.getClass.getSimpleName == "zForm" then hparam("nneg") = 0
-        val y_scal  = tForm_y.f(y)
-        val tForms: TransformMap = Map ("tForm_y" -> tForm_y)
+        val x_s = if scale then rescaleX (xe, f)
+                  else xe
+        val y_s = if f1.bounds != null then { val y_i = rescaleY (y, f1); itran = y_i._2; y_i._1 }
+                  else y
 
-        val xy    = ARX.buildMatrix (xe, y_scal, hparam, bakcast)
-        val yy    = makeMatrix4Y (y_scal, hh, bakcast)
-        new NeuralNet_3L4TS (xy, yy, hh, xe.dim2, fname, tRng, nz, hparam, f, f1, bakcast, tForms)
-
+//      println (s" scaled: xe = $x_s \n scaled y = $y_s")
+        apply (x_s, y_s, hh, fname, tRng, nz, hparam, f, f1, itran, bakcast)
     end rescale
 
 end NeuralNet_3L4TS
@@ -282,8 +280,8 @@ end neuralNet_3L4TSTest2
     for j <- exo_vars.indices do
         new Plot (null, xe(?, j), null, s"x_$j (${exo_vars(j)}) vs. t", lines = true)
 
-    val p    = 6                                                         // number of lags for endogenous variable
-    val q    = 4                                                          // number of lags for exogenous variables
+    val p    = 5                                                         // number of lags for endogenous variable
+    val q    = 2                                                          // number of lags for exogenous variables
     val spec = 1                                                          // number of trend terms
 
     hp("p")    = p
@@ -302,7 +300,7 @@ end neuralNet_3L4TSTest2
     val (yp, qof) = mod.trainNtest_xx ()()                                // train on full and test on full
 
     mod.forecastAll (mod.getYy)                                           // forecast h-steps ahead (h = 1 to hh) for all y
-    mod.diagnoseAll (mod.getYy, mod.getYf)                                        // diagnose for all horizons
+    mod.diagnoseAll (y, mod.getYf)                                        // diagnose for all horizons
 /*
     banner (s"Feature Selection Technique: Stepwise")
     val (cols, rSq) = mod.stepwiseSelAll (cross = false)                        // R^2, R^2 bar, sMAPE, NA

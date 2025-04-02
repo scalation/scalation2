@@ -1,5 +1,0 @@
-[debug] > Exec(all {file:/C:/Users/youse/OneDrive/Documents/New%20Scalation/scalation_2.0/}scalation/products {file:/C:/Users/youse/OneDrive/Documents/New%20Scalation/scalation_2.0/}scalation/test:products, None, None)
-[debug] Evaluating tasks: Compile / products, Test / products
-[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
-[success] Total time: 0 s, completed Mar 27, 2025, 2:19:45 AM
-[debug] > Exec(idea-shell, None, None)

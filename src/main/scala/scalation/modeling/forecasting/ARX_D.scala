@@ -28,7 +28,7 @@ import MakeMatrix4TS._
  *
  *  where y_t is the value of y at time t and e_t is the residual/error term.
  *  @param x        the data/input matrix (lagged columns of y) @see `ARX_D.apply`
- *  @param y        the response/output matrix (column per horizon) (time series data)
+ *  @param y        the response/output matrix (column per horizon) (time series data) 
  *  @param hh       the maximum forecasting horizon (h = 1 to hh)
  *  @param n_exo    the number of exogenous variables
  *  @param fname    the feature/variable names
@@ -41,14 +41,13 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String],
              tRng: Range = null, hparam: HyperParameter = hp,
              bakcast: Boolean = false,
              tForms: TransformMap = Map ("tForm_y" -> null))
-    extends Forecaster_D (x, y, hh, tRng, hparam, bakcast):
+      extends Forecaster_D (x, y, hh, tRng, hparam, bakcast):
 
     private val debug   = debugf ("ARX_D", true)                        // debug function
-    //  private val flaw    = flawf ("ARX_D")                               // flaw function
     protected val p     = hparam("p").toInt                             // use the last p endogenous values (p lags)
     protected val q     = hparam("q").toInt                             // use the last q exogenous values (q lags)
     protected val spec  = hparam("spec").toInt                          // trend terms: 0 - none, 1 - constant, 2 - linear, 3 - quadratic
-    //              4 - sine, 5 cosine
+                                                                        //              4 - sine, 5 cosine
     protected val nneg  = hparam("nneg").toInt == 1                     // 0 => unrestricted, 1 => predictions must be non-negative
     protected val reg   = new REGRESSION (x, y, fname, hparam)          // delegate training to multi-variate regression
 
@@ -56,7 +55,7 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String],
     yForm = tForms("tForm_y").asInstanceOf [Transform]
 
     debug ("init", s"$modelName with $n_exo exogenous variables and additional term spec = $spec")
-    //  debug ("init", s"[ x | y ] = ${x ++^ y}")
+//  debug ("init", s"[ x | y ] = ${x ++^ y}")
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Train/fit an `ARX_D` model to the times-series data in vector y_.
@@ -94,8 +93,8 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String],
      */
     def predict (t: Int, y_ : MatrixD): VectorD =
         val yp = rectify (reg.predict (x(t)), nneg)
-        if t < y_.dim then
-            debug ("predict", s"@t = $t, x(t) = ${x(t)}, yp = $yp vs. y_ = ${y_(t)}")
+//      if t < y_.dim then
+//          debug ("predict", s"@t = $t, x(t) = ${x(t)}, yp = $yp vs. y_ = ${y_(t)}")
         yp
     end predict
 
@@ -107,7 +106,6 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String],
      *  @param y_  the actual values to use in making predictions
      */
     override def forecast (t: Int, y_ : VectorD): VectorD =
-        //      val pred = reg.predict (x(min (t+1, x.dim-1)))               // FIX - why t+1
         val pred = predict (t, MatrixD (y_).transpose)
         for h <- 1 to hh do yf(t, h) = pred(h-1)
         pred                                                         // yh is pred
@@ -122,7 +120,6 @@ class ARX_D (x: MatrixD, y: MatrixD, hh: Int, n_exo: Int, fname: Array [String],
         for t <- y_.indices do
             val pred = predict (t, y_)
             for h <- 1 to hh do yf(t, h) = pred(h-1)
-        //          for h <- 1 to hh do yf(max0 (t-1), h) = pred(h-1)        // FIX - why -1
         yf
     end forecastAll
 
@@ -150,6 +147,7 @@ object ARX_D extends MakeMatrix4TS:
                tRng: Range = null, hparam: HyperParameter = hp,
                fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
                bakcast: Boolean = false): ARX_D =
+
         val xy    = ARX.buildMatrix (xe, y, hparam, bakcast)
         val yy    = makeMatrix4Y (y, hh, bakcast)
         val fname = if fname_ == null then ARX.formNames (xe.dim2, hparam) else fname_
@@ -174,13 +172,14 @@ object ARX_D extends MakeMatrix4TS:
                  fEndo: Array [Transform] = null, fExo: Array [Transform] = null,
                  bakcast: Boolean = false,
                  tForm: VectorD | MatrixD => Transform = x => zForm(x)): ARX_D =
+
         val tForm_y = tForm(y)
         if tForm_y.getClass.getSimpleName == "zForm" then hparam("nneg") = 0
-        val y_scal  = tForm_y.f(y)
+        val y_scl   = tForm_y.f(y)
         val tForms: TransformMap = Map ("tForm_y" -> tForm_y)
 
-        val xy    = ARX.buildMatrix (xe, y_scal, hparam, bakcast)
-        val yy    = makeMatrix4Y (y_scal, hh, bakcast)
+        val xy    = ARX.buildMatrix (xe, y_scl, hparam, bakcast)
+        val yy    = makeMatrix4Y (y_scl, hh, bakcast)
         val fname = if fname_ == null then formNames (xe.dim2, hparam) else fname_
         new ARX_D (xy, yy, hh, xe.dim2, fname, tRng, hparam, bakcast, tForms)
     end rescale
@@ -210,14 +209,14 @@ end ARX_D
 
     val hh = 3                                                          // maximum forecasting horizon
 
-      val mod = ARX_D (y, hh)                                             // create model for time series data
-      banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
-      mod.trainNtest_x ()()                                               // train and test on full dataset
+    val mod = ARX_D (y, hh)                                             // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
 
-      mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
-      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+    mod.forecastAll ()                                                  // forecast h-steps ahead (h = 1 to hh) for all y
+    println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
 
-      end aRX_DTest
+end aRX_DTest
  */
 
 
@@ -232,14 +231,14 @@ end ARX_D
 
     val hh = 3                                                          // maximum forecasting horizon
 
-      val mod = ARX_D (y, hh)                                             // create model for time series data
-      banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
-      mod.trainNtest_x ()()                                               // train and test on full dataset
+    val mod = ARX_D (y, hh)                                             // create model for time series data
+    banner (s"TnT Forecasts: ${mod.modelName} on LakeLevels Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
 
-      mod.rollValidate ()                                                 // TnT with Rolling Validation
-      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+    mod.rollValidate ()                                                 // TnT with Rolling Validation
+    println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
 
-      end aRX_DTest2
+end aRX_DTest2
  */
 
 
@@ -252,29 +251,25 @@ end ARX_D
 @main def aRX_DTest3 (): Unit =
 
     val exo_vars  = Array ("icu_patients")
-    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    //  val xe = xxe                                                        // full
+//  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-    //  val y  = yy                                                         // full
+//  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
-    for p <- 6 to 6; s <- 1 to 1 do                                    // number of lags; trend
+    for p <- 6 to 6; q <- 4 to 4; s <- 1 to 1 do                        // number of lags (endo, exo); trend
         hp("p")    = p                                                  // mumber of endo lags
-        hp("q")    = 4                                                  // mumber of exo lags
+        hp("q")    = q                                                  // mumber of exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
         val mod = ARX_D (xe, y, hh)                                     // create model for time series data
-        banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-        mod.trainNtest_x ()()                                           // train and test on full dataset
-        //      println (mod.summary ())                                        // statistical summary of fit  FIX - crashes
-
-        mod.forecastAll (mod.getYy)                                     // forecast h-steps ahead (h = 1 to hh) for all y
-        mod.diagnoseAll (y, mod.getYf)
-        println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+//        val mod = ARX_D.rescale (xe, y, hh)
+        mod.inSampleTest ()                                             // In-sample Testing
+        println (mod.summary ())                                        // statistical summary of fit  FIX - crashes
     end for
 
 end aRX_DTest3
@@ -288,31 +283,32 @@ end aRX_DTest3
  */
 @main def aRX_DTest4 (): Unit =
 
-    //  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val exo_vars  = Array ("icu_patients")
+//  val exo_vars  = Array ("icu_patients", "hosp_patients", "new_tests", "people_vaccinated")
     val (xxe, yy) = loadData (exo_vars, response)
     println (s"xxe.dims = ${xxe.dims}, yy.dim = ${yy.dim}")
 
-    //  val xe = xxe                                                        // full
+//  val xe = xxe                                                        // full
     val xe = xxe(0 until 116)                                           // clip the flat end
-    //  val y  = yy                                                         // full
+//  val y  = yy                                                         // full
     val y  = yy(0 until 116)                                            // clip the flat end
     val hh = 6                                                          // maximum forecasting horizon
     hp("lwave") = 20                                                    // wavelength (distance between peaks)
 
-    for p <- 6 to 6; s <- 1 to 1 do                                    // number of lags; trend
+    for p <- 6 to 6; q <- 4 to 4; s <- 1 to 1 do                        // number of lags (endo, exo); trend
         hp("p")    = p                                                  // number of endo lags
-        hp("q")    = 4                                                  // number of exo lags
+        hp("q")    = q                                                  // number of exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-        val mod = ARX_D.rescale (xe, y, hh)                                     // create model for time series data
+        val mod = ARX_D (xe, y, hh)                                     // create model for time series data
+//        val mod = ARX_D.rescale (xe, y, hh)
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
         mod.setSkip (0)
         mod.rollValidate ()
-        //      println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
-        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim))        // only diagnose on the testing set
-    //      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
+//      println (s"After Roll TnT Forecast Matrix yf = ${mod.getYf}")
+        mod.diagnoseAll (mod.getY, mod.getYf, Forecaster.teRng (y.dim))    // only diagnose on the testing set
+//      println (s"Final TnT Forecast Matrix yf = ${mod.getYf}")
     end for
 
 end aRX_DTest4

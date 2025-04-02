@@ -126,33 +126,27 @@ inline def log10 (x: Double): Double = log (x) / log_10
  */
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The power base 2 function of type `FunctionS2S`.
+/** The power base 2 function 2^x of type `FunctionS2S`.
  *  Its inverse function is log2.
  *  @param x  the value of the exponent 2^x
  */
 inline def pow2 (x: Double): Double = pow (2.0, x)
 
-
-
-
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The power to pp function of type `FunctionS2S`.
- * Its inverse function is powTo(1/pp)(x)
- *
- * @param x the value of the exponent x^pp
- */
-
-inline def powTo(pp : Double)(x: Double): Double = pow(x, pp)
-
-
-
-
-//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The power base 10 function of type `FunctionS2S`.
+/** The power base 10 function 10^x of type `FunctionS2S`.
  *  Its inverse function is log10.
  *  @param x  the value of the exponent 10^x
  */
 inline def pow10 (x: Double): Double = pow (10.0, x)
+
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+/** The power to p function x^p of type `FunctionS2S`.
+ *  Its inverse function is powTo (1/p)(x)
+ *  Usage: define a new function pow3 = powTo (3) so pow3 (x) = x^3
+ *  @param p  the value of the exponent/power x^p
+ *  @param x  the value of the base x^p
+ */
+inline def powTo (p: Double)(x: Double): Double = pow (x, p)
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The "log one plus", log base e function of x + 1 of type `FunctionS2S`.  Built-into Scala.
@@ -209,7 +203,6 @@ inline def ihs (x: Double): Double = log (x + sqrt (x*x + 1.0))
  *  @param x  the value whose log is sought
  */
 inline def logb (b: Double, x: Double): Double = log (x) / log (b)
-
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

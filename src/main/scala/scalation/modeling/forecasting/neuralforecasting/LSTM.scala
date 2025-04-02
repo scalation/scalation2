@@ -280,12 +280,14 @@ end lSTMTest2
 @main def lSTMTest3 (): Unit =
 
     import Example_LakeLevels.y
-    val lags = 2                                                      // number of lags to include
-    val hh   = 2                                                      // forecasting horizon - FIX - currently lags == hh
+    import MakeMatrix4TS._
+    val hh  = 2                                                       // forecasting horizon - FIX - currently lags == hh
+    hp("p") = 2                                                       // number of lags to include
 
     val y_s = scaleV (extreme (y), (-2.0, 2.0))(y)                    // rescale y to active domain of sigmoid, tanh
 
-    val (x, yy) = ARY_D.buildMatrix4TS (y_s, lags, hh)                // column for each lag
+    val x  = ARY.buildMatrix (y_s, hp)                                // column for each lag
+    val yy = makeMatrix4Y (y_s, hh)
 
     println (s"x.dims = ${x.dims}, yy.dims = ${yy.dims}")
 

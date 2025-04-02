@@ -946,7 +946,7 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
                            domain ++ r2.domain, newKey)
 
         val ix = pullPos (x)                                                // using integers is faster than strings
-        val iy = pullPos (y)
+        val iy = r2.pullPos (y)
 
         cfor (0, tuples.size) { i =>
             val t_i = tuples(i)
@@ -1101,12 +1101,13 @@ class Table (name: String, schema: Schema, domain: Domain, key: Schema)
         val s = new Table (s"${name}_j_${cntr.inc ()}", schema ++ rest,
                            domain ++ r2.pull (rest), newKey)
         val icommon = pullPos (common)                                      // using integers id faster than strings
+        val jcommon = r2.pullPos (common)                                   // using integers id faster than strings
 
         cfor (0, tuples.size) { i =>
             val t_i = tuples(i)
             cfor (0, r2.tuples.size) { j =>
                 val t_j = r2.tuples(j)
-                if pull (t_i, icommon) eqElements r2.pull (t_j, icommon) then
+                if pull (t_i, icommon) eqElements r2.pull (t_j, jcommon) then
                     s.tuples += t_i ++ r2.pull (t_j, rest)
             } // for
         } // for

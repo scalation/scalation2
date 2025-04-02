@@ -249,7 +249,6 @@ end example_ILITest6
 //      mod.setSkip (p)                                                 // full ARY-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf, showYf = false)                  // model diagnostics for all horizons
-//      Forecaster.evalForecasts (mod, y, hh)
     end for
 
 end example_ILITest7
@@ -277,7 +276,6 @@ end example_ILITest7
 //      mod.setSkip (p)                                                 // full ARY-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf, showYf = false)                  // model diagnostics for all horizons
-//      Forecaster.evalForecasts (mod, y, hh)
     end for
 
 end example_ILITest8
@@ -304,7 +302,6 @@ end example_ILITest8
 //      mod.setSkip (p)                                                 // full ARY-formula available when t >= p
         mod.forecastAll ()                                              // forecast h-steps ahead (h = 1 to hh) for all y
         mod.diagnoseAll (y, mod.getYf, showYf = false)                  // model diagnostics for all horizons
-//      Forecaster.evalForecasts (mod, y, hh)
     end for
 
 end example_ILITest9
@@ -314,54 +311,56 @@ end example_ILITest9
  *  This test compares the `ARX_Symb` and `ARX_Symb_D` models for several values of p and q.
  *  > runMain scalation.modeling.forecasting.example_ILITest10
  */
-//@main def example_ILITest10 (): Unit =
-//
-//    import AR.hp
-//
-//    val exo_vars = Array ("%WEIGHTED ILI", "%UNWEIGHTED ILI")
-//    val (xe, y)  = loadData (exo_vars, response)
-//    println (s"xe.dims = ${xe.dims}, y.dim = ${y.dim}")
-//
-//    val hh = 12                                                          // maximum forecasting horizon
-//    val p  = 10
-//    val q  = 10
-//    hp("p")     = p                                                     // endo lags
-//    hp("q")     = q                                                     // exo lags
-//    hp("spec")  = 1                                                     // trend specification: 0, 1, 2, 3, 5
-//    hp("lwave") = 20                                                    // wavelength (distance between peaks)
-//    hp("cross") = 1
-//    hp("lambda") = 1.0
-//
-//    val ff = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)
-//    val gg = Array (powTo (1.5), powTo (0.5), log1p, sin, cos)
-//
-//    val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)               // create model for time series data
-//    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
-//    mod.trainNtest_x ()()                                               // train and test on full dataset
-//
-//    mod.setSkip(0)
-//    mod.rollValidate (rc = 2)                                           // TnT with Rolling Validation
-//    mod.diagnoseAll (y, mod.getYf, Forecaster.teRng(y.dim), 0)
-//
-//    banner ("Feature Selection Technique: stepwise")
-//    val (cols, rSq) = mod.stepwiseSelAll ()                             // R^2, R^2 bar, sMAPE, R^2 cv
-////  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
-//    val k = cols.size
-//    println (s"k = $k")
-//    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
-//               s"R^2 vs n for ${mod.modelName}", lines = true)
-//    println (s"rSq = $rSq")
-//
-//    val modBest = mod.getBest.mod
-//    val x_fs = modBest.getX
-//
-//    val yy_D  = MakeMatrix4TS.makeMatrix4Y (y, hh, false)               // FIX - switch to usiing apply method in next line)
-//    val mod_D = new ARX_Symb_D (x_fs, yy_D, hh, n_exo = 1, null)
-//    mod_D.trainNtest_x ()()
-//
-//    mod_D.setSkip (0)
-//    mod_D.rollValidate (rc = 2)                                         // TnT with Rolling Validation
-//    mod_D.diagnoseAll (y, mod_D.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
-//
-//end example_ILITest10
+@main def example_ILITest10 (): Unit =
+
+    import AR.hp
+
+    val exo_vars = Array ("%WEIGHTED ILI", "%UNWEIGHTED ILI")
+    val (xe, y)  = loadData (exo_vars, response)
+    println (s"xe.dims = ${xe.dims}, y.dim = ${y.dim}")
+
+    val hh = 12                                                          // maximum forecasting horizon
+    val p  = 10
+    val q  = 10
+    val pp = 1.5
+    hp("p")     = p                                                     // endo lags
+    hp("q")     = q                                                     // exo lags
+    hp("pp")    = pp                                                    // power to raise lags to
+    hp("spec")  = 1                                                     // trend specification: 0, 1, 2, 3, 5
+    hp("lwave") = 20                                                    // wavelength (distance between peaks)
+    hp("cross") = 1
+    hp("lambda") = 1.0
+
+    val ff = Array [Transform] (powForm (VectorD (pp)))
+    val gg = Array [Transform] ()
+
+    val mod = ARX_Symb (xe, y, hh, fEndo = ff, fExo = gg)               // create model for time series data
+    banner (s"In-ST Forecasts: ${mod.modelName} on COVID-19 Dataset")
+    mod.trainNtest_x ()()                                               // train and test on full dataset
+
+    mod.setSkip(0)
+    mod.rollValidate (rc = 2)                                           // TnT with Rolling Validation
+    mod.diagnoseAll (y, mod.getYf, Forecaster.teRng(y.dim), 0)
+
+    banner ("Feature Selection Technique: stepwise")
+    val (cols, rSq) = mod.stepwiseSelAll ()                             // R^2, R^2 bar, sMAPE, R^2 cv
+//  val (cols, rSq) = mod.backwardElimAll ()                            // R^2, R^2 bar, sMAPE, R^2 cv
+    val k = cols.size
+    println (s"k = $k")
+    new PlotM (null, rSq.transpose, Array ("R^2", "R^2 bar", "sMAPE", "R^2 cv"),
+               s"R^2 vs n for ${mod.modelName}", lines = true)
+    println (s"rSq = $rSq")
+
+    val modBest = mod.getBest.mod
+    val x_fs = modBest.getX
+
+    val yy_D  = MakeMatrix4TS.makeMatrix4Y (y, hh, false)               // FIX - switch to usiing apply method in next line)
+    val mod_D = new ARX_Symb_D (x_fs, yy_D, hh, n_exo = 1, null)
+    mod_D.trainNtest_x ()()
+
+    mod_D.setSkip (0)
+    mod_D.rollValidate (rc = 2)                                         // TnT with Rolling Validation
+    mod_D.diagnoseAll (y, mod_D.getYf, Forecaster.teRng (y.dim), 0)     // only diagnose on the testing set
+
+end example_ILITest10
 

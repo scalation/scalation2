@@ -297,7 +297,7 @@ object VAR:
                hparam: HyperParameter = hp, bakcast: Boolean = false): VAR =   // backcasted values only used in `buildMatrix4TS`
         val y_0   = y(?, 0)                                                    // the main endogenous variable (column zero)
         val yy    = y(?, 1 until y.dim2)                                       // the other endogenous variables (rest of the columns)
-        val x     = ARX.buildMatrix (yy, y_0, hparam, bakcast)   // add spec trend columns and p|q lags for each column of y
+        val x     = ARX.buildMatrix (yy, y_0, hparam, bakcast)                 // add spec trend columns and p|q lags for each column of y
         new VAR (x, y, hh, fname, tRng, hparam)
     end apply
 

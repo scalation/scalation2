@@ -285,7 +285,7 @@ abstract class Forecaster (y: VectorD, hh: Int, tRng: Range = null, hparam: Hype
      *  Calls forecast for h-steps ahead out-of-sample forecasts.
      *  Return the FORECAST MATRIX.
      *  @param rc       the retraining cycle (number of forecasts until retraining occurs)
-     *  @param growing  whether the training grows as it roll or keeps a fixed size
+     *  @param growing  whether the training grows as it roll or kepps a fixed size
      */
     def rollValidate (rc: Int = 2, growing: Boolean = false): MatrixD =
         val ftMat   = new MatrixD (hh, Fit.N_QoF)
@@ -333,14 +333,17 @@ abstract class Forecaster (y: VectorD, hh: Int, tRng: Range = null, hparam: Hype
 
     //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     /** Perform In-Sample Testing (In-ST), i.e. train and test on the full data set.
-     *  @param skip  the number of initial time points to skip (due to insufficient past)
+     *  @param skip    the number of initial time points to skip (due to insufficient past)
+     *  @param showYf  whether to show the forecast matrix
      */
-    def inSampleTest (skip: Int = 2): Unit =
+    def inSampleTest (skip: Int = 2, showYf: Boolean = false): Unit =
         banner (s"In-ST Test: $modelName")
-        trainNtest ()()
-        forecastAll ()
-        setSkip (skip)
-        diagnoseAll (y, getYf)
+        trainNtest ()()                                                   // train on full and test on full 
+        forecastAll ()                                                    // forecast over all horizons
+        setSkip (skip)                                                    // diagnose: skip the first 'skip' rows
+        diagnoseAll (getY, getYf)                                         // compute metrics for all horizons
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf}")
+//      println (s"Final In-ST Forecast Matrix yf = ${mod.getYf.shiftDiag}")
     end inSampleTest
 
 //  F E A T U R E   S E L E C T I O N
@@ -467,33 +470,6 @@ object Forecaster:
         if ! allow then assert (cnt == 0)
         cnt
     end differ
-
-    //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    /** Evaluate the quality of point and optionally interval forecast for horizon (h = 1 to hh).
-     *  @param mod   the forecasting model to be evaluated
-     *  @param y     the actual time series values (use `mod.getYb` for full time series with backcast)
-     *  @param hh    the maximum forecasting horizon (h = 1 to hh)
-     *  @param ints  whether to evaluate prediction interval forecasts as well as point forecasts
-     *
-    def evalForecasts (mod: Forecaster, y: VectorD, hh: Int, ints: Boolean = false): Unit =
-        val ftMat = new MatrixD (hh, Fit.N_QoF)
-        banner (s"Evaluate ${mod.modelName}'s QoF for horizons 1 to $hh:")
-
-        for h <- 1 to hh do
-            val (yy, yfh, qof) = mod.testF (h, y)                         // h-steps ahead forecast and its QoF
-            ftMat(h-1) = qof 
-//          println (FitM.fitMap (qof, qoF_names))                        // evaluate h-steps ahead forecasts
-
-            if ints then
-                val (low, up) = mod.forecastAtI (yy, yfh, h)              // prediction interval forecasts
-                val qof_all   = mod.diagnose_ (yy, yfh, low, up)          // fully evaluate h-steps ahead forecasts
-                mod.show_interval_forecasts (yy, yfh, low, up, qof_all, h)
-        end for
-
-        println ("fitMap     qof = ")
-        println (FitM.showFitMap (ftMat.transpose, QoF.values.map (_.toString)))
-    end evalForecasts
-     */
 
 end Forecaster
 

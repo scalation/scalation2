@@ -145,7 +145,7 @@ end banner
  *  @param method   the method where the error occurred
  *  @param message  the error message
  */
-def flawf (clsName: String)(method: String, message: String): Boolean =
+inline def flawf (clsName: String)(method: String, message: String): Boolean =
     import scala.Console.{RED, RESET}
     println (s"${RED}ERROR @ $clsName.$method: $message ${RESET}")
     false
@@ -160,7 +160,7 @@ end flawf
  *  @param method   the method where the error occurred
  *  @param message  the error message
  */
-def debugf (clsName: String, enabled: Boolean)(method: String, message: String): Unit =
+inline def debugf (clsName: String, enabled: Boolean)(method: String, message: String): Unit =
     if enabled then
         println (s"DEBUG @ $clsName.$method: $message")
 end debugf
