@@ -173,9 +173,8 @@ object ARX_Quad extends MakeMatrix4TS:
             Map ("tForm_y" -> tForm_y, "tForm_endo" -> tForm_endo, "ppForm" -> ppForm)
         else
             Map ("tForm_y" -> null, "ppForm" -> ppForm)
-        println(y_pp)
-//        val x_endo = MatrixD (y_scl, y_pp).transpose
-        val x_endo = MatrixD (y_scl).transpose
+
+        val x_endo = MatrixD (y_scl, y_pp).transpose
 
         // add trend terms and terms for the endogenous variable
         var xy = makeMatrix4T (y, spec, lwave, bakcast) ++^                     // trend terms
@@ -316,8 +315,8 @@ end aRX_QuadTest3
         hp("p")    = p                                                  // endo lags
         hp("q")    = q                                                  // exo lags
         hp("spec") = s                                                  // trend specification: 0, 1, 2, 3, 5
-//        val mod = ARX_Quad (xe, y, hh)
-        val mod = ARX_Quad.rescale (xe, y, hh)                          // create model for time series data
+        val mod = ARX_Quad (xe, y, hh)
+//        val mod = ARX_Quad.rescale (xe, y, hh)                          // create model for time series data
         banner (s"TnT Forecasts: ${mod.modelName} on COVID-19 Dataset")
         mod.trainNtest_x ()()                                           // use customized trainNtest_x
 
