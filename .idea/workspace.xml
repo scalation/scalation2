@@ -4,16 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b2eb790b-a8b8-4ee9-a68f-5c956cb14266" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.bsp/sbt.json" beforeDir="false" afterPath="$PROJECT_DIR$/.bsp/sbt.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules/scalation.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/scalation.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules/scalation.scalation-build.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules/scalation.scalation-build.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.html" beforeDir="false" afterPath="$PROJECT_DIR$/README.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad.scala" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad_D.scala" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/scala/scalation/modeling/forecasting/ARX_Quad_D.scala" afterDir="false" />
-    </list>
+    <list default="true" id="b2eb790b-a8b8-4ee9-a68f-5c956cb14266" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -39,34 +30,34 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Application.aRXTest4.executor": "Run",
-    "Application.aRX_DTest3.executor": "Run",
-    "Application.aRX_DTest4.executor": "Run",
-    "Application.aRX_QuadTest3.executor": "Run",
-    "Application.aRX_QuadTest4.executor": "Run",
-    "Application.aRX_Quad_DTest4.executor": "Run",
-    "Application.aRX_SymbTest4.executor": "Run",
-    "Application.aRX_Symb_DTest4.executor": "Run",
-    "Application.aRYTest4.executor": "Run",
-    "Application.aRY_DTest4.executor": "Run",
-    "Application.aRY_QuadTest4.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "dev__Yousef",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/youse/OneDrive/Documents/GitHub/scalation_2.0",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Problems",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.2",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Application.aRXTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_DTest3.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_DTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_QuadTest3.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_QuadTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_Quad_DTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_SymbTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRX_Symb_DTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRYTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRY_DTest4.executor&quot;: &quot;Run&quot;,
+    &quot;Application.aRY_QuadTest4.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;dev__Yousef&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/youse/OneDrive/Documents/GitHub/scalation_2.0&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Problems&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.2&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="Application.aRX_Quad_DTest4">
     <configuration name="aRXTest4" type="Application" factoryName="Application" temporary="true">
       <option name="MAIN_CLASS_NAME" value="scalation.modeling.forecasting.aRXTest4" />
@@ -167,6 +158,7 @@
       <workItem from="1743556486942" duration="5623000" />
       <workItem from="1743562243849" duration="2094000" />
       <workItem from="1743570723394" duration="1312000" />
+      <workItem from="1743610413093" duration="41000" />
     </task>
     <servers />
   </component>
