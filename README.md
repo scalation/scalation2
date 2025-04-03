@@ -1,10 +1,9 @@
 <center>
 <h1> SCALAble SimulaTION - ScalaTion </h1>
 <p>
-<a href = "#papers">Papers</a> 
-
+<a href = "#papers">Papers</a> | <a href = https://scalation.github.io/scalation_2.0/>Scaladoc</a>
 <!--
-| <a href = "#scaladoc">Scaladoc</a> | <a href = "#source-code"> Source Code</a>
+| <a href = "#source-code"> Source Code</a>
 -->
 </center>
 
@@ -146,7 +145,7 @@ To develop using an Integrated Development Environment (IDE) [IntelliJ]:
 <A name = "papers">
 
 <p><hr><p>
-<h3> Papers/Documentation </h3>
+<h3> Papers </h3>
 <p>
 
 <ol>
