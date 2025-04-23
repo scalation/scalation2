@@ -40,7 +40,7 @@ abstract class Forecaster_Reg (x: MatrixD, y: VectorD, hh: Int, fname: Array [St
       extends Forecaster (y, hh, tRng, hparam, bakcast)
          with FeatureSelection:
 
-    private   val debug = debugf ("Forecaster_Reg", true)                // debug function
+    private   val debug = debugf ("Forecaster_Reg", false)                // debug function
     private   val flaw  = flawf ("Forecaster_Reg")                        // debug function
     protected val reg   = new REGRESSION (x, y, fname, hparam)            // delegate training to regression
     protected val nneg  = hparam("nneg").toInt == 1                       // 0 => unrestricted, 1 => predictions must be non-negative
